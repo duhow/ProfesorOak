@@ -1046,6 +1046,18 @@ class Main extends CI_Controller {
 					->caption("¿Fiesta? ¡La que te va a dar ésta!")
 					->file('document', "BQADBAADpgMAAnMdZAePc-TerW2MSwI");
 			}
+		}elseif($telegram->receive("fanta")){
+			$fantas = [
+				"BQADBAADLwEAAjSYQgABe8eWP7cgn9gC", // Naranja
+				"BQADBAADQwEAAjSYQgABVgn9h2J6NfsC", // Limon
+				"BQADBAADRQEAAjSYQgABsDEEUjdh0w8C", // Uva
+				"BQADBAADRwEAAjSYQgABu1UlOqU2-8IC", // Fresa
+			];
+			$n = mt_rand(0, count($fantas) - 1);
+
+			if($pokemon->settings($telegram->chat->id, 'shutup') != TRUE){
+				$telegram->send->notification(FALSE)->file('sticker', $fantas[$n]);
+			}
 		}
 
 		if(!empty($joke)){
