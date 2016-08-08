@@ -405,6 +405,8 @@ class Telegram extends CI_Model{
 		return FALSE;
 	}
 
+	function is_bot($user = NULL){ if($user === NULL){ $user = $this->user->username; } return (!empty($user) && substr(strtolower($user), -3) == "bot") }
+
     function dump($json = FALSE){ return($json ? json_encode($this->data) : $this->data); }
 
     function get_admins($chat = NULL, $full = FALSE){

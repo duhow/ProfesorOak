@@ -27,12 +27,16 @@ class Main extends CI_Controller {
 		if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_participant"){
 			$set = $pokemon->settings($chat->id, 'announce_welcome');
 			$new = $telegram->new_user;
+
 			if($new->id == $this->config->item("telegram_bot_id")){
 				$count = $telegram->send->get_members_count();
 				if(is_numeric($count) && $count <= 5){
 					$telegram->send->leave_chat();
 					exit();
 				}
+			}elseif($telegram->is_bot($new->username)){
+				// Bot agregado al grupo. Yo no saludo bots :(
+				exit();
 			}
 			$pknew = $pokemon->user($new->id);
 			if($new->id == $this->config->item('creator')){
