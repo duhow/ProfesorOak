@@ -953,7 +953,7 @@ class Main extends CI_Controller {
 
 		$joke = NULL;
 
-		if($telegram->receive(["tira el dado", "tira los dados", "tirar los dados", "roll the dice", "/dado"], TRUE)){
+		if($telegram->receive(["tira el dado", "lanza el dado", "tira los dados", "tirar los dados", "roll the dice", "/dado"], ["el dado", "los dados", "the dice"], TRUE)){
 			$can = $pokemon->settings($telegram->chat->id, 'play_games');
 			if($can != FALSE or $can === NULL){
 				$joke = "*" .mt_rand(1,6) ."*";
