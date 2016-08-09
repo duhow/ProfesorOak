@@ -1106,6 +1106,10 @@ class Main extends CI_Controller {
 			$this->analytics->event('Telegram', 'Jokes', 'Seguro dental');
 			$telegram->send->notification(FALSE)->file('video', FCPATH . "files/seguro_dental.mp4");
 			exit();
+		}elseif($telegram->receive("no paras") && $telegram->words() < 10){
+			$this->analytics->event('Telegram', 'Jokes', 'Paras');
+			$telegram->send->notification(FALSE)->file('photo', FCPATH . "files/paras.png");
+			exit();
 		}elseif($telegram->receive(["que hora es", "la hora"]) && $telegram->receive("?") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Time');
 			$joke = "Son las " .date("H:i") .", una hora menos en Canarias. :)";
