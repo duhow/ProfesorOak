@@ -988,8 +988,7 @@ class Main extends CI_Controller {
 			exit();
 		}elseif($telegram->receive(["team", "equipo"]) && $telegram->receive(["sois", "hay aquí", "hay aqui", "estáis", "estais"])){
 			exit();
-		}elseif($telegram->receive(["Qué", "Que"], NULL, TRUE) && $telegram->receive(["significa", "es"])){
-			exit();
+		}elseif($telegram->receive(["Qué", "Que"], ["significa", "es"], TRUE) && (1 == 2)){ // Desactivado temporal
 			$word = trim(strtolower($telegram->last_word(TRUE)));
 			$help = $pokemon->meaning($word);
 
@@ -1099,6 +1098,9 @@ class Main extends CI_Controller {
 			$this->analytics->event('Telegram', 'Jokes', 'GTFO');
 			$telegram->send->notification(FALSE)->file('document', "BQADBAADHgEAAuK9EgOeCEDKa3fsFgI"); // Puerta
 			exit();
+		}elseif($telegram->receive(["que hora es", "la hora"]) && $telegram->receive("?") && $telegram->words() <= 5){
+			$this->analytics->event('Telegram', 'Jokes', 'Time');
+			$joke = "Son las " .date("H:i") .", una hora menos en Canarias. :)";
 		}elseif($telegram->receive("Profesor Oak", TRUE)){
 			if($pokemon->settings($telegram->chat->id, 'say_hey') == TRUE){
 				$joke = "Dime!";
@@ -1204,6 +1206,7 @@ class Main extends CI_Controller {
 			'¿Sabes por qué no sale Mew? ¡Porque tiene mewdo!',
 			'Cuando un Charizard se tira un pedo, tiene el ataque furia.',
 			'¿Cuál es el Pokémon que come más chorizo? Chorizard',
+			'¿Cuál es el Pokémon que tiene dudas en geografía? Geodude',
 			'¿Cuál es el Pokémon que tiene la ametralladora en el nombre?  - RATATATATATATA',
 			'¿Cuál es la canción que canta Digglet? "<¡Soy minero...!>"... ',
 			'¿Cuál es el Pokémon más multifacético? Eevee, porque no se queda contento con ninguna evolución...',
