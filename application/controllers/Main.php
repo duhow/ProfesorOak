@@ -1244,6 +1244,7 @@ class Main extends CI_Controller {
 			$text = substr($text, 1);
 		}
 
+		// $attack contiene el primer tipo del pokemon
 		$pokemon = $this->pokemon->find($text);
 		if($pokemon !== FALSE){
 			$str .= "#" .$pokemon['id'] ." - *" .$pokemon['name'] ."* (*" .$types[$pokemon['type']] ."*" .(!empty($pokemon['type2']) ? " / *" .$types[$pokemon['type2']] ."*" : "") .")\n";
@@ -1257,6 +1258,7 @@ class Main extends CI_Controller {
 			$attack = $attack['id']; // Attack es toda la fila, céntrate en el ID.
 		}
 
+		// $table contiene todos las relaciones donde aparezcan alguno de los dos tipos del pokemon
 		$table = $this->pokemon->attack_table($attack);
 		$target[] = $attack;
 		if($pokemon !== FALSE && $pokemon['type2'] != NULL){
@@ -1264,23 +1266,34 @@ class Main extends CI_Controller {
 			$target[] = $pokemon['type2'];
 		}
 
-		// inutil, debil, muy fuerte
+		// $table['attack'] -> 0.5; 2
+		// 0.5 = poco eficaz; 2 = muy eficaz
 		$list = array();
 		foreach($table as $t){
 			if(in_array(strtolower($t['target']), $target)){
-				if($t['attack'] == 0){ $list[0][] = $types[$t['source']]; }
-				if($t['attack'] == 0.5){ $list[1][] = $types[$t['source']]; }
-				if($t['attack'] == 2){ $list[2][] = $types[$t['source']]; }
+				if($t['attack'] == 0.5){ $list[0][] = $types[$t['source']]; }
+				if($t['attack'] == 2){ $list[1][] = $types[$t['source']]; }
 			}
 		}
-
-		foreach($list as $i => $k){
+		foreach($list as $i){
 			$list[$i] = array_unique($list[$i]);
 		}
+		$idex = 0;
+		foreach($list[0] as $i){
+			$jdex = 0;
+			foreach ($list[1] as $j){
+				if($i == $j){
+					// $i y $j contienen el mismo tipo, hay contradicción
+					unset($list[0][$idex]);
+					unset($list[1][$jdex]);
+				}
+				$jdex = $jdex+1;
+			}
+			$idex = $idex+1;
+		}
 
-		if(isset($list[0]) && count($list[0]) > 0){ $str .= "Es inútil atacarle con *" .implode("*, *", $list[0]) ."*.\n"; }
-		if(isset($list[1]) && count($list[1]) > 0){ $str .= "Apenas le afecta *" .implode("*, *", $list[1]) ."*.\n"; }
-		if(isset($list[2]) && count($list[2]) > 0){ $str .= "Le afecta mucho *" .implode("*, *", $list[2]) ."*.\n"; }
+		if(isset($list[0]) && count($list[0]) > 0){ $str .= "Apenas le afecta *" .implode("*, *", $list[0]) ."*.\n"; }
+		if(isset($list[1]) && count($list[1]) > 0){ $str .= "Le afecta mucho *" .implode("*, *", $list[1]) ."*.\n"; }
 
 		$telegram->send
 			->chat($chat)
