@@ -258,6 +258,20 @@ class Main extends CI_Controller {
 			}
 			exit();
 		}elseif(
+			$telegram->receive("/setflag ", NULL, TRUE) &&
+			(in_array($telegram->words(), [2,3])) &&
+			$telegram->user->id == $this->config->item('creator')
+		){
+			if($telegram->words() == 2 and $telegram->has_reply){
+				$f_user = $telegram->reply_user->id;
+			}elseif($telegram->words() == 3){
+				$f_user = $pokemon->user($telegram->words(1));
+				if(empty($f_user)){ exit(); }
+				$f_user = $f_user->telegramid;
+			}
+			$flag = $telegram->last_word();
+			$pokemon->user_flags($f_user, $flag, TRUE);
+		}elseif(
 			$telegram->receive("/get ", TRUE) &&
 			$telegram->words() == 2
 		){
@@ -614,9 +628,18 @@ class Main extends CI_Controller {
 						if(empty($info->username)){ $str .= "No sé como se llama, sólo sé que "; }
 						else{ $str .= "@$info->username, "; }
 
-						$str .= "es *" .$team[$info->team] ."* L" .$info->lvl .".";
+						$str .= "es *" .$team[$info->team] ."* L" .$info->lvl .".\n";
 
-						if(!$info->verified){ $str .= "\n*UNTRUSTED*"; }
+						$flags = $pokemon->user_flags($info->telegramid);
+
+						if($info->verified){ $str .= $telegram->emoji(":green-check: "); }
+						if($info->blocked){ $str .= $telegram->emoji(":forbid: "); }
+						if($info->authorized){ $str .= $telegram->emoji(":star: "); }
+						if(in_array("ratkid", $flags)){ $str .= $telegram->emoji(":mouse: "); }
+						if(in_array("multiaccount", $flags)){ $str .= $telegram->emoji(":multiuser: "); }
+						if(in_array("bot", $flags)){ $str .= $telegram->emoji(":robot: "); }
+						if(in_array("rager", $flags)){ $str .= $telegram->emoji(":fire: "); }
+						if(in_array("troll", $flags)){ $str .= $telegram->emoji(":joker: "); }
 					}
 				}
 			}elseif(
@@ -842,7 +865,7 @@ class Main extends CI_Controller {
 				->notification(FALSE)
 				->file('photo', FCPATH .'files/egg_list.png');
 			exit();
-		}elseif($telegram->receive(["cambiar", "cambio"]) && $telegram->receive(["facción", "faccion", "equipo", "team"])){
+		}elseif($telegram->receive(["cambiar", "cambio"]) && $telegram->receive(["facción", "color", "faccion", "equipo", "team"]) && $telegram->words() <= 12){
 			$help = "Según la página oficial de Niantic, aún no es posible cambiarse de equipo. Tendrás que esperar o hacerte una cuenta nueva, pero *procura no jugar con multicuentas, está prohibido.*";
 		}elseif($telegram->receive("datos") && $telegram->receive(["movil", "móvil", "moviles", "móviles"]) && !$telegram->receive("http")){
 			$help = "Si te has quedado sin datos, deberías pensar en cambiarte a otra compañía o conseguir una tarifa mejor. "

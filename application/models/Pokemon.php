@@ -36,6 +36,42 @@ class Pokemon extends CI_Model{
 		return ($query->num_rows() == 1);
 	}
 
+	function user_flags($user, $flag = NULL, $set = NULL){
+		if($flag != NULL && is_bool($set)){
+			if($set == TRUE){
+				$q = $this->user_flags($user, $flag, NULL);
+				if($q == FALSE){
+					return $this->db
+						->set('user', $user)
+						->set('value', $flag)
+					->insert('user_flags');
+				}
+			}else{
+				if(!is_array($flag)){ $flag = [$flag]; }
+				return $this->db
+					->where('user', $user)
+					->where_in('value', $flag)
+				->delete('user_flags');
+			}
+		}else{
+			if($flag != NULL && !is_array($flag)){ $flag = [$flag]; }
+			if(is_array($flag)){ $this->db->where_in('value', $flag); }
+
+			$query = $this->db
+				->where('user', $user)
+			->get('user_flags');
+			if($flag == NULL && $query->num_rows() == 1){
+				return array($query->row()->value);
+			}elseif(count($flag) == 1 && $query->num_rows() == 1){
+				return TRUE;
+			}elseif($query->num_rows() > 1){
+				return array_column($query->result_array(), 'value');
+			}else{
+				return FALSE;
+			}
+		}
+	}
+
 	function find_users($array){
 		$query = $this->db
 			->where_in('username', $array)
