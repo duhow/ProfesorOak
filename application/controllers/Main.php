@@ -1095,6 +1095,10 @@ class Main extends CI_Controller {
 		}elseif($telegram->receive("sextape")){
 			$telegram->send->notification(FALSE)->file('video', FCPATH . "sextape.mp4");
 			exit();
+		}elseif($telegram->receive(["GTFO", "puerta", "vale adios"], NULL, TRUE)){
+			$this->analytics->event('Telegram', 'Jokes', 'GTFO');
+			$telegram->send->notification(FALSE)->file('document', "BQADBAADHgEAAuK9EgOeCEDKa3fsFgI"); // Puerta
+			exit();
 		}elseif($telegram->receive("Profesor Oak", TRUE)){
 			if($pokemon->settings($telegram->chat->id, 'say_hey') == TRUE){
 				$joke = "Dime!";
