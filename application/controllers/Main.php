@@ -1082,6 +1082,10 @@ class Main extends CI_Controller {
 			if($pokemon->settings($telegram->chat->id, 'shutup') != TRUE or $telegram->user->id == $this->config->item('creator')){
 				$joke = "Un saludo para todos mis fans! :D";
 			}
+		}elseif($telegram->receive("/me ", NULL, TRUE) && $telegram->words() >= 2){
+			$text = substr($telegram->text(), strlen("/me "));
+			if(strpos($text, "/") !== FALSE){ exit(); }
+			$joke = trim($telegram->user->first_name ." " .$text);
 		}elseif($telegram->receive(["necesitas", "necesitais ", "necesitáis "]) && $telegram->receive(["novio", "novia", "pareja", "follar"])){
 			// if($pokemon->settings($telegram->chat->id, 'shutup') != TRUE or $telegram->user->id == $this->config->item('creator')){
 				$joke = "¿Novia? Qué es eso, se come?";
