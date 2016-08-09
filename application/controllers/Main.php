@@ -199,11 +199,26 @@ class Main extends CI_Controller {
 			$teams = ["Y" => "yellow", "B" => "blue", "R" => "red"];
 			$str = "";
 
-			foreach($admins as $a){
+			foreach($admins as $k => $a){
+				if($a['status'] == 'creator'){
+					unset($admins[$k]);
+					array_unshift($admins, $a);
+				}elseif($a['user']['id'] == $this->config->item('telegram_bot_id')){
+					unset($admins[$k]);
+					array_push($admins, $a);
+				}
+			}
+
+			foreach($admins as $k => $a){
+				if($a['user']['id'] == $this->config->item('telegram_bot_id')){
+					$str .= "Y yo, el Profesor Oak :)";
+					continue;
+				}
 				$pk = $pokemon->user($a['user']['id']);
 				if(!empty($pk)){ $str .= $telegram->emoji(":heart-" .$teams[$pk->team] .":") ." L" .$pk->lvl ." @" .$pk->username ." - "; }
 				$str .= $a['user']['first_name'] ." ";
 				if(isset($a['user']['username']) && ($a['user']['username'] != $pk->username) ){ $str .= "( @" .$a['user']['username'] ." )"; }
+				if($k == 0){ $str .= "\n"; } // - Creator
 				$str .= "\n";
 			}
 
