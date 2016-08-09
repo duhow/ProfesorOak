@@ -24,7 +24,7 @@ class Main extends CI_Controller {
 			exit();
 		}
 		if($telegram->receive(["profe", "profesor", "oak"]) && $telegram->receive(["ping", "me recibe", "estás", "estas", "estas ahi", "estás ahi", "estás ahí"]) && !$telegram->receive("program")){
-			$t = $this->analytics->event('Telegram', 'Ping');
+			$this->analytics->event('Telegram', 'Ping');
 			$telegram->send->text("Pong! :D")->send();
 			exit();
 		}
@@ -35,7 +35,7 @@ class Main extends CI_Controller {
 			if($new->id == $this->config->item("telegram_bot_id")){
 				$count = $telegram->send->get_members_count();
 				if(is_numeric($count) && $count <= 5){
-					$t = $this->analytics->event('Telegram', 'Join low group');
+					$this->analytics->event('Telegram', 'Join low group');
 					$telegram->send->leave_chat();
 					exit();
 				}
