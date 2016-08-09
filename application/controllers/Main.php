@@ -1189,9 +1189,13 @@ class Main extends CI_Controller {
 		$jokes = $this->pokemon->settings($this->telegram->chat->id, 'jokes');
 		$shut = $this->pokemon->settings($this->telegram->chat->id, 'shutup');
 
+		$admins = array();
+		if($this->telegram->is_chat_group()){ $admins = $this->telegram->get_admins(); }
+		$admins[] = $this->config->item('creator');
+
 		if(
 			$this->telegram->is_chat_group() &&
-			$this->telegram->user->id != $this->config->item('creator') &&
+			!in_array($this->telegram->user->id, $admins) &&
 			( $jokes == FALSE or $shut == TRUE )
 		){ return; }
 
