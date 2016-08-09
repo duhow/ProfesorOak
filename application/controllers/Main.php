@@ -1053,6 +1053,17 @@ class Main extends CI_Controller {
 		}elseif($telegram->receive("oak") && $telegram->receive(["versión", "version"])){
 			$date = (time() - filemtime(__FILE__));
 			$joke = "Versión de hace " .floor($date / 60) ." minutos.";
+		}elseif($telegram->receive(["oak", "profe"]) && $telegram->receive(["donde estoy", "dónde estoy"]) && $telegram->words() <= 4){
+			// DEBUG
+			if($telegram->is_chat_group()){
+				$joke = "Estás en *" .$telegram->chat->title ."* ";
+				if(isset($telegram->chat->username)){ $joke .= "@" .$telegram->chat->username ." "; }
+				$joke .= "(" .$telegram->chat->id .").";
+			}else{
+				$joke = "Estás hablando por privado conmigo :)\n";
+				if(isset($telegram->chat->username)){ $joke .= "@" .$telegram->chat->username ." "; }
+				$joke .= "(" .$telegram->chat->id .").";
+			}
 		}elseif($telegram->receive(["buenos", "buenas", "bon"]) && $telegram->receive(["días", "día", "dia", "tarde", "tarda", "tardes"])){
 			if($pokemon->settings($telegram->chat->id, 'say_hello') == TRUE){
 				$joke = "Buenas a ti también, entrenador! :D";
