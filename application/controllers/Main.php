@@ -1227,6 +1227,7 @@ class Main extends CI_Controller {
 			'Cuando un Charizard se tira un pedo, tiene el ataque furia.',
 			'¿Cuál es el Pokémon que come más chorizo? Chorizard',
 			'¿Cuál es el Pokémon que tiene dudas en geografía? Geodude',
+			'¿Cuál es el Pokémon al que le gusta el té? Dragonite',
 			'¿Cuál es el Pokémon que tiene la ametralladora en el nombre?  - RATATATATATATA',
 			'¿Cuál es la canción que canta Digglet? "<¡Soy minero...!>"... ',
 			'¿Cuál es el Pokémon más multifacético? Eevee, porque no se queda contento con ninguna evolución...',
