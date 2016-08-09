@@ -686,7 +686,7 @@ class Main extends CI_Controller {
 			exit();
 		}elseif(
 			$telegram->receive(["funciona ", "funcionan ", "va ", "caido ", "caer ", "muerto", "caído ", "estado "]) &&
-		 	$telegram->receive(["juego", "pokemon", "servidor",  "server", "web", "bien"]) &&
+		 	$telegram->receive(["juego", "pokemon", "pokémon", "servidor",  "server"]) &&
 			!$telegram->receive(["ese", "a mi me va", "a mis", "Que alg", "esa", "este", "caza", "su bola", "atacar", "cambi", "futuro", "esto", "para", "mapa", "contando", "va lo de", "llevamos", "a la", "va bastante bien"]) &&
 			$telegram->words() < 15 && $telegram->words() > 2
 		){
