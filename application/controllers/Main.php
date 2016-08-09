@@ -1098,6 +1098,10 @@ class Main extends CI_Controller {
 			$this->analytics->event('Telegram', 'Jokes', 'GTFO');
 			$telegram->send->notification(FALSE)->file('document', "BQADBAADHgEAAuK9EgOeCEDKa3fsFgI"); // Puerta
 			exit();
+		}elseif($telegram->receive(["#badumtss", "ba dum tss"])){
+			$this->analytics->event('Telegram', 'Jokes', 'Ba Dum Tss');
+			$telegram->send->notification(FALSE)->file('document', "BQADBAADHgMAAo-zWQOHtZAjTKJW2QI");
+			exit();
 		}elseif($telegram->receive(["que hora es", "la hora"]) && $telegram->receive("?") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Time');
 			$joke = "Son las " .date("H:i") .", una hora menos en Canarias. :)";
