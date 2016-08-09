@@ -814,6 +814,12 @@ class Main extends CI_Controller {
 			// $help = "Claro! El mapa para capturar Pokémon: https://pokevision.com/";
 		}elseif($telegram->receive(["como", "cómo"]) && $telegram->receive(["conseguir", "consigue"]) && $telegram->receive(["objeto", "incienso", "cebo", "huevo"])){
 			$help = "En principio si vas a las PokeParadas y tienes suerte, también deberías de poder conseguirlos.";
+		}elseif($telegram->receive(["tabla", "lista"]) && $telegram->receive(["ataque", "tipos de ataque", "debilidad"]) && $telegram->words() < 10){
+			$this->analytics->event('Telegram', 'Attack Table');
+			$telegram->send
+				->notification(FALSE)
+				->file('photo', FCPATH .'files/attack_types.png');
+			exit();
 		}elseif($telegram->receive(["cambiar", "cambio"]) && $telegram->receive(["facción", "faccion", "equipo", "team"])){
 			$help = "Según la página oficial de Niantic, aún no es posible cambiarse de equipo. Tendrás que esperar o hacerte una cuenta nueva, pero *procura no jugar con multicuentas, está prohibido.*";
 		}elseif($telegram->receive("datos") && $telegram->receive(["movil", "móvil", "moviles", "móviles"]) && !$telegram->receive("http")){
