@@ -836,6 +836,12 @@ class Main extends CI_Controller {
 				->notification(FALSE)
 				->file('photo', FCPATH .'files/attack_types.png');
 			exit();
+		}elseif($telegram->receive(["tabla", "lista"]) && $telegram->receive(["huevos"]) && $telegram->words() < 10){
+			$this->analytics->event('Telegram', 'Egg Table');
+			$telegram->send
+				->notification(FALSE)
+				->file('photo', FCPATH .'files/egg_list.png');
+			exit();
 		}elseif($telegram->receive(["cambiar", "cambio"]) && $telegram->receive(["facción", "faccion", "equipo", "team"])){
 			$help = "Según la página oficial de Niantic, aún no es posible cambiarse de equipo. Tendrás que esperar o hacerte una cuenta nueva, pero *procura no jugar con multicuentas, está prohibido.*";
 		}elseif($telegram->receive("datos") && $telegram->receive(["movil", "móvil", "moviles", "móviles"]) && !$telegram->receive("http")){
