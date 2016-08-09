@@ -1088,11 +1088,11 @@ class Main extends CI_Controller {
 			// }
 		}elseif($telegram->receive("Team Rocket")){
 			$this->analytics->event('Telegram', 'Jokes', 'Team Rocket');
-			$telegram->send->notification(FALSE)->file('photo', FCPATH . "teamrocket.jpg", "¡¡El Team Rocket despega de nuevoooooo...!!");
-			$telegram->send->notification(FALSE)->file('audio', FCPATH . "teamrocket.ogg");
+			$telegram->send->notification(FALSE)->file('photo', FCPATH . "files/teamrocket.jpg", "¡¡El Team Rocket despega de nuevoooooo...!!");
+			$telegram->send->notification(FALSE)->file('audio', FCPATH . "files/teamrocket.ogg");
 			exit();
 		}elseif($telegram->receive("sextape")){
-			$telegram->send->notification(FALSE)->file('video', FCPATH . "sextape.mp4");
+			$telegram->send->notification(FALSE)->file('video', FCPATH . "files/sextape.mp4");
 			exit();
 		}elseif($telegram->receive(["GTFO", "puerta", "vale adios"], NULL, TRUE)){
 			$this->analytics->event('Telegram', 'Jokes', 'GTFO');
@@ -1101,6 +1101,10 @@ class Main extends CI_Controller {
 		}elseif($telegram->receive(["#badumtss", "ba dum tss"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Ba Dum Tss');
 			$telegram->send->notification(FALSE)->file('document', "BQADBAADHgMAAo-zWQOHtZAjTKJW2QI");
+			exit();
+		}elseif($telegram->receive("seguro dental")){
+			$this->analytics->event('Telegram', 'Jokes', 'Seguro dental');
+			$telegram->send->notification(FALSE)->file('video', FCPATH . "files/seguro_dental.mp4");
 			exit();
 		}elseif($telegram->receive(["que hora es", "la hora"]) && $telegram->receive("?") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Time');
