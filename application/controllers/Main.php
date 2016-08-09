@@ -811,7 +811,8 @@ class Main extends CI_Controller {
 		}elseif($telegram->receive(["PC", "estadisticas", "estadísticas", "estados", "ataque"]) && $telegram->receive(["pokemon", "pokémon", "máximo", "maximo"]) && !$telegram->receive(["mes"])){
 			$help = "Puedes buscar las estadísticas aquí: http://pokemongo.gamepress.gg/pokemon-list";
 		}elseif($telegram->receive(["mapa", "página", "pagina"]) && $telegram->receive(["pokemon", "pokémon", "ciudad"]) && !$telegram->receive("evoluci")){
-			// $help = "Claro! El mapa para capturar Pokémon: https://pokevision.com/";
+			$this->analytics->event('Telegram', 'Map Pokemon');
+			$help = "https://goo.gl/GZb5hd";
 		}elseif($telegram->receive(["como", "cómo"]) && $telegram->receive(["conseguir", "consigue"]) && $telegram->receive(["objeto", "incienso", "cebo", "huevo"])){
 			$help = "En principio si vas a las PokeParadas y tienes suerte, también deberías de poder conseguirlos.";
 		}elseif($telegram->receive(["tabla", "lista"]) && $telegram->receive(["ataque", "tipos de ataque", "debilidad"]) && $telegram->words() < 10){
