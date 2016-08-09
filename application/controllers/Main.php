@@ -780,10 +780,10 @@ class Main extends CI_Controller {
 					."Una vez hecho, podéis preguntar por ejemplo... *Debilidad contra Pikachu* y os enseñaré como funciona.\n"
 					."Espero poder ayudaros en todo lo posible, ¡muchas gracias!";
 		}elseif(
-			($telegram->receive(["lista", "ayuda", "para que sirve", "para qué sirve"]) && $telegram->receive(["comando", "oak", "profe"]) && !$telegram->receive(["analista"])) ||
-			$telegram->receive("/help")){
-
-			// $telegram->send("Aún no tengo una lista de comandos, tengo que hacerla. Ten paciencia, tengo que ir aprendiendo cosas de los Hipsters en el Starbucks. :P");
+			// ($telegram->receive(["lista", "ayuda", "para que sirve", "para qué sirve"]) && $telegram->receive(["comando", "oak", "profe"]) && !$telegram->receive(["analista"])) ||
+			$telegram->receive("/help", NULL, TRUE)
+		){
+			$this->analytics->event('Telegram', 'Help');
 			$help = "- Puedes preguntarme sobre la *Debilidad de Pikachu* y te responderé por privado.\n"
 			 		."O si me pides que diga la *Debilidad de Pidgey aquí*, lo haré en el chat donde estés.\n"
 					."También puedes preguntar *Evolución de Charizard* y te diré las fases por las que pasa.\n"
