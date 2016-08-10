@@ -620,7 +620,12 @@ class Main extends CI_Controller {
 				if($telegram->reply_user->id == $this->config->item("telegram_bot_id")){
 					$str = "Pues ese soy yo mismo :)";
 				}else{
-					$info = $pokemon->user( $telegram->reply_user->id );
+					$user_search = $telegram->reply_user->id;
+					if($telegram->reply_is_forward && $telegram->reply_user->id != $telegram->reply->forward_from->id){
+						$user_search = $telegram->reply->forward_from['id']; // FIXME -> to object?
+					}
+
+					$info = $pokemon->user( $user_search );
 					if(empty($info)){
 						$str = "No sé quien es.";
 					}else{

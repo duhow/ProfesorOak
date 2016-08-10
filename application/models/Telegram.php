@@ -330,6 +330,7 @@ class Telegram extends CI_Model{
 		}
 		if(isset($this->data['message']['reply_to_message'])){
 			$this->has_reply = TRUE;
+            $this->reply_is_forward = (isset($this->data['message']['reply_to_message']['forward_from']));
 			$this->reply_user = (object) $this->data['message']['reply_to_message']['from'];
             $this->reply = (object) $this->data['message']['reply_to_message'];
 		}
@@ -349,6 +350,7 @@ class Telegram extends CI_Model{
 	public $new_user = NULL;
 	public $reply_user = NULL;
 	public $has_reply = FALSE;
+    public $reply_is_forward = FALSE;
 	public $caption = NULL;
 	public $send; // Class
 
@@ -395,7 +397,6 @@ class Telegram extends CI_Model{
 		}
 	}
 
-    function reply_is_forward(){ return isset($this->data['message']['reply_to_message']['forward_from']); }
     function is_chat_group(){ return in_array($this->chat->type, ["group", "supergroup"]); }
     function data_received($expect = NULL){
 		$data = ["new_chat_participant", "left_chat_participant", "new_chat_member", "left_chat_member", "reply_to_message",
