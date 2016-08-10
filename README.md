@@ -1,14 +1,15 @@
 [![Telegram dev group](https://img.shields.io/badge/Telegram%20Group-%40OakDevs-blue.svg)](https://telegram.me/OakDevs) [![Telegram bot](https://img.shields.io/badge/Telegram%20Bot-%40ProfesorOak__bot-blue.svg)](https://telegram.me/ProfesorOak_bot) [![Codacy Badge](https://api.codacy.com/project/badge/Grade/ddc9b7deafc94cd8a2d90e671914adb8)](https://www.codacy.com/app/SKillusion_Collabs/ProfesorOak_Original?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=duhow/ProfesorOak&amp;utm_campaign=Badge_Grade)
 # El Profesor Oak
 
-## Un bot para Pokémon Go
+## Un bot para Pokémon GO
 
-El Profesor Oak es un proyecto comunitario creado y liderado por [@duhow](https://github.com/duhow). El bot esta diseñado para asistir a los jugadores de Pokémon Go y funciona utilizando la API de bots de Telegram. Incluye funciones cómo:
+El Profesor Oak es un proyecto comunitario creado y liderado por [@duhow](https://github.com/duhow). El bot esta diseñado para asistir a los jugadores de Pokémon GO y funciona utilizando la API de bots de [CodeIgniter-Telegram](https://github.com/duhow/CodeIgniter-Telegram). Incluye funciones como:
 
-- Responder a las debilidades y fuertes de Pokémons
-- Guardar información sobre los jugadores (equipo, nick y nivel)
-- Contar chistes
-- Jugar a la ruleta rusa
+- Guardar información sobre los jugadores (nombre, equipo y nivel)
+- Responder a las debilidades, fortalezas y evoluciones de Pokémon
+- Información general de Pokémon GO y consejos
+- Funciones administrativas de grupos, enlaces de utilidad varias
+- Contar chistes, jugar al Piedra Papel Tijera, Ruleta rusa...
 - _Probablemente más_
 
 ---
