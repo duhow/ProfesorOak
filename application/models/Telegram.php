@@ -395,6 +395,7 @@ class Telegram extends CI_Model{
 		}
 	}
 
+    function reply_is_forward(){ return isset($this->data['message']['reply_to_message']['forward_from']); }
     function is_chat_group(){ return in_array($this->chat->type, ["group", "supergroup"]); }
     function data_received($expect = NULL){
 		$data = ["new_chat_participant", "left_chat_participant", "new_chat_member", "left_chat_member", "reply_to_message",
@@ -443,6 +444,14 @@ class Telegram extends CI_Model{
 			'times' => "\u274c",
             'warning' => "\u26a0\ufe0f",
 			'banned' => "\ud83d\udeab",
+            'star' => "\u2b50\ufe0f",
+            'star-shine' => "\ud83c\udf1f",
+            'mouse' => "\ud83d\udc2d",
+            'multiuser' => "\ud83d\udc65",
+            'robot' => "\ud83e\udd16",
+            'fire' => "\ud83d\udd25",
+            'collision' => "\ud83d\udca5",
+            'joker' => "\ud83c\udccf",
 			'exclamation-red' => "\u2757\ufe0f",
 			'question-red' => "\u2753",
 			'exclamation-grey' => "\u2755",
@@ -480,6 +489,14 @@ class Telegram extends CI_Model{
 			'forbid' => [':forbid:'],
 			'times' => [':times:'],
 			'banned' => [':banned:'],
+            'star' => [':star:'],
+            'star-shine' => [':star-shine:'],
+            'mouse' => [':mouse:'],
+            'robot' => [':robot:'],
+            'multiuser' => [':multiuser:'],
+            'fire' => [':fire:'],
+            'collision' => [':collision:'],
+            'joker' => [':joker:'],
             'green-check' => [':ok:', ':green-check:'],
             'warning' => [':warning:'],
 			'exclamation-red' => [':exclamation-red:'],
