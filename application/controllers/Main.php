@@ -704,7 +704,7 @@ class Main extends CI_Controller {
 					if($telegram->reply_is_forward && $telegram->reply_user->id != $telegram->reply->forward_from->id){
 						$user_search = $telegram->reply->forward_from['id']; // FIXME -> to object?
 					}
-					
+
 					// si el usuario es desconocido
 					$info = $pokemon->user( $user_search );
 					if(empty($info)){
@@ -1158,6 +1158,63 @@ class Main extends CI_Controller {
 			$flip = ["Cara!", "Cruz!"];
 
 			$joke = "*" .$flip[$n % 2] ."*";
+		}elseif($telegram->receive(["Recarga", "/recarga"], NULL, TRUE) && $telegram->words() <= 3){
+			$shot = $pokemon->settings($telegram->chat->id, 'russian_roulette');
+			$text = NULL;
+			if(empty($shot)){
+				$this->analytics->event('Telegram', 'Games', 'Roulette Reload');
+				$shot = mt_rand(1, 6);
+				$pokemon->settings($telegram->chat->id, 'russian_roulette', $shot);
+				$text = "Bala puesta.";
+			}else{
+				if($telegram->user->id == $this->config->item('creator')){
+					$pokemon->settings($telegram->chat->id, 'russian_roulette', 'DELETE');
+					$this->_begin(); // HACK vigilar
+				}
+				$text = "Ya hay una bala. ¡*Dispara* si te atreves!";
+			}
+			$telegram->send
+				->notification(FALSE)
+				->text($text, TRUE)
+			->send();
+			exit();
+		}elseif($telegram->receive(["Dispara", "Disparo", "/dispara"], NULL, TRUE) && $telegram->words() <= 3){
+			$shot = $pokemon->settings($telegram->chat->id, 'russian_roulette');
+			$text = NULL;
+			$last = NULL; // Ultimo en disparar
+			$kill = FALSE;
+			if(empty($shot)){
+				$text = "No hay bala. *Recarga* antes de disparar.";
+			}else{
+				if($telegram->is_chat_group()){
+					$last = $pokemon->settings($telegram->chat->id, 'russian_roulette_last');
+					if($last == $telegram->user->id){
+						$text = "Tu ya has disparado, ¡pásale el arma a otra persona!";
+					}else{
+						$pokemon->settings($telegram->chat->id, 'russian_roulette_last', $telegram->user->id);
+					}
+				}
+				if($shot == 6){
+					$pokemon->settings($telegram->chat->id, 'russian_roulette', 'DELETE');
+					$text = ":die: :collision: :gun:";
+				}else{
+					$pokemon->settings($telegram->chat->id, 'russian_roulette', $shot + 1);
+					$faces = ["happy", "tongue", "smiley"];
+					$r = mt_rand(0, count($faces) - 1);
+					$text = ":" .$faces[$r] .": :cloud: :gun:";
+				}
+				$telegram->send
+					->notification(FALSE)
+					->reply_to(TRUE)
+					->text( $telegram->emoji($text) )
+				->send();
+
+				if($shot == 6 && $telegram->is_chat_group()){
+					// Implementar modo light o hard (ban)
+					// Avisar al admin?
+					$telegram->send->kick( $telegram->user->id );
+				}
+			}
 		}elseif($telegram->receive( ["Cuentame", "cuéntame", "cuéntanos", "cuenta"], NULL, TRUE) && $telegram->receive(["otro chiste", "un chiste"]) ){
 			$this->_joke();
 			exit();
@@ -1251,7 +1308,6 @@ class Main extends CI_Controller {
 			if($pokemon->settings($telegram->chat->id, 'say_hey') == TRUE){
 				$joke = "Dime!";
 			}
-			// $telegram->send("Dime!");
 		}elseif($telegram->receive(["programado", "funcionas"]) && $telegram->receive(["profe", "oak", "bot"])){
 			$joke = "Pues yo funciono con *PHP* (_CodeIgniter_) :)";
 		}elseif($telegram->receive(["profe", "profesor", "oak"]) && $telegram->receive(["te quiero", "te amo"])){
