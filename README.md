@@ -3,9 +3,13 @@
 
 ## Un bot para Pokémon Go
 
-El Profesor Oak es un proyecto comunitario creado y liderado por [@duhow](https://github.com/duhow). El bot es un asistente diseñado para asistir a los jugadores de Pokémon Go e incluye funciones cómo:
+El Profesor Oak es un proyecto comunitario creado y liderado por [@duhow](https://github.com/duhow). El bot esta diseñado para asistir a los jugadores de Pokémon Go y funciona utilizando la API de bots de Telegram. Incluye funciones cómo:
 
-- (Añadir funciones aquí)
+- Responder a las debilidades y fuertes de Pokémons
+- Guardar información sobre los jugadores (equipo, nick y nivel)
+- Contar chistes
+- Jugar a la ruleta rusa
+- _Probablemente más_
 
 ---
 ### Estructura del proyecto
