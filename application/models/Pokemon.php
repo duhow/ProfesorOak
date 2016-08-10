@@ -37,6 +37,7 @@ class Pokemon extends CI_Model{
 	}
 
 	function user_flags($user, $flag = NULL, $set = NULL){
+		if(!$this->user_exists($user)){ return FALSE; }
 		if($flag != NULL && is_bool($set)){
 			if($set == TRUE){
 				$q = $this->user_flags($user, $flag, NULL);
