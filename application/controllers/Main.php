@@ -176,13 +176,12 @@ class Main extends CI_Controller {
 			if(!$pokemon->user_exists($user->id)){
 				$text = trim(strtolower($telegram->last_word(TRUE)));
 
-				// si el usuario aun no esta registrado
+				// Registrar al usuario si es del color correcto
 				if($pokemon->register($user->id, $text) !== FALSE){
 					$this->analytics->event('Telegram', 'Register', $text);
+
 					$name = $user->first_name ." " .$user->last_name;
-					// registrar user en db
 					$pokemon->update_user_data($user->id, 'fullname', $name);
-					$pokemon->update_user_data($user->id, 'verified', TRUE); // TODO Luego habrá que quitarlo
 					// enviar mensaje al usuario
 					$telegram->send
 						->notification(FALSE)
@@ -437,7 +436,6 @@ class Main extends CI_Controller {
 						->text("Vale jefe, marco a $name como *$word*!", TRUE)
 					->send();
 					$pokemon->update_user_data($reply->id, 'fullname', $name);
-					$pokemon->update_user_data($reply->id, 'verified', TRUE); // TODO Luego habrá que quitarlo
 				}elseif($pokemon->user_exists( $reply->id )){
 					$telegram->send
 						->notification(FALSE)
@@ -475,17 +473,18 @@ class Main extends CI_Controller {
 
 			exit();
 		}elseif($telegram->receive("Te valido") && $telegram->words() <= 3){
-			if(!$user->authorized){ exit(); }
+			if(!$pokeuser->authorized){ exit(); }
 			$target = NULL;
 			if($telegram->words() == 2 && $telegram->has_reply){
 				$target = $telegram->reply_user->id;
 			}elseif($telegram->words() == 3){
 				$target = $telegram->last_word(TRUE);
 				if($target[0] == "@"){ $target = substr($target, 1); }
-				$target = $pokemon->user_exits($target, TRUE);
+				$target = $pokemon->user_exists($target, TRUE);
 				if($target == FALSE){ exit(); }
 			}
 
+			if($pokemon->user_verified($target)){ exit(); } // Ya es válido.
 			if($pokemon->verify_user($telegram->user->id, $target)){
 				$telegram->send
 					->notification(FALSE)
