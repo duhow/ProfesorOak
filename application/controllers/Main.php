@@ -35,6 +35,10 @@ class Main extends CI_Controller {
 		// comprobar estado del bot
 		if($telegram->receive(["profe", "profesor", "oak"]) && $telegram->receive(["ping", "pong", "me recibe", "estás", "estas", "estas ahi", "estás ahi", "estás ahí"]) && !$telegram->receive("program")){
 			$this->analytics->event('Telegram', 'Ping');
+			if($telegram->is_chat_group() && $telegram->user->id != $this->config->item('creator')){
+				$can = $pokemon->settings($telegram->chat->id, 'ping');
+				if($can == FALSE){ exit(); }
+			}
 			if($telegram->receive("pong")){
 				$telegram->send->file('sticker', "BQADBAAD7AADoOj0Bx8Btm77I1V5Ag");
 			}else{
