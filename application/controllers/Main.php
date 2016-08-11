@@ -1370,7 +1370,7 @@ class Main extends CI_Controller {
 			];
 			$n = mt_rand(0, count($fantas) - 1);
 
-			if($pokemon->settings($telegram->chat->id, 'shutup') != TRUE){
+			if($pokemon->settings($telegram->chat->id, 'shutup') != TRUE or $telegram->user->id == $this->config->item('creator')){
 				$telegram->send->notification(FALSE)->file('sticker', $fantas[$n]);
 			}
 		}
