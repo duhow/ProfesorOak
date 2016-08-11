@@ -1515,13 +1515,17 @@ class Main extends CI_Controller {
 			$primary = $pokemon['type'];
 			$secondary = $pokemon['type2'];
 		}else{
+			$str .= "Debilidad ";
 			if(strpos($text, "/") !== FALSE){
 				$text = explode("/", $text);
 				if(count($text) != 2){ exit(); } // Hay más de uno o algo raro.
 				$primary = trim($text[0]);
 				$secondary = trim($text[1]);
+
+				$str .= "*" .ucwords($primary) ."* / *" .ucwords($secondary) ."*:\n";
 			}else{
 				$primary = $text;
+				$str .= "*" .ucwords($primary) ."*:\n";
 			}
 
 			$primary = $this->pokemon->attack_type($primary); // Attack es toda la fila, céntrate en el ID.
