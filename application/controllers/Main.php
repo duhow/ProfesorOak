@@ -140,6 +140,18 @@ class Main extends CI_Controller {
 			$this->_begin();
 		}
 
+		// Comando de información de registro para la gente que tanto lo spamea...
+		elseif($telegram->receive("/register", NULL, TRUE) && strlen($telegram->text()) == strlen("/register")){
+			$this->analytics->event('Telegram', 'Register', 'command');
+			$str = "Hola " .$telegram->user->first_name ."! Me podrías decir tu color?\n"
+					."(_Soy_ ...)";
+			$telegram->send
+				->notification(FALSE)
+				->text($str)
+			->send();
+			exit();
+		}
+
 		// guardar color de user
 		elseif($telegram->receive(["Soy", "soy", "Yo soy", "Pues soy", "Pues yo soy"], NULL, TRUE) && $telegram->receive(['rojo', 'valor', 'amarillo', 'instinto', 'azul', 'sabiduría', 'sabiduria'])){
 			if(!$pokemon->user_exists($user->id)){
