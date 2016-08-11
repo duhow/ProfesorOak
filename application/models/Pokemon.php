@@ -2,12 +2,24 @@
 
 class Pokemon extends CI_Model{
 
+	function log($user, $action, $target = NULL){
+		$this->db
+			->set('user', $user)
+			->set('target', $target)
+			->set('action', $action)
+		->insert('logs');
+
+		return $this->db->insert_id();
+	}
+
 	function user($user){
 		$query = $this->db
 			->where('telegramid', $user)
+			->or_where('telegramuser', $user)
 			->or_where('username', $user)
 		->get('user');
 		if($query->num_rows() == 1){ return $query->row(); }
+		return array();
 	}
 
 	function user_verified($user){
@@ -26,14 +38,18 @@ class Pokemon extends CI_Model{
 		return ($query->num_rows() == 1 ? (bool) $query->row()->blocked : FALSE);
 	}
 
-	function user_exists($data){
+	function user_exists($data, $retid = FALSE){
 		$query = $this->db
 			->where('telegramid', $data)
+			->or_where('telegramuser', $data)
 			->or_where('username', $data)
 			->or_where('email', $data)
 			->limit(1)
 		->get('user');
-		return ($query->num_rows() == 1);
+		if($query->num_rows() == 1){
+			return ($retid == TRUE ? $query->row()->telegramid : TRUE);
+		}
+		return FALSE;
 	}
 
 	function user_flags($user, $flag = NULL, $set = NULL){
@@ -85,6 +101,18 @@ class Pokemon extends CI_Model{
 		}else{
 			return array();
 		}
+	}
+
+	function verify_user($validator, $target){
+		$validator = $this->user($validator);
+		$target = $this->user($target);
+
+		if(empty($validator) or empty($target)){ return FALSE; }
+		if(!$validator->verified or $validator->blocked and !$validator->authorized){ return FALSE; }
+		$this->update_user_data($target->telegramid, 'verified', TRUE);
+		$this->log($validator->telegramid, 'verify', $target->telegramid);
+
+		return TRUE;
 	}
 
 	function team_text($text){

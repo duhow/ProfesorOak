@@ -154,8 +154,8 @@ class Main extends CI_Controller {
 		}
 		// if($this->telegram->chat_type() == "group"){ die(); }
 
-		// si el usuario existe y esta verificado, proceder a interpretar el mensaje
-		if($pokemon->user_exists($user->id) && $pokemon->user_verified($user->id)){
+		// si el usuario existe, proceder a interpretar el mensaje
+		if($pokemon->user_exists($user->id)){
 			$this->_begin();
 		}
 
@@ -215,11 +215,9 @@ class Main extends CI_Controller {
 		$step = $pokemon->step($user->id);
 
 		// terminar si el usuario no esta verificado o esta en la blacklist
-		if(!$pokemon->user_verified($user->id) || $pokemon->user_blocked($user->id)){
-			die();
-		}
+		if($pokemon->user_blocked($user->id)){ die(); }
 
-		if(empty($step)){ $pokemon->step($user->id, "MENU"); }
+		// if(empty($step)){ $pokemon->step($user->id, "MENU"); }
 
 		/*
 		##################
@@ -476,6 +474,24 @@ class Main extends CI_Controller {
 			}
 
 			exit();
+		}elseif($telegram->receive("Te valido") && $telegram->words() <= 3){
+			if(!$user->authorized){ exit(); }
+			$target = NULL;
+			if($telegram->words() == 2 && $telegram->has_reply){
+				$target = $telegram->reply_user->id;
+			}elseif($telegram->words() == 3){
+				$target = $telegram->last_word(TRUE);
+				if($target[0] == "@"){ $target = substr($target, 1); }
+				$target = $pokemon->user_exits($target, TRUE);
+				if($target == FALSE){ exit(); }
+			}
+
+			if($pokemon->verify_user($telegram->user->id, $target)){
+				$telegram->send
+					->notification(FALSE)
+					->text( $telegram->emoji(":green-check:") )
+				->send();
+			}
 		}elseif($telegram->receive("/investigate", NULL, TRUE) && $telegram->is_chat_group()){
 			$admins = $telegram->get_admins();
 			$admins[] = $this->config->item('creator');
@@ -780,6 +796,8 @@ class Main extends CI_Controller {
 
 						// añadir emoticonos basado en los flags del usuario
 						if($info->verified){ $str .= $telegram->emoji(":green-check: "); }
+						else{ $str .= $telegram->emoji(":warning: "); }
+						// ----------------------
 						if($info->blocked){ $str .= $telegram->emoji(":forbid: "); }
 						if($info->authorized){ $str .= $telegram->emoji(":star: "); }
 						if(in_array("ratkid", $flags)){ $str .= $telegram->emoji(":mouse: "); }
