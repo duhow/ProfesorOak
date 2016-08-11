@@ -1390,6 +1390,21 @@ class Main extends CI_Controller {
 				}
 			}
 		}
+
+		// Buscar coordenadas
+		$loc = NULL;
+		if(preg_match("/(\d+.\d+)[,;]\s?(\d+.\d+)/", $telegram->text(), $loc)){
+			$loc = $loc[0];
+			if(strpos($loc, ";") !== FALSE){ $loc = explode(";", $loc); }
+			elseif(strpos($loc, ",") !== FALSE){ $loc = explode(",", $loc); }
+
+			if(count($loc) == 2){
+				$this->analytics->event('Telegram', 'Parse coords');
+				$telegram->send
+					->location($loc[0], $loc[1])
+				->send();
+			}
+		}
 	}
 
 	function _joke(){
