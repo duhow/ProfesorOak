@@ -947,6 +947,13 @@ class Main extends CI_Controller {
 			// ($telegram->receive(["lista", "ayuda", "para que sirve", "para qué sirve"]) && $telegram->receive(["comando", "oak", "profe"]) && !$telegram->receive(["analista"])) ||
 			$telegram->receive("/help", NULL, TRUE)
 		){
+			if($telegram->is_chat_group() && $telegram->user->id != $this->config->item('creator')){
+				$telegram->send
+					->notification(FALSE)
+					->text("Te la envío por privado, " .$telegram->user->first_name .$telegram->emoji("! :happy:"))
+				->send();
+				$telegram->send->chat( $telegram->user->id );
+			}
 			$this->analytics->event('Telegram', 'Help');
 			$help = "- Puedes preguntarme sobre la *Debilidad de Pikachu* y te responderé por privado.\n"
 			 		."O si me pides que diga la *Debilidad de Pidgey aquí*, lo haré en el chat donde estés.\n"
