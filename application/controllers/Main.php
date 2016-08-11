@@ -1183,6 +1183,9 @@ class Main extends CI_Controller {
 
 			$joke = "*" .$flip[$n % 2] ."*";
 		}elseif($telegram->receive(["Recarga", "/recarga"], NULL, TRUE) && $telegram->words() <= 3){
+			$can = $pokemon->settings($telegram->chat->id, 'play_games');
+			if($can == FALSE){ exit(); }
+
 			$shot = $pokemon->settings($telegram->chat->id, 'russian_roulette');
 			$text = NULL;
 			if(empty($shot)){
@@ -1203,6 +1206,9 @@ class Main extends CI_Controller {
 			->send();
 			exit();
 		}elseif($telegram->receive(["Dispara", "Disparo", "/dispara"], NULL, TRUE) && $telegram->words() <= 3){
+			$can = $pokemon->settings($telegram->chat->id, 'play_games');
+			if($can == FALSE){ exit(); }
+
 			$shot = $pokemon->settings($telegram->chat->id, 'russian_roulette');
 			$text = NULL;
 			$last = NULL; // Ultimo en disparar
