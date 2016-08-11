@@ -618,7 +618,7 @@ class Main extends CI_Controller {
 		// ---------------------
 
 		// guardar nombre de user
-		if($telegram->receive(["Me llamo", "Mi nombre es", "Mi usuario es"], NULL, TRUE) && $telegram->words() <= 4){
+		if($telegram->receive(["Me llamo", "Mi nombre es", "Mi usuario es"], NULL, TRUE) && $telegram->words() <= 4 && $telegram->words() > 2){
 			if(!empty($pokeuser->username)){ exit(); }
 			$word = $telegram->last_word(TRUE);
 			if($word[0] == "@"){ $word = substr($word, 1); }
