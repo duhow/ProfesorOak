@@ -84,7 +84,7 @@ class __Module_Telegram_Sender extends CI_Model{
         return $this;
     }
 
-    function disable_web_page_preview($value = FALSE){
+    function disable_web_page_preview($value = TRUE){
         if($value === TRUE){ $this->content['disable_web_page_preview'] = TRUE; }
         return $this;
     }

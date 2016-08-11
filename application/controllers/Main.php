@@ -966,8 +966,51 @@ class Main extends CI_Controller {
 			$telegram->receive(["pokemon", "pokémon", "juego"]) &&
 			$telegram->words() <= 12
 		){
-			$help = "Te envío la descarga:\n\n*Android:* https://play.google.com/store/apps/details?id=com.nianticlabs.pokemongo\n"
-					."*iPhone:* https://itunes.apple.com/es/app/pokemon-go/id1094591345?mt=8";
+			$google['web'] = "https://play.google.com/store/apps/details?id=com.nianticlabs.pokemongo";
+			$apple['web'] =  "https://itunes.apple.com/es/app/pokemon-go/id1094591345";
+			$web = file_get_contents($google['web']);
+			$google['date'] = substr($web, strpos($web, "datePublished") - 32, 100);
+			$google['version'] = substr($web, strpos($web, "softwareVersion") - 32, 100);
+			foreach($google as $k => $v){
+				$google[$k] = substr($google[$k], 0, strpos($google[$k], "</div>") + strlen("</div>"));
+				$google[$k] = trim(strip_tags($google[$k]));
+			}
+
+			$web = file_get_contents($apple['web']);
+			$apple['date'] = substr($web, strpos($web, "datePublished") - 16, 100);
+			$apple['version'] = substr($web, strpos($web, "softwareVersion") - 16, 100);
+			foreach($apple as $k => $v){
+				$apple[$k] = substr($apple[$k], 0, strpos($apple[$k], "</span>") + strlen("</span>"));
+				$apple[$k] = trim(strip_tags($apple[$k]));
+			}
+
+			$google['date'] = date("Y-m-d", strtotime($google['date']));
+			$apple['date'] = date("Y-d-m", strtotime($apple['date'])); // HACK DMY -> YMD
+			$apple['date'] = date("Y-m-d", strtotime($apple['date']));
+
+			$google['days'] = floor((time() - strtotime($google['date'])) / 86400); // -> Days
+			$apple['days'] = floor((time() - strtotime($apple['date'])) / 86400); // -> Days
+
+			$google['new'] = ($google['days'] <= 1);
+			$apple['new'] = ($apple['days'] <= 1);
+
+			$dates = [0 => "hoy", 1 => "ayer"];
+
+			$google['web'] = "https://play.google.com/store/apps/details?id=com.nianticlabs.pokemongo";
+			$apple['web'] =  "https://itunes.apple.com/es/app/pokemon-go/id1094591345";
+
+			$str = "[iOS](" .$apple['web'] ."): ";
+			if($apple['new']){ $str .= "*NUEVA* de " .$dates[$apple['days']] ."! "; }
+			else{ $str .= "de hace " .$apple['days'] ." dias "; }
+			$str .= "(" .$apple['version'] .")\n";
+
+			$str .= "[Android](" .$google['web'] ."): ";
+			if($google['new']){ $str .= "*NUEVA* de " .$dates[$google['days']] ."! "; }
+			else{ $str .= "de hace " .$google['days'] ." dias "; }
+			$str .= "(" .$google['version'] .").";
+
+			$telegram->send->disable_web_page_preview(TRUE);
+			$help = $str;
 		}elseif($telegram->receive("mejorar") && $telegram->receive(["antes", "después", "despues"]) && $telegram->receive(["evolución", "evolucionar", "evolucione"])){
 			$help = "En principio es irrelevante, puedes mejorar un Pokemon antes o después de evolucionarlo sin problemas.";
 		}elseif($telegram->receive(["calculadora", "calcular", "calculo", "calcula", "tabla", "pagina", "xp ", "experiencia"]) && $telegram->receive(["evolución", "evolucion", "evoluciona", "evolucione", "nivel", "PC", "CP"])){
