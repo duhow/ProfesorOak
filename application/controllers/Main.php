@@ -1066,7 +1066,7 @@ class Main extends CI_Controller {
 			$str .= "[Android](" .$google['web'] ."): ";
 			if($google['new']){ $str .= "*NUEVA* de " .$dates[$google['days']] ."! "; }
 			else{ $str .= "de hace " .$google['days'] ." dias "; }
-			$str .= "(" .$google['version'] .").";
+			$str .= "(" .$google['version'] .")";
 
 			$telegram->send->disable_web_page_preview(TRUE);
 			$help = $str;
