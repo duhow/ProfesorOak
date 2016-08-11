@@ -84,7 +84,26 @@ class Main extends CI_Controller {
 						->reply_to(TRUE)
 						->text("*¡SE CUELA UN TOPO!* @$pknew->username $pknew->team", TRUE)
 					->send();
+
+					// Kickear (por defecto TRUE)
+					$kick = $pokemon->settings($chat->id, 'team_exclusive_kick');
+					if($kick != FALSE){
+						$telegram->send->kick($user->id, $chat->id);
+					}
 					exit();
+				}
+
+				$blacklist = $pokemon->settings($chat->id, 'blacklist');
+				if(!empty($blacklist)){
+					$blacklist = explode(",", $blacklist);
+					$pknew_flags = $pokemon->user_flags($pknew->telegramid);
+					foreach($blacklist as $b){
+						if(in_array($b, $pknew_flags)){
+							$this->analytics->event('Telegram', 'Join blacklist user', $b);
+							$telegram->send->kick($user->id, $chat->id);
+							exit();
+						}
+					}
 				}
 			}
 
@@ -144,10 +163,10 @@ class Main extends CI_Controller {
 		elseif($telegram->receive("/register", NULL, TRUE) && strlen($telegram->text()) == strlen("/register")){
 			$this->analytics->event('Telegram', 'Register', 'command');
 			$str = "Hola " .$telegram->user->first_name ."! Me podrías decir tu color?\n"
-					."(_Soy_ ...)";
+					."(*Soy* ...)";
 			$telegram->send
 				->notification(FALSE)
-				->text($str)
+				->text($str, TRUE)
 			->send();
 			exit();
 		}
