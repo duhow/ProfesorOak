@@ -701,10 +701,11 @@ class Main extends CI_Controller {
 				->text($str, TRUE)
 			->send();
 		}
-		// si pregunta por la puta ama
-		elseif($telegram->receive(["quien es miri", "quien es mireia"], NULL, TRUE)){
+		// Si pregunta por Ash...
+		elseif($telegram->receive(["quien es ash", "quién es Ash"], NULL, TRUE) && $telegram->words() <= 7){
+			$this->analytics->event('Telegram', 'Jokes', 'Ash');
 			$telegram->send
-				->text("Es la puta ama y se las tira a todas. ;D")
+				->text("Ah! Ese es un *cheater*, es nivel 100...\nLo que no sé de dónde saca tanto dinero para viajar tanto...", TRUE)
 			->send();
 			exit();
 		}
