@@ -480,8 +480,9 @@ class Main extends CI_Controller {
 			}elseif($telegram->words() == 3){
 				$target = $telegram->last_word(TRUE);
 				if($target[0] == "@"){ $target = substr($target, 1); }
-				$target = $pokemon->user_exists($target, TRUE);
-				if($target == FALSE){ exit(); }
+				$target = $pokemon->find_users($target);
+				if($target == FALSE or count($target) > 1){ exit(); }
+				$target = $target[0]['telegramid'];
 			}
 
 			if($pokemon->user_verified($target)){ exit(); } // Ya es válido.

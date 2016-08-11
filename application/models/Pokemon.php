@@ -41,7 +41,7 @@ class Pokemon extends CI_Model{
 	function user_exists($data, $retid = FALSE){
 		$query = $this->db
 			->where('telegramid', $data)
-			->or_where('telegramuser', $data)
+			// ->or_where('telegramuser', $data) FIXME CONFLICTO con Username normal para registro
 			->or_where('username', $data)
 			->or_where('email', $data)
 			->limit(1)
