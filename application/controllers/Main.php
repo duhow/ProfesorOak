@@ -611,6 +611,24 @@ class Main extends CI_Controller {
 				->text($text, TRUE)
 			->send();
 			exit();
+		}elseif($telegram->receive(["grupo offtopic", "/offtopic"]) && $telegram->is_chat_group()){
+			$offtopic = $pokemon->settings($telegram->chat->id, 'offtopic_chat');
+			$chatgroup = NULL;
+			if(!empty($offtopic)){
+				if($offtopic[0] != "@"){
+					$chatgroup = "https://telegram.me/joinchat/" .$offtopic;
+				}else{
+					$chatgroup = $offtopic;
+				}
+			}
+			if(!empty($chatgroup)){
+				$this->analytics->event('Telegram', 'Offtopic Link');
+				$telegram->send
+					->notification(FALSE)
+					->text("*OFFTOPIC:* $chatgroup")
+				->send();
+			}
+			exit();
 		}
 
 		// ---------------------
