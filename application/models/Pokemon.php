@@ -268,6 +268,7 @@ class Pokemon extends CI_Model{
 			->or_where('target', $attackid)
 		->get('pokedex_attack');
 		if($query->num_rows() > 0){ return $query->result_array(); }
+		return NULL;
 	}
 
 	function find($search){

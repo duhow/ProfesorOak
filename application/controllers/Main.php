@@ -1018,17 +1018,18 @@ class Main extends CI_Controller {
 
 		if($telegram->receive( ["atacando", "atacan"]) && $telegram->receive(["gimnasio", "gym"])){
 
-		}elseif($telegram->receive(["debilidad ", "debilidades ", "luchar ", "atacar "]) && $telegram->receive(["contra ", "hacia ", "sobre ", "de "])){
-			// if($this->telegram->is_chat_group()){ die(); }
+		}elseif($telegram->receive(["debilidad ", "debilidades ", "luchar ", "atacar "]) && $telegram->receive(["contra ", "hacia ", "sobre ", "de "]) && $telegram->words() <= 6){
+			$chat = NULL;
+			$filter = (strpos($telegram->text(), "/") === FALSE); // Si no hay barra, filtra.
 			if(in_array($telegram->words(), [3,4]) && strpos($telegram->last_word(), "aqu") !== FALSE){
-				$text = $telegram->words(2, TRUE);
-				$this->analytics->event('Telegram', 'Search Pokemon Attack', $text);
-				$this->_poke_attack($text, $telegram->chat->id);
+				$text = $telegram->words(2, $filter);
+				$chat = $telegram->chat->id;
 			}else{
-				$text = $telegram->last_word(TRUE);
-				$this->analytics->event('Telegram', 'Search Pokemon Attack', $text);
-				$this->_poke_attack($text, $telegram->user->id);
+				$text = $telegram->last_word($filter);
+				$chat = $telegram->user->id;
 			}
+			$this->analytics->event('Telegram', 'Search Pokemon Attack', $text);
+			$this->_poke_attack($text, $chat);
 		}elseif($telegram->receive(["evolución", "evolucion"])){
 			if(strpos($telegram->last_word(TRUE), "aqu") !== FALSE){
 				$chat = $telegram->chat->id;
@@ -1487,6 +1488,8 @@ class Main extends CI_Controller {
 		$telegram = $this->telegram;
 		$types = $this->pokemon->attack_types();
 
+		$primary = NULL;
+		$secondary = NULL;
 
 		if($chat === NULL){ $chat = $telegram->chat->id; }
 		$str = "";
@@ -1509,22 +1512,37 @@ class Main extends CI_Controller {
 		$pokemon = $this->pokemon->find($text);
 		if($pokemon !== FALSE){
 			$str .= "#" .$pokemon['id'] ." - *" .$pokemon['name'] ."* (*" .$types[$pokemon['type']] ."*" .(!empty($pokemon['type2']) ? " / *" .$types[$pokemon['type2']] ."*" : "") .")\n";
-			$attack = $pokemon['type'];
+			$primary = $pokemon['type'];
+			$secondary = $pokemon['type2'];
 		}else{
-			$attack = $this->pokemon->attack_type($text);
-			if(empty($attack)){
+			if(strpos($text, "/") !== FALSE){
+				$text = explode("/", $text);
+				if(count($text) != 2){ exit(); } // Hay más de uno o algo raro.
+				$primary = trim($text[0]);
+				$secondary = trim($text[1]);
+			}else{
+				$primary = $text;
+			}
+
+			$primary = $this->pokemon->attack_type($primary); // Attack es toda la fila, céntrate en el ID.
+			if(empty($primary)){
 				// $this->telegram->send("Eso no existe, ni en el mundo Pokemon ni en la realidad.");
 				exit();
 			}
-			$attack = $attack['id']; // Attack es toda la fila, céntrate en el ID.
+			$primary = $primary['id'];
+
+			if(!empty($secondary)){
+				$secondary = $this->pokemon->attack_type($secondary);
+				if(!empty($secondary)){ $secondary = $secondary['id']; }
+			}
 		}
 
 		// $table contiene todos las relaciones donde aparezcan alguno de los dos tipos del pokemon
-		$table = $this->pokemon->attack_table($attack);
-		$target[] = $attack;
-		if($pokemon !== FALSE && $pokemon['type2'] != NULL){
-			$table = array_merge($table, $this->pokemon->attack_table($pokemon['type2']));
-			$target[] = $pokemon['type2'];
+		$table = $this->pokemon->attack_table($primary);
+		$target[] = $primary;
+		if($secondary != NULL){
+			$table = array_merge($table, $this->pokemon->attack_table($secondary));
+			$target[] = $secondary;
 		}
 
 		// $table['attack'] -> 0.5; 2
