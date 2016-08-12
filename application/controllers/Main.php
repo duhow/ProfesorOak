@@ -1096,6 +1096,8 @@ class Main extends CI_Controller {
 			exit();
 		}elseif($telegram->receive(["cambiar", "cambio"]) && $telegram->receive(["facción", "color", "faccion", "equipo", "team"]) && $telegram->words() <= 12){
 			$help = "Según la página oficial de Niantic, aún no es posible cambiarse de equipo. Tendrás que esperar o hacerte una cuenta nueva, pero *procura no jugar con multicuentas, está prohibido.*";
+		}elseif($telegram->receive(["cambiar", "cambio"]) && $telegram->receive(["usuario", "nombre", "llamo"]) && $telegram->words() <= 15){
+			$help = "Si quieres cambiarte de nombre, puedes hacerlo en los *Ajustes de Pokemon GO.*\nUna vez hecho, habla con @duhow para que pueda cambiarte el nombre aquí!";
 		}elseif($telegram->receive("datos") && $telegram->receive(["movil", "móvil", "moviles", "móviles"]) && !$telegram->receive("http")){
 			$help = "Si te has quedado sin datos, deberías pensar en cambiarte a otra compañía o conseguir una tarifa mejor. "
 					."Te recomiendo que tengas al menos 4GB si vas a ponerte a jugar en serio.";
