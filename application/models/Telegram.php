@@ -320,6 +320,7 @@ class Telegram extends CI_Model{
 
 		$content = file_get_contents("php://input");
 		// if(empty($content)){ die(); }
+		$this->raw = $content;
 		$this->data = json_decode($content, TRUE);
 		$this->id = $this->data['update_id'];
 		$this->message = $this->data['message']['message_id'];
@@ -341,6 +342,7 @@ class Telegram extends CI_Model{
 		}
 	}
 
+	private $raw;
 	private $data = array();
 	public $id = NULL;
 	public $message = NULL;
@@ -354,9 +356,26 @@ class Telegram extends CI_Model{
 	public $caption = NULL;
 	public $send; // Class
 
-	function receive($input, $next_word = NULL, $strpos = NULL){
-		if(!is_array($input)){ $input = array($input); }
+	function text($clean = FALSE){
+		$text = @$this->data['message']['text'];
+		if($clean === TRUE){ $text = $this->clean('alphanumeric-full-spaces', $text); }
+		return $text;
+	}
 
+	function text_encoded($clean_quotes = FALSE){
+		$t = json_encode($this->text(FALSE));
+		if($clean_quotes){ $t = substr($t, 1, -1); }
+		return $t;
+	}
+
+	// DEPRECATED
+	function receive($a, $b = NULL, $c = NULL){
+		return $this->text_contains($a, $b, $c);
+	}
+
+	function text_contains($input, $next_word = NULL, $strpos = NULL){
+		if(!is_array($input)){ $input = array($input); }
+		// TODO implementar $next_word
 		foreach($input as $i){
 			if(
 				($strpos === NULL and strpos(strtolower($this->text()), strtolower($i)) !== FALSE) or // Buscar cualquier coincidencia
@@ -370,19 +389,44 @@ class Telegram extends CI_Model{
 		return FALSE;
 	}
 
-	function clean($text, $pattern = NULL){
-		// TODO
-	}
+	function text_has($input, $next_word = NULL, $position = NULL){
+		// A diferencia de text_contains, esto no será valido si la palabra no es la misma.
+		// ($input = "fanta") -> fanta OK , fanta! OK , fantasma KO
+		if(!is_array($input)){ $input = array($input); }
+		// FIXME si algun input contiene un PIPE | , ya me ha jodio. Controlarlo.
 
-	function text($clean = FALSE){
-		$text = @$this->data['message']['text'];
-		if($clean === TRUE){ $text = preg_replace("/[^a-zA-Z0-9 áéíóúÁÉÍÓÚ]+/", "", $text); }
-		return $text;
+		$input = implode("|", $input);
+		$input = strtolower($input); // HACK util o molesto en segun que casos?
+		$input = str_replace(["á", "é", "í", "ó", "ú"], ["a", "e", "i", "o", "u"], $input); // HACK mas de lo mismo, ayuda o molesta?
+
+		if(is_bool($next_word)){ $position = $next_word; $next_word = NULL; }
+		elseif($next_word !== NULL){
+			if(!is_array($next_word)){ $next_word = array($next_word); }
+			$next_word = implode("|", $next_word);
+			$next_word = strtolower($next_word); // HACK
+			$next_word = str_replace(["á", "é", "í", "ó", "ú"], ["a", "e", "i", "o", "u"], $next_word); // HACK
+		}
+
+		if($position === TRUE){
+			if($next_word === NULL){ $regex = "^(" .$input .')([\s!.,"])'; }
+			else{ $regex = "^(" .$input .')([\s!.,"]?)\s(' .$next_word .')([\s!?.,"])'; }
+		}elseif($position === FALSE){
+			if($next_word === NULL){ $regex = "(" .$input .')([!?,."]?)$'; }
+			else{ $regex = "(" .$input .')([\s!.,"]?)\s(' .$next_word .')([?!.,"])$'; }
+		}else{
+			if($next_word === NULL){ $regex = "(" .$input .')([\s!?.,"])|(' .$input .')$'; }
+			else{ $regex = "(" .$input .')([\s!.,"]?)\s(' .$next_word .')([\s!?.,"])|(' .$input .')([\s!.,"]?)\s(' .$next_word .')([!?.,"]?)$'; }
+		}
+
+		$text = strtolower($this->text());
+		$text = str_replace(["á", "é", "í", "ó", "ú"], ["a", "e", "i", "o", "u"], $text); // HACK
+		return preg_match("/" .$regex ."/", $text);
 	}
 
 	function last_word($clean = FALSE){
-		$text = explode(" ", $this->text($clean));
-		return array_pop($text);
+		$text = explode(" ", $this->text());
+		if($clean === TRUE){ $clean = 'alphanumeric-accent'; }
+		return $this->clean($clean, array_pop($text));
 	}
 
 	function words($position = NULL, $amount = 1){ // Contar + recibir argumentos
@@ -402,17 +446,38 @@ class Telegram extends CI_Model{
 		}
 	}
 
+	function clean($pattern = 'alphanumeric-full', $text = NULL){
+		$pats = [
+			'number' => '/^[0-9]+/',
+			'number-calc' => '/^([+-]?)\d+(([\.,]?)\d+?)/',
+			'alphanumeric' => '/[^a-zA-Z0-9]+/',
+			'alphanumeric-accent' => '/[^a-zA-Z0-9áéíóúÁÉÍÓÚ]+/',
+			'alphanumeric-symbols-basic' => '/[^a-zA-Z0-9_-.]+/',
+			'alphanumeric-full' => '/[^a-zA-Z0-9áéíóúÁÉÍÓÚ_-.]+/',
+			'alphanumeric-full-spaces' => '/[^a-zA-Z0-9áéíóúÁÉÍÓÚ_-. ]+/',
+		];
+		if(empty($text)){ $text = $this->text(); }
+		if($pattern == FALSE){ return $text; }
+		if(!isset($pats[$pattern])){ return FALSE; }
+		return preg_replace($pats[$pattern], "", $text);
+	}
+
 	function is_chat_group(){ return in_array($this->chat->type, ["group", "supergroup"]); }
 	function data_received($expect = NULL){
 		$data = ["new_chat_participant", "left_chat_participant", "new_chat_member", "left_chat_member", "reply_to_message",
 			"text", "audio", "document", "photo", "voice", "location", "contact"];
 		foreach($data as $t){
-			if(isset($this->data["message"][$t])){ return $t; }
+			if(isset($this->data["message"][$t])){
+				if($expect == NULL or $expect == $t){ return $t; }
+			}
 		}
 		return FALSE;
 	}
 
-	function is_bot($user = NULL){ if($user === NULL){ $user = $this->user->username; } return (!empty($user) && substr(strtolower($user), -3) == "bot"); }
+	function is_bot($user = NULL){
+		if($user === NULL){ $user = $this->user->username; }
+		return (!empty($user) && substr(strtolower($user), -3) == "bot");
+	}
 
 	function dump($json = FALSE){ return($json ? json_encode($this->data) : $this->data); }
 
