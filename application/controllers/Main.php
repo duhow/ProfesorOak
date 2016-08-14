@@ -1533,7 +1533,7 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_has(["transferir", "transfiere", "recicla"]) && $telegram->text_has(["pokémon"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Transfer Pokemon');
 			$telegram->send->notification(FALSE)->file('document', FCPATH . "pidgey.gif", "Espera entrenador, que te voy a transferir un caramelo...");
-		}elseif($telegram->receive(["vas a la", "hay una", "es una"], "fiesta")){
+		}elseif($telegram->text_has(["vas a la", "hay una", "es una"], "fiesta")){
 			$this->analytics->event('Telegram', 'Jokes', 'Party');
 			if($pokemon->settings($telegram->chat->id, 'shutup') != TRUE){
 				$telegram->send
@@ -1541,7 +1541,7 @@ class Main extends CI_Controller {
 					->caption("¿Fiesta? ¡La que te va a dar ésta!")
 					->file('document', "BQADBAADpgMAAnMdZAePc-TerW2MSwI");
 			}
-		}elseif($telegram->text_has("fanta") && $telegram->word() > 3){
+		}elseif($telegram->text_has("fanta") && $telegram->words() > 3){
 			$this->analytics->event('Telegram', 'Jokes', 'Fanta');
 			$fantas = [
 				"BQADBAADLwEAAjSYQgABe8eWP7cgn9gC", // Naranja
