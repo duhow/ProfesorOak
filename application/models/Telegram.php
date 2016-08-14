@@ -141,6 +141,10 @@ class __Module_Telegram_Sender extends CI_Model{
 		return $this->_parse_generic_chatFunctions("leaveChat", $keep, $chat);
 	}
 
+	function get_chat($chat = NULL, $keep = FALSE){
+		return $this->_parse_generic_chatFunctions("getChat", $keep, $chat);
+	}
+
 	function get_admins($chat = NULL, $keep = FALSE){
 		return $this->_parse_generic_chatFunctions("getChatAdministrators", $keep, $chat);
 	}
