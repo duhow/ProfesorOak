@@ -398,6 +398,7 @@ class Telegram extends CI_Model{
 		$input = implode("|", $input);
 		$input = strtolower($input); // HACK util o molesto en segun que casos?
 		$input = str_replace(["á", "é", "í", "ó", "ú"], ["a", "e", "i", "o", "u"], $input); // HACK mas de lo mismo, ayuda o molesta?
+        $input = str_replace("/", "\/", $input); // CHANGED fix para escapar comandos y demás.
 
 		if(is_bool($next_word)){ $position = $next_word; $next_word = NULL; }
 		elseif($next_word !== NULL){
@@ -405,14 +406,15 @@ class Telegram extends CI_Model{
 			$next_word = implode("|", $next_word);
 			$next_word = strtolower($next_word); // HACK
 			$next_word = str_replace(["á", "é", "í", "ó", "ú"], ["a", "e", "i", "o", "u"], $next_word); // HACK
+            $input = str_replace("/", "\/", $input); // CHANGED
 		}
 
 		if($position === TRUE){
-			if($next_word === NULL){ $regex = "^(" .$input .')([\s!.,"])'; }
-			else{ $regex = "^(" .$input .')([\s!.,"]?)\s(' .$next_word .')([\s!?.,"])'; }
+			if($next_word === NULL){ $regex = "^(" .$input .')([\s!.,"]?)'; }
+			else{ $regex = "^(" .$input .')([\s!.,"]?)\s(' .$next_word .')([\s!?.,"]?)'; }
 		}elseif($position === FALSE){
 			if($next_word === NULL){ $regex = "(" .$input .')([!?,."]?)$'; }
-			else{ $regex = "(" .$input .')([\s!.,"]?)\s(' .$next_word .')([?!.,"])$'; }
+			else{ $regex = "(" .$input .')([\s!.,"]?)\s(' .$next_word .')([?!.,"]?)$'; }
 		}else{
 			if($next_word === NULL){ $regex = "(" .$input .')([\s!?.,"])|(' .$input .')$'; }
 			else{ $regex = "(" .$input .')([\s!.,"]?)\s(' .$next_word .')([\s!?.,"])|(' .$input .')([\s!.,"]?)\s(' .$next_word .')([!?.,"]?)$'; }
