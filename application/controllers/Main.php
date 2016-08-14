@@ -216,14 +216,24 @@ class Main extends CI_Controller {
 
 		// terminar si el usuario no esta verificado o esta en la blacklist
 		if($pokemon->user_blocked($user->id)){ die(); }
+		if(!empty($step)){ $this->_step(); }
 
-		// if(empty($step)){ $pokemon->step($user->id, "MENU"); }
 
 		/*
 		##################
 		# Comandos admin #
 		##################
 		*/
+
+		// Cancelar pasos en general.
+		if($step != NULL && $telegram->text_has(["Cancelar", "/cancel"], TRUE)){
+			$pokemon->step($user->id, NULL);
+			$this->telegram->send
+				->notification(FALSE)
+				->text("Acción cancelada.")
+			->send();
+			exit();
+		}
 
 		// enviar broadcast a todos los grupos (solo creador)
 		if($telegram->text_has("/broadcast", TRUE) && $user->id == $this->config->item('creator')){
@@ -1297,6 +1307,17 @@ class Main extends CI_Controller {
 			}
 
 			exit();
+		}elseif($telegram->text_has(["poner", "actualizar", "redactar", "escribir"], ["las normas", "las reglas"], FALSE) && $telegram->words() <= 6 && $telegram->is_chat_group()){
+			$admins = $telegram->get_admins();
+			$admins[] = $this->config->item('creator');
+			if(in_array($telegram->user->id, $admins)){
+				$pokemon->step($telegram->user->id, 'RULES');
+				$telegram->send
+					->reply_to(TRUE)
+					->text("De acuerdo, envíame el texto que quieres que ponga de normas.")
+				->send();
+				exit();
+			}
 		}elseif($telegram->text_has(["team", "equipo"]) && $telegram->text_has(["sóis", "hay aquí", "estáis"])){
 			exit();
 		}elseif($telegram->text_has("Qué", ["significa", "es"], TRUE)){
@@ -1456,7 +1477,10 @@ class Main extends CI_Controller {
 				$joke .= "(" .$telegram->chat->id .").";
 			}
 		}elseif($telegram->text_has(["buenos", "buenas", "bon"], ["días", "día", "tarde", "tarda", "tardes", "noches", "nit"])){
-			if($pokemon->settings($telegram->chat->id, 'say_hello') == TRUE){
+			if(
+				($telegram->is_chat_group() and $pokemon->settings($telegram->chat->id, 'say_hello') == TRUE) and
+				($pokemon->settings($telegram->user->id, 'say_hello') != FALSE or $pokemon->settings($telegram->user->id, 'say_hello') == NULL)
+			){
 				$joke = "Buenas a ti también, entrenador! :D";
 				if($telegram->text_has(['noches', 'nit'])){
 					$joke = "Buenas noches fiera, descansa bien! :)";
@@ -1612,6 +1636,10 @@ class Main extends CI_Controller {
 				->send();
 			}
 		}
+	}
+
+	function _step(){
+
 	}
 
 	function _joke(){
@@ -1794,7 +1822,7 @@ class Main extends CI_Controller {
 	}
 
 	function _help(){
-		exit();
+
 	}
 
 }
