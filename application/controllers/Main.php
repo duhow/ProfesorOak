@@ -1760,7 +1760,7 @@ class Main extends CI_Controller {
 					->location($lat, $lon)
 				->send();
 			}
-			$this->analyics->event('Telegram', 'Map search');
+			$this->analytics->event('Telegram', 'Map search');
 			$telegram->send
 				->text($str)
 			->send();
