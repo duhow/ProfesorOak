@@ -543,6 +543,9 @@ class Main extends CI_Controller {
 			$target = NULL;
 			if($telegram->words() == 2 && $telegram->has_reply){
 				$target = $telegram->reply_user->id;
+				if($telegram->reply_is_forward && $telegram->reply_user->id != $telegram->reply->forward_from->id){
+					$target = $telegram->reply->forward_from['id'];
+				}
 			}elseif($telegram->words() == 3){
 				$target = $telegram->last_word(TRUE);
 				if($target[0] == "@"){ $target = substr($target, 1); }
