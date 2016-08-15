@@ -1688,6 +1688,10 @@ class Main extends CI_Controller {
 				"BQADBAADRwEAAjSYQgABu1UlOqU2-8IC", // Fresa
 			];
 			$n = mt_rand(0, count($fantas) - 1);
+			if($telegram->text_has('naranja')){ $n = 0; }
+			elseif($telegram->text_has('limón')){ $n = 1; }
+			elseif($telegram->text_has('uva')){ $n = 2; }
+			elseif($telegram->text_has('fresa')){ $n = 3; }
 
 			if($pokemon->settings($telegram->chat->id, 'shutup') != TRUE or $telegram->user->id == $this->config->item('creator')){
 				$telegram->send->notification(FALSE)->file('sticker', $fantas[$n]);
@@ -1753,6 +1757,8 @@ class Main extends CI_Controller {
 
 		// Buscar ubicación en mapa
 		if($telegram->text_has(["ubicación", "mapa de"], TRUE)){
+			$flags = $pokemon->user_flags($user->id);
+			if(in_array('ratkid', $flags)){ exit(); }
 			$text = $telegram->text();
 			$text = $telegram->clean('alphanumeric-full-spaces', $text);
 			if($telegram->text_has("ubicación", TRUE)){
