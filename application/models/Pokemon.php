@@ -335,6 +335,7 @@ class Pokemon extends CI_Model{
 	function get_groups($shownames = FALSE){
 		$query = $this->db
 			->where_in('type', ['group', 'supergroup'])
+			->where('active', TRUE)
 			->order_by('last_date', 'DESC')
 		->get('chats');
 		if($query->num_rows() > 0){
@@ -344,6 +345,22 @@ class Pokemon extends CI_Model{
 				return array_column($query->result_array(), 'id');
 			}
 		}
+	}
+
+	function group($id){
+		$query = $this->db
+			->where('id', $id)
+			->limit(1)
+		->get('chats');
+		if($query->num_rows() == 1){ return $query->row(); }
+	}
+
+	function group_disable($id, $stat = TRUE){
+		$query = $this->db
+			->where('id', $id)
+			->set('active', !$stat)
+		->update('chats');
+		return $query;
 	}
 
 	function get_users($team = TRUE, $alldata = FALSE){
@@ -379,12 +396,17 @@ class Pokemon extends CI_Model{
 				->where('id', $link->id)
 			->update($table);
 			if($table == "meanings"){ return $link->text; }
+			if($table == "public_groups"){ return $link->link; }
 			return $link->url;
 		}
 	}
 
 	function meaning($text, $count = FALSE){
 		return $this->link($text, $count, 'meanings');
+	}
+
+	function group_link($text, $count = FALSE){
+		return $this->link($text, $count, 'public_groups');
 	}
 
     function count_teams(){

@@ -446,19 +446,19 @@ class Telegram extends CI_Model{
 		return $this->clean($clean, array_pop($text));
 	}
 
-	function words($position = NULL, $amount = 1){ // Contar + recibir argumentos
-		$clean = FALSE;
+	function words($position = NULL, $amount = 1, $filter = FALSE){ // Contar + recibir argumentos
 		if($position === NULL){
 			return count(explode(" ", $this->text()));
 		}elseif(is_numeric($position)){
-			if($amount === TRUE){ $clean = TRUE; $amount = 1; }
+			if($amount === TRUE){ $filter = 'alphanumeric'; $amount = 1; }
+			elseif(is_string($amount)){ $filter = $amount; $amount = 1; }
 			$t = explode(" ", $this->text());
 			$a = $position + $amount;
 			$str = '';
 			for($i = $position; $i < $a; $i++){
 				$str .= $t[$i] .' ';
 			}
-			if($clean){ $str = preg_replace("/[^a-zA-Z0-9]+/", "", $str); }
+			if($filter !== FALSE){ $str = $this->clean($filter, $str); }
 			return trim($str);
 		}
 	}
@@ -469,9 +469,9 @@ class Telegram extends CI_Model{
 			'number-calc' => '/^([+-]?)\d+(([\.,]?)\d+?)/',
 			'alphanumeric' => '/[^a-zA-Z0-9]+/',
 			'alphanumeric-accent' => '/[^a-zA-Z0-9áéíóúÁÉÍÓÚ]+/',
-			'alphanumeric-symbols-basic' => '/[^a-zA-Z0-9_-.]+/',
-			'alphanumeric-full' => '/[^a-zA-Z0-9áéíóúÁÉÍÓÚ_-.]+/',
-			'alphanumeric-full-spaces' => '/[^a-zA-Z0-9áéíóúÁÉÍÓÚ_-. ]+/',
+			'alphanumeric-symbols-basic' => '/[^a-zA-Z0-9\._\-]+/',
+			'alphanumeric-full' => '/[^a-zA-Z0-9áéíóúÁÉÍÓÚ\._\-]+/',
+			'alphanumeric-full-spaces' => '/[^a-zA-Z0-9áéíóúÁÉÍÓÚ\.\s_\-]+/',
 		];
 		if(empty($text)){ $text = $this->text(); }
 		if($pattern == FALSE){ return $text; }

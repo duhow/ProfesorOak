@@ -392,7 +392,7 @@ class Main extends CI_Controller {
 			$announce = $pokemon->settings($telegram->chat->id, 'announce_settings');
 			$telegram->send
 				->chat( $this->config->item('creator') )
-				->text("CONFIG: $key *" .json_encode($set) ." -> " .json_encode($value) ."*", TRUE)
+				->text("CONFIG: $key " .json_encode($set) ." -> " .json_encode($value))
 			->send();
 
 			if( ($set !== FALSE or $set > 0) && ($announce == TRUE) ){
@@ -481,6 +481,7 @@ class Main extends CI_Controller {
 					->text("Jo, pensaba que me queríais... :(\nBueno, si me necesitáis, ya sabéis donde estoy.")
 				->send();
 
+				$pokemon->group_disable($telegram->chat->id);
 				$telegram->send->leave_chat();
 			}
 		}
@@ -762,9 +763,19 @@ class Main extends CI_Controller {
 
 			$text = "No hay reglas escritas.";
 			if(!empty($rules)){ $text = json_decode($rules); }
+			$chat = $chat->id;
+			if(strlen($rules) > 1000){
+				$chat = $user->id;
+				$telegram->send
+					->notification(FALSE)
+					->reply_to(TRUE)
+					->text("Te las envío por privado, " .$user->first_name .".")
+				->send();
+			}
 
 			$telegram->send
 				->notification(FALSE)
+				->chat($chat)
 				// ->disable_web_page_preview()
 				->text($text)
 			->send();
@@ -775,6 +786,12 @@ class Main extends CI_Controller {
 			$telegram->is_chat_group()
 		){
 			$link = $pokemon->settings($telegram->chat->id, 'link_chat');
+
+			$word = $telegram->last_word(TRUE);
+			if(!is_numeric($word) and strlen($word) >= 4 and !$telegram->text_has("este grupo")){ // XXX comprobar que no dé problemas
+				$s = $pokemon->group_link($word);
+				if(!empty($s)){ $link = $s; }
+			}
 			$chatgroup = NULL;
 			if(!empty($link)){
 				if($link[0] != "@" and strlen($link) == 22){
@@ -1599,7 +1616,7 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_has("/me", TRUE) && $telegram->words() >= 2){
 			$text = substr($telegram->text(), strlen("/me "));
 			if(strpos($text, "/") !== FALSE){ exit(); }
-			$joke = trim("*" .$telegram->user->first_name ."* " .$text);
+			$joke = trim("*" .$telegram->user->first_name ."* " .$telegram->emoji($text));
 		}elseif($telegram->text_has(["necesitas", "necesitáis"], ["novio", "un novio", "novia", "una novia", "pareja", "una pareja", "follar"])){
 			// if($pokemon->settings($telegram->chat->id, 'shutup') != TRUE or $telegram->user->id == $this->config->item('creator')){
 				$joke = "¿Novia? Qué es eso, se come?";
