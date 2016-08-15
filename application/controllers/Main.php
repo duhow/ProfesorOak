@@ -1733,6 +1733,38 @@ class Main extends CI_Controller {
 				->send();
 			}
 		}
+
+		// Buscar ubicación en mapa
+		if($telegram->text_has(["ubicación", "mapa de"], TRUE)){
+			$text = $telegram->text();
+			$text = $telegram->clean('alphanumeric-full-spaces', $text);
+			if($telegram->text_has("ubicación", TRUE)){
+				$text = substr($text, strlen("ubicación"));
+			}elseif($telegram->text_has("mapa de", TRUE)){
+				$text = substr($text, strlen("mapa de"));
+			}
+			$text = trim($text);
+			$data = ["text" => $text, "f" => "json"];
+			$data = http_build_query($data);
+			$web = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find?" .$data;
+			$loc = file_get_contents($web);
+			$ret = json_decode($loc);
+			$str = "No lo encuentro.";
+			if(!empty($ret->locations)){
+				$loc = $ret->locations[0];
+				$str = $loc->name ." (" .$loc->feature->attributes->Score ."%)";
+
+				$lat = round($loc->feature->geometry->y, 6);
+				$lon = round($loc->feature->geometry->x, 6);
+				$telegram->send
+					->location($lat, $lon)
+				->send();
+			}
+			$this->analyics->event('Telegram', 'Map search');
+			$telegram->send
+				->text($str)
+			->send();
+		}
 	}
 
 	function _step(){
