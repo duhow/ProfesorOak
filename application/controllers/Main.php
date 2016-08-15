@@ -353,6 +353,27 @@ class Main extends CI_Controller {
 			->send();
 		}
 
+		// Preguntar si el usuario es administrador
+		elseif($telegram->text_has(["soy", "es", "eres"], ["admin", "administrador"], TRUE) && $telegram->words() <= 5 && $telegram->is_chat_group()){
+			$admin = NULL;
+			if($telegram->text_has("soy")){ $admin = $telegram->user->id; }
+			elseif($telegram->text_has(["es", "eres"]) && $telegram->has_reply){ $admin = $telegram->reply_user->id; }
+			else{ exit(); }
+
+			$admins = $telegram->get_admins();
+			$text = "Nop.";
+			if(in_array($admin, $admins)){
+				$text = "Sip, es admin.";
+			}
+			$this->analytics->event('Telegram', 'Ask for admin');
+			$telegram->send
+				->notification(FALSE)
+				// ->reply_to($telegram->reply_user->id)
+				->text($text)
+			->send();
+			exit();
+		}
+
 		// configurar el bot (solo creador/admin/chat privado)
 		elseif(
 			$telegram->text_has("/set", TRUE) &&
@@ -999,7 +1020,7 @@ class Main extends CI_Controller {
 		// Estado Pokemon Go
 		elseif(
 			$telegram->text_has(["funciona", "funcionan", "va", "caído", "caer", "muerto", "estado"]) &&
-		 	$telegram->text_has(["juego", "pokémon", "servidor",  "server"]) &&
+		 	$telegram->text_has(["juego", "pokémon", "servidor", "servidores", "server"]) &&
 			!$telegram->text_contains(["ese", "a mi me va", "a mis", "Que alg", "esa", "este", "caza", "su bola", "atacar", "cambi", "futuro", "esto", "para", "mapa", "contando", "va lo de", "llevamos", "a la", "va bastante bien"]) &&
 			$telegram->words() < 15 && $telegram->words() > 2
 		){
