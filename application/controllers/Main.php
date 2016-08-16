@@ -1657,6 +1657,9 @@ class Main extends CI_Controller {
 			if($pokemon->settings($telegram->chat->id, 'say_hey') == TRUE){
 				$joke = "Dime!";
 			}
+		}elseif($telegram->text_has(["alguien", "alguno"]) && $telegram->text_has(["decir", "dice"])){
+			$r = mt_rand(1, 7);
+			if($r == 7){ $joke = "pa k kieres saber eso jaja salu2"; }
 		}elseif($telegram->text_has(["programado", "funcionas"]) && $telegram->text_has(["profe", "oak", "bot"])){
 			$joke = "Pues yo funciono con *PHP* (_CodeIgniter_) :)";
 		}elseif($telegram->text_has(["profe", "profesor", "oak"]) && $telegram->text_has("te", ["quiero", "amo", "adoro"])){
