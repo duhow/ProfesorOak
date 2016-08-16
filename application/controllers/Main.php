@@ -1657,9 +1657,8 @@ class Main extends CI_Controller {
 			if($pokemon->settings($telegram->chat->id, 'say_hey') == TRUE){
 				$joke = "Dime!";
 			}
-		}elseif($telegram->text_has(["alguien", "alguno"]) && $telegram->text_has(["decir", "dice"])){
-			$r = mt_rand(1, 7);
-			if($r == 7){ $joke = "pa k kieres saber eso jaja salu2"; }
+		}elseif($telegram->text_has(["alguien", "alguno"]) && $telegram->text_has(["decir", "dice", "sabe"])){
+			if(mt_rand(1, 7) == 7){ $joke = "pa k kieres saber eso jaja salu2"; }
 		}elseif($telegram->text_has(["programado", "funcionas"]) && $telegram->text_has(["profe", "oak", "bot"])){
 			$joke = "Pues yo funciono con *PHP* (_CodeIgniter_) :)";
 		}elseif($telegram->text_has(["profe", "profesor", "oak"]) && $telegram->text_has("te", ["quiero", "amo", "adoro"])){
@@ -1744,14 +1743,10 @@ class Main extends CI_Controller {
 		}
 
 		// Recibir ubicación
-		if($telegram->data_received() == "location"){
+		if($telegram->data_received("location")){
 			$loc = $telegram->location()->latitude ."," .$telegram->location()->longitude;
-			$telegram->send
-				->text(json_encode($telegram->location(FALSE)))
-			->send();
-			exit();
 			$pokemon->settings($user->id, 'location', $loc);
-			$pokemon->step($user->id, 'LOCATION');
+			// $pokemon->step($user->id, 'LOCATION');
 			$this->_step();
 			exit();
 		}
@@ -1768,6 +1763,15 @@ class Main extends CI_Controller {
 				$telegram->send
 					->location($loc[0], $loc[1])
 				->send();
+
+				// REQUIRE TOKEN API
+				/* $data = http_build_query(["location" => $loc[0] ."," .$loc[1], 'f' => 'json']);
+				$web = "http://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?$data";
+				$data = file_get_contents($web);
+				$ret = json_decode($data);
+				$telegram->send
+					->text(json_encode($ret))
+				->send(); */
 			}
 		}
 
@@ -1783,7 +1787,8 @@ class Main extends CI_Controller {
 				$text = substr($text, strlen("mapa de"));
 			}
 			$text = trim($text);
-			$data = ["text" => $text, "f" => "json"];
+			$text = str_replace("en ", "in ", $text);
+			$data = ["text" => $text, "sourceCountry" => "ESP", "f" => "json"];
 			$data = http_build_query($data);
 			$web = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find?" .$data;
 			$loc = file_get_contents($web);
