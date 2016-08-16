@@ -308,6 +308,19 @@ class Pokemon extends CI_Model{
 		return FALSE;
 	}
 
+	function add_found($poke, $user, $lat, $lng){
+		$data = [
+			'pokemon' => $poke,
+			'user' => $user,
+			'lat' => $lat,
+			'lng' => $lng,
+			'register_date' => date("Y-m-d H:i:s"),
+			'points' => 0,
+		];
+		$this->db->insert('pokemon_spawns', $data);
+		return $this->db->insert_id();
+	}
+
 	function evolution($search, $retval = TRUE){
 		if(!is_array($search)){ $search = [$search]; }
 		$query = $this->db
