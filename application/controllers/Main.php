@@ -180,7 +180,7 @@ class Main extends CI_Controller {
 		}
 
 		// guardar color de user
-		elseif($telegram->text_has("Soy", ['rojo', 'valor', 'amarillo', 'instinto', 'azul', 'sabiduría'])){
+		elseif($telegram->text_has(["Soy", "Equipo", "Team"]) && $telegram->text_has(['rojo', 'valor', 'amarillo', 'instinto', 'azul', 'sabiduría'])){
 			if(!$pokemon->user_exists($user->id)){
 				$text = trim(strtolower($telegram->last_word('alphanumeric-accent')));
 
@@ -1738,6 +1738,19 @@ class Main extends CI_Controller {
 					}
 				}
 			}
+		}
+
+		// Recibir ubicación
+		if($telegram->data_received() == "location"){
+			$loc = $telegram->location()->latitude ."," .$telegram->location()->longitude;
+			$telegram->send
+				->text(json_encode($telegram->location(FALSE)))
+			->send();
+			exit();
+			$pokemon->settings($user->id, 'location', $loc);
+			$pokemon->step($user->id, 'LOCATION');
+			$this->_step();
+			exit();
 		}
 
 		// Buscar coordenadas
