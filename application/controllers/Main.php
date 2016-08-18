@@ -1236,6 +1236,8 @@ class Main extends CI_Controller {
 			$help = "https://goo.gl/GZb5hd";
 		}elseif($telegram->text_contains(["como", "cómo"]) && $telegram->text_contains(["conseguir", "consigue"]) && $telegram->text_contains(["objeto", "incienso", "cebo", "huevo"])){
 			$help = "En principio si vas a las PokeParadas y tienes suerte, también deberías de poder conseguirlos.";
+		}elseif($telegram->text_contains(["calcular", "calculadora"]) && $telegram->text_contains(["IV", "porcentaje"])){
+			$help = "Puedes calcular las IVs de tus Pokemon en esta página: https://pokeassistant.com/main/ivcalculator";
 		}elseif($telegram->text_contains(["tabla", "lista"]) && $telegram->text_contains(["ataque", "tipos de ataque", "debilidad"]) && $telegram->words() < 10){
 			$this->analytics->event('Telegram', 'Attack Table');
 			$telegram->send
