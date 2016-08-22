@@ -194,7 +194,7 @@ class Main extends CI_Controller {
 					$telegram->send
 						->notification(FALSE)
 						->reply_to(TRUE)
-						->text("Muchas gracias $user->first_name! Por cierto, ¿cómo te llamas *en el juego*? \n_(Me llamo...)_", TRUE)
+						->text("Muchas gracias $user->first_name! Por cierto, ¿cómo te llamas *en el juego* y/o que *nivel* eres? \n \n_(Me llamo...)_\n_(Soy nivel...)_", TRUE)
 					->send();
 				}else{
 					$this->analytics->event('Telegram', 'Register', 'wrong', $text);
