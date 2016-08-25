@@ -14,9 +14,12 @@ class Pokemon extends CI_Model{
 
 	function user($user){
 		$query = $this->db
-			->where('telegramid', $user)
-			->or_where('telegramuser', $user)
-			->or_where('username', $user)
+			->group_start()
+				->where('telegramid', $user)
+				->or_where('telegramuser', $user)
+				->or_where('username', $user)
+			->group_end()
+			->where('anonymous', FALSE)
 		->get('user');
 		if($query->num_rows() == 1){ return $query->row(); }
 		return array();
@@ -40,10 +43,13 @@ class Pokemon extends CI_Model{
 
 	function user_exists($data, $retid = FALSE){
 		$query = $this->db
-			->where('telegramid', $data)
-			// ->or_where('telegramuser', $data) FIXME CONFLICTO con Username normal para registro
-			->or_where('username', $data)
-			->or_where('email', $data)
+			->group_start()
+				->where('telegramid', $data)
+				// ->or_where('telegramuser', $data) FIXME CONFLICTO con Username normal para registro
+				->or_where('username', $data)
+				->or_where('email', $data)
+			->group_end()
+			->where('anonymous', FALSE)
 			->limit(1)
 		->get('user');
 		if($query->num_rows() == 1){
@@ -308,6 +314,24 @@ class Pokemon extends CI_Model{
 		return FALSE;
 	}
 
+	function pokedex($pokemon = NULL){
+		if(!empty($pokemon)){
+			if(!is_array($pokemon)){ $pokemon = [$pokemon]; }
+			$this->db
+				->where_in('id', $pokemon)
+				->or_where_in('name', $pokemon);
+		}
+		$query = $this->db->get('pokedex');
+		if($query->num_rows() == 1){ return $query->row(); }
+		if($query->num_rows() > 1){
+			$pokedex = array();
+			foreach($query->result_array() as $pk){
+				$pokedex[$pk['id']] = (object) $pk;
+			}
+			return $pokedex;
+		}
+	}
+
 	function add_found($poke, $user, $lat, $lng){
 		$data = [
 			'pokemon' => $poke,
@@ -389,6 +413,23 @@ class Pokemon extends CI_Model{
 				return array_column($query->result_array(), 'telegramid');
 			}
 		}
+	}
+
+	function trainer_rewards($find){
+		if(is_numeric($find)){ $this->db->where('lvl', $find); }
+		elseif(is_string($find)){ $this->db->where('item', $find); }
+		$query = $this->db->get('trainer_rewards');
+
+		if($query->num_rows() > 0){ return $query->result_array(); }
+		return array();
+	}
+
+	function items($find = NULL){
+		if(!empty($find)){ $this->db->where('name', $find)->or_where('display', $find); }
+		$query = $this->db->get('items');
+
+		if($query->num_rows() > 0){ return array_column($query->result_array(), 'display', 'name'); }
+		return array();
 	}
 
 	function link($text, $count = FALSE, $table = 'links'){

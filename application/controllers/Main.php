@@ -135,8 +135,12 @@ class Main extends CI_Controller {
 			// $this->telegram->sendHTML("*OYE!* Si vas a empezar con esas, deberías dejar el juego. En serio, hacer trampas *NO MOLA*.");
 			exit();
 			}
-		}elseif($telegram->text_has("pole", TRUE)){
+		}elseif($telegram->text_has(["pole", "subpole"], TRUE)){
 			// ---
+			if(date("H") == 0 && date("i") == 0){
+				$telegram->send->text($telegram->user->first_name ." ha hecho la *pole*!", TRUE)->send();
+				exit();
+			}
 		}
 		elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has("dónde estás") && $telegram->words() <= 5){
 			$telegram->send
@@ -278,10 +282,16 @@ class Main extends CI_Controller {
 				->send();
 				$c++;
 			}
-		}elseif($telegram->text_contains("/block", TRUE) && $user->id == $this->config->item('creator') && $telegram->has_reply){
-			$pokemon->update_user_data($telegram->reply_user->id, 'blocked', TRUE);
-		}elseif($telegram->text_contains("/unblock", TRUE) && $user->id == $this->config->item('creator') && $telegram->has_reply){
-			$pokemon->update_user_data($telegram->reply_user->id, 'blocked', FALSE);
+		}elseif($telegram->text_contains(["/block", "/unblock"], TRUE) && $user->id == $this->config->item('creator')){
+			$user = NULL;
+			if($telegram->has_reply){
+				// if($telegram->reply_is_forward)
+				$user = $telegram->reply_user->id;
+			}elseif($telegram->words() == 2 && $telegram->text_mention()){
+				// $user = $telegram->text_mention(); // --> to UID.
+			}
+			if(empty($user)){ exit(); }
+			$pokemon->update_user_data($user, 'blocked', $telegram->text_contains("/block"));
 		}
 		// echar usuario del grupo
 		elseif($telegram->text_has(["/kick", "/ban"], TRUE) && $telegram->is_chat_group()){
@@ -455,6 +465,18 @@ class Main extends CI_Controller {
 				->reply_to( ($chat == $telegram->chat->id) )
 				->text($text, (!is_array($value)))
 			->send();
+			exit();
+
+		}elseif($telegram->text_has("/mode", TRUE) && $telegram->user->id == $this->config->item('creator')){
+			$user = ($telegram->has_reply ? $telegram->reply_user->id : $telegram->user->id);
+			if($telegram->words() == 1){
+				$step = $pokemon->step($user);
+				if(empty($step)){ $step = NULL; }
+				$telegram->send->text("*" .json_encode($step) ."*", TRUE)->send();
+			}elseif($telegram->words() == 2){
+				$step = $pokemon->step($user, $telegram->last_word());
+				$telegram->send->text("set!")->send();
+			}
 			exit();
 		}elseif(
 			($telegram->text_has(["oak", "profe"], "limpia")) or $telegram->text_has("/clean", TRUE)
@@ -1136,6 +1158,9 @@ class Main extends CI_Controller {
 
 		if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) && $telegram->text_contains(["paradas", "pokeparadas"])){
 			$help = "Lo siento, pero por el momento no es posible crear nuevas PokéParadas, tendrás que esperar... :(";
+		}elseif($telegram->text_contains(["Niantic", "report"]) && $telegram->text_has(["link", "enlace", "página"])){
+			$this->analytics->event("Telegram", "Report link");
+			$help = "Link para reportar: https://goo.gl/Fy9Wt6";
 		}elseif($telegram->text_contains(["poli ", "polis ", "policía ", "policia "]) && $telegram->text_contains(["juga", "movil", "móvil"])){
 			$help = "Recuerda que jugar mientras conduces el coche o vas en bicicleta, está *prohibido*. "
 					."Podrías provocar un accidente, así que procura jugar con seguridad! :)";
@@ -1227,6 +1252,19 @@ class Main extends CI_Controller {
 
 			$telegram->send->disable_web_page_preview(TRUE);
 			$help = $str;
+		}elseif($telegram->text_has("que", ["recompensas", "recibes", "consigues"]) && $telegram->text_has(["llegar", "nivel"]) && $telegram->words() <= 10){
+			$items = $pokemon->items();
+			$num = filter_var($telegram->text(TRUE), FILTER_SANITIZE_NUMBER_INT);
+			if($num > 1 && $num <= 40){
+				$this->analytics->event('Telegram', 'Trainer Rewards', $num);
+				$rewards = $pokemon->trainer_rewards($num);
+				if(!empty($rewards)){
+					$help = "En el *nivel $num* conseguirás:\n\n";
+					foreach($rewards as $r){
+						$help .= "- " .str_pad($r['amount'], 2, "0", STR_PAD_LEFT) ."x " .$items[$r['item']] ."\n";
+					}
+				}
+			}
 		}elseif($telegram->text_contains("mejorar") && $telegram->text_contains(["antes", "después", "despues"]) && $telegram->text_contains(["evolución", "evolucionar", "evolucione"])){
 			$help = "En principio es irrelevante, puedes mejorar un Pokemon antes o después de evolucionarlo sin problemas.";
 		}elseif($telegram->text_contains(["calculadora", "calcular", "calculo", "calcula", "tabla", "pagina", "xp ", "experiencia"]) && $telegram->text_contains(["evolución", "evolucion", "evoluciona", "evolucione", "nivel", "PC", "CP"])){
@@ -1265,7 +1303,7 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_contains("datos") && $telegram->text_contains(["movil", "móvil", "moviles", "móviles"]) && !$telegram->text_contains("http")){
 			$help = "Si te has quedado sin datos, deberías pensar en cambiarte a otra compañía o conseguir una tarifa mejor. "
 					."Te recomiendo que tengas al menos 4GB si vas a ponerte a jugar en serio.";
-		}elseif($telegram->text_contains(["no", "os funciona", "no funciona", "no me funciona", "problema"]) && $telegram->text_contains(["GPS", "ubicacion", "ubicación"]) && !$telegram->text_contains(["fake", "bueno"])){
+		}elseif($telegram->text_has(["os funciona", "no funciona", "no me funciona", "problema"]) && $telegram->text_has(["GPS", "ubicación"]) && !$telegram->text_contains(["fake", "bueno", "cerca", "me funciona"])){
 			$help = "Si no te funciona el GPS, comprueba los ajustes de GPS. Te recomiendo que lo tengas en modo *sólo GPS*. "
 					."Procura también estar en un espacio abierto, el GPS en casa no funciona a no ser que lo tengas en *modo ahorro*. \n"
 					."Si sigue sin funcionar, prueba a apagar el móvil por completo, espera un par de minutos y vuelve a probar.";
@@ -1611,7 +1649,8 @@ class Main extends CI_Controller {
 		){
 			$release = strtotime("2016-07-16 14:27");
 			$birthdate = strtotime("now") - $release;
-			$joke = "Cumplo " .floor($birthdate / (60*60*24)) ." días. ";
+			$days = floor($birthdate / (60*60*24));
+			$joke = "Cumplo " .floor($days/30) ." mes y " .($days % 30) ." días. ";
 			$joke .= $telegram->emoji(":)");
 		}elseif($telegram->text_has(["saluda", "saludo"]) && $telegram->text_has(["profe", "profesor", "oak"])){
 			if($pokemon->settings($telegram->chat->id, 'shutup') != TRUE or $telegram->user->id == $this->config->item('creator')){
@@ -1642,6 +1681,10 @@ class Main extends CI_Controller {
 			$this->analytics->event('Telegram', 'Jokes', 'Ba Dum Tss');
 			$telegram->send->notification(FALSE)->file('document', "BQADBAADHgMAAo-zWQOHtZAjTKJW2QI");
 			exit();
+		}elseif($telegram->text_has(["métemela", "por el culo", "por el ano"])){
+			$this->analytics->event('Telegram', 'Jokes', 'Metemela');
+			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/metemela.ogg");
+			exit();
 		}elseif($telegram->text_has("seguro dental")){
 			$this->analytics->event('Telegram', 'Jokes', 'Seguro dental');
 			$telegram->send->notification(FALSE)->file('video', FCPATH . "files/seguro_dental.mp4");
@@ -1654,6 +1697,8 @@ class Main extends CI_Controller {
 			$this->analytics->event('Telegram', 'Jokes', 'John Cena');
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/john_cena.ogg");
 			exit();
+		}elseif($telegram->text_has(["bug", "bugeate", "bugeado"]) && $telegram->words() <= 4){
+			$telegram->send->file('voice', FCPATH . 'files/modem.ogg', 'ERROR 404 PKGO_FC_CHEATS NOT_FOUND');
 		}elseif($telegram->text_has(["qué", "la"], "hora") && $telegram->text_contains("?") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Time');
 			$joke = "Son las " .date("H:i") .", una hora menos en Canarias. :)";
@@ -1746,6 +1791,15 @@ class Main extends CI_Controller {
 			}
 		}
 
+		if($telegram->text_has(["invertir", "invertir ubicación", "reverse"]) && $telegram->words() <= 5 && $telegram->has_reply && isset($telegram->reply->location)){
+			$loc = (object) $telegram->reply->location;
+			$telegram->send
+				->notification(FALSE)
+				->text($loc->latitude ."," .$loc->longitude)
+			->send();
+			exit();
+		}
+
 		// Recibir ubicación
 		if($telegram->data_received("location") && !$telegram->is_chat_group()){
 			$loc = $telegram->location()->latitude ."," .$telegram->location()->longitude;
@@ -1757,6 +1811,23 @@ class Main extends CI_Controller {
 
 		// Buscar coordenadas
 		$loc = NULL;
+
+		if(preg_match("/^(calcula\s)(\d+.\d+)[,;]\s?(\d+.\d+)\s(\d+.\d+)[,;]\s?(\d+.\d+)/", $telegram->text(), $loc)){
+			$l1 = [$loc[2], $loc[3]];
+			$l2 = [$loc[4], $loc[5]];
+
+			$a = 90 - $l1[0];
+			$b = 90 - $l2[0];
+			$c = $l2[1] - $l1[1];
+			// arccos(cos(a)*cos(b) + sen(a)*sen(b)*cos(c))
+			$d = acos(cos($a) * cos($b) + sin($a) * sin($b) * cos($c));
+			$prc = ($d / 360);
+			$r = round((40000 * $prc) * 1000, 1); // metros
+
+			$telegram->send->text($r)->send();
+			exit();
+		}
+
 		if(preg_match("/(\d+.\d+)[,;]\s?(\d+.\d+)/", $telegram->text(), $loc)){
 			$loc = $loc[0];
 			if(strpos($loc, ";") !== FALSE){ $loc = explode(";", $loc); }
@@ -1830,6 +1901,51 @@ class Main extends CI_Controller {
 
 		$step = $pokeuser->step;
 		switch ($step) {
+			case 'POKEMON_PARSE':
+				$pokes = $pokemon->pokedex();
+				$s = explode(" ", $telegram->text());
+				$data = array();
+				$number = NULL;
+				// ---------
+				$data['pokemon'] = NULL;
+				foreach($s as $w){
+					$w = $telegram->clean('alphanumeric', $w);
+					$w = strtolower($w);
+
+					if($data['pokemon'] === NULL){
+						foreach($pokes as $pk){
+							if($w == strtolower($pk->name)){ $data['pokemon'] = $pk->id; break; }
+						}
+					}
+
+					if(is_numeric($w)){
+						// tengo un número pero no se de qué. se supone que la siguiente palabra me lo dirá.
+						// a no ser que la palabra sea un "DE", en cuyo caso paso a la siguiente.
+						$number = (int) $w;
+					}
+
+					if(strpos($w, 'cp') !== FALSE or strpos($w, 'pc') !== FALSE or strpos($w, 'hp') !== FALSE or strpos($w, 'polvo')){
+						$action = NULL;
+						if(strpos($w, 'cp') !== FALSE or strpos($w, 'pc') !== FALSE){ $action = 'cp'; }
+						if(strpos($w, 'hp') !== FALSE){ $action = 'hp'; }
+						if(strpos($w, 'polvo') !== FALSE){ $action = 'dust'; }
+
+						if(strlen($w) > 2 && $number === NULL){
+							// Creo que me lo ha puesto junto. Voy a sacar números...
+							$number = filter_var($w, FILTER_SANITIZE_NUMBER_INT);
+						}
+
+						if($action == 'hp' && $number > 5 && $number < 300){ $data[$action] = $number; $number = NULL; }
+						if($number > 5 && $number < 4000){ $data[$action] = $number; $number = NULL; }
+					}
+				}
+				$data['attack'] = ($telegram->text_has(["ataque", "ATQ", "ATK"]));
+				$data['defense'] = ($telegram->text_has(["defensa", "DEF"]));
+				$data['stamina'] = ($telegram->text_has(["salud", "STA"]));
+				$data['powered'] = ($telegram->text_has(["mejorado", "powered"]));
+
+				$telegram->send->text(json_encode($data))->send();
+				break;
 			case 'RULES':
 				if(!$telegram->is_chat_group()){ break; }
 				if(!in_array($user->id, $admins)){ $pokemon->step($user->id, NULL); break; }
@@ -1893,6 +2009,7 @@ class Main extends CI_Controller {
 			break;
 			case 'POKEMON_SEEN':
 				// Tienes que estar en el lugar para poder haber reportado el Pokemon
+				// Si tienes flags TROLL, FC u otras, no podrás enviarlo.
 				// Solo puedes hacer uno cada minuto.
 				$pk = $pokemon->settings($user->id, 'pokemon_select');
 				$loc = explode(",", $pokemon->settings($user->id, 'location'));
@@ -2001,6 +2118,12 @@ class Main extends CI_Controller {
 			'http://i777.photobucket.com/albums/yy56/Felikis/Chistes%20Pokemon%20Espaniol/objeto.jpg',
 			'https://lh6.googleusercontent.com/-3nZvdz5JbFA/TW1u0xudl-I/AAAAAAAAAHY/XQ70Pa0xq5s/s1600/meme+pokemon+missigno.jpg',
 			'https://i.imgur.com/vl6QSQ3.jpg', // Fat Pidgeotto
+			'http://www.cuantocabron.com/ccs/2013/08/CC_2128742_si_la_vida_te_da_tomates_ash_ketchum.jpg',
+			'https://s-media-cache-ak0.pinimg.com/564x/e5/a5/a8/e5a5a8e2e93c80ba9a326af98456b6af.jpg',
+			'https://i.imgur.com/NAX0kr5.png', // Papa Francisco
+			'http://cde.peru.com/ima/0/1/4/6/6/1466547/924x530/pokemon-go-espana-smartphone-memes.jpg', // No me contesta, estará con otras...
+			'https://i.imgur.com/mhhSs.png', // Attract pokemon
+			'http://nuevoydivertido.com/wp-content/uploads/2014/06/que-le-doy-verguenza-estoy-trabajando-maestro-pokemon-ash-ketchum.jpg',
 			'¿Que le dice Pikachu a un Cyndaquil? -¡¡¡¡Pika!!!!!! -Pos rascate ',
 			'¿Sabes que le dice un Charmander loco a un Squirtle?  Porfa, apágame la cola con tu Pistola de Agua.',
 			'Un Ursaring se cayó de un árbol de 50 metros. ¿Te gustó el chiste? A Ursaring tampoco.',
@@ -2049,12 +2172,9 @@ class Main extends CI_Controller {
 
 		if(filter_var($chistes[$n], FILTER_VALIDATE_URL) !== FALSE){
 			// Foto
-			$f = tempnam("/tmp", "pkmn.") .".jpg";
-			file_put_contents($f, fopen($chistes[$n], 'r'));
-			$t = $this->telegram->send
+			$this->telegram->send
 				->notification( !$this->telegram->is_chat_group() )
-				->file('photo', $f);
-			unlink($f);
+				->file('photo', $chistes[$n]);
 		}else{
 			$this->telegram->send
 				->notification( !$this->telegram->is_chat_group() )
