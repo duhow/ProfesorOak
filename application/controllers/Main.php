@@ -990,6 +990,7 @@ class Main extends CI_Controller {
 				else{ $text = $telegram->last_word(); }
 				$text = $telegram->clean('alphanumeric', $text);
 				if(strlen($text) < 4){ exit(); }
+				if($pokemon->pokedex($text)){ $this->_pokedex($text); exit(); }
 				$info = $pokemon->user($text);
 
 				// si no se conoce
@@ -1029,6 +1030,25 @@ class Main extends CI_Controller {
 			}
 			exit();
 
+		// Responder el nivel de un entrenador.
+		}elseif($telegram->text_has("qué nivel", ["eres", "es", "soy"]) && $telegram->words() <= 7){
+			$user = $telegram->user->id;
+			if($telegram->text_has(["eres", "es"]) && $telegram->has_reply){ $user = $telegram->reply_user->id; }
+
+			$u = $pokemon->user($user);
+			$text = NULL;
+			if(!empty($u) && $u->lvl >= 5){
+				$this->analytics->event('Telegram', 'Whois', 'Level');
+				$text = ($telegram->text_has(["eres", "es"]) ? "Es" : "Eres") ." L" .$u->lvl .".";
+			}else{
+				$text = "No lo sé. :(";
+			}
+			$telegram->send
+				->notification(FALSE)
+				// ->reply_to(TRUE)
+				->text($text)
+			->send();
+			exit();
 		}elseif($telegram->text_has("estoy aquí")){
 			// Quien en cac? Que estoy aquí
 
@@ -1150,6 +1170,13 @@ class Main extends CI_Controller {
 				->send();
 			}
 
+			exit();
+		}
+
+		// Ver los IV o demás viendo stats Pokemon.
+		elseif($telegram->text_has(["tengo un", "he conseguido", "he capturado"], TRUE)){
+			$pokemon->step($user->id, 'POKEMON_PARSE');
+			$this->_step();
 			exit();
 		}
 
@@ -1277,6 +1304,7 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_contains(["como", "cómo"]) && $telegram->text_contains(["conseguir", "consigue"]) && $telegram->text_contains(["objeto", "incienso", "cebo", "huevo"])){
 			$help = "En principio si vas a las PokeParadas y tienes suerte, también deberías de poder conseguirlos.";
 		}elseif($telegram->text_contains(["calcular", "calculadora"]) && $telegram->text_contains(["IV", "porcentaje"])){
+			$this->analytics->event('Telegram', 'IV Calculator');
 			$help = "Puedes calcular las IVs de tus Pokemon en esta página: https://pokeassistant.com/main/ivcalculator";
 		}elseif($telegram->text_contains(["tabla", "lista"]) && $telegram->text_contains(["ataque", "tipos de ataque", "debilidad"]) && $telegram->words() < 10){
 			$this->analytics->event('Telegram', 'Attack Table');
@@ -1390,6 +1418,12 @@ class Main extends CI_Controller {
 					->text($str, TRUE)
 				->send();
 			}
+		}elseif($telegram->text_has(["pokédex", "pokémon"], TRUE) or $telegram->text_command("pokedex")){
+			$word = $telegram->last_word();
+			if($telegram->text_has("aquí")){
+				$word = $telegram->words( $telegram->words() - 2 );
+			}
+			$this->_pokedex($word);
 
 		// ---------------------
 		// Utilidades varias
@@ -1945,6 +1979,7 @@ class Main extends CI_Controller {
 				$data['powered'] = ($telegram->text_has(["mejorado", "powered"]));
 
 				$telegram->send->text(json_encode($data))->send();
+				$pokemon->step($user->id, NULL);
 				break;
 			case 'RULES':
 				if(!$telegram->is_chat_group()){ break; }
@@ -2098,6 +2133,9 @@ class Main extends CI_Controller {
 						break;
 					}
 				}
+			case 'DUMP':
+				$telegram->send->text( $telegram->dump(TRUE) )->send();
+				break;
 			default:
 			break;
 		}
@@ -2179,6 +2217,35 @@ class Main extends CI_Controller {
 			$this->telegram->send
 				->notification( !$this->telegram->is_chat_group() )
 				->text($chistes[$n], TRUE)
+			->send();
+		}
+	}
+
+	function _pokedex($pk, $chat = NULL){
+		$telegram = $this->telegram;
+		$pokemon = $this->pokemon;
+		$types = $pokemon->attack_types();
+
+		if($chat === NULL){ $chat = $telegram->chat->id; }
+
+		$pk = str_replace("#", "", $pk);
+		$pokedex = $pokemon->pokedex($pk);
+		$str = "";
+		if(!empty($pokedex)){
+			$str = "*#" .$pokedex->id ."* - " .$pokedex->name ."\n"
+					.$types[$pokedex->type] .($pokedex->type2 ? " / " .$types[$pokedex->type2] : "") ."\n"
+					."ATK " .$pokedex->attack ." - DEF " .$pokedex->defense ." - STA " .$pokedex->stamina;
+		}
+
+		if($pokedex->sticker){
+			$telegram->send
+				->notification(FALSE)
+				->file('sticker', $pokedex->sticker);
+		}
+		if(!empty($str)){
+			$telegram->send
+				->notification(FALSE)
+				->text($str, TRUE)
 			->send();
 		}
 	}
