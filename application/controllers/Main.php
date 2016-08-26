@@ -1535,7 +1535,12 @@ class Main extends CI_Controller {
 			$this->analytics->event('Telegram', 'Games', 'Dice');
 			$can = $pokemon->settings($telegram->chat->id, 'play_games');
 			if($can != FALSE or $can === NULL){
-				$joke = "*" .mt_rand(1,6) ."*";
+                $numeroCaras = filter_var($telegram->last_word(), FILTER_SANITIZE_NUMBER_INT);
+                $carasDado = 6;
+                if(is_numeric($numeroCaras) && ($numeroCaras == 4 or $numeroCaras == 6 or $numeroCaras == 8 or $numeroCaras == 10 or $numeroCaras == 12 or $numeroCaras == 20 or $numeroCaras === 100){
+                    $carasDado = $numeroCaras;
+                }
+				$joke = "*" .mt_rand(1,$carasDado) ."*";
 			}
 		}elseif(
 			( $telegram->text_has("piedra") and
