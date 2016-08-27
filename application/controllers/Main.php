@@ -1335,7 +1335,7 @@ class Main extends CI_Controller {
 			$help = "Si no te funciona el GPS, comprueba los ajustes de GPS. Te recomiendo que lo tengas en modo *sólo GPS*. "
 					."Procura también estar en un espacio abierto, el GPS en casa no funciona a no ser que lo tengas en *modo ahorro*. \n"
 					."Si sigue sin funcionar, prueba a apagar el móvil por completo, espera un par de minutos y vuelve a probar.";
-		}elseif($telegram->text_contains(["batería", "bateria"]) && $telegram->text_contains(["externa", "portatil", "portátil", "recargable", "extra"]) && !$telegram->text_contains(["http", "voy con", "tengo", "del port"])){
+		}elseif($telegram->text_has(["recomendar", "recomienda", "comprar", "aconseja"]) &&  $telegram->text_has("batería", ["externa", "portátil", "recargable", "extra"]) && !$telegram->text_contains(["http", "voy con", "tengo", "del port"])){
 			$help = "En función de lo que vayas a jugar a Pokemon GO, puedes coger baterías pequeñas. "
 					."La capacidad se mide en mAh, cuanto más tengas, más tiempo podrás jugar.\n\n"
 					."Si juegas unas 2-3 horas al día, te recomiendo al menos una de 5.000 mAh. Rondan más o menos *8-12€*. "
