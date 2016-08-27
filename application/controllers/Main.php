@@ -1743,6 +1743,10 @@ class Main extends CI_Controller {
 			$this->analytics->event('Telegram', 'Jokes', 'John Cena');
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/john_cena.ogg");
 			exit();
+		}elseif($telegram->text_has("soy", ["100tifiko", "científico"])){
+			$this->analytics->event('Telegram', 'Jokes', '100tifiko');
+			$telegram->send->notification(FALSE)->file('sticker', 'BQADBAADFgADPngvAtG9NS3VQEf5Ag');
+			exit();		
 		}elseif($telegram->text_has(["bug", "bugeate", "bugeado"]) && $telegram->words() <= 4){
 			$telegram->send->file('voice', FCPATH . 'files/modem.ogg', 'ERROR 404 PKGO_FC_CHEATS NOT_FOUND');
 		}elseif($telegram->text_has(["qué", "la"], "hora") && $telegram->text_contains("?") && $telegram->words() <= 5){
