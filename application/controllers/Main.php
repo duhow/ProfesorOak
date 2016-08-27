@@ -1324,6 +1324,11 @@ class Main extends CI_Controller {
 				->notification(FALSE)
 				->file('photo', FCPATH .'files/egg_list.png');
 			exit();
+		}elseif(
+			( $telegram->text_has(["profe", "oak"]) && $telegram->text_has(["código fuente", "source"]) ) or
+			$telegram->text_command("github")
+		){
+			$help = "Puedes inspeccionarme en github.com/duhow/ProfesorOak !\nNo me desnudes mucho que me sonrojo... " .$telegram->emoji("=P");
 		}elseif($telegram->text_contains(["cambiar", "cambio"]) && $telegram->text_contains(["facción", "color", "faccion", "equipo", "team"]) && $telegram->words() <= 12){
 			$help = "Según la página oficial de Niantic, aún no es posible cambiarse de equipo. Tendrás que esperar o hacerte una cuenta nueva, pero *procura no jugar con multicuentas, está prohibido.*";
 		}elseif($telegram->text_contains(["cambiar", "cambio"]) && $telegram->text_contains(["usuario", "nombre", "apodo", "llamo"]) && $telegram->words() <= 15){
