@@ -332,6 +332,41 @@ class Pokemon extends CI_Model{
 		}
 	}
 
+
+	function skill($find = NULL, $type = NULL){
+		if(!empty($find)){
+			$this->db
+				->where('name', $find)
+				->or_where('name_es', $find);
+		}
+		if(!empty($type)){ $this->db->where('type', $type); }
+		$query = $this->db->get('pokemon_skills');
+		if($query->num_rows() == 1){ return $query->row(); }
+		if($query->num_rows() > 1){
+			$skills = array();
+			foreach($query->result_array() as $sk){
+				$skills[$sk['id']] = (object) $sk;
+			}
+			return $skills;
+		}
+	}
+
+	function skill_learn($pokemon){
+		$query = $this->db
+			->select('*')
+			->from('pokemon_skills')
+			->join('pokemon_skills_learn', 'pokemon_skills.id = pokemon_skills_learn.sid')
+			->where('pokemon_skills_learn.pid', $pokemon)
+		->get();
+		if($query->num_rows() > 0){
+			$skills = array();
+			foreach($query->result_array() as $sk){
+				$skills[$sk['id']] = (object) $sk;
+			}
+			return $skills;
+		}
+	}
+
 	function add_found($poke, $user, $lat, $lng){
 		$data = [
 			'pokemon' => $poke,

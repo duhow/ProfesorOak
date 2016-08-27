@@ -1279,7 +1279,7 @@ class Main extends CI_Controller {
 
 			$telegram->send->disable_web_page_preview(TRUE);
 			$help = $str;
-		}elseif($telegram->text_has("que", ["recompensas", "recibes", "consigues"]) && $telegram->text_has(["llegar", "nivel"]) && $telegram->words() <= 10){
+		}elseif($telegram->text_contains(["recompensa", "recibe", "consigue"]) && $telegram->text_has(["llegar", "nivel"]) && $telegram->words() <= 10){
 			$items = $pokemon->items();
 			$num = filter_var($telegram->text(TRUE), FILTER_SANITIZE_NUMBER_INT);
 			if($num > 1 && $num <= 40){
@@ -1438,9 +1438,9 @@ class Main extends CI_Controller {
 		}elseif(
 			$telegram->is_chat_group() && $telegram->words() <= 6 &&
 			(
-				( $telegram->text_has("está aquí") ) and
+				( $telegram->text_has("está") and $telegram->text_has("aquí") ) and
 				// ( ( $telegram->receive(["está", "esta"]) && $telegram->receive(["aqui", "aquí"]) ) || ( $telegram->receive(["alguno", "alguien"]) && $telegram->receive("es") ) ) &&
-				( !$telegram->text_contains(["alguien es", "alguien ha", "estar", "estamos", "alguno es", "algunos", "alguno como", "alguien está", "alguno esta", "que es"]) ) // Alguien está aquí? - Alguno es....
+				( !$telegram->text_contains(["alguno", "alguien", "que"], ["es", "ha", "como", "está"]) ) // Alguien está aquí? - Alguno es....
 			)
 		){
 			if($telegram->words() > 3){
@@ -1455,7 +1455,8 @@ class Main extends CI_Controller {
 
 			$str = "";
 			$find = str_replace(["@", "?"], "", $find);
-			if(empty($find)){ exit(); }
+			if(empty($find) or strlen($find) < 4){ exit(); }
+			if(strpos($find, "est") !== FALSE or strpos($find, "aqu") !== FALSE){ exit(); }
 			$this->analytics->event('Telegram', 'Search User', $find);
 			$data = $pokemon->user($find);
 			if(empty($data)){
@@ -1862,7 +1863,7 @@ class Main extends CI_Controller {
 			exit();
 		}
 
-		if(preg_match("/(\d+.\d+)[,;]\s?(\d+.\d+)/", $telegram->text(), $loc)){
+		if(preg_match("/([+-]?)(\d+.\d+)[,;]\s?([+-]?)(\d+.\d+)/", $telegram->text(), $loc)){
 			$loc = $loc[0];
 			if(strpos($loc, ";") !== FALSE){ $loc = explode(";", $loc); }
 			elseif(strpos($loc, ",") !== FALSE){ $loc = explode(",", $loc); }
@@ -2232,9 +2233,15 @@ class Main extends CI_Controller {
 		$pokedex = $pokemon->pokedex($pk);
 		$str = "";
 		if(!empty($pokedex)){
+			$skills = $pokemon->skill_learn($pokedex->id);
+
 			$str = "*#" .$pokedex->id ."* - " .$pokedex->name ."\n"
 					.$types[$pokedex->type] .($pokedex->type2 ? " / " .$types[$pokedex->type2] : "") ."\n"
-					."ATK " .$pokedex->attack ." - DEF " .$pokedex->defense ." - STA " .$pokedex->stamina;
+					."ATK " .$pokedex->attack ." - DEF " .$pokedex->defense ." - STA " .$pokedex->stamina ."\n\n";
+
+			foreach($skills as $sk){
+				$str .= "[" .$sk->attack ."/" .$sk->bars ."] - " .$sk->name_es  ."\n";
+			}
 		}
 
 		if($pokedex->sticker){
