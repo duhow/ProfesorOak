@@ -1306,7 +1306,7 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_contains(["calcular", "calculadora"]) && $telegram->text_contains(["IV", "porcentaje"])){
 			$this->analytics->event('Telegram', 'IV Calculator');
 			$help = "Puedes calcular las IVs de tus Pokemon en esta página: https://pokeassistant.com/main/ivcalculator";
-		}elseif($telegram->text_contains(["tabla", "lista"]) && $telegram->text_contains(["ataque", "tipos de ataque", "debilidad"]) && $telegram->words() < 10){
+		}elseif($telegram->text_contains(["tabla", "lista"]) && $telegram->text_contains(["ataque", "tipos", "tipos de ataque", "debilidad"]) && $telegram->words() < 10){
 			$this->analytics->event('Telegram', 'Attack Table');
 			$telegram->send
 				->notification(FALSE)
