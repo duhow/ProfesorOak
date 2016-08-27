@@ -83,6 +83,14 @@ class Main extends CI_Controller {
 				}
 			}
 
+			// Si el grupo no admite más usuarios...
+			$nojoin = $pokemon->settings($chat->id, 'limit_join');
+			if($nojoin == TRUE){
+				$this->analytics->event('Telegram', 'Join limit users');
+				$telegram->send->kick($user->id, $chat->id);
+				exit();
+			}
+
 			// Si un usuario generico se une al grupo
 			if($set != FALSE or $set === NULL){
 				$custom = $pokemon->settings($chat->id, 'welcome');
@@ -1746,7 +1754,7 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_has("soy", ["100tifiko", "científico"])){
 			$this->analytics->event('Telegram', 'Jokes', '100tifiko');
 			$telegram->send->notification(FALSE)->file('sticker', 'BQADBAADFgADPngvAtG9NS3VQEf5Ag');
-			exit();		
+			exit();
 		}elseif($telegram->text_has(["bug", "bugeate", "bugeado"]) && $telegram->words() <= 4){
 			$telegram->send->file('voice', FCPATH . 'files/modem.ogg', 'ERROR 404 PKGO_FC_CHEATS NOT_FOUND');
 		}elseif($telegram->text_has(["qué", "la"], "hora") && $telegram->text_contains("?") && $telegram->words() <= 5){
