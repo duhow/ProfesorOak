@@ -136,11 +136,17 @@ class Main extends CI_Controller {
 			exit();
 			}
 		}elseif($telegram->text_has(["pole", "subpole"], TRUE)){
-			// ---
-			if(date("H") == 0 && date("i") == 0){
-				$telegram->send->text($telegram->user->first_name ." ha hecho la *pole*!", TRUE)->send();
-				exit();
+			$pole = $pokemon->settings($telegram->chat->id, 'pole');
+			$pole_user = $pokemon->settings($telegram->chat->id, 'pole_user');
+			// $subpole = $pokemon->settings($telegram->chat->id, 'subpole');
+			// $subpole_user = $pokemon->settings($telegram->chat->id, 'subpole_user');
+			if(!empty($pole)){
+				if(date("d") == date("d", $pole)){ exit(); } // Mismo dia? nope.
 			}
+			$pokemon->settings($chat->id, 'pole', time());
+			$pokemon->settings($chat->id, 'pole_user', $telegram->user->id);
+			$telegram->send->text($telegram->user->first_name ." ha hecho la *pole*!", TRUE)->send();
+			exit();
 		}
 		elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has("dónde estás") && $telegram->words() <= 5){
 			$telegram->send
