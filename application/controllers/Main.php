@@ -961,6 +961,9 @@ class Main extends CI_Controller {
 				// si el usuario por el que se pregunta es el bot
 				if($telegram->reply_user->id == $this->config->item("telegram_bot_id")){
 					$str = "Pues ese soy yo mismo :)";
+				// HACK Un bot no detecta reply de otro bot.
+				// }elseif(strtolower(substr($telegram->reply_user->username, -3)) == "bot"){
+				//	$str = "Es un bot.";
 				}else{
 					$user_search = $telegram->reply_user->id;
 					if($telegram->reply_is_forward && $telegram->reply_user->id != $telegram->reply->forward_from->id){
@@ -1012,8 +1015,11 @@ class Main extends CI_Controller {
 				if($pokemon->pokedex($text)){ $this->_pokedex($text); exit(); }
 				$info = $pokemon->user($text);
 
+				// si es un bot
+				if(strtolower(substr($text, -3)) == "bot"){
+					$str = "Es un bot. O eso parece."; // Yo no me hablo con los de mi especie.\nSi, queda muy raro, pero nos hicieron así...";
 				// si no se conoce
-				if(empty($info)){
+				}elseif(empty($info)){
 					$str = "No sé quien es $text.";
 				}else{
 					$str = 'Es *$team* $nivel. $valido';
