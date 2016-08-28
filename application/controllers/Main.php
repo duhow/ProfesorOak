@@ -1322,7 +1322,7 @@ class Main extends CI_Controller {
 			$help = "Claro! Te refieres a la Calculadora de Evolución, verdad? http://pogotoolkit.com/";
 		}elseif($telegram->text_contains(["PC", "estadisticas", "estadísticas", "estados", "ataque"]) && $telegram->text_contains(["pokemon", "pokémon", "máximo", "maximo"]) && !$telegram->text_contains(["mes"])){
 			$help = "Puedes buscar las estadísticas aquí: http://pokemongo.gamepress.gg/pokemon-list";
-		}elseif($telegram->text_contains(["mapa", "página", "pagina"]) && $telegram->text_contains(["pokemon", "pokémon", "ciudad"]) && !$telegram->text_contains("evoluci", "IV", "calcul")){
+		}elseif($telegram->text_contains(["mapa", "página", "pagina"]) && $telegram->text_contains(["pokemon", "pokémon", "ciudad"]) && !$telegram->text_contains(["evoluci", "IV", "calcul"])){
 			$this->analytics->event('Telegram', 'Map Pokemon');
 			$help = "https://goo.gl/GZb5hd";
 		}elseif($telegram->text_contains(["como", "cómo"]) && $telegram->text_contains(["conseguir", "consigue"]) && $telegram->text_contains(["objeto", "incienso", "cebo", "huevo"])){
