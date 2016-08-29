@@ -1233,11 +1233,13 @@ class Main extends CI_Controller {
 			$telegram->text_has("/help", TRUE)
 		){
 			if($telegram->is_chat_group() && $telegram->user->id != $this->config->item('creator')){
+				$q = $telegram->send->chat( $telegram->user->id )->text("*Ayuda del Oak:*", TRUE)->send();
+				$strhelp = ($q == FALSE ? "No puedo enviarte la ayuda, escríbeme por privado primero." :
+							"Te la envío por privado, " .$telegram->user->first_name .$telegram->emoji("! :happy:") );
 				$telegram->send
 					->notification(FALSE)
-					->text("Te la envío por privado, " .$telegram->user->first_name .$telegram->emoji("! :happy:"))
+					->text($strhelp)
 				->send();
-				$telegram->send->chat( $telegram->user->id );
 			}
 			$this->analytics->event('Telegram', 'Help');
 			$help = "- Puedes preguntarme sobre la *Debilidad de Pikachu* y te responderé por privado.\n"
