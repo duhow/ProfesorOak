@@ -1240,6 +1240,7 @@ class Main extends CI_Controller {
 					->notification(FALSE)
 					->text($strhelp)
 				->send();
+				$telegram->send->chat( $telegram->user->id ); // Volver a forzar
 			}
 			$this->analytics->event('Telegram', 'Help');
 			$help = "- Puedes preguntarme sobre la *Debilidad de Pikachu* y te responderé por privado.\n"
