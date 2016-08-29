@@ -476,28 +476,25 @@ class Main extends CI_Controller {
 				if(!in_array($user->id, $admins)){ return; }
 			}
 
-			$word = $telegram->words(1);
+			$word = $telegram->last_word();
+			$chat = $telegram->chat->id;
 			if(strpos($word, "+private") !== FALSE){
-				$chat = $telegram->user->id;
-				$word = str_replace("+private", "", $word);
-			}else{
-				$chat = $telegram->chat->id;
+			    $chat = $telegram->user->id;
+			    $word = trim(str_replace("+private", "", $word));
 			}
 			if(strtolower($word) == "all"){ $word = "*" ; } // ['say_hello', 'say_hey', 'play_games', 'announce_welcome', 'announce_settings', 'shutup']; }
 			$value = $pokemon->settings($telegram->chat->id, $word);
 			$text = "";
 			if(is_array($value)){
-				foreach($value as $k => $v){
-					$text .= "$k: $v\n";
-				}
+			    foreach($value as $k => $v){ $text .= "$k: $v\n"; }
 			}else{
-				$text = "*" .json_encode($value) ."*";
+			    $text = "*" .json_encode($value) ."*";
 			}
 			$telegram->send
-				->chat($chat)
-				->notification( ($chat != $telegram->chat->id) )
-				->reply_to( ($chat == $telegram->chat->id) )
-				->text($text, (!is_array($value)))
+			    ->chat($chat)
+			    ->notification( ($chat != $telegram->chat->id) )
+			    ->reply_to( ($chat == $telegram->chat->id) )
+			    ->text($text, (!is_array($value)))
 			->send();
 			exit();
 
