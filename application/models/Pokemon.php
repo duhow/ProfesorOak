@@ -83,11 +83,12 @@ class Pokemon extends CI_Model{
 			$query = $this->db
 				->where('user', $user)
 			->get('user_flags');
+
 			if($flag == NULL && $query->num_rows() == 1){
 				return array($query->row()->value);
 			}elseif(count($flag) == 1 && $query->num_rows() == 1){
 				return TRUE;
-			}elseif($query->num_rows() > 1){
+			}elseif($query->num_rows() > 0){
 				return array_column($query->result_array(), 'value');
 			}else{
 				return FALSE;
@@ -161,8 +162,9 @@ class Pokemon extends CI_Model{
 			return ($query->num_rows() == 1 ? $query->row()->step : NULL);
 		}else{
 			// SET
+			if(!empty($step)){ $step = strtoupper($step); }
 			$query = $this->db
-				->set('step', strtoupper($step))
+				->set('step', $step)
 				->where('telegramid', $user)
 			->update('user');
 			return $this;
@@ -184,6 +186,43 @@ class Pokemon extends CI_Model{
 		return ($query->num_rows() == 1 ? $this->parse_location($query->row()) : NULL);
 	}
 
+	function location_distance($locA, $locB, $locC = NULL, $locD = NULL){
+		$earth = 6371000;
+		if($locC !== NULL && $locD !== NULL){
+			$locA = [$locA, $locB];
+			$locB = [$locC, $locD];
+		}
+		$locA[0] = deg2rad($locA[0]);
+		$locA[1] = deg2rad($locA[1]);
+		$locB[0] = deg2rad($locB[0]);
+		$locB[1] = deg2rad($locB[1]);
+
+		$latD = $locB[0] - $locA[0];
+		$lonD = $locB[1] - $locA[1];
+
+		$angle = 2 * asin(sqrt(pow(sin($latD / 2), 2) + cos($locA[0]) * cos($locB[0]) * pow(sin($lonD / 2), 2)));
+		return ($angle * $earth);
+
+		// SELECT lat, lng, ASIN( SQRT(POW(SIN((RADIANS(X) - RADIANS(lat)) / 2), 2) + COS(RADIANS(lat)) * COS(RADIANS(X)) * POW(SIN((RADIANS(Y) - RADIANS(lng)) / 2), 2) )) * 2 * 6371000 AS distancia FROM pokemon_spawns ORDER BY distancia;
+	}
+
+	function spawn_near($location, $radius = 500, $limit = 10, $pokemon = NULL){
+		if(!is_array($location) or count($location) != 2){ return FALSE; }
+		$sql_dist = "ASIN(SQRT(POW(SIN((RADIANS($location[0]) - RADIANS(lat)) / 2), 2) + COS(RADIANS(lat)) * COS(RADIANS($location[0])) * POW(SIN((RADIANS($location[1]) - RADIANS(lng)) / 2), 2) )) * 2 * 6371000";
+		$query = $this->db
+			->select(['*', "$sql_dist AS distance"])
+			->where("($sql_dist) <=", $radius)
+			->where_in('pokemon', $pokemon)
+			->limit($limit)
+			->order_by("$sql_dist", 'ASC', FALSE)
+			// ->order_by('last_seen', 'DESC')
+			->order_by('id', 'DESC')
+			->group_by('pokemon')
+		->get('pokemon_spawns');
+		if($query->num_rows() > 0){ return $query->result_array(); }
+		return array();
+	}
+
 	function parse_location($row){
 		$row->location = new Location($row->latitude, $row->longitude);
 		return $row;
@@ -200,9 +239,11 @@ class Pokemon extends CI_Model{
 	}
 
 	function settings($user, $key, $value = NULL){
+		$full = FALSE;
 		if(strtolower($value) == "true"){ $value = TRUE; }
 		if(strtolower($value) == "false"){ $value = FALSE; }
 		if(strtolower($value) == "null"){ $value = NULL; }
+		if(strtolower($value) == "fullinfo"){ $value = NULL; $full = TRUE; }
 		if($value === NULL){
 			if(is_array($key)){
                 $this->db->where_in('type', $key);
@@ -217,9 +258,10 @@ class Pokemon extends CI_Model{
 				->where('uid', $user)
 			->get('settings');
             if($query->num_rows() > 1){
+				if($full){ return $query->result_array(); }
                 return array_column($query->result_array(), 'value', 'type');
             }
-			elseif($query->num_rows() == 1){ return $query->row()->value; }
+			elseif($query->num_rows() == 1){ return ($full ? $query->row() : $query->row()->value); }
 			return NULL;
 		}else{
 			if($this->settings($user, $key) === NULL){

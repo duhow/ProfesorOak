@@ -114,7 +114,11 @@ class __Module_Telegram_Sender extends CI_Model{
 		}else{
 			$this->content[$type] = $file;
 		}
-		if($caption !== NULL){ $this->content['caption'] = $caption; }
+		if($caption !== NULL){
+			$key = "caption";
+			if($type == "audio"){ $key = "title"; }
+			$this->content[$key] = $caption;
+		}
 
 		if(empty($this->content['chat_id'])){ $this->content['chat_id'] = $this->telegram->chat->id; }
 
@@ -679,7 +683,8 @@ class Telegram extends CI_Model{
 		$loc = $this->data['message']['location'];
 		if(empty($loc)){ return FALSE; }
 		if($object == TRUE){ return (object) $loc; }
-		elseif($object === 0){ return array_values($loc); }
+		elseif($object == FALSE){ return array_values($loc); }
+		// null u otro
 		return $loc;
 	}
 
@@ -728,6 +733,7 @@ class Telegram extends CI_Model{
 			'laptop' => "\ud83d\udcbb",
 			'pin' => "\ud83d\udccd",
 			'home' => "\ud83c\udfda",
+			'map' => "\ud83d\uddfa",
 
 			'forbid' => "\u26d4\ufe0f",
 			'times' => "\u274c",
@@ -797,6 +803,7 @@ class Telegram extends CI_Model{
 			'spam' => [':spam:'],
 			'pin' => [':pin:'],
 			'home' => [':home:'],
+			'map' => [':map:'],
 			'green-check' => [':ok:', ':green-check:'],
 			'warning' => [':warning:'],
 			'exclamation-red' => [':exclamation-red:'],
