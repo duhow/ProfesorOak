@@ -374,6 +374,31 @@ class Pokemon extends CI_Model{
 		}
 	}
 
+	function level($level = NULL){
+		if(!empty($level)){ $this->db->where('level', $level); }
+		$query = $this->db->get('pokemon_level');
+
+		if($query->num_rows() == 1){ return $query->row(); }
+		if($query->num_rows() > 1){
+			$levels = array();
+			foreach($query->result_array() as $lv){
+				$levels[$lv['level']] = (object) $lv;
+			}
+			return $levels;
+		}
+		return NULL;
+	}
+
+	function stardust($stardust, $powered = FALSE){
+		if(!is_array($stardust)){ $stardust = [$stardust]; }
+		if($powered == FALSE){ $this->db->like('level', '.0'); } // Si no se ha mejorado, son niveles enteros.
+		$query = $this->db
+			->where_in('stardust', $stardust)
+			->order_by('level')
+		->get('pokemon_level');
+		if($query->num_rows() > 0){ return array_column($query->result_array(), 'level'); }
+		return array();
+	}
 
 	function skill($find = NULL, $type = NULL){
 		if(!empty($find)){
