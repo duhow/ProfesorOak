@@ -1960,6 +1960,10 @@ class Main extends CI_Controller {
 			$this->analytics->event('Telegram', 'Jokes', 'Fichas');
 			$telegram->send->notification(FALSE)->file('document', 'BQADBAADQQMAAgweZAcaoiy0cZEn5wI');
 			exit();
+		}elseif($telegram->text_has(["quiero", "necesito"], ["abrazo", "abrazarte", "un abrazo"])){
+			$this->analytics->event('Telegram', 'Jokes', 'Hug');
+			$telegram->send->notification(FALSE)->file('document', FCPATH ."files/hug.gif");
+			exit();
 		}elseif($telegram->text_has(["es", "eres"], "tonto") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Tonto');
 			if($this->is_shutup()){ return; }
