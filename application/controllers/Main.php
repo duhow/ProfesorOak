@@ -421,7 +421,7 @@ class Main extends CI_Controller {
 				$pk = $pokemon->user($a['user']['id']);
 				if(!empty($pk)){ $str .= $telegram->emoji(":heart-" .$teams[$pk->team] .":") ." L" .$pk->lvl ." @" .$pk->username ." - "; }
 				$str .= $a['user']['first_name'] ." ";
-				if(isset($a['user']['username']) && ($a['user']['username'] != $pk->username) ){ $str .= "( @" .$a['user']['username'] ." )"; }
+				if(isset($a['user']['username']) && (strtolower($a['user']['username']) != strtolower($pk->username)) ){ $str .= "( @" .$a['user']['username'] ." )"; }
 				if($k == 0){ $str .= "\n"; } // - Creator
 				$str .= "\n";
 			}
