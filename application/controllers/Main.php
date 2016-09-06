@@ -2008,6 +2008,13 @@ class Main extends CI_Controller {
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/hipoglucidos.mp3");
 			exit();
+		}elseif($telegram->text_has(["tdfw", "turn down for what"])){
+			$this->analytics->event('Telegram', 'Jokes', 'Turn Down');
+			$files = ["tdfw_botella.mp3", "tdfw_turndown.mp3"];
+			$file = $files[mt_rand(0, count($files) - 1)];
+			$telegram->send->chat_action('upload_audio')->send();
+			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/$file");
+			exit();
 		}elseif($telegram->text_has(["es", "eres"], "tonto") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Tonto');
 			if($this->is_shutup()){ return; }
@@ -2080,6 +2087,40 @@ class Main extends CI_Controller {
 		}
 
 		// Mención de usuarios
+		if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
+			$touch = NULL;
+			if($telegram->has_reply){
+				$touch = $telegram->reply_user->id;
+			}elseif($telegram->text_mention()){
+				$touch = $telegram->text_mention();
+				if(is_array($touch)){ $touch = key($touch); }
+				else{ $touch = substr($touch, 1); }
+			}else{
+				$touch = $telegram->last_word(TRUE);
+				if(strlen($touch) < 4){ return; }
+			}
+			$name = (isset($telegram->user->username) ? "@" .$telegram->user->username : $telegram->user->first_name);
+
+			$usertouch = $pokemon->user($touch);
+			$req = FALSE;
+
+			if(!empty($usertouch)){
+				$req = $telegram->send
+					->notification(TRUE)
+					->chat($usertouch->telegramid)
+					->text("$name te ha tocado.")
+				->send();
+			}
+
+			$text = ($req ? $telegram->emoji(":green-check:") : $telegram->emoji(":times:"));
+			$telegram->send
+				->chat($telegram->user->id)
+				->notification(!$req)
+				->text($text)
+			->send();
+			exit();
+		}
+
 		if(
 			(
 				($telegram->text_contains("@") && !$telegram->text_contains("@ ")) or
@@ -2137,36 +2178,6 @@ class Main extends CI_Controller {
 					}
 				}
 			}
-		}
-
-		if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
-			$touch = NULL;
-			if($telegram->has_reply){
-				$touch = $telegram->reply_user->id;
-			}elseif($telegram->text_mention()){
-				$touch = $telegram->text_mention();
-				if(is_array($touch)){ $touch = key($touch); }
-				else{ $touch = substr($touch, 1); }
-			}
-			$name = (isset($telegram->user->username) ? "@" .$telegram->user->username : $telegram->user->first_name);
-
-			$usertouch = $pokemon->user($touch);
-			$req = FALSE;
-
-			if(!empty($usertouch)){
-				$req = $telegram->send
-					->notification(TRUE)
-					->chat($usertouch->telegramid)
-					->text("$name te ha tocado.")
-				->send();
-			}
-
-			$text = ($req ? $telegram->emoji(":green-check:") : $telegram->emoji(":times:"));
-			$telegram->send
-				->chat($telegram->user->id)
-				->notification(!$req)
-				->text($text)
-			->send();
 		}
 
 		if($telegram->text_has(["invertir", "invertir ubicación", "reverse"]) && $telegram->words() <= 5 && $telegram->has_reply && isset($telegram->reply->location)){
