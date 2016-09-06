@@ -1906,6 +1906,14 @@ class Main extends CI_Controller {
 			$text = substr($telegram->text(), strlen("/me "));
 			if(strpos($text, "/") !== FALSE){ exit(); }
 			$joke = trim("*" .$telegram->user->first_name ."* " .$telegram->emoji($text));
+		}elseif($telegram->text_has("strtolower", TRUE) or $telegram->text_command("strtolower")){
+			$text = ($telegram->has_reply && isset($telegram->reply->text) ? $telegram->reply->text : $telegram->text());
+			$text = strtolower($text);
+			$telegram->send
+				->notification(FALSE)
+				->text($text)
+			->send();
+			exit();
 		}elseif(
 			( $telegram->text_has(["necesitas", "necesitáis"], ["novio", "un novio", "novia", "una novia", "pareja", "una pareja", "follar"]) ) or
 			( $telegram->text_has("Tengo", TRUE) && $telegram->words() == 2)
@@ -2003,6 +2011,7 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_has(["es", "eres"], "tonto") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Tonto');
 			if($this->is_shutup()){ return; }
+			$telegram->send->chat_action('record_audio')->send();
 			if($telegram->has_reply){ $telegram->send->reply_to(FALSE); }
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/tonto.ogg");
 			exit();
@@ -2103,7 +2112,7 @@ class Main extends CI_Controller {
 					// Preparar datos - Link del chat
 					$link = $pokemon->settings($telegram->chat->id, 'link_chat');
 					if(!empty($link)){
-						if($link[0] == "@"){ $link = "https://telegram.me/" .substr($link, 1); }
+						if($link[0] == "@"){ $link = "https://telegram.me/" .substr($link, 1) ."/" .$telegram->message; }
 						else{ $link = "https://telegram.me/joinchat/" .$link; }
 					}
 					// Preparar datos - Nombre de quien escribe
@@ -2155,7 +2164,7 @@ class Main extends CI_Controller {
 			$text = ($req ? $telegram->emoji(":green-check:") : $telegram->emoji(":times:"));
 			$telegram->send
 				->chat($telegram->user->id)
-				->notification(FALSE)
+				->notification(!$req)
 				->text($text)
 			->send();
 		}
