@@ -69,6 +69,74 @@ class __Module_Telegram_Keyboard_Row extends CI_Model{
 	}
 }
 
+class __Module_Telegram_InlineKeyboard extends CI_Model{
+	private $rows;
+	private $config;
+
+	function __construct(){
+		parent::__construct();
+		$this->selective(FALSE);
+	}
+
+	function row(){ return new __Module_Telegram_InlineKeyboard_Row(); }
+	function row_button($text, $request = NULL, $switch = FALSE){ return $this->row()->button($text, $request)->end_row(); }
+
+	function push($data){
+		if(!is_array($data)){ return FALSE; }
+		$this->rows[] = $data;
+		return $this;
+	}
+
+	function selective($val = TRUE){
+		$this->config['selective'] = $val;
+		return $this;
+	}
+
+	function show($one_time = FALSE, $resize = FALSE){
+		$this->telegram->send->_push('reply_markup', [
+			'keyboard' => $this->rows,
+			'resize_keyboard' => $resize,
+			'one_time_keyboard' => $one_time,
+			'selective' => $this->config['selective']
+		]);
+		$this->_reset();
+		return $this->telegram->send;
+	}
+
+	function hide($sel = FALSE){
+		if($sel === TRUE){ $this->selective(TRUE); }
+		$this->telegram->send->_push('reply_markup', [
+			'hide_keyboard' => TRUE,
+			'selective' => $this->config['selective']
+		]);
+		$this->_reset();
+		return $this->telegram->send;
+	}
+
+	function _reset(){
+		$this->rows = array();
+		return $this;
+	}
+}
+
+class __Module_Telegram_InlineKeyboard_Row extends CI_Model{
+	private $buttons;
+	function button($text, $request = NULL, $switch = FALSE){
+		$data = array();
+		$data['text'] = $text;
+		if(filter_var($request, FILTER_VALIDATE_URL) !== FALSE){ $data['url'] = $request; }
+		elseif($switch === TRUE){ $data['switch_inline_query'] = $request; }
+		elseif($switch === FALSE){ $data['callback_data'] = $request; }
+		$this->buttons[] = $data;
+		return $this;
+	}
+	function end_row(){
+		var_dump($this->buttons);
+		$this->telegram->send->keyboard()->push($this->buttons);
+		return $this->telegram->send->keyboard();
+	}
+}
+
 class __Module_Telegram_Sender extends CI_Model{
 	private $content = array();
 	private $method = NULL;
@@ -194,7 +262,10 @@ class __Module_Telegram_Sender extends CI_Model{
 
 	function reply_to($message_id = NULL){
 		if($message_id === TRUE or ($message_id === FALSE && !$this->telegram->has_reply)){ $message_id = $this->telegram->message; }
-		elseif($message_id === FALSE && $this->telegram->has_reply){ $message_id = $this->telegram->reply->message_id; }
+		elseif($message_id === FALSE){
+			if(!$this->telegram->has_reply){ return; }
+			$message_id = $this->telegram->reply->message_id;
+		}
 		$this->content['reply_to_message_id'] = $message_id;
 		return $this;
 	}
@@ -680,6 +751,7 @@ class Telegram extends CI_Model{
 	}
 
 	function location($object = TRUE){
+		if(!isset($this->data['message']['location'])){ return FALSE; }
 		$loc = $this->data['message']['location'];
 		if(empty($loc)){ return FALSE; }
 		if($object == TRUE){ return (object) $loc; }
@@ -734,6 +806,8 @@ class Telegram extends CI_Model{
 			'pin' => "\ud83d\udccd",
 			'home' => "\ud83c\udfda",
 			'map' => "\ud83d\uddfa",
+			'candy' => "\ud83c\udf6c",
+			'spiral' => "\ud83c\udf00",
 
 			'forbid' => "\u26d4\ufe0f",
 			'times' => "\u274c",
@@ -804,6 +878,8 @@ class Telegram extends CI_Model{
 			'pin' => [':pin:'],
 			'home' => [':home:'],
 			'map' => [':map:'],
+			'candy' => [':candy:'],
+			'spiral' => [':spiral:'],
 			'green-check' => [':ok:', ':green-check:'],
 			'warning' => [':warning:'],
 			'exclamation-red' => [':exclamation-red:'],

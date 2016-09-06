@@ -1,16 +1,9 @@
 <?php
-
 class Pokemon extends CI_Model{
 
-	function log($user, $action, $target = NULL){
-		$this->db
-			->set('user', $user)
-			->set('target', $target)
-			->set('action', $action)
-		->insert('logs');
-
-		return $this->db->insert_id();
-	}
+	// --------------------------------
+	//   Funciones de usuario
+	// --------------------------------
 
 	function user($user){
 		$query = $this->db
@@ -21,8 +14,7 @@ class Pokemon extends CI_Model{
 			->group_end()
 			->where('anonymous', FALSE)
 		->get('user');
-		if($query->num_rows() == 1){ return $query->row(); }
-		return array();
+		return ($query->num_rows() == 1 ? $query->row() : NULL);
 	}
 
 	function user_verified($user){
@@ -56,6 +48,31 @@ class Pokemon extends CI_Model{
 			return ($retid == TRUE ? $query->row()->telegramid : TRUE);
 		}
 		return FALSE;
+	}
+
+	function get_users($team = TRUE, $alldata = FALSE){
+		if($team !== TRUE){
+			$this->db->where_in('team', $team);
+		}
+
+		$query = $this->db->get('user');
+		if($query->num_rows() > 0){
+			if($alldata){
+				return $query->result_array();
+			}else{
+				return array_column($query->result_array(), 'telegramid');
+			}
+		}
+	}
+
+	function find_users($array){
+		$query = $this->db
+			->where_in('username', $array)
+			->or_where_in('telegramid', $array)
+			->or_where_in('telegramuser', $array)
+		->get('user');
+
+		return ($query->num_rows() > 0 ? $query->result_array() : array());
 	}
 
 	function user_flags($user, $flag = NULL, $set = NULL){
@@ -96,20 +113,6 @@ class Pokemon extends CI_Model{
 		}
 	}
 
-	function find_users($array){
-		$query = $this->db
-			->where_in('username', $array)
-			->or_where_in('telegramid', $array)
-			->or_where_in('telegramuser', $array)
-		->get('user');
-
-		if($query->num_rows() > 0){
-			return $query->result_array();
-		}else{
-			return array();
-		}
-	}
-
 	function verify_user($validator, $target){
 		$validator = $this->user($validator);
 		$target = $this->user($target);
@@ -120,6 +123,16 @@ class Pokemon extends CI_Model{
 		$this->log($validator->telegramid, 'verify', $target->telegramid);
 
 		return TRUE;
+	}
+
+	function team($user){
+		$query = $this->db
+			->select('team')
+			->or_where('telegramid', $user)
+			->or_where('username', $user)
+			->or_where('email', $user)
+		->get('user');
+		return ($query->num_rows() == 1 ? $query->row()->team : FALSE);
 	}
 
 	function team_text($text){
@@ -135,6 +148,16 @@ class Pokemon extends CI_Model{
 
 		if(strlen($text) != 1){ return FALSE; }
 		return $text;
+	}
+
+	function log($user, $action, $target = NULL){
+		$this->db
+			->set('user', $user)
+			->set('target', $target)
+			->set('action', $action)
+		->insert('logs');
+
+		return $this->db->insert_id();
 	}
 
 	function register($telegramid, $team){
@@ -169,73 +192,6 @@ class Pokemon extends CI_Model{
 			->update('user');
 			return $this;
 		}
-	}
-
-	function location_name($name){
-		$query = $this->db
-			->from('locations')
-			->where('id = (SELECT locid FROM locations_name WHERE name = "' .$name .'")', NULL, FALSE)
-		->get();
-		return ($query->num_rows() == 1 ? $this->parse_location($query->row()) : NULL );
-	}
-
-	function location_zipcode($zipcode){
-		$query = $this->db
-			->where('zipcode', $zipcode)
-		->get('locations');
-		return ($query->num_rows() == 1 ? $this->parse_location($query->row()) : NULL);
-	}
-
-	function location_distance($locA, $locB, $locC = NULL, $locD = NULL){
-		$earth = 6371000;
-		if($locC !== NULL && $locD !== NULL){
-			$locA = [$locA, $locB];
-			$locB = [$locC, $locD];
-		}
-		$locA[0] = deg2rad($locA[0]);
-		$locA[1] = deg2rad($locA[1]);
-		$locB[0] = deg2rad($locB[0]);
-		$locB[1] = deg2rad($locB[1]);
-
-		$latD = $locB[0] - $locA[0];
-		$lonD = $locB[1] - $locA[1];
-
-		$angle = 2 * asin(sqrt(pow(sin($latD / 2), 2) + cos($locA[0]) * cos($locB[0]) * pow(sin($lonD / 2), 2)));
-		return ($angle * $earth);
-
-		// SELECT lat, lng, ASIN( SQRT(POW(SIN((RADIANS(X) - RADIANS(lat)) / 2), 2) + COS(RADIANS(lat)) * COS(RADIANS(X)) * POW(SIN((RADIANS(Y) - RADIANS(lng)) / 2), 2) )) * 2 * 6371000 AS distancia FROM pokemon_spawns ORDER BY distancia;
-	}
-
-	function spawn_near($location, $radius = 500, $limit = 10, $pokemon = NULL){
-		if(!is_array($location) or count($location) != 2){ return FALSE; }
-		$sql_dist = "ASIN(SQRT(POW(SIN((RADIANS($location[0]) - RADIANS(lat)) / 2), 2) + COS(RADIANS(lat)) * COS(RADIANS($location[0])) * POW(SIN((RADIANS($location[1]) - RADIANS(lng)) / 2), 2) )) * 2 * 6371000";
-		$query = $this->db
-			->select(['*', "$sql_dist AS distance"])
-			->where("($sql_dist) <=", $radius)
-			->where_in('pokemon', $pokemon)
-			->limit($limit)
-			->order_by("$sql_dist", 'ASC', FALSE)
-			// ->order_by('last_seen', 'DESC')
-			->order_by('id', 'DESC')
-			->group_by('pokemon')
-		->get('pokemon_spawns');
-		if($query->num_rows() > 0){ return $query->result_array(); }
-		return array();
-	}
-
-	function parse_location($row){
-		$row->location = new Location($row->latitude, $row->longitude);
-		return $row;
-	}
-
-	function team($user){
-		$query = $this->db
-			->select('team')
-			->or_where('telegramid', $user)
-			->or_where('username', $user)
-			->or_where('email', $user)
-		->get('user');
-		return ($query->num_rows() == 1 ? $query->row()->team : FALSE);
 	}
 
 	function settings($user, $key, $value = NULL){
@@ -290,21 +246,6 @@ class Pokemon extends CI_Model{
 		}
 	}
 
-	function create($telegram, $phone = NULL){
-		$data = [
-			'telegramid' => $telegram,
-			'valid' => FALSE,
-			'step' => 'REGISTER_NEW'
-		];
-		$this->db->insert('user');
-		$id = $this->db->insert_id();
-		if($phone !== NULL){
-			$this->settings($telegram, 'phone', $phone);
-		}
-
-		return $id;
-	}
-
 	function update_user_data($telegram, $key, $value){
 		return $this->db
 			->set($key, $value)
@@ -312,40 +253,44 @@ class Pokemon extends CI_Model{
 		->update('user');
 	}
 
-	// ---------------------
+	// --------------------------------
+	//   Funciones de Grupos
+	// --------------------------------
 
-	function attack_types(){
-		$query = $this->db->get('pokedex_types');
-		if($query->num_rows() > 0){
-			return array_column($query->result_array(), 'name_es', 'id');
-		}else{
-			return array();
-		}
-	}
-
-	function attack_type($search = NULL){
-		if($search !== NULL){
-			$this->db->where('id', $search)
-			->or_where('type', $search)
-			->or_where('name_es', $search);
-		}
-		$query = $this->db->get('pokedex_types');
-		if($query->num_rows() > 0){
-			if($query->num_rows() == 1){ return $query->row_array(); }
-			return $query->result_array();
-		}else{
-			return FALSE;
-		}
-	}
-
-	function attack_table($attackid){
+	function group($id){
 		$query = $this->db
-			->where('source', $attackid)
-			->or_where('target', $attackid)
-		->get('pokedex_attack');
-		if($query->num_rows() > 0){ return $query->result_array(); }
-		return NULL;
+			->where('id', $id)
+			->limit(1)
+		->get('chats');
+		if($query->num_rows() == 1){ return $query->row(); }
 	}
+
+	function get_groups($shownames = FALSE){
+		$query = $this->db
+			->where_in('type', ['group', 'supergroup'])
+			->where('active', TRUE)
+			->order_by('last_date', 'DESC')
+		->get('chats');
+		if($query->num_rows() > 0){
+			if($shownames){
+				return array_column($query->result_array(), 'title', 'id');
+			}else{
+				return array_column($query->result_array(), 'id');
+			}
+		}
+	}
+
+	function group_disable($id, $stat = TRUE){
+		$query = $this->db
+			->where('id', $id)
+			->set('active', !$stat)
+		->update('chats');
+		return $query;
+	}
+
+	// --------------------------------
+	//   Funciones de Datos Pokemon
+	// --------------------------------
 
 	function find($search){
 		$query = $this->db
@@ -372,6 +317,94 @@ class Pokemon extends CI_Model{
 			}
 			return $pokedex;
 		}
+	}
+
+	function evolution($search, $retval = TRUE){
+		if(!is_array($search)){ $search = [$search]; }
+		$query = $this->db
+			->where_in('id', $search)
+			->or_where_in('evolved_from', $search)
+			->or_where_in('evolves_to', $search)
+			->order_by('id', 'ASC')
+		->get('pokedex');
+		if($query->num_rows() > count($search)){
+			$pks = array_column($query->result_array(), 'id');
+			return $this->evolution($pks, $retval);
+		}else{
+			// CASO del Eevee, CUIDADO!
+			foreach($query->result_array() as $p){ $pks[$p['id']] = $p; }
+			$full = array();
+			$full = $pks;
+			foreach($pks as $p){
+				if($p['evolves_to'] != NULL){ $full[$p['id']]['evolves_to'] = $pks[$p['evolves_to']]; }
+				if($p['evolved_from'] != NULL){ $full[$p['id']]['evolved_from'] = $pks[$p['evolved_from']]; }
+			}
+			return $full;
+		}
+	}
+
+	function misspell($text){
+		$orig = $text;
+		if(!is_array($text)){ $text = explode(" ", $text); }
+		$pokedex = $this->pokedex();
+		$query = $this->db
+			->select(['LOWER(word) AS word', 'pokedex.name'])
+			->from('pokemon_misspell')
+			->join('pokedex', 'pokemon_misspell.pokemon = pokedex.id')
+			->where_in('word', $text)
+		->get();
+		if($query->num_rows() == 0){ return $orig; }
+		$rep = array_column($query->result_array(), 'word', 'name');
+		foreach($text as $k => $w){
+			$q = array_search(strtolower($w), $rep);
+			if($q !== FALSE){ $this->misspell_count($w); $text[$k] = $q; }
+		}
+		return implode(" ", $text);
+	}
+
+	function misspell_count($word, $return = FALSE){
+		if($return){
+			$query = $this->db
+				->where('word', $word)
+				->or_where('id', $word)
+			->get('pokemon_misspell');
+			if($query->num_rows() == 1){ return $query->row()->visits; }
+			return 0;
+		}
+		return $this->db
+			->set('visits', 'visits+1', FALSE)
+			->where('word', $word)
+			->or_where('id', $word)
+		->update('pokemon_misspell');
+	}
+
+	function attack_types(){
+		$query = $this->db->get('pokedex_types');
+		return ($query->num_rows() > 0 ? array_column($query->result_array(), 'name_es', 'id') : array());
+	}
+
+	function attack_type($search = NULL){
+		if($search !== NULL){
+			$this->db->where('id', $search)
+			->or_where('type', $search)
+			->or_where('name_es', $search);
+		}
+		$query = $this->db->get('pokedex_types');
+		if($query->num_rows() > 0){
+			if($query->num_rows() == 1){ return $query->row_array(); }
+			return $query->result_array();
+		}else{
+			return FALSE;
+		}
+	}
+
+	function attack_table($attackid){
+		$query = $this->db
+			->where('source', $attackid)
+			->or_where('target', $attackid)
+		->get('pokedex_attack');
+		if($query->num_rows() > 0){ return $query->result_array(); }
+		return NULL;
 	}
 
 	function level($level = NULL){
@@ -434,89 +467,6 @@ class Pokemon extends CI_Model{
 		}
 	}
 
-	function add_found($poke, $user, $lat, $lng){
-		$data = [
-			'pokemon' => $poke,
-			'user' => $user,
-			'lat' => $lat,
-			'lng' => $lng,
-			'register_date' => date("Y-m-d H:i:s"),
-			'points' => 0,
-		];
-		$this->db->insert('pokemon_spawns', $data);
-		return $this->db->insert_id();
-	}
-
-	function evolution($search, $retval = TRUE){
-		if(!is_array($search)){ $search = [$search]; }
-		$query = $this->db
-			->where_in('id', $search)
-			->or_where_in('evolved_from', $search)
-			->or_where_in('evolves_to', $search)
-			->order_by('id', 'ASC')
-		->get('pokedex');
-		if($query->num_rows() > count($search)){
-			$pks = array_column($query->result_array(), 'id');
-			return $this->evolution($pks, $retval);
-		}else{
-			// CASO del Eevee, CUIDADO!
-			foreach($query->result_array() as $p){ $pks[$p['id']] = $p; }
-			$full = array();
-			$full = $pks;
-			foreach($pks as $p){
-				if($p['evolves_to'] != NULL){ $full[$p['id']]['evolves_to'] = $pks[$p['evolves_to']]; }
-				if($p['evolved_from'] != NULL){ $full[$p['id']]['evolved_from'] = $pks[$p['evolved_from']]; }
-			}
-			return $full;
-		}
-	}
-
-	function get_groups($shownames = FALSE){
-		$query = $this->db
-			->where_in('type', ['group', 'supergroup'])
-			->where('active', TRUE)
-			->order_by('last_date', 'DESC')
-		->get('chats');
-		if($query->num_rows() > 0){
-			if($shownames){
-				return array_column($query->result_array(), 'title', 'id');
-			}else{
-				return array_column($query->result_array(), 'id');
-			}
-		}
-	}
-
-	function group($id){
-		$query = $this->db
-			->where('id', $id)
-			->limit(1)
-		->get('chats');
-		if($query->num_rows() == 1){ return $query->row(); }
-	}
-
-	function group_disable($id, $stat = TRUE){
-		$query = $this->db
-			->where('id', $id)
-			->set('active', !$stat)
-		->update('chats');
-		return $query;
-	}
-
-	function get_users($team = TRUE, $alldata = FALSE){
-		if($team !== TRUE){
-			$this->db->where_in('team', $team);
-		}
-
-		$query = $this->db->get('user');
-		if($query->num_rows() > 0){
-			if($alldata){
-				return $query->result_array();
-			}else{
-				return array_column($query->result_array(), 'telegramid');
-			}
-		}
-	}
-
 	function trainer_rewards($find){
 		if(is_numeric($find)){ $this->db->where('lvl', $find); }
 		elseif(is_string($find)){ $this->db->where('item', $find); }
@@ -533,6 +483,156 @@ class Pokemon extends CI_Model{
 		if($query->num_rows() > 0){ return array_column($query->result_array(), 'display', 'name'); }
 		return array();
 	}
+
+	// --------------------------------
+	//   Funciones de Ubicación Pokemon
+	// --------------------------------
+
+	function add_found($poke, $user, $lat, $lng){
+		$data = [
+			'pokemon' => $poke,
+			'user' => $user,
+			'lat' => $lat,
+			'lng' => $lng,
+			'register_date' => date("Y-m-d H:i:s"),
+			'points' => 0,
+		];
+		$this->db->insert('pokemon_spawns', $data);
+		return $this->db->insert_id();
+	}
+
+	function location_distance($locA, $locB, $locC = NULL, $locD = NULL){
+		$earth = 6371000;
+		if($locC !== NULL && $locD !== NULL){
+			$locA = [$locA, $locB];
+			$locB = [$locC, $locD];
+		}
+		$locA[0] = deg2rad($locA[0]);
+		$locA[1] = deg2rad($locA[1]);
+		$locB[0] = deg2rad($locB[0]);
+		$locB[1] = deg2rad($locB[1]);
+
+		$latD = $locB[0] - $locA[0];
+		$lonD = $locB[1] - $locA[1];
+
+		$angle = 2 * asin(sqrt(pow(sin($latD / 2), 2) + cos($locA[0]) * cos($locB[0]) * pow(sin($lonD / 2), 2)));
+		return ($angle * $earth);
+	}
+
+	function location_add($locA, $locB, $amount = NULL, $direction = NULL){
+		// if(is_object($locA)){ $locA = [$locA->latitude, $locA->longitude]; }
+		if(!is_array($locA) && $direction === NULL){ return FALSE; }
+		if(!is_array($locA)){ $locA = [$locA, $locB]; }
+		// si se rellenan 3 y direction es NULL, entonces locA es array.
+		if(is_numeric($locB) && $amount !== NULL && $direction === NULL){
+			$direction = $amount;
+			$amount = $locB;
+		}
+		$direction = strtoupper($direction);
+		$steps = [
+			'N' => ['NORTE', 'NORTH', 'N', 'UP'],
+			'NW' => ['NOROESTE', 'NORTHWEST', 'NW', 'UP_LEFT'],
+			'NE' => ['NORESTE', 'NORTHEAST', 'NE', 'UP_RIGHT'],
+			'S' => ['SUD', 'SOUTH', 'S', 'DOWN'],
+			'SW' => ['SUDOESTE', 'SOUTHWEST', 'SW', 'DOWN_LEFT'],
+			'SE' => ['SUDESTE', 'SOUTHEAST', 'SE', 'DOWN_RIGHT'],
+			'W' => ['OESTE', 'WEST', 'W', 'O', 'LEFT'],
+			'E' => ['ESTE', 'EAST', 'E', 'RIGHT']
+		];
+		foreach($steps as $s => $k){ if(in_array($direction, $k)){ $direction = $s; break; } } // Buscar y asociar dirección
+		$earth = (40075 / 360 * 1000);
+
+		if($direction == 'N'){ $locA[0] = $locA[0] + ($amount / $earth); }
+		elseif($direction == 'S'){ $locA[0] = $locA[0] - ($amount / $earth); }
+		elseif($direction == 'W'){ $locA[1] = $locA[1] - ($amount / $earth); }
+		elseif($direction == 'E'){ $locA[1] = $locA[1] + ($amount / $earth); }
+		elseif($direction == 'NW'){
+			$locA[0] = $locA[0] + ($amount / $earth); // N
+			$locA[1] = $locA[1] - ($amount / $earth); // W
+		}elseif($direction == 'NE'){
+			$locA[0] = $locA[0] + ($amount / $earth); // N
+			$locA[1] = $locA[1] + ($amount / $earth); // E
+		}elseif($direction == 'SW'){
+			$locA[0] = $locA[0] - ($amount / $earth); // S
+			$locA[1] = $locA[1] - ($amount / $earth); // W
+		}elseif($direction == 'SE'){
+			$locA[0] = $locA[0] - ($amount / $earth); // S
+			$locA[1] = $locA[1] + ($amount / $earth); // E
+		}
+
+		return $locA;
+	}
+
+	function pokecrew($location, $radius = 3000, $limit = 10, $pokemon = NULL){
+		$n = ($radius / 3);
+		$rhor = ($n * 2);
+		$rver = ($n * 1);
+		$locNE = $this->location_add($location, $rhor, 'RIGHT');
+		$locNE = $this->location_add($locNE, $rver, 'UP');
+		$locSW = $this->location_add($location, $rhor, 'LEFT');
+		$locSW = $this->location_add($locSW, $rver, 'DOWN');
+
+		$data = [
+			'center_latitude' => $location[0],
+			'center_longitude' => $location[1],
+			'live' => 'false',
+			'minimal' => 'true',
+			'northeast_latitude' => $locNE[0],
+			'northeast_longitude' => $locNE[1],
+			'pokemon_id' => $pokemon,
+			'southwest_latitude' => $locSW[0],
+			'southwest_longitude' => $locSW[1],
+		];
+		$url = "https://api.pokecrew.com/api/v1/seens";
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, ($url ."?" .http_build_query($data)) );
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		$json = curl_exec($ch);
+		curl_close($ch);
+		// $json = file_get_contents($url ."?" .http_build_query($data));
+		$json = json_decode($json, TRUE);
+		if(count($json['seens']) == 0){ return array(); }
+		$seens = array(); // Lista completa
+		$pokes = array(); // ID de Pokemon (para evitar duplicados)
+		foreach($json['seens'] as $pk){
+			if(in_array($pk['pokemon_id'], $pokes)){ continue; } // Un Pokemon por ubicación
+			if(count($seens) >= $limit){ break; } // Limitar
+			if(!empty($pokemon) && $pokemon != $pk['pokemon_id']){ continue; }
+			if(!empty($pokemon) && count($seens) == 1){ break; } // HACK Están ordenados por más reciente, asi que me quedo sólo con el primero.
+			$locpk = [$pk['latitude'], $pk['longitude']];
+			$seens[] = [
+				'id' => $pk['id'],
+				'lat' => $pk['latitude'],
+				'lng' => $pk['longitude'],
+				'pokemon' => $pk['pokemon_id'],
+				'last_seen' => $pk['expires_at'],
+				'points' => ($pk['upvote_count'] - $pk['downvote_count'] - 1),
+				'distance' => $this->location_distance($location, $locpk),
+			];
+		}
+		return $seens;
+	}
+
+	function spawn_near($location, $radius = 500, $limit = 10, $pokemon = NULL){
+		if(!is_array($location) or count($location) != 2){ return FALSE; }
+		$sql_dist = "ASIN(SQRT(POW(SIN((RADIANS($location[0]) - RADIANS(lat)) / 2), 2) + COS(RADIANS(lat)) * COS(RADIANS($location[0])) * "
+					."POW(SIN((RADIANS($location[1]) - RADIANS(lng)) / 2), 2) )) * 2 * 6371000";
+		$query = $this->db
+			->select(['*', "$sql_dist AS distance"])
+			->where("($sql_dist) <=", $radius)
+			->where_in('pokemon', $pokemon)
+			->limit($limit)
+			->order_by($sql_dist, 'ASC', FALSE)
+			// ->order_by('last_seen', 'DESC')
+			->order_by('id', 'DESC')
+			->group_by('pokemon')
+		->get('pokemon_spawns');
+		return ($query->num_rows() > 0 ? $query->result_array() : array());
+	}
+
+	// --------------------------------
+	//   Funciones de información general
+	// --------------------------------
 
 	function link($text, $count = FALSE, $table = 'links'){
 		if(strtolower($text) != "all" && $text !== TRUE){
@@ -565,17 +665,32 @@ class Pokemon extends CI_Model{
 		return $this->link($text, $count, 'public_groups');
 	}
 
+	function joke($full = FALSE, $random = TRUE, $type = NULL){
+		if(is_numeric($random)){ $this->db->where('id', $random); }
+		if($type !== NULL){
+			if(!is_array($type)){ $type = [$type]; }
+			$this->db->where_in('type', $type);
+		}
+		$query = $this->db
+			->limit(1)
+			->order_by('RAND()')
+		->get('jokes');
+		if($query->num_rows() == 0){ return NULL; }
+		$ret = $query->row();
+		$this->db
+			->where('id', $ret->id)
+			->set('visits', 'visits+1', FALSE)
+		->update('jokes');
+		return ($full ? $ret : $ret->joke);
+	}
+
     function count_teams(){
         $query = $this->db
             ->select(['team', 'count(*) AS count'])
             ->where_in('team', ['R','B','Y'])
             ->group_by('team')
         ->get('user');
-        if($query->num_rows() > 0){
-            return array_column($query->result_array(), 'count', 'team');
-        }else{
-            return array();
-        }
+		return ($query->num_rows() > 0 ? array_column($query->result_array(), 'count', 'team') : array());
     }
 
 } ?>
