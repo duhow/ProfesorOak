@@ -1995,6 +1995,11 @@ class Main extends CI_Controller {
 			$telegram->send->chat_action('upload_video')->send();
 			$telegram->send->notification(FALSE)->file('document', FCPATH ."files/whip.gif");
 			exit();
+		}elseif($telegram->text_has(["guerra", "callaos", "callaros"]) and $telegram->words() <= 6){
+			$this->analytics->event('Telegram', 'Jokes', 'Callaos Hipoglúcidos');
+			$telegram->send->chat_action('record_audio')->send();
+			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/hipoglucidos.mp3");
+			exit();
 		}elseif($telegram->text_has(["es", "eres"], "tonto") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Tonto');
 			if($this->is_shutup()){ return; }
