@@ -1510,7 +1510,7 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_has(["mapa", "página"]) && $telegram->text_has(["pokémon", "ciudad"]) && !$telegram->text_contains(["evoluci", "IV", "calcul"])){
 			$this->analytics->event('Telegram', 'Map Pokemon');
 			$help = "https://goo.gl/GZb5hd";
-		}elseif($telegram->text_has(["evee"]) && !$telegram->text_has("eevee")){
+		}elseif($telegram->text_has(["evee", "evve"]) && !$telegram->text_has("eevee")){
 			$help = "Se dice *Eevee*... ¬¬";
 		}elseif($telegram->text_has(["cómo"]) && $telegram->text_has(["conseguir", "consigue"]) && $telegram->text_contains(["objeto", "incienso", "cebo", "huevo"])){
 			$help = "En principio si vas a las PokeParadas y tienes suerte, también deberías de poder conseguirlos.";
@@ -1980,10 +1980,20 @@ class Main extends CI_Controller {
 			$telegram->send->chat_action('upload_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/te_necesito.ogg");
 			exit();
-		}elseif($telegram->text_has(["soy", "luke"]) or $telegram->text_has(["tu padre", "papa"])){
+		}elseif($telegram->text_has(["soy", "luke"]) and $telegram->text_has(["tu padre", "papa"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Yo soy tu padre');
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/luke_padre.ogg");
+			exit();
+		}elseif($telegram->text_has(["subnor", "subnormal"]) and $telegram->text_has(["alerta", "detectado", "detected", "eres"])){
+			$this->analytics->event('Telegram', 'Jokes', 'Alerta por subnormal');
+			$telegram->send->chat_action('record_audio')->send();
+			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/alerta_subnormal.ogg");
+			exit();
+		}elseif($telegram->text_has(["saca", "dame"]) and $telegram->text_has("látigo")){
+			$this->analytics->event('Telegram', 'Jokes', 'Látigo');
+			$telegram->send->chat_action('upload_video')->send();
+			$telegram->send->notification(FALSE)->file('document', FCPATH ."files/whip.gif");
 			exit();
 		}elseif($telegram->text_has(["es", "eres"], "tonto") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Tonto');
