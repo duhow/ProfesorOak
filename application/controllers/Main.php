@@ -1494,6 +1494,7 @@ class Main extends CI_Controller {
 				$this->analytics->event('Telegram', 'Trainer Rewards', $num);
 				$rewards = $pokemon->trainer_rewards($num);
 				if(!empty($rewards)){
+					if($this->is_shutup()){ $telegram->send->chat($telegram->user->id); }
 					$help = "En el *nivel $num* conseguirás:\n\n";
 					foreach($rewards as $r){
 						$help .= "- " .str_pad($r['amount'], 2, "0", STR_PAD_LEFT) ."x " .$items[$r['item']] ."\n";
@@ -1947,7 +1948,7 @@ class Main extends CI_Controller {
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/john_cena.ogg");
 			exit();
-		}elseif($telegram->text_has(["soy", "eres"], ["100tifiko", "científico"])){
+		}elseif($telegram->text_has(["soy", "soi", "eres"], ["100tifiko", "científico"])){
 			$this->analytics->event('Telegram', 'Jokes', '100tifiko');
 			$telegram->send->notification(FALSE)->file('sticker', 'BQADBAADFgADPngvAtG9NS3VQEf5Ag');
 			exit();
@@ -1974,10 +1975,15 @@ class Main extends CI_Controller {
 			$telegram->send->chat_action('upload_audio')->send();
 			$telegram->send->notification(FALSE)->file('audio', FCPATH ."files/running.ogg");
 			exit();
-		}elseif($telegram->text_has("oak", "oak")){
+		}elseif($telegram->text_has("oak", "oak") or $telegram->text_has("toda", "toda")){
 			$this->analytics->event('Telegram', 'Jokes', 'Oak Oak');
 			$telegram->send->chat_action('upload_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/te_necesito.ogg");
+			exit();
+		}elseif($telegram->text_has(["soy", "luke"]) or $telegram->text_has(["tu padre", "papa"])){
+			$this->analytics->event('Telegram', 'Jokes', 'Yo soy tu padre');
+			$telegram->send->chat_action('record_audio')->send();
+			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/luke_padre.ogg");
 			exit();
 		}elseif($telegram->text_has(["es", "eres"], "tonto") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Tonto');
