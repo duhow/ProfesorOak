@@ -1974,6 +1974,11 @@ class Main extends CI_Controller {
 			$telegram->send->chat_action('upload_audio')->send();
 			$telegram->send->notification(FALSE)->file('audio', FCPATH ."files/running.ogg");
 			exit();
+		}elseif($telegram->text_has("oak", "oak")){
+			$this->analytics->event('Telegram', 'Jokes', 'Oak Oak');
+			$telegram->send->chat_action('upload_audio')->send();
+			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/te_necesito.ogg");
+			exit();
 		}elseif($telegram->text_has(["es", "eres"], "tonto") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Tonto');
 			if($this->is_shutup()){ return; }
