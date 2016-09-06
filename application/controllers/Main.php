@@ -159,7 +159,7 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_command(["pole", "subpole"])){
 			$this->analytics->event("Telegram", "Pole");
 			$pole = $pokemon->settings($telegram->chat->id, 'pole');
-			if($pole == FALSE){ return; }
+			if($pole != NULL && $pole == FALSE){ return; }
 
 			// Si está el Modo HARDCORE, la pole es cada hora. Si no, cada día.
 			$timer = ($pokemon->settings($telegram->chat->id, 'pole_hardcore') ? "H" : "d");
