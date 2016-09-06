@@ -1930,10 +1930,12 @@ class Main extends CI_Controller {
 			exit();
 		}elseif($telegram->text_has(["métemela", "por el culo", "por el ano"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Metemela');
+			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/metemela.ogg");
 			exit();
 		}elseif($telegram->text_has(["seguro", "plan"], "dental")){
 			$this->analytics->event('Telegram', 'Jokes', 'Seguro dental');
+			$telegram->send->chat_action('upload_video')->send();
 			$telegram->send->notification(FALSE)->file('video', FCPATH . "files/seguro_dental.mp4");
 			exit();
 		}elseif($telegram->text_has("no paras") && $telegram->words() < 10){
@@ -1942,6 +1944,7 @@ class Main extends CI_Controller {
 			exit();
 		}elseif($telegram->text_contains("JOHN CENA") && $telegram->words() < 10){
 			$this->analytics->event('Telegram', 'Jokes', 'John Cena');
+			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/john_cena.ogg");
 			exit();
 		}elseif($telegram->text_has(["soy", "eres"], ["100tifiko", "científico"])){
@@ -1950,10 +1953,12 @@ class Main extends CI_Controller {
 			exit();
 		}elseif($telegram->text_has(["hola", "buenas"], ["profesor", "oak"]) && $telegram->words() <= 4){
 			$this->analytics->event('Telegram', 'Jokes', 'Me gusta el dinero');
+			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/hola_dinero.ogg");
 			exit();
 		}elseif($telegram->text_has(["muéstrame", "mostrar"]) && $telegram->text_has(["pokebola", "pokeball"]) && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Muestrame tu Pokebola');
+			$telegram->send->chat_action('upload_audio')->send();
 			$telegram->send->notification(FALSE)->file('audio', FCPATH . "files/pokebola.mp3");
 			exit();
 		}elseif($telegram->text_has("/fichas")){
@@ -1963,6 +1968,11 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_has(["quiero", "necesito"], ["abrazo", "abrazarte", "un abrazo"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Hug');
 			$telegram->send->notification(FALSE)->file('document', FCPATH ."files/hug.gif");
+			exit();
+		}elseif($telegram->text_has("corre", "corre")){
+			$this->analytics->event('Telegram', 'Jokes', 'Running');
+			$telegram->send->chat_action('upload_audio')->send();
+			$telegram->send->notification(FALSE)->file('audio', FCPATH ."files/running.ogg");
 			exit();
 		}elseif($telegram->text_has(["es", "eres"], "tonto") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Tonto');
