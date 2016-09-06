@@ -2140,12 +2140,14 @@ class Main extends CI_Controller {
 			foreach($users as $k => $u){ if(in_array($u, $self)){ unset($users[$k]); } }
 
 			if(!empty($users)){
+				$admins = FALSE;
 				if(in_array("admin", $users)){
 					// FIXME Cambiar function get_admins por la integrada + array merge
 					$admins = $telegram->send->get_admins();
 					if(!empty($admins)){
 						foreach($admins as $a){	$users[] = $a['user']['id']; }
 					}
+					$admins = TRUE;
 				}
 				$find = $pokemon->find_users($users);
 				if(!empty($find)){
@@ -2159,6 +2161,7 @@ class Main extends CI_Controller {
 					// Preparar datos - Nombre de quien escribe
 					$name = (isset($telegram->user->username) ? "@" .$telegram->user->username : $telegram->user->first_name);
 
+					$resfin = FALSE;
 					foreach($find as $u){
 						// Valida que el entrenador esté en el grupo
 						$chat = $telegram->send->get_member_info($u['telegramid'], $telegram->chat->id);
@@ -2168,13 +2171,22 @@ class Main extends CI_Controller {
 							else{ $str .= "<b>" .$telegram->chat->title ."</b>:\n"; }
 							$str .= $telegram->text();
 
-							$telegram->send
+							$res = $telegram->send
 								->chat($u['telegramid'])
 								->notification(TRUE)
 								->disable_web_page_preview(TRUE)
 								->text($str, 'HTML')
 							->send();
+							if($res != FALSE){ $resfin = TRUE; }
 						}
+					}
+
+					if($admins && $resfin === FALSE){
+						$telegram->send
+							->chat($telegram->chat->id)
+							->notification(TRUE)
+							->text("No puedo avisar a los @admin, no me han iniciado :(")
+						->send();
 					}
 				}
 			}
