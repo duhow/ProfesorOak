@@ -181,19 +181,19 @@ class Main extends CI_Controller {
 				$pole = [time(), NULL, NULL];
 				$pole_user = [$telegram->user->id, NULL, NULL];
 				$action = "la *pole*";
-				if($pkuser){ $pokemon->update_user_data($pkuser->telegramid, 'pole', ($pkuser->pole + 3)); }
+				if($pkuser && $timer == "d"){ $pokemon->update_user_data($pkuser->telegramid, 'pole', ($pkuser->pole + 3)); }
 			}elseif($telegram->text_has("subpole", TRUE) and date($timer) == date($timer, $pole[0]) and $pole_user[1] == NULL){
 				if(in_array($telegram->user->id, $pole_user)){ return; } // Si ya ha hecho pole, nope.
 				$pole[1] = time();
 				$pole_user[1] = $telegram->user->id;
 				$action = "la *subpole*";
-				if($pkuser){ $pokemon->update_user_data($pkuser->telegramid, 'pole', ($pkuser->pole + 2)); }
+				if($pkuser && $timer == "d"){ $pokemon->update_user_data($pkuser->telegramid, 'pole', ($pkuser->pole + 2)); }
 			}elseif($telegram->text_has("bronce", TRUE) and date($timer) == date($timer, $pole[0]) and $pole_user[1] != NULL and $pole_user[2] == NULL){
 				if(in_array($telegram->user->id, $pole_user)){ return; } // Si ya ha hecho sub/pole, nope.
 				$pole[2] = time();
 				$pole_user[2] = $telegram->user->id;
 				$action = "el *bronce*";
-				if($pkuser){ $pokemon->update_user_data($pkuser->telegramid, 'pole', ($pkuser->pole + 1)); }
+				if($pkuser && $timer == "d"){ $pokemon->update_user_data($pkuser->telegramid, 'pole', ($pkuser->pole + 1)); }
 			}else{
 				exit();
 			}
