@@ -2090,6 +2090,36 @@ class Main extends CI_Controller {
 			}
 		}
 
+		if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
+			$touch = NULL;
+			if($telegram->has_reply){
+				$touch = $telegram->reply_user->id;
+			}elseif($telegram->text_mention()){
+				$touch = $telegram->text_mention();
+				if(is_array($touch)){ $touch = key($touch); }
+				else{ $touch = substr($touch, 1); }
+			}
+			$name = (isset($telegram->user->username) ? "@" .$telegram->user->username : $telegram->user->first_name);
+
+			$usertouch = $pokemon->user($touch);
+			$req = FALSE;
+
+			if(!empty($usertouch)){
+				$req = $telegram->send
+					->notification(TRUE)
+					->chat($usertouch->telegramid)
+					->text("$name te ha tocado.")
+				->send();
+			}
+
+			$text = ($req ? $telegram->emoji(":green-check:") : $telegram->emoji(":times:"));
+			$telegram->send
+				->chat($telegram->user->id)
+				->notification(FALSE)
+				->text($text)
+			->send();
+		}
+
 		if($telegram->text_has(["invertir", "invertir ubicación", "reverse"]) && $telegram->words() <= 5 && $telegram->has_reply && isset($telegram->reply->location)){
 			$loc = (object) $telegram->reply->location;
 			$telegram->send
