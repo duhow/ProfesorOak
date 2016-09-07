@@ -2026,7 +2026,7 @@ class Main extends CI_Controller {
 			if(mt_rand(1, 4) == 4){
 				$telegram->send->file('voice', FCPATH . 'files/modem.ogg', 'ERROR 404 PKGO_FC_CHEATS NOT_FOUND');
 			}
-		}elseif($telegram->text_has("qué hora", ["es", "son"]) && $telegram->text_contains("?") && $telegram->words() <= 5){
+		}elseif($telegram->text_has("qué hora", ["es", "son"]) && !$telegram->text_has("a qué hora") && $telegram->text_contains("?") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Time');
 			$joke = "Son las " .date("H:i") .", una hora menos en Canarias. :)";
 		}elseif($telegram->text_has("Profesor Oak", TRUE)){
