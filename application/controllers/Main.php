@@ -1916,7 +1916,7 @@ class Main extends CI_Controller {
 			exit();
 		}elseif(
 			( $telegram->text_has(["necesitas", "necesitáis"], ["novio", "un novio", "novia", "una novia", "pareja", "una pareja", "follar"]) ) or
-			( $telegram->text_has("Tengo", TRUE) && $telegram->words() == 2)
+			( $telegram->text_has("Tengo", TRUE) && $telegram->words() == 2 && !is_numeric($telegram->last_word()) )
 		){
 				$word = ($telegram->text_has("Tengo", TRUE) ? ucwords(strtolower($telegram->last_word())) : "Novia");
 				$joke = "¿$word? Qué es eso, ¿se come?";
