@@ -137,6 +137,11 @@ class Main extends CI_Controller {
 					->reply_to(TRUE)
 					->text( $telegram->emoji($text) , TRUE)
 				->send();
+
+				if(!empty($pknew)){
+					// TODO invitar al usuario si es validado.
+					// y si no cumple con la blacklist
+				}
 			}
 			exit();
 		}
@@ -404,6 +409,8 @@ class Main extends CI_Controller {
 			$teams = ["Y" => "yellow", "B" => "blue", "R" => "red"];
 			$str = "";
 
+			if(empty($admins)){ $str = $telegram->emoji("No hay admin... :die:"); }
+
 			foreach($admins as $k => $a){
 				if($a['status'] == 'creator'){
 					unset($admins[$k]);
@@ -419,8 +426,9 @@ class Main extends CI_Controller {
 					continue;
 				}
 				$pk = $pokemon->user($a['user']['id']);
+				$name = (!empty($a['user']['first_name']) ? $a['user']['first_name'] : "Desconocido");
 				if(!empty($pk)){ $str .= $telegram->emoji(":heart-" .$teams[$pk->team] .":") ." L" .$pk->lvl ." @" .$pk->username ." - "; }
-				$str .= $a['user']['first_name'] ." ";
+				$str .= $name ." ";
 				if(isset($a['user']['username']) && (strtolower($a['user']['username']) != strtolower($pk->username)) ){ $str .= "( @" .$a['user']['username'] ." )"; }
 				if($k == 0){ $str .= "\n"; } // - Creator
 				$str .= "\n";
@@ -705,12 +713,9 @@ class Main extends CI_Controller {
 					}
 					$c++;
 
-					$q = $telegram->send
-						->chat($telegram->chat->id)
-					->get_member_info($u);
+					$q = $telegram->user_in_chat($u);
 
-					if($q == FALSE or $q['status'] == "left"){ continue; }
-					else{
+					if($q){
 						$topos[] = $q;
 						$telegram->send
 							->notification(TRUE)
@@ -783,12 +788,9 @@ class Main extends CI_Controller {
 				}
 				$c++;
 
-				$q = $telegram->send
-					->chat($telegram->chat->id)
-				->get_member_info($u);
+				$q = $telegram->user_in_chat($u);
 
-				if($q == FALSE or $q['status'] == "left"){ continue; }
-				else{
+				if($q){
 					$pk = $pokemon->user($u);
 					if(!empty($pk)){
 						$pks[$pk->team][] = $u;
@@ -906,6 +908,160 @@ class Main extends CI_Controller {
 				->send();
 			}
 			exit();
+		}elseif($telegram->text_has(["emparejamiento", "unión"], ["de grupo", "del grupo", "grupo", "grupal"]) && $telegram->words() <= 5 && $telegram->is_chat_group()){
+			$admins = $this->admins(TRUE);
+			if(!in_array($telegram->user->id, $admins)){ return; }
+			// Requiere team_exclusive
+			$team = $pokemon->settings($telegram->chat->id, 'team_exclusive');
+			if(empty($team)){
+				$telegram->send->text( $telegram->emoji(":times: Falta indicar exclusividad del grupo / color.") )->send();
+				return;
+			}
+			// Requiere link del grupo
+			$link = $pokemon->settings($telegram->chat->id, 'link_chat');
+			if(empty($link)){
+				$chat = $telegram->send->get_chat();
+				if(isset($chat['username'])){
+					$pokemon->settings($telegram->chat->id, 'link_chat', $chat['username']);
+					$this->_begin();
+					return;
+				}
+				$telegram->send->text( $telegram->emoji(":times: Falta enlace del grupo.") )->send();
+				return;
+			}
+			// El usuario tiene que estar validado.
+			if(!$pokeuser->verified){
+				$telegram->send->text( $telegram->emoji(":times: El usuario no está verificado.") )->send();
+				return;
+			}
+			// El usuario tiene que ser del mismo color que el grupo
+			if($pokeuser->team != $team && $telegram->user->id != $this->config->item('creator')){
+				$telegram->send->text( $telegram->emoji(":times: El usuario no pertenece al mismo color del grupo.") )->send();
+				return;
+			}
+			// Generar clave
+			$minute = 5;
+			if(date("i") % $minute == $minute - 1){
+				$telegram->send->text("Espera un minuto antes de crear la clave.")->send();
+				return;
+			}
+			$key = [
+				strtoupper($team), // TEAM
+				$telegram->chat->id, // ID CHAT
+				(date("Ymd") .floor(date("i") / $minute)), // TIME
+				mt_rand(1000,9999), // RAND
+			];
+			$key = implode(":", $key);
+			$pokemon->settings($telegram->chat->id, 'pair_key', sha1($key));
+			$res = $telegram->send
+				->notification(TRUE)
+				->chat($telegram->user->id)
+				->text("Unir grupo <b>" .base64_encode($key) ."</b>", 'HTML')
+			->send();
+			if(!$res){
+				// Aviso al chat general.
+			$pokemon->settings($telegram->chat->id, 'pair_key', sha1($key));
+			$res = $telegram->send
+				->notification(TRUE)
+				->chat($telegram->user->id)
+				->text("Unir grupo <b>" .base64_encode($key) ."</b>", 'HTML')
+			->send();
+			if(!$res){
+				// Aviso al chat general.
+				$telegram->send
+					->notification(FALSE)
+					->reply_to(TRUE)
+					->text("Por favor, inicia el chat conmigo para poder enviarte la clave, y una vez hecho vuelve a generarla.")
+				->send();
+			}else{
+				$telegram->send
+					->notification(FALSE)
+					->reply_to(TRUE)
+					->text("¡Hecho! Por favor *reenvía* la clave al *administrador* del grupo que quieres unir.", TRUE)
+				->send();
+			}
+		}elseif($telegram->text_has(["unir", "unión"], ["de grupo", "del grupo", "grupo", "grupal"]) && $telegram->is_chat_group()){
+			$key = $telegram->last_word();
+			$admins = $this->admins(TRUE);
+			if(!in_array($telegram->user->id, $admins)){ return; }
+
+			$team = $pokemon->settings($telegram->chat->id, 'team_exclusive');
+			if(!empty($team)){
+				$telegram->send->text( $telegram->emoji(":times: El grupo no puede ser exclusivo para agregar otro.") )->send();
+				return;
+			}
+			// Requiere link del grupo
+			$link = $pokemon->settings($telegram->chat->id, 'link_chat');
+			if(empty($link)){
+				$chat = $telegram->send->get_chat();
+				if(isset($chat['username'])){
+					$pokemon->settings($telegram->chat->id, 'link_chat', $chat['username']);
+					$this->_begin();
+					return;
+				}
+				$telegram->send->text( $telegram->emoji(":times: Falta enlace del grupo.") )->send();
+				return;
+			}
+			// El usuario tiene que estar validado.
+			if(!$pokeuser->verified){
+				$telegram->send->text( $telegram->emoji(":times: El usuario no está verificado.") )->send();
+				return;
+			}
+
+			$key = base64_decode($key);
+			$keydec = explode(":", $key);
+
+			$valid = TRUE;
+			$minute = 5; // SYNC
+			if($valid == TRUE && (!is_array($keydec) or count($keydec) != 4)){ $valid = -6; } // Decodificación incorrecta
+			if($valid == TRUE && $keydec[1] == $telegram->chat->id){ $valid = -5; } // Si el grupo es el mismo, descartar.
+			if($valid == TRUE && $keydec[0] != $pokemon->settings($keydec[1], 'team_exclusive')){ $valid = -4; } // Si el grupo no tiene el mismo color.
+			if($valid == TRUE && $pokemon->settings($keydec[1], 'link_chat') == NULL){ $valid = -3; } // Si el grupo no tiene link.
+			if($valid == TRUE && $keydec[2] != (date("Ymd") .floor(date("i") / $minute)) ){ $valid = -2; } // Si ha expirado la clave
+			if($valid == TRUE && sha1($key) != $pokemon->settings($keydec[1], 'pair_key')){ $valid = -1; } // Si la clave por DB es distinta
+
+			// Validar la clave.
+			if($valid !== TRUE){
+				$telegram->send->text( $telegram->emoji(":times: Clave inválida. [$valid]" ) )->send();
+				return;
+			}
+
+			// Si el Oak no está en el grupo.
+			if(!$telegram->user_in_chat($this->config->item('telegram_bot_id'), $keydec[1])){
+				$telegram->send->text( $telegram->emoji(":times: No estoy en el grupo destino.") )->send();
+				return;
+			}
+
+			$chatdst = $keydec[1];
+			$pair = sha1($telegram->chat->id .":" .$chatdst);
+			$team = $keydec[0];
+
+			$pokemon->settings($telegram->chat->id, 'pair_team_' .$team, $pair);
+			$pairs = $pokemon->settings($chatdst, 'pair_groups');
+			if(!empty($pairs)){ $pairs = explode(",", $pairs); } // Decodifica Array
+			$pairs[] = $pair; // Agrega grupo
+			$pairs = array_unique($pairs); // Quitar duplicados
+			$pairs = implode(",", $pairs);
+			$pokemon->settings($chatdst, 'pair_groups', $pairs);
+			$pokemon->settings($chatdst, 'pair_key', "DELETE");
+
+			$telegram->send
+				->chat($telegram->chat->id)
+				->notification(TRUE)
+				->text("¡Grupo emparejado correctamente!")
+			->send();
+
+			$telegram->send
+				->chat($chatdst)
+				->notification(TRUE)
+				->text("Se ha unido el grupo: " .$telegram->chat->title)
+			->send();
+
+			$telegram->send
+				->chat($this->config->item('creator'))
+				->notification(TRUE)
+				->text("*PAIR:* " .$telegram->chat->id .":" .$chatdst, TRUE)
+			->send();
 		}
 
 		// ---------------------
@@ -1677,8 +1833,8 @@ class Main extends CI_Controller {
 			if(empty($data)){
 				$str = "No sé quien es. ($find)";
 			}else{
-				$find = $telegram->send->get_member_info($data->telegramid);
-				if($find === FALSE || in_array($find['status'], ['left', 'kicked'])){
+				$find = $telegram->user_in_chat($data->telegramid);
+				if(!$find){
 					$str = "No, no está.";
 				}else{
 					$str = "Si, " .$find['user']['first_name'] ." está aquí.";
@@ -2169,8 +2325,7 @@ class Main extends CI_Controller {
 					$resfin = FALSE;
 					foreach($find as $u){
 						// Valida que el entrenador esté en el grupo
-						$chat = $telegram->send->get_member_info($u['telegramid'], $telegram->chat->id);
-						if($chat !== FALSE && !in_array($chat['status'], ['left', 'kicked'])){
+						if($telegram->user_in_chat($u['telegramid'])){
 							$str = $name ." - ";
 							if(!empty($link)){ $str .= "<a href='$link'>" .$telegram->chat->title ."</a>:\n"; }
 							else{ $str .= "<b>" .$telegram->chat->title ."</b>:\n"; }
@@ -2278,6 +2433,7 @@ class Main extends CI_Controller {
 			}
 			$text = trim($text);
 			$text = str_replace("en ", "in ", $text);
+			if(empty($text) or strlen($text) <= 2){ return; }
 			$data = ["text" => $text, "sourceCountry" => "ESP", "f" => "json"];
 			$data = http_build_query($data);
 			$web = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find?" .$data;

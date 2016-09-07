@@ -716,6 +716,15 @@ class Telegram extends CI_Model{
 		return (!empty($user) && substr(strtolower($user), -3) == "bot");
 	}
 
+	// NOTE: Solo funcionará si el bot está en el grupo.
+	function user_in_chat($user, $chat = NULL, $object = FALSE){
+		if($chat === TRUE){ $object = TRUE; $chat = NULL; }
+		if(empty($chat)){ $chat = $this->chat->id; }
+		$info = $this->send->get_member_info($user, $chat);
+		$ret = ($object ? (object) $info : $info);
+		return ( ($info === FALSE or in_array($info['status'], ['left', 'kicked'])) ? FALSE : $ret );
+	}
+
 	function dump($json = FALSE){ return($json ? json_encode($this->data) : $this->data); }
 
 	function get_admins($chat = NULL, $full = FALSE){

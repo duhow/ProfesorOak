@@ -265,6 +265,19 @@ class Pokemon extends CI_Model{
 		if($query->num_rows() == 1){ return $query->row(); }
 	}
 
+	function group_pair($group, $team){
+		$pair = $this->settings($group, 'pair_team_' .$team);
+		if(empty($pair)){ return NULL; }
+		$query = $this->db
+			->like('uid', '-', 'after') // GROUPS
+			->where('type', 'pair_groups')
+			->like('value', $pair)
+			->order_by('id', 'DESC')
+			// ->limit(1)
+		->get('settings');
+		return (($query->num_rows() == 1) ? $query->row()->uid : FALSE);
+	}
+
 	function get_groups($shownames = FALSE){
 		$query = $this->db
 			->where_in('type', ['group', 'supergroup'])
@@ -587,6 +600,7 @@ class Pokemon extends CI_Model{
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, ($url ."?" .http_build_query($data)) );
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 20);
 		$json = curl_exec($ch);
 		curl_close($ch);
 		// $json = file_get_contents($url ."?" .http_build_query($data));
