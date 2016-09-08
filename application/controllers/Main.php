@@ -469,7 +469,7 @@ class Main extends CI_Controller {
 			$telegram->text_has("/set", TRUE) &&
 			$telegram->words() == 3 &&
 			(
-				( $telegram->is_chat_group() && $this->admins(TRUE) ) or
+				( $telegram->is_chat_group() && in_array($telegram->user->id, $this->admins(TRUE)) ) or
 				( !$telegram->is_chat_group() )
 			)
 		){
@@ -491,6 +491,114 @@ class Main extends CI_Controller {
 					->text("Configuración establecida: *$value*", TRUE)
 				->send();
 			}
+			exit();
+		}
+		// configurar el bot por defecto (solo creador/admin)
+		elseif(
+			( $telegram->text_has(["oak", "profe"], "configuración", TRUE) or $telegram->text_command("config") ) &&
+			in_array($telegram->words(), [3,4]) &&
+			$telegram->is_chat_group()
+		){
+			$admins = $this->admins(TRUE);
+			if(!in_array($telegram->user->id, $admins)){ return; }
+
+			$config = strtolower($telegram->words(2, 2));
+			$configs = [
+				'inicial' => [
+					'announce_welcome' => TRUE,
+					'blacklist' => 'troll,spam,rager',
+					'shutup' => TRUE,
+					'jokes' => FALSE,
+					'pole' => TRUE,
+					'play_games' => FALSE,
+				],
+				'divertida' => [
+					'announce_welcome' => TRUE,
+					'blacklist' => FALSE,
+					'shutup' => FALSE,
+					'jokes' => TRUE,
+					'pole' => TRUE,
+					'play_games' => TRUE,
+				],
+				'silenciosa' => [
+					'announce_welcome' => FALSE,
+					'shutup' => TRUE,
+					'jokes' => FALSE,
+					'pole' => FALSE,
+					'play_games' => FALSE,
+				]
+			];
+
+			$this->analytics->event('Telegram', 'Set default config', $config);
+
+			if(!isset($configs[$config])){ $config = "inicial"; }
+			$icon = [":times:", ":green-check:", ":question-grey:", ":exclamation-grey:"];
+			foreach($configs[$config] as $key => $val){
+				$pokemon->settings($telegram->chat->id, $key, $val);
+			}
+
+			$str = "";
+			$check = [
+				'announce_welcome' => "Mostrar mensaje de bienvenida",
+				'welcome' => "Mensaje personalizado",
+				'rules' => "Reglas del grupo",
+				'shutup' => "Modo silencioso",
+				'jokes' => "Bromas",
+				'blacklist' => "Blacklist",
+				'play_games' => "Juegos",
+				'pole' => "Pole",
+				'location' => "Ubicación del grupo",
+				'offtopic_chat' => "Grupo offtopic",
+			];
+			foreach($check as $key => $txt){
+				$set = $pokemon->settings($telegram->chat->id, $key);
+				$seticon = ($set && $set != FALSE ? 1 : 0);
+				$str .= $telegram->emoji( $icon[$seticon] ) ." $txt\n";
+			}
+
+			// Setting de link_chat
+			$set = $pokemon->settings($telegram->chat->id, 'link_chat');
+			if($set && $set[0] != "@"){ $set = "privado"; }
+			elseif(!$set){
+				// intentar sacar link del grupo publico.
+				$chat = $telegram->send->get_chat();
+				if(isset($chat['username'])){
+					$pokemon->settings($telegram->chat->id, 'link_chat', $chat['username']);
+					$set = $chat['username'];
+				}
+			}
+			$seticon = ($set && $set != FALSE ? 1 : 0);
+			$str .= $telegram->emoji( $icon[$seticon] ) ." Link del grupo $set\n";
+
+			// Color del grupo
+			$color = [
+				'Y' => ['amarillo', 'instinto', 'instinct', 'sparky', ':heart-yellow:'],
+				'R' => ['rojo', 'valor', 'candela', ':heart-red:'],
+				'B' => ['azul', 'místico', 'mystic', 'blanche', ':heart-blue:'],
+			];
+			$iconteam = ['Y' => ':heart-yellow:', 'R' => ':heart-red:', 'B' => ':heart-blue:'];
+			$set = $pokemon->settings($telegram->chat->id, 'team_exclusive');
+			if(!$set){
+				$chat = $telegram->send->get_chat();
+				$title = $telegram->emoji($chat['title'], TRUE);
+				$teamsel = NULL;
+				foreach($color as $team => $words){
+					foreach($words as $word){
+						if(strpos($title, $word) !== FALSE){ $teamsel = $team; break; }
+					}
+					if($teamsel !== NULL){ break; }
+				}
+				if($teamsel !== NULL){
+					$pokemon->settings($telegram->chat->id, 'team_exclusive', $teamsel);
+					$set = "detectado " .$telegram->emoji($iconteam[$teamsel]);
+				}
+			}else{
+				$set = "es " .$telegram->emoji($iconteam[$set]);
+			}
+			$seticon = ($set && $set != FALSE ? 1 : 0);
+			$str .= $telegram->emoji( $icon[$seticon] ) ." Grupo de color $set\n";
+
+			$telegram->send->text($str)->send();
 			exit();
 		}
 		// establecer flag del usuario
@@ -908,7 +1016,7 @@ class Main extends CI_Controller {
 				->send();
 			}
 			exit();
-		}elseif($telegram->text_has(["emparejamiento", "unión"], ["de grupo", "del grupo", "grupo", "grupal"]) && $telegram->words() <= 5 && $telegram->is_chat_group()){
+		}elseif($telegram->text_has(["emparejamiento", "crear unión"], ["de grupo", "del grupo", "grupo", "grupal"]) && $telegram->words() <= 5 && $telegram->is_chat_group()){
 			$admins = $this->admins(TRUE);
 			if(!in_array($telegram->user->id, $admins)){ return; }
 			// Requiere team_exclusive
@@ -1658,7 +1766,7 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_has(["mapa", "página"]) && $telegram->text_has(["pokémon", "ciudad"]) && !$telegram->text_contains(["evoluci", "IV", "calcul"])){
 			$this->analytics->event('Telegram', 'Map Pokemon');
 			$help = "https://goo.gl/GZb5hd";
-		}elseif($telegram->text_has(["evee", "evve"]) && !$telegram->text_has("eevee")){
+		}elseif($telegram->text_has(["evee", "evve"]) && !$telegram->text_has("eevee") && $telegram->words() >= 3){
 			$help = "Se dice *Eevee*... ¬¬";
 		}elseif($telegram->text_has(["cómo"]) && $telegram->text_has(["conseguir", "consigue"]) && $telegram->text_contains(["objeto", "incienso", "cebo", "huevo"])){
 			$help = "En principio si vas a las PokeParadas y tienes suerte, también deberías de poder conseguirlos.";
