@@ -960,14 +960,6 @@ class Main extends CI_Controller {
 			->send();
 			if(!$res){
 				// Aviso al chat general.
-			$pokemon->settings($telegram->chat->id, 'pair_key', sha1($key));
-			$res = $telegram->send
-				->notification(TRUE)
-				->chat($telegram->user->id)
-				->text("Unir grupo <b>" .base64_encode($key) ."</b>", 'HTML')
-			->send();
-			if(!$res){
-				// Aviso al chat general.
 				$telegram->send
 					->notification(FALSE)
 					->reply_to(TRUE)
@@ -1754,7 +1746,7 @@ class Main extends CI_Controller {
 			$this->analytics->event('Telegram', 'Search Pokemon Attack', ucwords(strtolower($text)));
 			$this->_poke_attack($text, $chat);
 		}elseif($telegram->text_has(["evolución", "evolucionar"])){
-			$chat = ($telegram->text_has("aquí") ? $telegram->chat->id : $telegram->user->id);
+			$chat = ($telegram->text_has("aquí") && !$this->is_shutup() ? $telegram->chat->id : $telegram->user->id);
 
 			$pk = $this->parse_pokemon();
 			if(empty($pk['pokemon'])){ return; }
