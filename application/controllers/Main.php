@@ -563,7 +563,7 @@ class Main extends CI_Controller {
 				// intentar sacar link del grupo publico.
 				$chat = $telegram->send->get_chat();
 				if(isset($chat['username'])){
-					$pokemon->settings($telegram->chat->id, 'link_chat', $chat['username']);
+					$pokemon->settings($telegram->chat->id, 'link_chat', "@" .$chat['username']);
 					$set = $chat['username'];
 				}
 			}
@@ -1030,7 +1030,7 @@ class Main extends CI_Controller {
 			if(empty($link)){
 				$chat = $telegram->send->get_chat();
 				if(isset($chat['username'])){
-					$pokemon->settings($telegram->chat->id, 'link_chat', $chat['username']);
+					$pokemon->settings($telegram->chat->id, 'link_chat', "@" .$chat['username']);
 					$this->_begin();
 					return;
 				}
@@ -1095,7 +1095,7 @@ class Main extends CI_Controller {
 			if(empty($link)){
 				$chat = $telegram->send->get_chat();
 				if(isset($chat['username'])){
-					$pokemon->settings($telegram->chat->id, 'link_chat', $chat['username']);
+					$pokemon->settings($telegram->chat->id, 'link_chat', "@" .$chat['username']);
 					$this->_begin();
 					return;
 				}
