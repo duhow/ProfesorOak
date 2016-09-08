@@ -580,7 +580,7 @@ class Main extends CI_Controller {
 			$set = $pokemon->settings($telegram->chat->id, 'team_exclusive');
 			if(!$set){
 				$chat = $telegram->send->get_chat();
-				$title = $telegram->emoji($chat['title'], TRUE);
+				$title = strtolower($telegram->emoji($chat['title'], TRUE));
 				$teamsel = NULL;
 				foreach($color as $team => $words){
 					foreach($words as $word){
@@ -774,6 +774,12 @@ class Main extends CI_Controller {
 				$telegram->send
 					->notification(FALSE)
 					->text( $telegram->emoji(":green-check:") )
+				->send();
+
+				$telegram->send
+					->notification(TRUE)
+					->chat($target)
+					->text("Enhorabuena, estás validado! " .$telegram->emoji(":green-check:"))
 				->send();
 			}
 		}elseif($telegram->text_has("/investigate", TRUE) && $telegram->is_chat_group()){
@@ -1205,6 +1211,64 @@ class Main extends CI_Controller {
 			exit();
 		}
 
+		// Validar usuario
+		elseif(
+			$telegram->text_has(["oak", "profe", "quiero"]) &&
+			$telegram->text_has(["validame", "validarme", "válido", "verificarme", "verifico"]) &&
+			$telegram->words() <= 10
+		){
+			if($telegram->is_chat_group()){
+				$res = $telegram->send
+					->notification(TRUE)
+					->chat($telegram->user->id)
+					->text("Hola, " .$telegram->user->first_name ."!")
+				->send();
+
+				if(!$res){
+					$telegram->send
+						->notification(FALSE)
+						->reply_to(TRUE)
+						->text($telegram->emoji(":times: Pídemelo por privado, por favor."))
+					->send();
+					return;
+				}
+			}
+
+			if($pokeuser->verified){
+				$telegram->send
+					->notification(TRUE)
+					->chat($telegram->user->id)
+					->text("¡Ya estás verificado! " .$telegram->emoji(":green-check:"))
+				->send();
+				return;
+			}
+
+			$text = "Para validarte, necesito que me envies una *captura de tu perfil Pokemon GO.* "
+					."La captura tiene que cumplir las siguientes condiciones:\n\n"
+					.":triangle-right: Tiene que verse la hora de tu móvil, y tienes que enviarlo en un márgen de 5 minutos.\n"
+					.":triangle-right: Tiene que aparecer tu nombre de entrenador y color.\n"
+					.":triangle-right: Si te has cambiado de nombre, avisa a @duhow para tenerlo en cuenta.\n"
+					.":triangle-right: Si no tienes nombre puesto, *cancela el comando* y dime cómo te llamas.\n"
+					."\nCuando haya confirmado la validación, te avisaré por aquí.\n\n"
+					."Tus datos son: ";
+
+			$color = ['Y' => ':heart-yellow:', 'R' => ':heart-red:', 'B' => ':heart-blue:'];
+
+			$text .= (empty($pokeuser->username) ? "Sin nombre" : "@" .$pokeuser->username) ." L" .$pokeuser->lvl ." " .$color[$pokeuser->team];
+
+			$telegram->send
+				->notification(TRUE)
+				->chat($telegram->user->id)
+				->text($telegram->emoji($text), TRUE)
+				->keyboard()
+					->row_button("Cancelar")
+				->show(TRUE, TRUE)
+			->send();
+
+			$pokemon->step($telegram->user->id, 'SCREENSHOT_VERIFY');
+			return;
+		}
+
 		// pedir info sobre uno mismo
 		elseif(
 			$telegram->text_has(["Quién soy", "Cómo me llamo", "who am i"], TRUE) or
@@ -1253,7 +1317,8 @@ class Main extends CI_Controller {
 		}
 		// si pregunta por un usuario
 		elseif(
-			$telegram->text_has("quién", ["es", "eres"]) &&
+			( $telegram->text_has("quién", ["es", "eres"]) or
+			$telegram->text_has("Conoces", "a") ) &&
 			!$telegram->text_contains(["programa", "esta"]) &&
 			$telegram->words() <= 5
 		){
@@ -1308,7 +1373,7 @@ class Main extends CI_Controller {
 			// pregunta usando nombre
 			elseif(
 				// ( ($telegram->words() == 3) or ($telegram->words() == 4 && $telegram->last_word() == "?") ) and
-				( $telegram->text_has("quién es") )
+				( $telegram->text_has("quién es") or $telegram->text_has("conoces a") )
 			){
 				$this->analytics->event('Telegram', 'Whois', 'User');
 				if($telegram->text_mention()){ $text = $telegram->text_mention(); if(is_array($text)){ $text = key($text); } } // CHANGED Siempre coger la primera mención
@@ -2626,7 +2691,7 @@ class Main extends CI_Controller {
 					}
 
 
-					$search = ['cp', 'pc', 'hp', 'ps', 'polvo', 'polvos', 'stardust', 'm', 'metro', 'km'];
+					$search = ['cp', 'pc', 'hp', 'ps', 'polvo', 'polvos', 'polvoestelar', 'stardust', 'm', 'metro', 'km'];
 					$enter = FALSE;
 					foreach($search as $q){
 						if(strpos($w, $q) !== FALSE){ $enter = TRUE; break; }
@@ -2635,7 +2700,7 @@ class Main extends CI_Controller {
 						$action = NULL;
 						if(strpos($w, 'cp') !== FALSE or strpos($w, 'pc') !== FALSE){ $action = 'cp'; }
 						if(strpos($w, 'hp') !== FALSE or strpos($w, 'ps') !== FALSE){ $action = 'hp'; }
-						if(strpos($w, 'polvo') !== FALSE or strpos($w, 'stardust') !== FALSE){ $action = 'stardust'; }
+						if(strpos($w, 'polvo') !== FALSE or strpos($w, 'stardust') !== FALSE or strpos($w, 'polvoestelar') !== FALSE){ $action = 'stardust'; }
 						if(strpos($w, 'm') !== FALSE && strlen($w) == 1){ $action = 'distance'; }
 						if(strpos($w, 'metro') !== FALSE){ $action = 'distance'; }
 						if(strpos($w, 'km') !== FALSE && strlen($w) == 2){ $action = 'distance'; $number = $number * 1000; }
@@ -2891,6 +2956,30 @@ class Main extends CI_Controller {
 						break;
 					}
 					exit();
+				}
+				break;
+			case 'SCREENSHOT_VERIFY':
+				if(!$telegram->is_chat_group() && $telegram->photo()){
+					$telegram->send
+						->chat($telegram->user->id)
+						->message($telegram->message)
+						->forward_to($this->config->item('creator'))
+					->send();
+
+					$telegram->send
+						->notification(TRUE)
+						->chat($this->config->item('creator'))
+						->text("Validar " .$user->id ." @" .$pokeuser->username ." L" .$pokeuser->lvl ." " .$pokeuser->team)
+					->send();
+
+					$telegram->send
+						->notification(TRUE)
+						->chat($user->id)
+						->keyboard()->hide(TRUE)
+						->text("¡Enviado correctamente! El proceso de validar puede tardar un tiempo.")
+					->send();
+
+					$pokemon->step($user->id, NULL);
 				}
 				break;
 			case 'DUMP':

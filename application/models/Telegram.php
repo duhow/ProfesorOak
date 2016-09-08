@@ -271,10 +271,10 @@ class __Module_Telegram_Sender extends CI_Model{
 	}
 
 	function forward_to($chat_id_to){
-		if(empty($this->content['chat_id']) or empty($this->content['message_id'])){ return FALSE; }
+		if(empty($this->content['chat_id']) or empty($this->content['message_id'])){ return $this; }
 		$this->content['from_chat_id'] = $this->content['chat_id'];
 		$this->content['chat_id'] = $chat_id_to;
-		$this->method = "fordwardMessage";
+		$this->method = "forwardMessage";
 
 		return $this;
 	}
