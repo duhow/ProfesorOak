@@ -2072,6 +2072,26 @@ class Main extends CI_Controller {
 				->send();
 				return;
 			}
+		}elseif($telegram->text_has("mejor", ["ataque", "habilidad", "skill"])){
+			$pk = $this->parse_pokemon();
+			if(!empty($pk['pokemon'])){
+				$pokedex = $pokemon->pokedex($pk['pokemon']);
+				$skills = $pokemon->skill_learn($pk['pokemon']);
+				$sel = NULL;
+				$min = 0;
+				foreach($skills as $k => $skill){
+					if($skill->attack > $min){
+						$min = $skill->atttack;
+						$sel = $k;
+					}
+				}
+				$text = "El mejor ataque de *" .$pokedex->name ."* es *" .$skills[$sel]->name_es ."*, con " .$skills[$sel]->attack ." ATK y " .$skills[$sel]->bars ." barras.";
+				$telegram->send
+					->notification(FALSE)
+					->text($text, TRUE)
+				->send();
+			}
+			return;
 		}elseif($telegram->text_has(["pokédex", "pokémon"], TRUE) or $telegram->text_command("pokedex")){
 			$text = $telegram->text();
 			$chat = ($telegram->text_has("aqui") && !$this->is_shutup() ? $telegram->chat->id : $telegram->user->id);
