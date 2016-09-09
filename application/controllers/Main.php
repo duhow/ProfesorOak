@@ -2050,6 +2050,26 @@ class Main extends CI_Controller {
 				// ->reply_to( ($chat == $telegram->chat->id) )
 				->text($str, TRUE)
 			->send();
+		}elseif(($telegram->text_has(["ataque", "habilidad", "skill"], TRUE) or $telegram->text_command("attack")) && $telegram->words() <= 5){
+			$chat = ($telegram->text_has("aquí") && !$this->is_shutup() ? $telegram->chat->id : $telegram->user->id);
+
+			$find = $telegram->words(1, 2);
+			if($telegram->text_has("aquí")){
+				$find = $telegram->words(1, $telegram->words() - 2);
+			}
+			$skill = $pokemon->skill($find);
+			if($skill){
+				$types = $pokemon->attack_types();
+				$text = "*" .$skill->name_es ."* / _" .$skill->name ."_\n"
+						.$types[$skill->type] ." - " .$skill->attack ." ATK / " .$skill->bars ." barras";
+
+				$telegram->send
+					->notification(TRUE)
+					->chat($chat)
+					->text($text, TRUE)
+				->send();
+				return;
+			}
 		}elseif($telegram->text_has(["pokédex", "pokémon"], TRUE) or $telegram->text_command("pokedex")){
 			$text = $telegram->text();
 			$chat = ($telegram->text_has("aqui") && !$this->is_shutup() ? $telegram->chat->id : $telegram->user->id);
