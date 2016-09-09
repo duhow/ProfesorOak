@@ -139,8 +139,56 @@ class Main extends CI_Controller {
 				->send();
 
 				if(!empty($pknew)){
-					// TODO invitar al usuario si es validado.
-					// y si no cumple con la blacklist
+					$team = $pknew->team;
+					$key = $pokemon->settings($telegram->chat->id, 'pair_team_' .$team);
+					if(!empty($key)){
+						$teamchat = $pokemon->group_pair($telegram->chat->id, $team);
+						if(!$teamchat){
+							$telegram->send
+								->chat($this->config->item('creator'))
+								->notification(TRUE)
+								->text("Problema con pairing $team en " .$telegram->chat->id ." (" .substr($key, 0, 10) .")")
+							->send();
+							return;
+						}
+						// Tengo chat, comprobar blacklist
+						$black = explode(",", $pokemon->settings($teamchat, 'blacklist'));
+						if($pokemon->user_flags($telegram->user->id, $black)){ return; }
+
+						$link = $pokemon->settings($teamchat, 'link_chat');
+						if(empty($link)){
+							$telegram->send
+								->chat($this->config->item('creator'))
+								->notification(TRUE)
+								->text("Problema con pair link $team en " .$telegram->chat->id ." (" .substr($key, 0, 10) .")")
+							->send();
+							return;
+						}
+						// Si es validado
+						$color = ['Y' => 'Amarillo', 'R' => 'Rojo', 'B' => 'Azul'];
+						$text = "Hola! Veo que eres *" .$color[$pknew->team] ."* y acabas de entrar al grupo " .$telegram->chat->title .".\n"
+								."Hay un grupo de tu team asociado, pero no te puedo invitar porque no estás validado " .$telegram->emoji(":warning:") .".\n"
+								."Si *quieres validarte*, puedes decirmelo. :)";
+						if($pknew->verified){
+							$text = "Hola! Te invito al grupo *" .$color[$pknew->team] ."* asociado a " .$telegram->chat->title .". "
+									."¡No le pases este enlace a nadie!\n"
+									.$telegram->grouplink($link);
+						}
+
+						$telegram->send
+							->notification(TRUE)
+							->chat($telegram->user->id)
+							->text($text, TRUE)
+						->send();
+
+						if($pknew->verified){
+							$telegram->send
+								->notification(TRUE)
+								->chat($teamchat)
+								->text("He invitado a @" .$pknew->username ." a este grupo.")
+							->send();
+						}
+					}
 				}
 			}
 			exit();
@@ -1734,7 +1782,7 @@ class Main extends CI_Controller {
 					."Una vez hecho, podéis preguntar por ejemplo... *Debilidad contra Pikachu* y os enseñaré como funciona.\n"
 					."Espero poder ayudaros en todo lo posible, ¡muchas gracias!";
 		}elseif(
-			($telegram->text_has(["lista", "ayuda", "ayúdame", "para qué sirve"]) && $telegram->text_has(["comando", "oak", "profe"])) or
+			($telegram->text_has(["lista", "ayuda", "ayúdame", "para qué sirve"]) && $telegram->text_has(["comando", "oak", "profe", "profesor"])) or
 			$telegram->text_has("/help", TRUE)
 		){
 			if($telegram->is_chat_group() && $telegram->user->id != $this->config->item('creator')){
