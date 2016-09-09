@@ -1046,21 +1046,70 @@ class Main extends CI_Controller {
 			( $telegram->text_has(["link", "enlace"], ["del grupo", "de este grupo", "grupo"]) or
 			$telegram->text_has(["/linkgroup", "/grouplink"], TRUE))
 		){
-			$link = $pokemon->settings($telegram->chat->id, 'link_chat');
+			$colores_full = [
+				'Y' => ['amarillo', 'instinto', 'yellow'],
+				'R' => ['rojo', 'valor', 'red'],
+				'B' => ['azul', 'sabiduría', 'blue'],
+			];
 
+			$team = NULL;
+			foreach($colores_full as $k => $colores){
+				if($telegram->text_has($colores)){ $team = $k; break; }
+			}
+
+			if($team && ($pokeuser->team == $team or $telegram->user->id == $this->config->item('creator'))){
+				$pairteam = $pokemon->settings($telegram->chat->id, 'pair_team_' .$team);
+				if(!$pairteam){ return; }
+				$teamchat = $pokemon->group_pair($telegram->chat->id, $team);
+				if(!$teamchat or $pairteam != sha1($telegram->chat->id .":" .$teamchat)){ // HACK Algoritmo de verificación
+					$telegram->send
+						->chat($this->config->item('creator'))
+						->text("MEEEEEC en " .$telegram->chat->id ." con $team")
+					->send();
+					return;
+				}
+
+				// Tengo chat, comprobar blacklist
+				$black = explode(",", $pokemon->settings($teamchat, 'blacklist'));
+				if($pokemon->user_flags($telegram->user->id, $black)){ return; }
+
+				$teamlink = $pokemon->settings($teamchat, 'link_chat');
+
+				// Si es validado
+				$color = ['Y' => 'Amarillo', 'R' => 'Rojo', 'B' => 'Azul'];
+				$text = "Hay un grupo de tu team *" .$color[$team] ."*, pero no te puedo invitar porque no estás validado " .$telegram->emoji(":warning:") .".\n"
+						."Si *quieres validarte*, puedes decirmelo. :)";
+				if($pokeuser->verified){
+					$text = "Te invito al grupo *" .$color[$team] ."* asociado a " .$telegram->chat->title .". "
+							."¡No le pases este enlace a nadie!\n"
+							.$telegram->grouplink($teamlink);
+				}
+
+				$telegram->send
+					->notification(TRUE)
+					->chat($telegram->user->id)
+					->text($text, TRUE)
+				->send();
+
+				if($pokeuser->verified){
+					$telegram->send
+						->notification(TRUE)
+						->chat($teamchat)
+						->text("He invitado a @" .$pokeuser->username ." a este grupo.")
+					->send();
+				}
+				return;
+			}
+
+			$link = $pokemon->settings($telegram->chat->id, 'link_chat');
 			$word = $telegram->last_word(TRUE);
-			if(!is_numeric($word) and strlen($word) >= 4 and !$telegram->text_has("este")){ // XXX comprobar que no dé problemas
+
+			if(!$team && !is_numeric($word) and strlen($word) >= 4 and !$telegram->text_has("este")){ // XXX comprobar que no dé problemas
 				$s = $pokemon->group_link($word);
 				if(!empty($s)){ $link = $s; }
 			}
 			$chatgroup = NULL;
-			if(!empty($link)){
-				if($link[0] != "@" and strlen($link) == 22){
-					$chatgroup = "https://telegram.me/joinchat/" .$link;
-				}else{
-					$chatgroup = $link;
-				}
-			}
+			if(!empty($link)){ $chatgroup = $telegram->grouplink($link); }
 			if(!empty($chatgroup)){
 				$this->analytics->event('Telegram', 'Group Link');
 				$telegram->send
@@ -1872,7 +1921,7 @@ class Main extends CI_Controller {
 			}
 		}elseif($telegram->text_contains("mejorar") && $telegram->text_has(["antes", "después"]) && $telegram->text_has(["evolución", "evolucionar", "evolucione"])){
 			$help = "En principio es irrelevante, puedes mejorar un Pokemon antes o después de evolucionarlo sin problemas.";
-		}elseif($telegram->text_has(["calculadora", "calcular", "calculo", "calcula", "tabla", "pagina", "xp", "experiencia"]) && $telegram->text_has(["evolución", "evoluciona", "evolucione", "nivel", "PC", "CP"]) && !$telegram->text_contains("IV")){
+		}elseif($telegram->text_has(["calculadora", "calcular", "calculo", "calcula", "tabla", "pagina", "xp", "experiencia"]) && $telegram->text_has(["evolución", "evoluciona", "evolucione", "nivel", "PC", "CP"]) && !$telegram->text_contains(["IV", "lV"])){
 			$help = "Claro! Te refieres a la Calculadora de Evolución, verdad? http://pogotoolkit.com/";
 		}elseif($telegram->text_has(["PC", "estadísticas", "estados", "ataque"]) && $telegram->text_has(["pokémon", "máximo"]) && !$telegram->text_contains(["mes"])){
 			$help = "Puedes buscar las estadísticas aquí: http://pokemongo.gamepress.gg/pokemon-list";

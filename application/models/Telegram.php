@@ -725,6 +725,17 @@ class Telegram extends CI_Model{
 		return ( ($info === FALSE or in_array($info['status'], ['left', 'kicked'])) ? FALSE : $ret );
 	}
 
+	function grouplink($text, $url = FALSE){
+		$link = "https://telegram.me/";
+		if($text[0] != "@" and strlen($text) == 22){
+			$link .= "joinchat/$text";
+		}else{
+			if($url && $text[0] == "@"){ $link .= substr($text, 1); }
+			else{ $link = $text; }
+		}
+		return $link;
+	}
+
 	function dump($json = FALSE){ return($json ? json_encode($this->data) : $this->data); }
 
 	function get_admins($chat = NULL, $full = FALSE){
