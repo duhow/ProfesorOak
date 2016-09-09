@@ -1806,6 +1806,8 @@ class Main extends CI_Controller {
 					."Podrías provocar un accidente, así que procura jugar con seguridad! :)";
 		}elseif($telegram->text_has(["significa", "quiere decir", "qué es"]) && $telegram->text_contains(["L1", "L2", "L8"])){
 			$help = "Lo del *L1* es *Level 1* (*Nivel*). Si puedes, dime tu nivel y lo guardaré.\n_(Soy nivel ...)_";
+		}elseif($telegram->text_has(["sombra", "aura"], "azul")){
+			$help = "La sombra azul que aparece en algunos Pokémon, es porque los has capturado en las últimas 24 horas.";
 		}elseif($telegram->text_has("espacio") && $telegram->text_has("mochila")){ // $telegram->text_contains(["como", "cómo"]) &&
 			$help = "Tienes una mochila en la Tienda Pokemon, así que tendrás que buscar PokeMonedas si quieres comprarla. Si no, te va a tocar hacer hueco...";
 		}elseif($telegram->text_has(["normas", "reglas"]) && $telegram->text_has(["entrenador"]) && $telegram->words() <= 12){
