@@ -301,6 +301,30 @@ class Pokemon extends CI_Model{
 		return $query;
 	}
 
+	function user_addgroup($tid, $cid){
+		if($this->user_in_group($tid, $cid)){ return TRUE; }
+		return $this->db
+			->set('uid', $tid)
+			->set('cid', $cid)
+		->insert('user_inchat');
+	}
+
+	function user_in_group($tid, $cid = NULL){
+		if(!empty($cid)){
+			if(!is_array($cid)){ $cid = [$cid]; }
+			$this->db->where_in('cid', $cid);
+		}
+
+		$query = $this->db
+			->where('uid', $tid)
+		->get('user_inchat');
+		if($query->num_rows() > 0){
+			if(count($cid) == 1){ return $query->row(); }
+			return $query->result_array();
+		}
+		return FALSE;
+	}
+
 	// --------------------------------
 	//   Funciones de Datos Pokemon
 	// --------------------------------
@@ -495,6 +519,27 @@ class Pokemon extends CI_Model{
 
 		if($query->num_rows() > 0){ return array_column($query->result_array(), 'display', 'name'); }
 		return array();
+	}
+
+	function hatch_egg($distance, $pokemon = NULL, $add = FALSE){
+		if($add !== FALSE && !empty($pokemon)){
+			// INSERT
+			$this->db
+				->set('uid', $add)
+				->set('pokemon', $pokemon)
+				->set('km', $distance)
+			->insert('pokemon_eggs');
+			return $this->db->insert_id();
+		}else{
+			// GET
+			if(!empty($pokemon)){ $this->db->where('pokemon', $pokemon); }
+			$query = $this->db
+				->where('km', $distance)
+				->order_by('date_seen', 'DESC')
+			->get('pokemon_eggs');
+			if($query->num_rows() == 0){ return NULL; }
+
+		}
 	}
 
 	// --------------------------------

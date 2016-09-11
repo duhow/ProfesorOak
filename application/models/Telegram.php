@@ -160,6 +160,7 @@ class __Module_Telegram_Sender extends CI_Model{
 
 	function message($id = NULL){
 		if(empty($id)){ return $this->content['message_id']; }
+		if($id === TRUE){ $id = $this->telegram->message; }
 		$this->content['message_id'] = $id;
 		return $this;
 	}
@@ -698,7 +699,7 @@ class Telegram extends CI_Model{
 		return preg_replace($pats[$pattern], "", $text);
 	}
 
-	function is_chat_group(){ return in_array($this->chat->type, ["group", "supergroup"]); }
+	function is_chat_group(){ return isset($this->chat->type) && in_array($this->chat->type, ["group", "supergroup"]); }
 	function data_received($expect = NULL){
 		$data = ["new_chat_participant", "left_chat_participant", "new_chat_member", "left_chat_member", "reply_to_message",
 			"text", "audio", "document", "photo", "voice", "location", "contact"];

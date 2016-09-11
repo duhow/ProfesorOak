@@ -16,11 +16,48 @@ class Main extends CI_Controller {
 		$pokemon = $this->pokemon;
 		$chat = $telegram->chat;
 		$user = $telegram->user;
+		if($telegram->is_chat_group()){
+			/*
+			#####################
+			# Forwarding system #
+			#####################
+			*/
+
+			$chat_forward = $pokemon->settings($telegram->chat->id, 'forwarding_to');
+			if($chat_forward){ // Si no hay, po na.
+				if($telegram->user_in_chat($this->config->item('telegram_bot_id'), $chat_forward)){ // Si el Oak está en el grupo forwarding
+					$chat_accept = explode(",", $pokemon->settings($chat_forward, 'forwarding_accept'));
+					if(in_array($telegram->chat->id, $chat_accept)){ // Si el chat actual se acepta como forwarding...
+						$telegram->send
+							->message($telegram->message)
+							->chat($telegram->chat->id)
+							->forward_to($chat_forward)
+						->send();
+					}
+				}
+			}
+
+			/*
+			#####################
+			#   Abandon chat    #
+			#####################
+			*/
+
+			$abandon = $pokemon->settings($telegram->chat->id, 'abandon');
+			if($abandon){
+				if(json_decode($abandon) != NULL){ $abandon = json_decode($abandon); }
+				$str = ($abandon == TRUE ? "Este chat ha sido abandonado." : $abandon);
+				$telegram->send
+					->text($str)
+				->send();
+			}
+		}
+
 
 		$colores_full = [
-			['Y' => 'amarillo', 'instinto', 'yellow'],
-			['R' => 'rojo', 'valor', 'red'],
-			['B' => 'azul', 'sabiduría', 'blue'],
+			'Y' => ['amarillo', 'instinto', 'yellow'],
+			'R' => ['rojo', 'valor', 'red'],
+			'B' => ['azul', 'sabiduría', 'blue'],
 		];
 		$colores = array();
 		foreach($colores_full as $c){
@@ -175,18 +212,20 @@ class Main extends CI_Controller {
 									.$telegram->grouplink($link);
 						}
 
-						$telegram->send
-							->notification(TRUE)
-							->chat($telegram->user->id)
-							->text($text, TRUE)
-						->send();
-
-						if($pknew->verified){
+						if(!$telegram->user_in_chat($telegram->user->id, $teamchat)){
 							$telegram->send
 								->notification(TRUE)
-								->chat($teamchat)
-								->text("He invitado a @" .$pknew->username ." a este grupo.")
+								->chat($telegram->user->id)
+								->text($text, TRUE)
 							->send();
+
+							if($pknew->verified){
+								$telegram->send
+									->notification(TRUE)
+									->chat($teamchat)
+									->text("He invitado a @" .$pknew->username ." a este grupo.")
+								->send();
+							}
 						}
 					}
 				}
@@ -570,6 +609,7 @@ class Main extends CI_Controller {
 				],
 				'silenciosa' => [
 					'announce_welcome' => FALSE,
+					'blacklist' => 'troll,spam,rager',
 					'shutup' => TRUE,
 					'jokes' => FALSE,
 					'pole' => FALSE,
@@ -785,9 +825,11 @@ class Main extends CI_Controller {
 				}else{
 					$pokemon->update_user_data($reply->id, 'username', $word);
 					$this->analytics->event('Telegram', 'Register username');
+					$str = "De acuerdo, *@$word*!\n"
+							."¡Recuerda *validarte* para poder entrar en los grupos de colores!";
 					$telegram->send
 						->notification(FALSE)
-						->text("De acuerdo, *@$word*!", TRUE)
+						->text($str, TRUE)
 					->send();
 				}
 			}
@@ -1362,6 +1404,19 @@ class Main extends CI_Controller {
 				->show(TRUE, TRUE)
 			->send();
 
+			if(empty($pokeuser->username) or $pokeuser->lvl == 1){
+				$text = "Antes de validarte, necesito saber tu *nombre o nivel actual*.\n"
+						.":triangle-right: *Me llamo ...*\n"
+						.":triangle-right: *Soy nivel ...*";
+				$telegram->send
+					->notification(TRUE)
+					->chat($telegram->user->id)
+					->text($telegram->emoji($text), TRUE)
+					->keyboard()->hide(TRUE)
+				->send();
+				return;
+			}
+
 			$pokemon->step($telegram->user->id, 'SCREENSHOT_VERIFY');
 			return;
 		}
@@ -1667,18 +1722,36 @@ class Main extends CI_Controller {
 		}
 
 		// Ver los IV o demás viendo stats Pokemon.
-		elseif($telegram->text_has(["tengo", "calculame", "calcula iv", "calcular iv", "he conseguido", "he capturado"], TRUE) && $telegram->words() >= 4){
+		elseif($telegram->text_has(["tengo", "me ha salido", "calculame", "calcula iv", "calcular iv", "he conseguido", "he capturado"], TRUE) && $telegram->words() >= 4){
 			$pk = $this->parse_pokemon();
 			// TODO contar si faltan polvos o si se han especificado "caramelos" en lugar de polvos, etc.
 			if(!empty($pk['pokemon'])){
-				if(isset($pk['stardust'])){
+				if(($pk['egg'] == TRUE) && isset($pk['distance']) && !$telegram->text_contains("calcu")){
+					if(in_array($pk['distance'], [2000, 5000, 10000])){
+						if(!$pokeuser->verified){ return; } // no cheaters plz
+						if($pokemon->user_flags($telegram->user->id, ['troll', 'bot', 'gps'])){ return; }
+						$pk['distance'] = ($pk['distance'] / 1000);
+						if($pokemon->hatch_egg($pk['distance'], $pk['pokemon'], $telegram->user->id)){
+							$telegram->send
+								->notification(FALSE)
+								->text("¡Gracias! Lo apuntaré en mi lista :)")
+							->send();
+						}
+						return;
+					}
+				}elseif(isset($pk['stardust']) or isset($pk['candy'])){
+					if((!isset($pk['stardust']) or empty($pk['stardust'])) and isset($pk['candy'])){
+						// HACK confusión de la gente
+						$pk['stardust'] = $pk['candy'];
+						$telegram->send->text("¿Caramelos? Querrás decir polvos...")->send();
+					}
 					// TODO el Pokemon sólo puede ser +1.5 del nivel de entrenador (guardado en la cuenta)
 					// Calcular posibles niveles
 					$levels = $pokemon->stardust($pk['stardust'], $pk['powered']);
 					// $telegram->send->text(json_encode($levels))->send();
+
 					// Si tiene HP y CP puesto, calvular IV
 					if(isset($pk['hp']) and isset($pk['cp'])){
-						// $chat = ($pokemon->settings($chat->id, 'shutup') && $user->id != $this->config->item('creator') ? $telegram->user->id : $telegram->chat->id);
 						$chat = ($telegram->is_chat_group() && $this->is_shutup() && !in_array($telegram->user->id, $this->admins(TRUE)) ? $telegram->user->id : $telegram->chat->id);
 						$pokedex = $pokemon->pokedex($pk['pokemon']);
 						$this->analytics->event("Telegram", "Calculate IV", $pokedex->name);
@@ -1705,7 +1778,7 @@ class Main extends CI_Controller {
 												if($sum < $low){ $low = $sum; }
 												$table[] = ['level' => $lvl, 'atk' => $IV_ATK, 'def' => $IV_DEF, 'sta' => $IV_STA];
 											}
-											$cps[] = $cp;
+											$cps[] = $cp; // DEBUG
 										}
 									}
 									if($user->id == $this->config->item('creator')){
@@ -1718,9 +1791,6 @@ class Main extends CI_Controller {
 							// si tiene ATK, DEF O STA, los resultados
 							// que lo superen, quedan descartados.
 							foreach($table as $i => $r){
-								// if($pk['attack'] and ( ($r['atk'] < $r['def']) or ($r['atk'] < $r['sta']) )){ unset($table[$i]); }
-								// if($pk['defense'] and ( ($r['def'] < $r['atk']) or ($r['def'] < $r['atk']) )){ unset($table[$i]); }
-								// if($pk['stamina'] and ( ($r['sta'] < $r['atk']) or ($r['sta'] < $r['def']) )){ unset($table[$i]); }
 								if($pk['attack'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['atk'] )){ unset($table[$i]); continue; }
 								if($pk['defense'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['def'] )){ unset($table[$i]); continue; }
 								if($pk['stamina'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['sta'] )){ unset($table[$i]); continue; }
@@ -2260,7 +2330,7 @@ class Main extends CI_Controller {
 				->text($text, TRUE)
 			->send();
 			exit();
-		}elseif($telegram->text_has(["Dispara", "Disparo", "/dispara"], TRUE) && $telegram->words() <= 3){
+		}elseif($telegram->text_has(["Dispara", "Bang", "Disparo", "/dispara"], TRUE) && $telegram->words() <= 3){
 			if($pokemon->settings($telegram->chat->id, 'play_games') == FALSE){ return; }
 
 			$shot = $pokemon->settings($telegram->chat->id, 'russian_roulette');
@@ -2373,7 +2443,7 @@ class Main extends CI_Controller {
 				->notification(FALSE)
 				->text($text)
 			->send();
-			exit();
+			return;
 		}elseif(
 			( $telegram->text_has(["necesitas", "necesitáis"], ["novio", "un novio", "novia", "una novia", "pareja", "una pareja", "follar"]) ) or
 			( $telegram->text_has("Tengo", TRUE) && $telegram->words() == 2 && !is_numeric($telegram->last_word()) )
@@ -2384,109 +2454,129 @@ class Main extends CI_Controller {
 			$this->analytics->event('Telegram', 'Jokes', 'Team Rocket');
 			$telegram->send->notification(FALSE)->file('photo', FCPATH . "files/teamrocket.jpg", "¡¡El Team Rocket despega de nuevoooooo...!!");
 			$telegram->send->notification(FALSE)->file('audio', FCPATH . "files/teamrocket.ogg");
-			exit();
+			return;
 		}elseif($telegram->text_contains("sextape")){
 			$telegram->send->notification(FALSE)->file('video', FCPATH . "files/sextape.mp4");
-			exit();
+			return;
 		}elseif($telegram->text_has(["GTFO", "vale adiós"], TRUE)){
 			// puerta revisar
 			$this->analytics->event('Telegram', 'Jokes', 'GTFO');
 			$telegram->send->notification(FALSE)->file('document', "BQADBAADHgEAAuK9EgOeCEDKa3fsFgI"); // Puerta
-			exit();
+			return;
 		}elseif($telegram->text_contains(["badumtss", "ba dum tss"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Ba Dum Tss');
 			$telegram->send->notification(FALSE)->file('document', "BQADBAADHgMAAo-zWQOHtZAjTKJW2QI");
-			exit();
+			return;
 		}elseif($telegram->text_has(["métemela", "por el culo", "por el ano"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Metemela');
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/metemela.ogg");
-			exit();
+			return;
 		}elseif($telegram->text_has(["seguro", "plan"], "dental")){
 			$this->analytics->event('Telegram', 'Jokes', 'Seguro dental');
 			$telegram->send->chat_action('upload_video')->send();
 			$telegram->send->notification(FALSE)->file('video', FCPATH . "files/seguro_dental.mp4");
-			exit();
+			return;
 		}elseif($telegram->text_has("no paras") && $telegram->words() < 10){
 			$this->analytics->event('Telegram', 'Jokes', 'Paras');
 			$telegram->send->notification(FALSE)->file('photo', FCPATH . "files/paras.png");
-			exit();
+			return;
 		}elseif($telegram->text_contains("JOHN CENA") && $telegram->words() < 10){
 			$this->analytics->event('Telegram', 'Jokes', 'John Cena');
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/john_cena.ogg");
-			exit();
+			return;
 		}elseif($telegram->text_has(["soy", "soi", "eres"], ["100tifiko", "científico"])){
 			$this->analytics->event('Telegram', 'Jokes', '100tifiko');
 			$telegram->send->notification(FALSE)->file('sticker', 'BQADBAADFgADPngvAtG9NS3VQEf5Ag');
-			exit();
+			return;
 		}elseif($telegram->text_has(["hola", "buenas"], ["profesor", "oak"]) && $telegram->words() <= 4){
 			$this->analytics->event('Telegram', 'Jokes', 'Me gusta el dinero');
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/hola_dinero.ogg");
-			exit();
+			return;
 		}elseif($telegram->text_has(["muéstrame", "mostrar"]) && $telegram->text_has(["pokebola", "pokeball"]) && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Muestrame tu Pokebola');
 			$telegram->send->chat_action('upload_audio')->send();
 			$telegram->send->notification(FALSE)->file('audio', FCPATH . "files/pokebola.mp3");
-			exit();
-		}elseif($telegram->text_has("/fichas")){
+			return;
+		}elseif($telegram->text_has(["msn", "zumbido"])){
+			$this->analytics->event('Telegram', 'Jokes', 'Zumbido');
+			$telegram->send->chat_action('upload_audio')->send();
+			$telegram->send->notification(FALSE)->file('audio', FCPATH . "files/msn.ogg");
+			return;
+		}elseif($telegram->text_command("fichas") or $telegram->text_has(["te follo", "te follaba"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Fichas');
 			$telegram->send->notification(FALSE)->file('document', 'BQADBAADQQMAAgweZAcaoiy0cZEn5wI');
-			exit();
+			return;
+		}elseif($telegram->text_command("drama")){
+			$drama = [
+				'BQADAwADXgADVC-4BxFsybPmJZnnAg', // Judges you in Spanish
+				'BQADAwADWAADVC-4B-5sJxB9W3QUAg', // Cries in Spanish
+				'BQADAwADaAADVC-4B-Sq7oqcxWkyAg', // Screams in Spanish
+				'BQADAwADxwADVC-4BxbymhHL_2iYAg', // Gets nervous in Spanish
+			];
+			$n = mt_rand(0, count($drama) - 1);
+			$this->analytics->event('Telegram', 'Jokes', 'Drama');
+			$telegram->send->notification(FALSE)->file('sticker', $drama[$n]);
 		}elseif($telegram->text_has(["quiero", "necesito"], ["abrazo", "abrazarte", "un abrazo"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Hug');
 			$telegram->send->notification(FALSE)->file('document', FCPATH ."files/hug.gif");
-			exit();
+			return;
 		}elseif($telegram->text_has("corre", "corre")){
 			$this->analytics->event('Telegram', 'Jokes', 'Running');
 			$telegram->send->chat_action('upload_audio')->send();
 			$telegram->send->notification(FALSE)->file('audio', FCPATH ."files/running.ogg");
-			exit();
+			return;
 		}elseif($telegram->text_has("oak", "oak") or $telegram->text_has("toda", "toda")){
 			$this->analytics->event('Telegram', 'Jokes', 'Oak Oak');
 			$telegram->send->chat_action('upload_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/te_necesito.ogg");
-			exit();
+			return;
 		}elseif($telegram->text_has(["soy", "luke"]) and $telegram->text_has(["tu padre", "papa"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Yo soy tu padre');
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/luke_padre.ogg");
-			exit();
+			return;
 		}elseif($telegram->text_has(["subnor", "subnormal"]) and $telegram->text_has(["alerta", "detectado", "detected", "eres"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Alerta por subnormal');
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/alerta_subnormal.ogg");
-			exit();
+			return;
 		}elseif($telegram->text_has(["saca", "dame"]) and $telegram->text_has("látigo")){
 			$this->analytics->event('Telegram', 'Jokes', 'Látigo');
 			$telegram->send->chat_action('upload_video')->send();
 			$telegram->send->notification(FALSE)->file('document', FCPATH ."files/whip.gif");
-			exit();
+			return;
 		}elseif($telegram->text_has(["guerra", "callaos", "callaros"]) and $telegram->words() <= 6){
 			$this->analytics->event('Telegram', 'Jokes', 'Callaos Hipoglúcidos');
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/hipoglucidos.mp3");
-			exit();
+			return;
 		}elseif($telegram->text_has(["warns", "/warns"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Buarns');
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/buarns.mp3");
-			exit();
+			return;
+		}elseif($telegram->text_has(["no llevo nada", "no llevara nada"])){
+			$this->analytics->event('Telegram', 'Jokes', 'No llevara nada');
+			$telegram->send->chat_action('upload_video')->send();
+			$telegram->send->notification(FALSE)->file('document', FCPATH ."files/flanders.mp4");
+			return;
 		}elseif($telegram->text_has(["tdfw", "turn down for what"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Turn Down');
 			$files = ["tdfw_botella.mp3", "tdfw_turndown.mp3"];
 			$file = $files[mt_rand(0, count($files) - 1)];
 			$telegram->send->chat_action('upload_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH ."files/$file");
-			exit();
+			return;
 		}elseif($telegram->text_has(["es", "eres"], "tonto") && $telegram->words() <= 5){
 			$this->analytics->event('Telegram', 'Jokes', 'Tonto');
 			if($this->is_shutup()){ return; }
 			$telegram->send->chat_action('record_audio')->send();
 			if($telegram->has_reply){ $telegram->send->reply_to(FALSE); }
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/tonto.ogg");
-			exit();
+			return;
 		}elseif($telegram->text_has(["bug", "bugeate", "bugeado"]) && $telegram->words() <= 4){
 			if(mt_rand(1, 4) == 4){
 				$telegram->send->file('voice', FCPATH . 'files/modem.ogg', 'ERROR 404 PKGO_FC_CHEATS NOT_FOUND');
@@ -2830,7 +2920,7 @@ class Main extends CI_Controller {
 					}
 
 
-					$search = ['cp', 'pc', 'hp', 'ps', 'polvo', 'polvos', 'polvoestelar', 'stardust', 'm', 'metro', 'km'];
+					$search = ['cp', 'pc', 'hp', 'ps', 'polvo', 'polvos', 'caramelo', 'polvoestelar', 'stardust', 'm', 'metro', 'km'];
 					$enter = FALSE;
 					foreach($search as $q){
 						if(strpos($w, $q) !== FALSE){ $enter = TRUE; break; }
@@ -2841,6 +2931,7 @@ class Main extends CI_Controller {
 						if(strpos($w, 'hp') !== FALSE or strpos($w, 'ps') !== FALSE){ $action = 'hp'; }
 						if(strpos($w, 'polvo') !== FALSE or strpos($w, 'stardust') !== FALSE or strpos($w, 'polvoestelar') !== FALSE){ $action = 'stardust'; }
 						if(strpos($w, 'm') !== FALSE && strlen($w) == 1){ $action = 'distance'; }
+						if(strpos($w, 'caramelo') !== FALSE){ $action = 'candy'; }
 						if(strpos($w, 'metro') !== FALSE){ $action = 'distance'; }
 						if(strpos($w, 'km') !== FALSE && strlen($w) == 2){ $action = 'distance'; $number = $number * 1000; }
 
@@ -2865,6 +2956,7 @@ class Main extends CI_Controller {
 				$data['defense'] = ($telegram->text_has(["defensa", "DEF"]));
 				$data['stamina'] = ($telegram->text_has(["salud", "stamina", "estamina", "STA"]));
 				$data['powered'] = ($telegram->text_has(["mejorado", "entrenado", "powered"]) && !$telegram->text_has(["sin", "no"], ["mejorar", "mejorado"]));
+				$data['egg'] = ($telegram->text_contains("huevo"));
 
 				if($telegram->text_has(["muy fuerte", "lo mejor", "flipando", "fuera de", "muy fuertes", "muy alto", "muy alta", "muy altas"])){ $data['ivcalc'] = [15]; }
 				if($telegram->text_has(["bueno", "bastante bien", "buenas", "normal", "muy bien"])){ $data['ivcalc'] = [8,9,10,11,12]; }
@@ -2890,6 +2982,15 @@ class Main extends CI_Controller {
 				$number = NULL;
 				$hashtag = FALSE;
 				// ---------
+				$days = [
+					'lunes' => 'monday',
+					'martes' => 'tuesday',
+					'miercoles' => 'wednesday',
+					'jueves' => 'thursday',
+					'viernes' => 'friday',
+					'sabado' => 'saturday',
+					'domingo' => 'sunday'
+				];
 				foreach($s as $w){
 					$w = $telegram->clean('alphanumeric', $w);
 					$w = strtolower($w);
@@ -3035,7 +3136,12 @@ class Main extends CI_Controller {
 								->keyboard()->hide(TRUE)
 							->send();
 							exit();
-						break;
+							break;
+						case ':spiral:':
+							// TODO hacer el aviso.
+							$loc = $pokemon->settings($user->id, 'location');
+							$pokemon->step($user->id, NULL);
+							break;
 						case ':home:': // Set home
 							$loc = $pokemon->settings($user->id, 'location');
 							$pokemon->settings($user->id, 'location_home', $loc);
@@ -3077,8 +3183,11 @@ class Main extends CI_Controller {
 							if($error){ $telegram->send->keyboard()->hide(TRUE); }
 							else{
 								$telegram->send->keyboard()
-									->row_button($telegram->emoji(":mouse: He encontrado un Pokémon!"))
 									->row_button($telegram->emoji(":map: Ver los Pokémon cercanos"))
+									->row()
+										->button($telegram->emoji(":mouse: ¡Un Pokémon!"))
+										->button($telegram->emoji(":spiral: ¡Hay cebo!"))
+									->end_row()
 									->row_button("Cancelar")
 									->selective(TRUE)
 								->show(TRUE, TRUE);
@@ -3406,10 +3515,12 @@ class Main extends CI_Controller {
 		else{
 			$this->analytics->event('Telegram', 'Register username');
 			$pokemon->update_user_data($user, 'username', $name);
+			$str = "De acuerdo, *@$name*!\n"
+					."¡Recuerda *validarte* para poder entrar en los grupos de colores!";
 			$telegram->send
 				->reply_to(TRUE)
 				->notification(FALSE)
-				->text("De acuerdo, *@$name*!", TRUE)
+				->text($str, TRUE)
 			->send();
 		}
 		return TRUE;
