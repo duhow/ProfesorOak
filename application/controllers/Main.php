@@ -16,6 +16,10 @@ class Main extends CI_Controller {
 		$pokemon = $this->pokemon;
 		$chat = $telegram->chat;
 		$user = $telegram->user;
+
+		// Cancelar acciones sobre comandos provenientes de mensajes de channels. STOP SPAM.
+		if($telegram->has_forward && $telegram->forward_type("channel")){ return; }
+
 		if($telegram->is_chat_group()){
 			/*
 			#####################
@@ -86,10 +90,9 @@ class Main extends CI_Controller {
 						exit();
 					}
 				}
-			}elseif($telegram->is_bot($new->username)){
-				// Bot agregado al grupo. Yo no saludo bots :(
-				exit();
-			}
+
+			// Bot agregado al grupo. Yo no saludo bots :(
+			}elseif($telegram->is_bot($new->username)){ return; }
 
 			$pknew = $pokemon->user($new->id);
 			// El usuario nuevo es creador
@@ -1352,7 +1355,7 @@ class Main extends CI_Controller {
 
 		// Validar usuario
 		elseif(
-			$telegram->text_has(["oak", "profe", "quiero"]) &&
+			$telegram->text_has(["oak", "profe", "quiero", "como"]) &&
 			$telegram->text_has(["validame", "validarme", "válido", "verificarme", "verifico"]) &&
 			$telegram->words() <= 10
 		){
@@ -2490,7 +2493,7 @@ class Main extends CI_Controller {
 			$this->analytics->event('Telegram', 'Jokes', '100tifiko');
 			$telegram->send->notification(FALSE)->file('sticker', 'BQADBAADFgADPngvAtG9NS3VQEf5Ag');
 			return;
-		}elseif($telegram->text_has(["hola", "buenas"], ["profesor", "oak"]) && $telegram->words() <= 4){
+		}elseif($telegram->text_has(["hola", "buenas"], ["profesor", "profe", "oak"]) && $telegram->words() <= 4){
 			$this->analytics->event('Telegram', 'Jokes', 'Me gusta el dinero');
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/hola_dinero.ogg");
@@ -3235,7 +3238,8 @@ class Main extends CI_Controller {
 				exit();
 				break;
 			case 'SETNAME':
-				if($telegram->words() == 1){ $this->_set_name($user->id, $telegram->text()); }
+				// Last word con filtro de escapes.
+				if($telegram->words() == 1){ $this->_set_name($user->id, $telegram->last_word(TRUE), TRUE); }
 				$pokemon->step($user->id, NULL);
 				break;
 			default:

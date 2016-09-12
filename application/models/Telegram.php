@@ -486,6 +486,9 @@ class Telegram extends CI_Model{
 			$this->reply_user = (object) $this->data['message']['reply_to_message']['from'];
 			$this->reply = (object) $this->data['message']['reply_to_message'];
 		}
+		if(isset($this->data['message']['forward_from_chat'])){
+			$this->has_forward = TRUE;
+		}
 		if(isset($this->data['message']['new_chat_participant'])){
 			$this->new_user = (object) $this->data['message']['new_chat_participant'];
 		}elseif(isset($this->data['message']['left_chat_participant'])){
@@ -503,6 +506,7 @@ class Telegram extends CI_Model{
 	public $new_user = NULL;
 	public $reply_user = NULL;
 	public $has_reply = FALSE;
+	public $has_forward = FALSE;
 	public $reply_is_forward = FALSE;
 	public $caption = NULL;
 	public $send; // Class
@@ -709,6 +713,13 @@ class Telegram extends CI_Model{
 			}
 		}
 		return FALSE;
+	}
+
+	function forward_type($expect = NULL){
+		if(!$this->has_forward){ return FALSE; }
+		$type = $this->data['message']['forward_from_chat']['type'];
+		if($expect !== NULL){ return (strtolower($expect) == $type); }
+		return $type;
 	}
 
 	function is_bot($user = NULL){
