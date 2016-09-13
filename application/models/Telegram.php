@@ -206,7 +206,8 @@ class __Module_Telegram_Sender extends CI_Model{
 		// return $this;
 	}
 
-	function location($lat, $lon){
+	function location($lat, $lon = NULL){
+		if(is_array($lat) && $lon == NULL){ $lon = $lat[1]; $lat = $lat[0]; }
 		$this->content['latitude'] = $lat;
 		$this->content['longitude'] = $lon;
 		$this->method = "sendLocation";

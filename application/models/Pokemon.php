@@ -751,6 +751,75 @@ class Pokemon extends CI_Model{
 		}
 	}
 
+	function meeting($key){
+		$query = $this->db
+			->where('joinkey', $key)
+		->get('meetings');
+		return ($query->num_rows() == 1 ? $query->row() : NULL);
+	}
+
+	function meeting_members($id){
+		$query = $this->db
+			->where('mid', $id)
+			->order_by('register_date', 'DESC')
+		->get('meetings_join');
+		if($query->num_rows() > 0){ return $query->num_rows(); }
+		return array();
+	}
+
+	function meeting_members_count($id, $all = FALSE){
+		if(!$all){ $this->db->where('active', TRUE); }
+		$query = $this->db
+			->where('mid', $id)
+		->get('meetings_join');
+		return $query->num_rows();
+	}
+
+	function meeting_create($user, $date, $location, $private = FALSE){
+		$data = [
+			'creator' => $user,
+			'location' => $location,
+			'date_event' => $date,
+			'private' => $private,
+			'register_date' => date("Y-m-d H:i:s"),
+		];
+		$key = sha1(serialize($data));
+		$key = substr($key, 0, 8);
+		$data['joinkey'] = $key;
+		$this->db->insert('meetings', $data);
+		$id = $this->db->insert_id();
+		$this->meeting_join($user, $id, TRUE);
+		return $key;
+	}
+
+	function meeting_join($user, $meeting, $join = NULL){
+		if($join === NULL){
+			// GET
+			$query = $this->db
+				->where('uid', $user)
+				->where('mid', $meeting)
+			->get('meetings_join');
+			if($query->num_rows() == 1){ return (bool) $query->row()->active; }
+			return NULL;
+		}else{
+			if($this->meeting_join($user, $meeting) !== NULL){
+				// UPDATE
+				return $this->db
+					->set('active', $join)
+					->where('uid', $user)
+					->where('mid', $meeting)
+				->update('meetings_join');
+			}else{
+				// INSERT
+				return $this->db
+					->set('uid', $user)
+					->set('mid', $meeting)
+					->set('active', $join)
+				->insert('meetings_join');
+			}
+		}
+	}
+
 	function meaning($text, $count = FALSE){
 		return $this->link($text, $count, 'meanings');
 	}
