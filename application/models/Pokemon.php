@@ -265,6 +265,18 @@ class Pokemon extends CI_Model{
 		if($query->num_rows() == 1){ return $query->row(); }
 	}
 
+	function group_get_members($cid, $full = FALSE){
+		$query = $this->db
+			->where('cid', $cid)
+			->order_by('last_date', 'DESC')
+		->get('user_inchat');
+		if($query->num_rows() > 0){
+			if($full){ return $query->result_array(); }
+			return array_column($query->result_array(), 'uid');
+		}
+		return NULL;
+	}
+
 	function group_pair($group, $team){
 		$pair = $this->settings($group, 'pair_team_' .$team);
 		if(empty($pair)){ return NULL; }
@@ -307,6 +319,14 @@ class Pokemon extends CI_Model{
 			->set('uid', $tid)
 			->set('cid', $cid)
 		->insert('user_inchat');
+	}
+
+	function user_delgroup($tid, $cid){
+		if(!$this->user_in_group($tid, $cid)){ return TRUE; }
+		return $this->db
+			->where('uid', $tid)
+			->where('cid', $cid)
+		->delete('user_inchat');
 	}
 
 	function user_in_group($tid, $cid = NULL){
@@ -548,7 +568,21 @@ class Pokemon extends CI_Model{
 
 	function add_found($poke, $user, $lat, $lng){
 		$data = [
+			'type' => 'pokemon',
 			'pokemon' => $poke,
+			'user' => $user,
+			'lat' => $lat,
+			'lng' => $lng,
+			'register_date' => date("Y-m-d H:i:s"),
+			'points' => 0,
+		];
+		$this->db->insert('pokemon_spawns', $data);
+		return $this->db->insert_id();
+	}
+
+	function add_lure_found($user, $lat, $lng){
+		$data = [
+			'type' => 'lure',
 			'user' => $user,
 			'lat' => $lat,
 			'lng' => $lng,
@@ -678,6 +712,7 @@ class Pokemon extends CI_Model{
 					."POW(SIN((RADIANS($location[1]) - RADIANS(lng)) / 2), 2) )) * 2 * 6371000";
 		$query = $this->db
 			->select(['*', "$sql_dist AS distance"])
+			->where('type', 'pokemon')
 			->where("($sql_dist) <=", $radius)
 			->where_in('pokemon', $pokemon)
 			->limit($limit)
