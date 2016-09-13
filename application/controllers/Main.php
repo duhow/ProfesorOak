@@ -1778,7 +1778,9 @@ class Main extends CI_Controller {
 					if((!isset($pk['stardust']) or empty($pk['stardust'])) and isset($pk['candy'])){
 						// HACK confusión de la gente
 						$pk['stardust'] = $pk['candy'];
-						$telegram->send->text("¿Caramelos? Querrás decir polvos...")->send();
+						if(isset($pk['hp']) and isset($pk['cp'])){
+							$telegram->send->text("¿Caramelos? Querrás decir polvos...")->send();
+						}
 					}
 					// TODO el Pokemon sólo puede ser +1.5 del nivel de entrenador (guardado en la cuenta)
 					// Calcular posibles niveles
