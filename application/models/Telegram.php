@@ -641,7 +641,14 @@ class Telegram extends CI_Model{
 		if($cmd === TRUE){ return $cmds; }
 		if(is_string($cmd)){
 			if($cmd[0] != "/"){ $cmd = "/" .$cmd; }
-			return in_array(strtolower($cmd), $cmds);
+			$check[] = $cmd;
+			$check[] = strtolower($cmd) ."@" .$this->config->item('telegram_bot_name');
+			$check[] = strtolower($cmd ."@" .$this->config->item('telegram_bot_name'));
+			foreach($check as $c){
+				if(in_array($c, $cmds)){ return TRUE; }
+			}
+			return FALSE;
+			// return in_array(strtolower($cmd), $cmds);
 		}
 		return FALSE;
 	}
@@ -665,6 +672,20 @@ class Telegram extends CI_Model{
 		return FALSE;
 	}
 
+	function text_url($cmd = NULL){
+		// NULL -> saca la primera URL o FALSE.
+		// TRUE -> array [URLs]
+		if(!isset($this->data['message']['entities'])){ return FALSE; }
+		$cmds = array();
+		$text = $this->text(FALSE); // No UTF-8 clean
+		foreach($this->data['message']['entities'] as $e){
+			if($e['type'] == 'url'){ $cmds[] = strtolower(substr($text, $e['offset'], $e['length'])); }
+		}
+		if($cmd == NULL){ return (count($cmds) > 0 ? $cmds[0] : FALSE); }
+		if($cmd === TRUE){ return $cmds; }
+		return FALSE;
+	}
+
 	function last_word($clean = FALSE){
 		$text = explode(" ", $this->text());
 		if($clean === TRUE){ $clean = 'alphanumeric-accent'; }
@@ -674,6 +695,8 @@ class Telegram extends CI_Model{
 	function words($position = NULL, $amount = 1, $filter = FALSE){ // Contar + recibir argumentos
 		if($position === NULL){
 			return count(explode(" ", $this->text()));
+		}elseif($position === TRUE){
+			return explode(" ", $this->text());
 		}elseif(is_numeric($position)){
 			if($amount === TRUE){ $filter = 'alphanumeric'; $amount = 1; }
 			elseif(is_string($amount)){ $filter = $amount; $amount = 1; }
@@ -773,6 +796,7 @@ class Telegram extends CI_Model{
 	function document(){}
 
 	function photo($retall = FALSE, $id = -1){
+		if(!isset($this->data['message']['photo'])){ return FALSE; }
 		$photos = $this->data['message']['photo'];
 		if(empty($photos)){ return FALSE; }
 		$photo = NULL;

@@ -220,7 +220,7 @@ class Pokemon extends CI_Model{
 			elseif($query->num_rows() == 1){ return ($full ? $query->row() : $query->row()->value); }
 			return NULL;
 		}else{
-			if($this->settings($user, $key) === NULL){
+			if($this->settings($user, $key) === NULL && strtoupper($value) !== "DELETE"){
 				// INSERT
 				$data = [
 					'uid' => $user,
@@ -262,7 +262,70 @@ class Pokemon extends CI_Model{
 			->where('id', $id)
 			->limit(1)
 		->get('chats');
-		if($query->num_rows() == 1){ return $query->row(); }
+		return ($query->num_rows() == 1 ? $query->row() : NULL);
+	}
+
+	function group_find($data){
+		$possible[] = $data;
+		if($data[0] != "@"){ $possible[] = "@" .$data; }
+		$query = $this->db
+			->like('uid', '-', 'after')
+			->group_start()
+				->where('type', 'link_chat')
+				->or_where('type', 'name')
+			->group_end()
+			->where_in('value', $possible)
+			->order_by('lastupdate', 'DESC')
+		->get('settings');
+		if($query->num_rows() > 0){ return $query->row()->uid; }
+		return NULL;
+	}
+
+	function group_spamcount($gid, $amount = NULL){
+		$group = $this->group($gid);
+		if(!$group){ return FALSE; }
+		if($amount === NULL){ return $group->spam; }
+		if($amount === FALSE or ($group->spam + $amount) < 0){ $amount = ($group->spam * (-1)); }
+		if($amount !== NULL && $amount < 0 && $group->spam == 0){ return $group->spam; } // No need to update.
+		$this->db
+			->set('spam', "spam + ($amount)", FALSE)
+			->where('id', $gid)
+		->update('chats');
+		return $this->group_spamcount($gid);
+	}
+
+	function group_admins($gid, $useradd = NULL, $time = 3600){
+		if($useradd === NULL){
+			// GET
+			$query = $this->db
+				->where('gid', $gid)
+				->where('expires >=', date("Y-m-d H:i:s"))
+			->get('user_admins');
+			return ($query->num_rows() > 0 ? array_column($query->result_array(), 'uid') : NULL);
+		}elseif(is_string($useradd) && strtoupper($useradd) == "DELETE"){
+			// DELETE
+			return $this->db
+				->where('gid', $gid)
+			->delete('user_admins');
+		}
+		// INSERT
+		$admins = $this->group_admins($gid);
+		if(!is_array($useradd)){ $useradd = [$useradd]; }
+		$list = (is_array($admins) ? array_diff($useradd, $admins) : $useradd);
+		if(empty($list)){ return $admins; } // FIXME ?
+		$this->group_admins($gid, "DELETE");
+		$time = date("Y-m-d H:i:s", (time() + $time));
+
+		$data = array();
+		foreach($list as $a){
+			$data[] = [
+				'gid' => $gid,
+				'uid' => $a,
+				'expires' => $time
+			];
+		}
+		$this->db->insert_batch('user_admins', $data);
+		return $list;
 	}
 
 	function group_get_members($cid, $full = FALSE){
