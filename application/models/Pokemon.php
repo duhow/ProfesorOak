@@ -5,7 +5,8 @@ class Pokemon extends CI_Model{
 	//   Funciones de usuario
 	// --------------------------------
 
-	function user($user){
+	function user($user, $offline = FALSE){
+		if($user[0] == "@"){ $user = substr($user, 1); }
 		$query = $this->db
 			->group_start()
 				->where('telegramid', $user)
@@ -14,6 +15,14 @@ class Pokemon extends CI_Model{
 			->group_end()
 			->where('anonymous', FALSE)
 		->get('user');
+		if($query->num_rows() == 1){ return $query->row(); }
+		return ($offline ? $this->user_offline($user) : NULL);
+	}
+
+	function user_offline($user){
+		$query = $this->db
+			->where('username', $user)
+		->get('user_offline');
 		return ($query->num_rows() == 1 ? $query->row() : NULL);
 	}
 
@@ -76,7 +85,7 @@ class Pokemon extends CI_Model{
 	}
 
 	function user_flags($user, $flag = NULL, $set = NULL){
-		if(!$this->user_exists($user)){ return FALSE; }
+		// if(!$this->user_exists($user)){ return FALSE; }
 		if($flag != NULL && is_bool($set)){
 			if($set == TRUE){
 				$q = $this->user_flags($user, $flag, NULL);
@@ -175,6 +184,19 @@ class Pokemon extends CI_Model{
 		return $this->db->insert_id();
 	}
 
+	function register_offline($username, $team, $referral = NULL, $lvl = 1){
+		if($this->user($username, TRUE)){ return FALSE; }
+
+		$this->db
+			->set('username', $username)
+			->set('team', $team)
+			->set('lvl', $lvl)
+			->set('referral', $referral)
+			->set('register_date', date("Y-m-d H:i:s"))
+		->insert('user_offline');
+		return $this->db->insert_id();
+	}
+
 	function step($user, $step = FALSE){
 		if($step === FALSE){
 			// GET
@@ -251,6 +273,14 @@ class Pokemon extends CI_Model{
 			->set($key, $value)
 			->where('telegramid', $telegram)
 		->update('user');
+	}
+
+	function update_user_offline_data($id, $key, $value){
+		return $this->db
+			->set($key, $value)
+			->where('id', $id)
+			// ->or_where('username', $id)
+		->update('user_offline');
 	}
 
 	// --------------------------------
@@ -338,6 +368,18 @@ class Pokemon extends CI_Model{
 			return array_column($query->result_array(), 'uid');
 		}
 		return NULL;
+	}
+
+	function group_find_member($uid, $cid = NULL){
+		if($cid !== NULL && !is_bool($cid) && !is_array($cid)){ $cid = [$cid]; }
+		if(is_array($cid)){ $this->db->where_in('cid', $cid); }
+		$query = $this->db
+			->where('uid', $uid)
+		->get('user_inchat');
+		if($query->num_rows() == 0){ return FALSE; }
+		if($cid === TRUE){ return array_column($query->result_array(), 'last_date', 'cid'); }
+		if(is_array($cid) && count($cid) == 1){ return TRUE; } // Un grupo, no 0 results? Pues TRUE por narices.
+		return array_column($query->result_array(), 'cid');
 	}
 
 	function group_pair($group, $team){
@@ -787,6 +829,21 @@ class Pokemon extends CI_Model{
 		return ($query->num_rows() > 0 ? $query->result_array() : array());
 	}
 
+	function pokestops($location, $radius = 500, $limit = 10){
+		if(!is_array($location) or count($location) != 2){ return FALSE; }
+		$sql_dist = "ASIN(SQRT(POW(SIN((RADIANS($location[0]) - RADIANS(lat)) / 2), 2) + COS(RADIANS(lat)) * COS(RADIANS($location[0])) * "
+					."POW(SIN((RADIANS($location[1]) - RADIANS(lng)) / 2), 2) )) * 2 * 6371000";
+		$query = $this->db
+			->select(['*', "$sql_dist AS distance"])
+			->where("($sql_dist) <=", $radius)
+			->limit($limit)
+			->order_by($sql_dist, 'ASC', FALSE)
+			// ->order_by('last_seen', 'DESC')
+			->order_by('id', 'DESC')
+		->get('pokestops');
+		return ($query->num_rows() > 0 ? $query->result_array() : NULL);
+	}
+
 	// --------------------------------
 	//   Funciones de información general
 	// --------------------------------
@@ -911,12 +968,18 @@ class Pokemon extends CI_Model{
 	}
 
     function count_teams(){
-        $query = $this->db
-            ->select(['team', 'count(*) AS count'])
-            ->where_in('team', ['R','B','Y'])
-            ->group_by('team')
-        ->get('user');
-		return ($query->num_rows() > 0 ? array_column($query->result_array(), 'count', 'team') : array());
+		$teams = ['Y' => 0, 'R' => 0, 'B' => 0];
+		foreach(['user', 'user_offline'] as $table){
+			$query = $this->db
+				->select(['team', 'count(*) AS count'])
+				->where_in('team', array_keys($teams))
+				->group_by('team')
+			->get($table);
+			if($query->num_rows() > 0){
+				foreach($query->result_array() as $r){ $teams[$r['team']] += $r['count']; }
+			}
+		}
+		return $teams;
     }
 
 } ?>
