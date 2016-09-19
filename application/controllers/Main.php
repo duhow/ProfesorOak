@@ -127,15 +127,17 @@ class Main extends CI_Controller {
 			$dubs = $pokemon->settings($telegram->chat->id, 'dubs');
 			if($dubs){
 				$nums = array_merge(
+					range(11111, 99999, 11111),
 					range(1111, 9999, 1111),
 					range(111, 999, 111)
 					// range(11, 99, 11)
 				);
 				$lon = NULL;
+				$id = $telegram->message;
 				foreach($nums as $n){
-					if(strpos(substr($telegram->message, strlen($n) * -1), $n) !== FALSE){
+					if(strpos(strval($id), strval($n), strlen($id) - strlen($n)) !== FALSE){
+						// $telegram->send->text("hecho en $id con $n")->send();
 						$lon = strlen($n);
-						$telegram->send->text("hecho en $telegram->message")->send();
 						break;
 					}
 				}
@@ -143,11 +145,7 @@ class Main extends CI_Controller {
 				// if($lon == 2){ $str = "Dubs! :D"; }
 				if($lon == 3){ $str = "Trips checked!"; }
 				elseif($lon == 4){ $str = "QUADS *GET*!"; }
-				/* if($telegram->user->id == $this->config->item('creator')){
-					$telegram->send
-					->text($telegram->message)
-					->send();
-				} */
+				elseif($lon == 5){ $str = "QUINTUPLE *GET! OMGGG!!*"; }
 				if($str){
 					$telegram->send
 						->reply_to(TRUE)
@@ -2374,7 +2372,7 @@ class Main extends CI_Controller {
 
 		if($telegram->text_contains( ["atacando", "atacan"]) && $telegram->text_contains(["gimnasio", "gym"])){
 
-		}elseif($telegram->text_has(["debilidad", "debilidades", "luchar", "atacar"], ["contra", "hacia", "sobre", "de"]) && $telegram->words() <= 6){
+		}elseif($telegram->text_has(["debilidad", "debilidades", "fortaleza", "fortalezas"], ["contra", "hacia", "sobre", "de"]) && $telegram->words() <= 6){
 			$chat = NULL;
 			$filter = (strpos($telegram->text(), "/") === FALSE); // Si no hay barra, filtra.
 			if(in_array($telegram->words(), [3,4]) && $telegram->text_has("aquí", FALSE)){
@@ -2387,7 +2385,8 @@ class Main extends CI_Controller {
 			$pk = $this->parse_pokemon();
 			if(!empty($pk['pokemon'])){ $text = $pk['pokemon']; }
 			$this->analytics->event('Telegram', 'Search Pokemon Attack', ucwords(strtolower($text)));
-			$this->_poke_attack($text, $chat);
+			$target = $telegram->text_contains("fortaleza");
+			$this->_poke_attack($text, $chat, $target);
 		}elseif($telegram->text_has(["evolución", "evolucionar"])){
 			$chat = ($telegram->text_has("aquí") && !$this->is_shutup() ? $telegram->chat->id : $telegram->user->id);
 
@@ -4001,7 +4000,7 @@ class Main extends CI_Controller {
 		}
 	}
 
-	function _poke_attack($text, $chat = NULL){
+	function _poke_attack($text, $chat = NULL, $target_attack = FALSE){
 		$telegram = $this->telegram;
 		$types = $this->pokemon->attack_types();
 
@@ -4031,7 +4030,7 @@ class Main extends CI_Controller {
 			$primary = $pokemon['type'];
 			$secondary = $pokemon['type2'];
 		}else{
-			$str .= "Debilidad ";
+			$str .= (!$target_attack ? "Debilidad " : "Fortaleza ");
 			if(strpos($text, "/") !== FALSE){
 				$text = explode("/", $text);
 				if(count($text) != 2){ exit(); } // Hay más de uno o algo raro.
@@ -4068,10 +4067,12 @@ class Main extends CI_Controller {
 		// debil, muy fuerte
 		// 0.5 = poco eficaz; 2 = muy eficaz
 		$list = array();
+		$type_target = ($target_attack ? "target" : "source");
+		$type_source = ($target_attack ? "source" : "target");
 		foreach($table as $t){
-			if(in_array(strtolower($t['target']), $target)){
-				if($t['attack'] == 0.5){ $list[0][] = $types[$t['source']]; }
-				if($t['attack'] == 2){ $list[1][] = $types[$t['source']]; }
+			if(in_array(strtolower($t[$type_source]), $target)){
+				if($t['attack'] == 0.5){ $list[0][] = $types[$t[$type_target]]; }
+				if($t['attack'] == 2){ $list[1][] = $types[$t[$type_target]]; }
 			}
 		}
 		foreach($list as $k => $i){ $list[$k] = array_unique($list[$k]); } // Limpiar debilidades duplicadas
@@ -4089,8 +4090,8 @@ class Main extends CI_Controller {
 			$idex++;
 		}
 
-		if(isset($list[0]) && count($list[0]) > 0){ $str .= "Apenas le afecta *" .implode("*, *", $list[0]) ."*.\n"; }
-		if(isset($list[1]) && count($list[1]) > 0){ $str .= "Le afecta mucho *" .implode("*, *", $list[1]) ."*.\n"; }
+		if(isset($list[0]) && count($list[0]) > 0){ $str .= (!$target_attack ? "Apenas le afecta *" : "Apenas es fuerte contra *") .implode("*, *", $list[0]) ."*.\n"; }
+		if(isset($list[1]) && count($list[1]) > 0){ $str .= (!$target_attack ? "Le afecta mucho *" : "Es muy eficaz contra *") .implode("*, *", $list[1]) ."*.\n"; }
 
 		$telegram->send
 			->chat($chat)
