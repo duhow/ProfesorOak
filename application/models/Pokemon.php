@@ -836,6 +836,8 @@ class Pokemon extends CI_Model{
 		$query = $this->db
 			->select(['*', "$sql_dist AS distance"])
 			->where("($sql_dist) <=", $radius)
+			->where("gym", FALSE)
+			->where("disabled", FALSE)
 			->limit($limit)
 			->order_by($sql_dist, 'ASC', FALSE)
 			// ->order_by('last_seen', 'DESC')

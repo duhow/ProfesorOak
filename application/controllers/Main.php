@@ -3379,8 +3379,6 @@ class Main extends CI_Controller {
 				if($telegram->text_has(["bajo", "muy bajo", "poco que desear", "bien"])){ $data['ivcalc'] = [0,1,2,3,4,5,6,7]; }
 				if($telegram->text_has(["fuerte", "fuertes", "excelente", "excelentes", "impresionante", "impresionantes", "alto", "alta"])){ $data['ivcalc'] = [13,14]; }
 
-				// TODO: ataque bajo, ataque muy alto => indica valor IV.
-
 				if($pokemon->settings($user->id, 'debug')){
 					$telegram->send->text(json_encode($data))->send();
 				}
@@ -3392,7 +3390,6 @@ class Main extends CI_Controller {
 				}
 				break;
 			case 'TIME_PARSE':
-				// TODO hacer sistema
 				$s = explode(" ", $telegram->text());
 				$data = array();
 				$number = NULL;
@@ -3642,6 +3639,22 @@ class Main extends CI_Controller {
 					exit();
 				}
 				$loc = explode(",", $pokemon->settings($user->id, 'location')); // FIXME cuidado con esto, si reusamos la funcion.
+
+				// Buscar Pokeparada correspondiente o cercana.
+				$pkstop = $pokemon->pokestops($loc, 160, 1);
+				if(!$pkstop){
+					$telegram->send
+						->text("No hay Pokeparadas por ahí cerca, o no están registradas. Pregúntalo más adelante.")
+					->send();
+					$telegram->send
+						->chat($this->config->item('creator'))
+						->text("*!!* Buscar Poképaradas en *" .json_encode($loc) ."*", TRUE)
+					->send();
+					return;
+				}
+				$pkstop = $pkstop[0];
+				$loc = [$pkstop['lat'], $pkstop['lng']];
+
 				$pokemon->add_lure_found($user->id, $loc[0], $loc[1]);
 
 				// SELECT uid, SUBSTRING(value, 1, INSTR(value, ",") - 1) AS lat, SUBSTRING(value, INSTR(value, ",") + 1) AS lng FROM `settings` WHERE LEFT(uid, 1) = '-' AND type = "location"
@@ -3651,7 +3664,7 @@ class Main extends CI_Controller {
 
 				$this->analytics->event("Telegram", "Lure Seen", $pk);
 				$telegram->send
-					->text("Hecho! Gracias por avisar! :D")
+					->text("Cebo en *" .$pkstop['title'] ."*, gracias por avisar! :D", TRUE)
 					->keyboard()->hide(TRUE)
 				->send();
 				exit();
@@ -4183,10 +4196,13 @@ class Main extends CI_Controller {
 		}
 		if($loc === NULL){
 			$loc = explode(",", $pokemon->settings($telegram->chat->id, 'location'));
-			if($loc === NULL){
+			if(empty($loc) or count($loc) != 2){
 				$telegram->send
 					->notification(FALSE)
-					->text("No tengo ninguna ubicación.")
+					->text("No tengo ninguna ubicación. ¿Me la mandas?")
+					->keyboard()
+						->row_button($telegram->emoji(":pin: Enviar ubicación"), FALSE)
+					->show(TRUE, TRUE)
 				->send();
 				return;
 			}
@@ -4206,6 +4222,7 @@ class Main extends CI_Controller {
 		$chat = ($telegram->is_chat_group() && $this->is_shutup() ? $telegram->user->id : $telegram->chat->id);
 		$telegram->send
 			->chat($chat)
+			->keyboard()->hide(TRUE)
 			->text($text, TRUE)
 		->send();
 		if(!$found && $loc){

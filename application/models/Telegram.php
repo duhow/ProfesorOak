@@ -668,7 +668,7 @@ class Telegram extends CI_Model{
 		return FALSE;
 	}
 
-	function text_hashtag($hg = NULL){
+	function text_hashtag($tag = NULL){
 		// NULL -> saca el primer hashtag o FALSE.
 		// TRUE -> array [hashtags]
 		// STR -> hashtag definido.
@@ -678,11 +678,11 @@ class Telegram extends CI_Model{
 		foreach($this->data['message']['entities'] as $e){
 			if($e['type'] == 'hashtag'){ $hgs[] = strtolower(substr($text, $e['offset'], $e['length'])); }
 		}
-		if($hg == NULL){ return (count($hgs) > 0 ? $hgs[0] : FALSE); }
-		if($hg === TRUE){ return $hgs; }
-		if(is_string($hg)){
-			if($hg[0] != "#"){ $hg = "#" .$hg; }
-			return in_array(strtolower($hg), $hgs);
+		if($tag == NULL){ return (count($hgs) > 0 ? $hgs[0] : FALSE); }
+		if($tag === TRUE){ return $hgs; }
+		if(is_string($tag)){
+			if($tag[0] != "#"){ $tag = "#" .$tag; }
+			return in_array(strtolower($tag), $hgs);
 		}
 		return FALSE;
 	}
@@ -824,14 +824,12 @@ class Telegram extends CI_Model{
 		return $gif->file_id;
 	}
 
-	function photo($retall = FALSE, $id = -1){
+	function photo($retall = FALSE, $sel = -1){
 		if(!isset($this->data['message']['photo'])){ return FALSE; }
 		$photos = $this->data['message']['photo'];
 		if(empty($photos)){ return FALSE; }
-		$photo = NULL;
-		if($id == -1 or $id > count($photos) - 1){ $photo = array_pop($photos); }
-		else{ $photo = $photos[$id]; }
-
+		// Select last file or $sel_id
+		$photo = ($sel == -1 or $sel > count($photos) - 1 ? array_pop($photos) : $photos[$sel]);
 		if($retall == FALSE){ return $photo['file_id']; }
 		elseif($retall == TRUE){ return (object) $photo; }
 	}
