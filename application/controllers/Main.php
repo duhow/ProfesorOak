@@ -120,6 +120,31 @@ class Main extends CI_Controller {
 
 			/*
 			#####################
+			#  Custom commands  #
+			#####################
+			*/
+
+			$commands = $pokemon->settings($telegram->chat->id, 'custom_commands');
+			if($commands){
+				$commands = unserialize($commands);
+				if(is_array($commands)){
+					foreach($commands as $word => $action){
+						if($telegram->text_has($word, TRUE)){
+							$content = current($action);
+							$action = key($action);
+							if($action == "text"){
+								$telegram->send->text(json_decode($content))->send();
+							}else{
+								$telegram->send->file($action, $content);
+							}
+							return;
+						}
+					}
+				}
+			}
+
+			/*
+			#####################
 			#    Dub message    #
 			#####################
 			*/
@@ -1037,7 +1062,7 @@ class Main extends CI_Controller {
 			}
 		}
 		// echar al bot del grupo
-		elseif($telegram->text_has(["oak", "profe"], ["sal", "vete"], TRUE) && $telegram->is_chat_group() && $telegram->words() < 4){
+		elseif($telegram->text_has(["oak", "profe"], ["sal", "vete"], TRUE) && !$telegram->text_contains("salu") && $telegram->is_chat_group() && $telegram->words() < 4){
 			$admins = $this->admins(TRUE);
 
 			if(in_array($user->id, $admins)){
@@ -2611,8 +2636,7 @@ class Main extends CI_Controller {
 			$telegram->words() <= 8 &&
 			$telegram->is_chat_group()
 		){
-			$admins = $telegram->get_admins();
-			$admins[] = $this->config->item('creator');
+			$admins = $this->admins(TRUE);
 			if(in_array($telegram->user->id, $admins)){
 				$pokemon->step($telegram->user->id, 'WELCOME');
 				$telegram->send
@@ -2621,6 +2645,17 @@ class Main extends CI_Controller {
 				->send();
 				return;
 			}
+		}elseif(
+			( $telegram->text_has("crear", "comando", TRUE) or $telegram->text_command("command") ) &&
+			$telegram->is_chat_group()
+		){
+			if(!in_array($telegram->user->id, $this->admins(TRUE))){ return; }
+			$pokemon->step($telegram->user->id, 'CUSTOM_COMMAND');
+			$telegram->send
+				->reply_to(TRUE)
+				->text("Dime el comando / frase a crear.")
+			->send();
+			return;
 		}elseif($telegram->text_has(["team", "equipo"]) && $telegram->text_has(["sóis", "hay aquí", "estáis"])){
 			exit();
 		}elseif($telegram->text_has("Qué", ["significa", "es"], TRUE)){
@@ -2901,6 +2936,26 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_command("fichas") or $telegram->text_has(["te follo", "te follaba"])){
 			$this->analytics->event('Telegram', 'Jokes', 'Fichas');
 			$telegram->send->notification(FALSE)->file('document', 'BQADBAADQQMAAgweZAcaoiy0cZEn5wI');
+			return;
+		}elseif($telegram->text_command("banana") && $telegram->has_reply){
+			$this->analytics->event('Telegram', 'Jokes', 'Banana');
+			$text = "Oye " .$telegram->reply_user->first_name .", " .$telegram->user->first_name ." quiere darte su banana... " .$telegram->emoji("=P");
+			if($telegram->reply_user->id == $this->config->item('telegram_bot_id')){
+				$text = "Oh, asi que quieres darme tu banana, " .$telegram->user->first_name ."? " .$telegram->emoji("=P");
+				$telegram->send
+					->chat($this->config->item('creator'))
+					->text($telegram->user->first_name ." @" .$telegram->user->username ." / @" .$pokeuser->username ." quiere darte su banana.")
+				->send();
+			}
+			$telegram->send
+				->notification(FALSE)
+				->reply_to(FALSE)
+				->text($text)
+			->send();
+			return;
+		}elseif($telegram->text_command("tennis") or $telegram->text_has("maria", ["sharapova", "sarapova"]) or $telegram->text_has($telegram->emoji(":tennis:"), TRUE)){
+			$this->analytics->event('Telegram', 'Jokes', 'Tenis con Maria Sharapova');
+			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/tennis.ogg");
 			return;
 		}elseif($telegram->text_hashtag("novatos")){
 			$this->analytics->event('Telegram', 'Jokes', 'Question');
@@ -3914,6 +3969,39 @@ class Main extends CI_Controller {
 					$pokemon->step($user->id, NULL);
 					exit();
 				}
+				break;
+			case 'CUSTOM_COMMAND':
+				if(!$telegram->is_chat_group() or !in_array($telegram->user->id, $this->admins(TRUE))){ return; }
+				$command = $pokemon->settings($telegram->user->id, 'command_name');
+				if(empty($command)){
+					if($telegram->text()){
+						$pokemon->settings($telegram->user->id, 'command_name', $telegram->text());
+						$telegram->send
+							->text("¡De acuerdo! Ahora envíame la respuesta que quieres enviar.")
+						->send();
+					}
+					die(); // HACK
+				}
+				$cmds = $pokemon->settings($telegram->chat->id, 'custom_commands');
+				if($cmds){ $cmds = unserialize($cmds); }
+
+				if($telegram->text()){
+					$cmds[$command] = ['text' => $telegram->text_encoded()];
+				}elseif($telegram->photo()){
+					$cmds[$command] = ["photo" => $telegram->photo()];
+				}elseif($telegram->voice()){
+					$cmds[$command] = ["voice" => $telegram->voice()];
+				}elseif($telegram->gif()){
+					$cmds[$command] = ["document" => $telegram->gif()];
+				}
+
+				$cmds = serialize($cmds);
+				$pokemon->settings($telegram->chat->id, 'custom_commands', $cmds);
+				$pokemon->settings($telegram->user->id, 'command_name', "DELETE");
+				$pokemon->step($telegram->user->id, NULL);
+				$telegram->send
+					->text("¡Comando creado correctamente!")
+				->send();
 				break;
 			case 'DUMP':
 				$telegram->send->text( $telegram->dump(TRUE) )->send();

@@ -653,17 +653,13 @@ class Telegram extends CI_Model{
 		if($cmd === TRUE){ return $cmds; }
 		if(is_string($cmd)){
 			if($cmd[0] != "/"){ $cmd = "/" .$cmd; }
-			$check[] = $cmd;
-			$check[] = strtolower($cmd) ."@" .$this->config->item('telegram_bot_name');
-			$check[] = strtolower($cmd ."@" .$this->config->item('telegram_bot_name'));
-			foreach($check as $c){
-				if(in_array($c, $cmds)){
-					if($begin == TRUE){ return $initbegin; }
-					return TRUE;
-				}
+			if(in_array(strtolower($cmd), $cmds)){ return TRUE; }
+			$name = $this->config->item('telegram_bot_name');
+			if($name){
+				if($name[0] != "@"){ $name = "@" .$name; }
+				$cmd = $cmd.$name;
 			}
-			return FALSE;
-			// return in_array(strtolower($cmd), $cmds);
+			return in_array(strtolower($cmd), $cmds);
 		}
 		return FALSE;
 	}
@@ -918,6 +914,7 @@ class Telegram extends CI_Model{
 			'map' => "\ud83d\uddfa",
 			'candy' => "\ud83c\udf6c",
 			'spiral' => "\ud83c\udf00",
+			'tennis' => "\ud83c\udfbe",
 
 			'forbid' => "\u26d4\ufe0f",
 			'times' => "\u274c",
@@ -990,6 +987,7 @@ class Telegram extends CI_Model{
 			'map' => [':map:'],
 			'candy' => [':candy:'],
 			'spiral' => [':spiral:'],
+			'tennis' => [":tennis:"],
 			'green-check' => [':ok:', ':green-check:'],
 			'warning' => [':warning:'],
 			'exclamation-red' => [':exclamation-red:'],
