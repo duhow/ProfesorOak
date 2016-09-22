@@ -811,6 +811,25 @@ class Pokemon extends CI_Model{
 		return $seens;
 	}
 
+	function user_near($location, $radius = 500, $limit = 10){
+		if(!is_array($location) or count($location) != 2){ return FALSE; }
+		$lat = "SUBSTRING_INDEX(value, ',', 1)";
+		$lng = "SUBSTRING_INDEX(value, ',', -1)";
+		$sql_dist = "ASIN(SQRT(POW(SIN((RADIANS($location[0]) - RADIANS($lat)) / 2), 2) + COS(RADIANS($lat)) * COS(RADIANS($location[0])) * "
+					."POW(SIN((RADIANS($location[1]) - RADIANS($lng)) / 2), 2) )) * 2 * 6371000";
+
+		$query = $this->db
+			->select(['uid', 'lastupdate', "$sql_dist AS distance"])
+			->where('type', 'location_now')
+			->where("($sql_dist) <=", $radius)
+			->not_like("uid", "-", "after")
+			// TODO ->where('lastupdate', '')
+			->limit($limit)
+			->order_by($sql_dist, 'ASC', FALSE)
+		->get('settings');
+		return ($query->num_rows() > 0 ? $query->result_array() : array());
+	}
+
 	function spawn_near($location, $radius = 500, $limit = 10, $pokemon = NULL){
 		if(!is_array($location) or count($location) != 2){ return FALSE; }
 		$sql_dist = "ASIN(SQRT(POW(SIN((RADIANS($location[0]) - RADIANS(lat)) / 2), 2) + COS(RADIANS(lat)) * COS(RADIANS($location[0])) * "

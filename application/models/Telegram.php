@@ -844,8 +844,8 @@ class Telegram extends CI_Model{
 		if(!isset($this->data['message']['voice'])){ return FALSE; }
 		$vo = $this->data['message']['voice'];
 		if(empty($vo)){ return FALSE; }
-		if($object == TRUE){ return (object) $vo; }
-		elseif($object == FALSE){ return array_values($vo); }
+		if($object === TRUE){ return (object) $vo; }
+		elseif($object === FALSE){ return array_values($vo); }
 		return $vo['file_id'];
 	}
 

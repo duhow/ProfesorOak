@@ -1653,11 +1653,12 @@ class Main extends CI_Controller {
 						->text("Que ya lo sé, pesado...")
 					->send();
 				}
-				if($level >= 5 && $level <= 35){
-					$pokemon->update_user_data($telegram->user->id, 'lvl', $level);
-				}
 				$this->analytics->event('Telegram', 'Change level', $level);
 				$pokemon->settings($user->id, 'last_command', 'LEVELUP');
+				if($level >= 5 && $level <= 35){
+					if($lvl <= $pokeuser->lvl){ return; }
+					$pokemon->update_user_data($telegram->user->id, 'lvl', $level);
+				}
 			}
 			return;
 		}
@@ -2196,7 +2197,7 @@ class Main extends CI_Controller {
 					."Podrías provocar un accidente, así que procura jugar con seguridad! :)";
 		}elseif($telegram->text_has(["significa", "quiere decir", "qué es"]) && $telegram->text_contains(["L1", "L2", "L8"])){
 			$help = "Lo del *L1* es *Level 1* (*Nivel*). Si puedes, dime tu nivel y lo guardaré.\n_(Soy nivel ...)_";
-		}elseif($telegram->text_has(["sombra", "aura"], "azul")){
+		}elseif($telegram->text_has(["sombra", "aura", "fondo"], "azul")){
 			$help = "La sombra azul que aparece en algunos Pokémon, es porque los has capturado en las últimas 24 horas.";
 		}elseif($telegram->text_has("espacio") && $telegram->text_has("mochila")){ // $telegram->text_contains(["como", "cómo"]) &&
 			$help = "Tienes una mochila en la Tienda Pokemon, así que tendrás que buscar PokeMonedas si quieres comprarla. Si no, te va a tocar hacer hueco...";
@@ -3769,7 +3770,7 @@ class Main extends CI_Controller {
 							// ->row_button($telegram->emoji(":home: Vivo aquí."))
 							->row_button($telegram->emoji("Cancelar"))
 							->selective(TRUE)
-						->show(TRUE, TRUE)
+						->show(FALSE, TRUE)
 					->send();
 				}elseif($telegram->text()){
 					$text = $telegram->emoji($telegram->words(0), TRUE);
@@ -3840,7 +3841,17 @@ class Main extends CI_Controller {
 							if(!$error){
 								$this->analytics->event('Telegram', 'Set Current Location');
 								$pokemon->settings($user->id, 'location_now', $loc);
+								// TODO buscar a gente cercana.
+								$loc = explode(",", $loc);
+								$near = $pokemon->user_near($loc, 500, 30);
+
 								$text = "¡Hecho! ¿Quieres hacer algo más?";
+								if($telegram->user->id == $this->config->item('creator')){
+									$telegram->send->text(json_encode($near))->send();
+								}
+								if(count($near) > 1){
+									$text = "¡Tienes a *" .(count($near) - 1) ."* entrenadores por ahi cerca!\n¿Quieres hacer algo más?";
+								}
 							}
 
 							if($error){ $telegram->send->keyboard()->hide(TRUE); }
@@ -3855,7 +3866,7 @@ class Main extends CI_Controller {
 									->selective(TRUE)
 								->show(TRUE, TRUE);
 							}
-							$telegram->send->text($text)->send();
+							$telegram->send->text($text, TRUE)->send();
 						break;
 						case ':map:':
 							$pokemon->step($user->id, NULL);
@@ -3984,15 +3995,21 @@ class Main extends CI_Controller {
 				}
 				$cmds = $pokemon->settings($telegram->chat->id, 'custom_commands');
 				if($cmds){ $cmds = unserialize($cmds); }
+				if(!is_array($cmds) or empty($cmds)){
+					$pokemon->settings($telegram->chat->id, 'custom_commands', "DELETE");
+					$cmds = array();
+				}
 
 				if($telegram->text()){
-					$cmds[$command] = ['text' => $telegram->text_encoded()];
+					$cmds[$command] = ["text" => $telegram->text_encoded()];
 				}elseif($telegram->photo()){
 					$cmds[$command] = ["photo" => $telegram->photo()];
 				}elseif($telegram->voice()){
 					$cmds[$command] = ["voice" => $telegram->voice()];
 				}elseif($telegram->gif()){
 					$cmds[$command] = ["document" => $telegram->gif()];
+				}elseif($telegram->sticker()){
+					$cmds[$command] = ["sticker" => $telegram->sticker()];
 				}
 
 				$cmds = serialize($cmds);
