@@ -130,6 +130,10 @@ class Main extends CI_Controller {
 				if(is_array($commands)){
 					foreach($commands as $word => $action){
 						if($telegram->text_has($word, TRUE)){
+							if(
+								$pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'rager', 'spamkid']) or
+								$pokemon->user_blocked($telegram->user->id)
+							){ return; }
 							$content = current($action);
 							$action = key($action);
 							if($action == "text"){
@@ -182,9 +186,9 @@ class Main extends CI_Controller {
 
 
 		$colores_full = [
-			'Y' => ['amarillo', 'instinto', 'yellow'],
+			'Y' => ['amarillo', 'instinto', 'yellow', 'instinct'],
 			'R' => ['rojo', 'valor', 'red'],
-			'B' => ['azul', 'sabiduría', 'blue'],
+			'B' => ['azul', 'sabiduría', 'blue', 'mystic'],
 		];
 		$colores = array();
 		foreach($colores_full as $c){
@@ -867,6 +871,7 @@ class Main extends CI_Controller {
 
 			$config = strtolower($telegram->words(2, 2));
 			$configs = [
+				'actual' => [],
 				'inicial' => [
 					'announce_welcome' => TRUE,
 					'blacklist' => 'troll,spam,rager',
@@ -1656,8 +1661,9 @@ class Main extends CI_Controller {
 				$this->analytics->event('Telegram', 'Change level', $level);
 				$pokemon->settings($user->id, 'last_command', 'LEVELUP');
 				if($level >= 5 && $level <= 35){
-					if($lvl <= $pokeuser->lvl){ return; }
+					if($level <= $pokeuser->lvl){ return; }
 					$pokemon->update_user_data($telegram->user->id, 'lvl', $level);
+					$pokemon->log($telegram->user->id, 'levelup', $level);
 				}
 			}
 			return;
@@ -3714,6 +3720,19 @@ class Main extends CI_Controller {
 
 				$pokemon->add_lure_found($user->id, $loc[0], $loc[1]);
 
+				$nearest = $pokemon->group_near($loc);
+				foreach($nearest as $g){
+					$telegram->send
+						->chat($g)
+						->location($loc)
+					->send();
+
+					$text = "Cebo en *" .$pkstop['title'] ."*!";
+					$telegram->send
+						->chat($g)
+						->text($text, TRUE)
+					->send();
+				}
 				// SELECT uid, SUBSTRING(value, 1, INSTR(value, ",") - 1) AS lat, SUBSTRING(value, INSTR(value, ",") + 1) AS lng FROM `settings` WHERE LEFT(uid, 1) = '-' AND type = "location"
 
 				$pokemon->settings($user->id, 'pokemon_cooldown', time() + 60);
@@ -3986,7 +4005,7 @@ class Main extends CI_Controller {
 				$command = $pokemon->settings($telegram->user->id, 'command_name');
 				if(empty($command)){
 					if($telegram->text()){
-						$pokemon->settings($telegram->user->id, 'command_name', $telegram->text());
+						$pokemon->settings($telegram->user->id, 'command_name', strtolower($telegram->text()) );
 						$telegram->send
 							->text("¡De acuerdo! Ahora envíame la respuesta que quieres enviar.")
 						->send();
@@ -4000,7 +4019,9 @@ class Main extends CI_Controller {
 					$cmds = array();
 				}
 
+				if(isset($cmds[$command])){ unset($cmds[$command]); }
 				if($telegram->text()){
+					if(strlen(trim($telegram->text())) < 4){ return; }
 					$cmds[$command] = ["text" => $telegram->text_encoded()];
 				}elseif($telegram->photo()){
 					$cmds[$command] = ["photo" => $telegram->photo()];
