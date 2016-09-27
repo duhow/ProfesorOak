@@ -423,6 +423,7 @@ class Pokemon extends CI_Model{
 		return $this->db
 			->set('uid', $tid)
 			->set('cid', $cid)
+			->set('register_date', date("Y-m-d H:i:s"))
 		->insert('user_inchat');
 	}
 
@@ -828,6 +829,40 @@ class Pokemon extends CI_Model{
 			->order_by($sql_dist, 'ASC', FALSE)
 		->get('settings');
 		return ($query->num_rows() > 0 ? $query->result_array() : array());
+	}
+
+	function group_near($location, $limit = 10){
+		if(!is_array($location) or count($location) != 2){ return FALSE; }
+
+		// GET de todos los grupos el setting location Y location radius.
+		// Agrupar.
+		// Calcular distancia y ver si está en el radio, y agregar a array.
+		// Devolver array de grupos cercanos.
+
+		$query = $this->db
+			->like("uid", "-", "after")
+			->where_in("type", ["location", "location_radius"])
+			->order_by("uid", "DESC")
+		->get('settings');
+		$data = array();
+		if($query->num_rows() > 0){
+			foreach($query->result_array() as $row){
+				$data[$row['uid']][$row['type']] = $row['value'];
+			}
+		}
+		$ret = array();
+		foreach($data as $g => $d){
+			if(!isset($d['location_radius'])){
+				continue;
+			}
+			$loc = explode(",", $d['location']);
+			$diff = $this->location_distance($location, $loc);
+			if($diff <= $d['location_radius']){
+				$ret[] = $g;
+			}
+		}
+
+		return $ret;
 	}
 
 	function spawn_near($location, $radius = 500, $limit = 10, $pokemon = NULL){

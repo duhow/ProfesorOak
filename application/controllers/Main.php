@@ -97,6 +97,38 @@ class Main extends CI_Controller {
 			}
 
 			/*
+			#####################
+			#     Anti spam     #
+			#####################
+			*/
+
+			if($telegram->text_url()){
+				$info = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
+				// $telegram->send->text(json_encode($info))->send();
+				if($info->messages <= 5){
+					$telegram->send
+						->message(TRUE)
+						->chat(TRUE)
+						->forward_to($this->config->item('creator'))
+					->send();
+
+					$telegram->send
+						->chat($this->config->item('creator'))
+						->text("*SPAM* del grupo " .$telegram->chat->id .".", TRUE)
+					->send();
+
+					$pokemon->user_flags($telegram->user->id, 'spam', TRUE);
+
+					$telegram->send
+						->text("¡*SPAM* detectado!", TRUE)
+					->send();
+
+					$telegram->send->ban($telegram->user->id, $telegram->chat->id);
+					return;
+				}
+			}
+
+			/*
 			######################
 			# Migrate supergroup #
 			######################
@@ -616,6 +648,13 @@ class Main extends CI_Controller {
 		elseif($telegram->text_has(["/votekick", "/voteban"], TRUE) && $telegram->is_chat_group()){
 			// Si el usuario que convoca el comando es troll o tiene flags, no puede votar ni usarlo.
 			if($pokemon->user_flags($user->id, ['troll', 'bot', 'hacks', 'spam', 'rager', 'ratkid'])){ return; }
+			$kickuser = NULL;
+			if($telegram->has_reply){
+				if(
+					$telegram->reply_user->id == $this->config->item('telegram_bot_id') or
+					in_array($telegram->reply_user->id, $this->admins(TRUE))
+				){ return; }
+			}
 		}
 		// Limpiar antiflood
 		elseif($telegram->text_has(['/flood', '/antiflood'], TRUE) && $telegram->is_chat_group()){
@@ -972,7 +1011,7 @@ class Main extends CI_Controller {
 		}
 		// establecer flag del usuario
 		elseif(
-			$telegram->text_has("/setflag", TRUE) &&
+			$telegram->text_command("setflag") &&
 			(in_array($telegram->words(), [2,3])) &&
 			$telegram->user->id == $this->config->item('creator')
 		){
@@ -991,6 +1030,30 @@ class Main extends CI_Controller {
 			}
 			$flag = $telegram->last_word();
 			$pokemon->user_flags($f_user, $flag, TRUE);
+			return;
+		}
+		elseif(
+			$telegram->text_command("flags") &&
+			$telegram->user->id == $this->config->item('creator')
+		){
+			$uflag = NULL;
+			if($telegram->has_reply){ $uflag = $telegram->reply_user->id; }
+			elseif($telegram->text_mention()){
+				$uflag = $telegram->text_mention();
+				if(is_array($uflag)){ $uflag = key($uflag); }
+			}
+			if(empty($uflag)){ return; }
+			if(!is_numeric($uflag)){
+				$find = $pokemon->user_find($uflag);
+				if(!$find){ return; }
+				$uflag = $find->telegramid;
+			}
+			$flags = $pokemon->user_flags($uflag);
+			$flags = (empty($flags) ? "No tiene." : implode(", ", $flags));
+			$telegram->send
+				->chat($this->config->item('creator'))
+				->text($flags)
+			->send();
 			return;
 		}
 
@@ -3963,7 +4026,6 @@ class Main extends CI_Controller {
 				break;
 			case 'SCREENSHOT_VERIFY':
 				if(!$telegram->is_chat_group() && $telegram->photo()){
-
 					if(empty($pokeuser->username) or $pokeuser->lvl == 1){
 						$text = "Antes de validarte, necesito saber tu *nombre o nivel actual*.\n"
 								.":triangle-right: *Me llamo ...*\n"
@@ -3978,8 +4040,8 @@ class Main extends CI_Controller {
 					}
 
 					$telegram->send
-						->chat($telegram->user->id)
-						->message($telegram->message)
+						->message(TRUE)
+						->chat(TRUE)
 						->forward_to($this->config->item('creator'))
 					->send();
 

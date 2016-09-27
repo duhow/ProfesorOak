@@ -136,6 +136,7 @@ class __Module_Telegram_Sender extends CI_Model{
 	}
 
 	function chat($id = NULL){
+		if($id === TRUE){ $id = $this->telegram->chat->id; }
 		$this->content['chat_id'] = $id;
 		return $this;
 	}
@@ -825,9 +826,9 @@ class Telegram extends CI_Model{
 		$photos = $this->data['message']['photo'];
 		if(empty($photos)){ return FALSE; }
 		// Select last file or $sel_id
-		$photo = ($sel == -1 or $sel > count($photos) - 1 ? array_pop($photos) : $photos[$sel]);
-		if($retall == FALSE){ return $photo['file_id']; }
-		elseif($retall == TRUE){ return (object) $photo; }
+		$sel = ($sel == -1 or ($sel > count($photos) - 1) ? (count($photos) - 1) : $sel);
+		if($retall === FALSE){ return $photos[$sel]['file_id']; }
+		elseif($retall === TRUE){ return (object) $photos[$sel]; }
 	}
 
 	function location($object = TRUE){
