@@ -651,6 +651,30 @@ class Main extends CI_Controller {
 				}
 			}
 		}
+		// Desbanear usuarios
+		elseif($telegram->text_command("unban") && $telegram->user->id == $this->config->item('creator')){
+			// si es group y
+			// in_array($telegram->user->id, $this->admins(TRUE)
+
+			$target = NULL;
+			$target_chat = NULL;
+
+			if($telegram->has_reply){
+				$target = $telegram->reply_user->id;
+				if($telegram->is_chat_group()){ $target_chat = $telegram->chat->id; }
+			}elseif($telegram->words() == 3){
+				$target = $telegram->words(1);
+				$target_chat = $telegram->words(2);
+			}
+
+			if(!empty($target) && !empty($target_chat)){
+				$telegram->send->unban($target, $target_chat);
+				$telegram->send
+					->text("Usuario $target desbaneado" .($target_chat != $telegram->chat->id ? " de $target_chat" : "") .".")
+				->send();
+			}
+			return;
+		}
 		// Votar kick de usuarios.
 		elseif($telegram->text_has(["/votekick", "/voteban"], TRUE) && $telegram->is_chat_group()){
 			// Si el usuario que convoca el comando es troll o tiene flags, no puede votar ni usarlo.
