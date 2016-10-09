@@ -425,6 +425,7 @@ class Main extends CI_Controller {
 			$this->analytics->event("Telegram", "Pole");
 			$pole = $pokemon->settings($telegram->chat->id, 'pole');
 			if($pole != NULL && $pole == FALSE){ return; }
+			if($pokemon->settings($telegram->user->id, 'no_pole') == TRUE){ return; }
 
 			// Si está el Modo HARDCORE, la pole es cada hora. Si no, cada día.
 			$timer = ($pokemon->settings($telegram->chat->id, 'pole_hardcore') ? "H" : "d");
@@ -432,9 +433,9 @@ class Main extends CI_Controller {
 			if(!empty($pole)){
 				$pole = unserialize($pole);
 				if(
-					( $telegram->text_has("pole", TRUE) &&    date($timer) == date($timer, $pole[0]) ) or
-					( $telegram->text_has("subpole", TRUE) && date($timer) == date($timer, $pole[1]) ) or
-					( $telegram->text_has("bronce", TRUE) &&  date($timer) == date($timer, $pole[2]) )
+					( $telegram->text_has("pole", TRUE) &&    is_numeric($pole[0]) && date($timer) == date($timer, $pole[0]) ) or
+					( $telegram->text_has("subpole", TRUE) && is_numeric($pole[1]) && date($timer) == date($timer, $pole[1]) ) or
+					( $telegram->text_has("bronce", TRUE) &&  is_numeric($pole[2]) && date($timer) == date($timer, $pole[2]) )
 				){
 					return;  // Mismo dia? nope.
 				}
