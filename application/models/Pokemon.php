@@ -42,7 +42,9 @@ class Pokemon extends CI_Model{
 		return ($query->num_rows() == 1 ? (bool) $query->row()->blocked : FALSE);
 	}
 
-	function user_exists($data, $retid = FALSE){
+	function user_exists($data, $hidden = FALSE){
+		if(!$hidden){ $this->db->where('anonymous', FALSE); }
+
 		$query = $this->db
 			->group_start()
 				->where('telegramid', $data)
@@ -50,11 +52,12 @@ class Pokemon extends CI_Model{
 				->or_where('username', $data)
 				->or_where('email', $data)
 			->group_end()
-			->where('anonymous', FALSE)
+			// ->where('anonymous', FALSE)
 			->limit(1)
 		->get('user');
 		if($query->num_rows() == 1){
-			return ($retid == TRUE ? $query->row()->telegramid : TRUE);
+			return $query->row()->telegramid;
+			// return ($retid == TRUE ? $query->row()->telegramid : TRUE);
 		}
 		return FALSE;
 	}
@@ -173,7 +176,7 @@ class Pokemon extends CI_Model{
 		$team = $this->team_text($team);
 		if($team === FALSE){ return FALSE; }
 
-		if($this->user_exists($telegramid)){ return FALSE; }
+		if($this->user_exists($telegramid, TRUE)){ return FALSE; }
 
 		$this->db
 			->set('telegramid', $telegramid)
@@ -934,6 +937,16 @@ class Pokemon extends CI_Model{
 		return ($query->num_rows() == 1 ? $query->row() : NULL);
 	}
 
+	function meeting_member($id, $uid){
+		$query = $this->db
+			->where('mid', $id)
+			->where('uid', $uid)
+			->order_by('register_date', 'DESC')
+		->get('meetings_join');
+		if($query->num_rows() == 1){ return $query->row()->active; }
+		return NULL;
+	}
+
 	function meeting_members($id){
 		$query = $this->db
 			->where('mid', $id)
@@ -947,8 +960,25 @@ class Pokemon extends CI_Model{
 		if(!$all){ $this->db->where('active', TRUE); }
 		$query = $this->db
 			->where('mid', $id)
+			// ->or_where('joinkey', $id)
 		->get('meetings_join');
 		return $query->num_rows();
+	}
+
+	function meeting_members_total($id){
+		$query = $this->db
+			->where('mid', $id)
+			// ->or_where('joinkey', $id)
+		->get('meetings_join');
+
+		$amount = [0, 0];
+		if($query->num_rows() > 0){
+			foreach($query->result_array() as $m){
+				$i = (int) $m['active'];
+				$amount[$i] = $amount[$i] + 1;
+			}
+		}
+		return $amount;
 	}
 
 	function meeting_create($user, $date, $location, $private = FALSE){
