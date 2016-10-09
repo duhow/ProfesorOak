@@ -186,7 +186,7 @@ class Main extends CI_Controller {
 			*/
 
 			$dubs = $pokemon->settings($telegram->chat->id, 'dubs');
-			if($dubs){
+			if($dubs && $telegram->key == "message"){ // HACK para editados no vale.
 				$nums = array_merge(
 					range(11111, 99999, 11111),
 					range(1111, 9999, 1111),
@@ -196,7 +196,7 @@ class Main extends CI_Controller {
 				$lon = NULL;
 				$id = $telegram->message;
 				foreach($nums as $n){
-					if(strpos(strval($id), strval($n), strlen($id) - strlen($n)) !== FALSE){
+					if(@strpos(strval($id), strval($n), strlen($id) - strlen($n)) !== FALSE){
 						// $telegram->send->text("hecho en $id con $n")->send();
 						$lon = strlen($n);
 						break;
