@@ -312,10 +312,10 @@ class Main extends CI_Controller {
 				$text = 'Bienvenido al grupo, $nombre!' ."\n";
 				if(!empty($custom)){ $text = json_decode($custom) ."\n"; }
 				if(empty($pknew)){
-					$text .= "Oye, ¿podrías decirme de que color eres?\n*Di: *_Soy ..._";
+					$text .= "Oye, ¿podrías decirme el color de tu equipo?\n*Di: *_Soy ..._";
 				}else{
 					$emoji = ["Y" => "yellow", "B" => "blue", "R" => "red"];
-					$text .= '$pokemon $nivel $equipo $valido';
+					$text .= '$pokemon $nivel $equipo $valido $ingress';
 				}
 
 				if($new->id == $this->config->item("telegram_bot_id")){
@@ -324,6 +324,11 @@ class Main extends CI_Controller {
 
 				$pokemon->user_addgroup($new->id, $chat->id);
 				$this->analytics->event('Telegram', 'Join user');
+
+				$ingress = NULL;
+				if($pokemon->settings($new->id, 'resistance')){ $ingress = ":key:"; }
+				elseif($pokemon->settings($new->id, 'enlightened')){ $ingress = ":frog:"; }
+
 				$repl = [
 					'$nombre' => $new->first_name,
 					'$apellidos' => $new->last_name,
@@ -332,7 +337,8 @@ class Main extends CI_Controller {
 					'$usuario' => "@" .$new->username,
 					'$pokemon' => "@" .$pknew->username,
 					'$nivel' => "L" .$pknew->lvl,
-					'$valido' => ($pknew->verified ? ':green-check:' : ':warning:')
+					'$valido' => ($pknew->verified ? ':green-check:' : ':warning:'),
+					'$ingress' => $ingress
 				];
 				$text = str_replace(array_keys($repl), array_values($repl), $text);
 				$telegram->send
