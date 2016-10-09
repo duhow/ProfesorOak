@@ -681,7 +681,10 @@ class Main extends CI_Controller {
 			return;
 		}
 		// Votar kick de usuarios.
-		elseif($telegram->text_has(["/votekick", "/voteban"], TRUE) && $telegram->is_chat_group()){
+		elseif(
+			($telegram->text_command("votekick") or $telegram->text_command("voteban")) &&
+			$telegram->is_chat_group()
+		){
 			// Si el usuario que convoca el comando es troll o tiene flags, no puede votar ni usarlo.
 			if($pokemon->user_flags($user->id, ['troll', 'bot', 'hacks', 'spam', 'rager', 'ratkid'])){ return; }
 			$kickuser = NULL;
