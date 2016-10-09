@@ -1570,6 +1570,8 @@ class Main extends CI_Controller {
 				'B' => ['azul', 'sabiduría', 'blue', 'mystic'],
 			];
 
+			if($telegram->text_url()){ return; }
+
 			$team = NULL;
 			foreach($colores_full as $k => $colores){
 				if($telegram->text_has($colores)){ $team = $k; break; }
