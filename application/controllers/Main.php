@@ -3738,11 +3738,15 @@ class Main extends CI_Controller {
 				$waiting_month = FALSE;
 				$waiting_time = FALSE;
 				$waiting_time_add = FALSE;
+				$select_week = FALSE;
 				$next_week = FALSE;
+				$last_week = FALSE;
 				$this_week_day = FALSE;
 				foreach($s as $w){
 					// $w = $telegram->clean('alphanumeric', $w); // HACK filtrar?
 					$w = strtolower($w);
+					$w = str_replace(["á","é"], ["a","e"], $w);
+					$w = str_replace("?", "", $w);
 
 					if($w == "de" && (!isset($data['date']) or empty($data['date']) )){ $waiting_month = TRUE; } // FIXME not working?
 					if($w == "la" && !isset($data['hour'])){ $waiting_time = TRUE; }
@@ -3772,7 +3776,7 @@ class Main extends CI_Controller {
 						$waiting_time = FALSE;
 						continue;
 					}
-					if($waiting_time && in_array($w, ['mañana', 'maana']) && !isset($data['hour'])){
+					if($waiting_time && in_array($w, ['mañana', 'maana', 'manana']) && !isset($data['hour'])){
 						$data['hour'] = "11:00";
 						$waiting_time = FALSE;
 						continue;
@@ -3785,13 +3789,15 @@ class Main extends CI_Controller {
 						$waiting_time_add = FALSE;
 						continue;
 					}
-					if(in_array($w, array_keys($days)) && $next_week or $this_week_day && !isset($data['date'])){
+					if(in_array($w, array_keys($days)) && ($next_week or $last_week or $this_week_day) && !isset($data['date'])){
 						$selector = "+1 week next";
 						if($this_week_day && date("w") <= date("w", strtotime($days[$w]))){ $selector = "this"; }
-						if($this_week_day && date("w") > date("w", strtotime($days[$w]))){ $selector = "last"; }
+						if($this_week_day && date("w") > date("w", strtotime($days[$w]))){ $selector = "next"; }
+						if($last_week){ $selector = "last"; } // && date("w") > date("w", strtotime($days[$w]))
 						if($next_week && date("w") >= date("w", strtotime($days[$w]))){ $selector = "next"; }
 						$data['date'] = date("Y-m-d", strtotime($selector ." " .$days[$w]));
 						$next_week = FALSE;
+						$last_week = FALSE;
 						$this_week_day = FALSE;
 						continue;
 					}
@@ -3802,14 +3808,42 @@ class Main extends CI_Controller {
 						$waiting_month = FALSE;
 						continue;
 					}
-					if($w == "semana" && $next_week && !isset($data['date'])){
-						$data['date'] = date("Y-m-d", strtotime("next week"));
-						$next_week = FALSE;
+					if($w == "semana" && !isset($data['date'])){
+						if($next_week){
+							$data['date'] = date("Y-m-d", strtotime("next week"));
+							$next_week = FALSE;
+							continue;
+						}
+						$select_week = TRUE;
 						continue;
 					}
 					if(in_array($w, ["proximo", "próximo", "proxima", "próxima", "siguiente"])){
 						// proximo lunes != ESTE lunes, esta semana
+						if($select_week && !isset($data['date'])){
+							$data['date'] = date("Y-m-d", strtotime("next week"));
+							$select_week = FALSE;
+							continue;
+						}
 						$next_week = TRUE;
+						continue;
+					}
+					if(in_array($w, ["pasado", "pasada"])){
+						if(!isset($data['date']) or empty($data['date'])){
+							if($this_week_day){ $this_week_day = FALSE; }
+							if($select_week){
+								// last week = LUNES, marca el dia de hoy!
+								$en_days = array_values($days);
+								$data['date'] = date("Y-m-d", strtotime("last week " .$en_days[date("N") - 1]));
+								$select_week = FALSE;
+								continue;
+							}
+							$last_week = TRUE;
+							continue;
+						}
+						// el pasado martes, el martes pasado.
+						$tmp = new DateTime($data['date']);
+						$tmp->modify('-1 week');
+						$data['date'] = $tmp->format('Y-m-d');
 						continue;
 					}
 					if(in_array($w, ["este", "el"])){
@@ -3817,7 +3851,7 @@ class Main extends CI_Controller {
 						$this_week_day = TRUE;
 						continue;
 					}
-					if(in_array($w, ['mañana', 'maana']) && !isset($data['date'])){
+					if(in_array($w, ['mañana', 'maana', 'manana']) && !isset($data['date'])){
 						// Distinguir mañana de "por la mañana"
 						$data['date'] = date("Y-m-d", strtotime("tomorrow"));
 						continue;
