@@ -1099,6 +1099,7 @@ class Main extends CI_Controller {
 			$pokemon->user_flags($f_user, $flag, TRUE);
 			return;
 		}
+		// Ver flags de usuarios
 		elseif(
 			$telegram->text_command("flags") &&
 			$telegram->user->id == $this->config->item('creator')
@@ -1108,6 +1109,9 @@ class Main extends CI_Controller {
 			elseif($telegram->text_mention()){
 				$uflag = $telegram->text_mention();
 				if(is_array($uflag)){ $uflag = key($uflag); }
+			}elseif($telegram->words() == 2){
+				$uflag = $telegram->last_word();
+				if(!is_numeric($uflag)){ return; }
 			}
 			if(empty($uflag)){ return; }
 			if(!is_numeric($uflag)){
