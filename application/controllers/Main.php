@@ -3152,7 +3152,14 @@ class Main extends CI_Controller {
 			$telegram->send->chat_action('upload_audio')->send();
 			$telegram->send->notification(FALSE)->file('audio', FCPATH . "files/msn.ogg");
 			return;
-		}elseif($telegram->text_command("taladro")){
+		}elseif($telegram->text_has(["maincra"])){
+			$this->analytics->event('Telegram', 'Jokes', 'Maincra');
+			$audio = ["maincra_1.mp3", "maincra_2.mp3", "maincra_3.mp3", "maincra_4.mp3"];
+			$rand = mt_rand(0, count($audio) - 1);
+			$telegram->send->chat_action('record_audio')->send();
+			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/" .$audio[$rand]);
+			return;
+		}elseif($telegram->text_command("taladro") && $telegram->user->id == $this->config->item('creator')){
 			$this->analytics->event('Telegram', 'Jokes', 'Taladro');
 			$telegram->send->chat_action('upload_video')->send();
 			$telegram->send->notification(FALSE)->reply_to(FALSE)->file('document', 'BQADBAADq08AAlVRZArqEZcMIc4iJQI');
