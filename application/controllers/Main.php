@@ -687,6 +687,37 @@ class Main extends CI_Controller {
 				){ return; }
 			}
 		}
+		// Quitar tag de SPAM
+		elseif($telegram->text_has("nospam", TRUE) && $telegram->user->id == $this->config->item('creator') && $telegram->words() <= 3){
+			// HACK text_has porque comandos no se parsean en INLINE_keyboard.
+			$target = NULL;
+			$target_chat = NULL;
+			if($telegram->has_reply){
+				// si reply forward
+				$target = $telegram->reply_user->id;
+				if($telegram->is_chat_group()){ $target_chat = $telegram->chat->id; }
+			}elseif($telegram->words() >= 2){
+				$target = $telegram->words(1);
+				$target_chat = $telegram->words(2);
+			}
+
+			if($target != NULL){
+				$pokemon->user_flags($target, 'spam', FALSE);
+
+				if($telegram->callback){
+					$telegram->send
+						->chat(TRUE)
+						->message(TRUE)
+						->text("Flag *SPAM* quitado del grupo $target_chat.", TRUE)
+					->edit('text');
+				}elseif($telegram->is_chat_group()){
+					$telegram->send
+						->text("Flag *SPAM* de $target quitado.", TRUE)
+					->send();
+				}
+			}
+			return;
+		}
 		// Limpiar antiflood
 		elseif($telegram->text_has(['/flood', '/antiflood'], TRUE) && $telegram->is_chat_group()){
 			$this->analytics->event('Telegram', 'Antiflood', 'Check');
