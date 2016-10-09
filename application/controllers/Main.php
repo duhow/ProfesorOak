@@ -3497,6 +3497,38 @@ class Main extends CI_Controller {
 			exit();
 		}
 
+		if($telegram->text_url() && $telegram->text_contains("//goo.gl/maps/")){
+			$url = $telegram->text_url();
+			$ch = curl_init($url);
+
+			curl_setopt($ch, CURLOPT_USERAGENT,'Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.13) Gecko/20080311 Firefox/2.0.0.13');
+			curl_setopt($ch, CURLOPT_FAILONERROR, true);
+			curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+			curl_setopt($ch, CURLOPT_HEADER, true);
+		    curl_setopt($ch, CURLOPT_FILETIME, true);
+		    curl_setopt($ch, CURLOPT_NOBODY, true);
+			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+			curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+			$header = curl_exec($ch);
+			$data = curl_getinfo($ch);
+			curl_close($ch);
+
+			$url = urldecode($data['url']);
+			if(preg_match("/([+-]?)(\d+.\d+)[,;]\s?([+-]?)(\d+.\d+)/", $url, $loc)){
+				$loc = $loc[0];
+				if(strpos($loc, ";") !== FALSE){ $loc = explode(";", $loc); }
+				elseif(strpos($loc, ",") !== FALSE){ $loc = explode(",", $loc); }
+
+				if(count($loc) == 2){
+					$this->analytics->event('Telegram', 'Parse coords URL');
+					$telegram->send
+						->location($loc[0], $loc[1])
+					->send();
+				}
+			}
+		}
+
 		if(preg_match("/([+-]?)(\d+.\d+)[,;]\s?([+-]?)(\d+.\d+)/", $telegram->text(), $loc)){
 			$loc = $loc[0];
 			if(strpos($loc, ";") !== FALSE){ $loc = explode(";", $loc); }
