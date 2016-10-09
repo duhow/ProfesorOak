@@ -106,11 +106,20 @@ class __Module_Telegram_InlineKeyboard_Row extends CI_Model{
 		$data = array();
 		$data['text'] = $text;
 		if(filter_var($request, FILTER_VALIDATE_URL) !== FALSE){ $data['url'] = $request; }
-		elseif($switch === TRUE){
+		elseif($switch === TRUE or (is_string($switch) && strtolower($switch) == "command")){
 			// enviar por privado
 			$data['url'] = "https://telegram.me/" .$this->config->item('telegram_bot_name') ."?start=" .urlencode($request);
+		}elseif(is_string($switch) && strtolower($switch) == "share"){
+			$enc = NULL;
+			if(is_array($request) && count($request) == 2){
+				$enc = ['url' => urlencode($request[0]), 'text' => $request[1]];
+			}else{
+				$enc = ['url' => urlencode($request)];
+			}
+			$data['url'] = "https://telegram.me/share/url?" .http_build_query($enc);
 		}
 		elseif($switch === FALSE){ $data['switch_inline_query'] = $request; }
+		elseif(is_string($switch) && strtolower($switch) == "text"){ $data['callback_data'] = "T:" .$request; }
 		elseif($switch === NULL or is_string($switch)){ $data['callback_data'] = $request; }
 		if(is_string($switch)){ $data['switch_inline_query'] = $switch; }
 		$this->buttons[] = $data;
@@ -152,6 +161,12 @@ class __Module_Telegram_Sender extends CI_Model{
 		if($id === TRUE){ $id = $this->telegram->message; }
 		$this->content['message_id'] = $id;
 		return $this;
+	}
+
+	function get_file($id){
+		$this->method = "getFile";
+		$this->content['file_id'] = $id;
+		return $this->send();
 	}
 
 	function file($type, $file, $caption = NULL, $keep = FALSE){
@@ -205,6 +220,16 @@ class __Module_Telegram_Sender extends CI_Model{
 
 	function dump(){
 		var_dump($this->method); var_dump($this->content);
+		$bm = $this->method;
+		$bc = $this->content;
+
+		$this->_reset();
+		$this
+			->chat($this->config->item('creator'))
+			->text(json_encode($bc))
+		->send();
+		$this->method = $bm;
+		$this->content = $bc;
 		return $this;
 	}
 
@@ -288,6 +313,24 @@ class __Module_Telegram_Sender extends CI_Model{
 	function get_admins($chat = NULL, $keep = FALSE){ return $this->_parse_generic_chatFunctions("getChatAdministrators", $keep, $chat); }
 	function get_member_info($user = NULL, $chat = NULL, $keep = FALSE){ return $this->_parse_generic_chatFunctions("getChatMember", $keep, $chat, $user); }
 	function get_members_count($chat = NULL, $keep = FALSE){ return $this->_parse_generic_chatFunctions("getChatMembersCount", $keep, $chat); }
+
+	function answer_callback($alert = FALSE, $text = NULL, $id = NULL){
+		// Function overload :>
+		// $this->text can be empty. (Answer callback with empty response to finish request.)
+		if($text == NULL && $id == NULL){
+			$text = $this->content['text'];
+			if($this->telegram->key == "callback_query"){
+				$id = $this->telegram->id;
+			}
+			if(empty($id)){ return $this; } // HACK
+			$this->content['callback_query_id'] = $id;
+			$this->content['text'] = $text;
+			$this->content['show_alert'] = $alert;
+			$this->method = "answerCallbackQuery";
+		}
+
+		return $this->send();
+	}
 
 	function edit($type){
 		if(!in_array($type, ['text', 'message', 'caption', 'keyboard', 'inline', 'markup'])){ return FALSE; }
@@ -519,8 +562,18 @@ class Telegram extends CI_Model{
 	public $callback = FALSE;
 	public $send; // Class
 
+	function text_message(){
+		if($this->key == "callback_query"){ return $this->data[$this->key]['message']['text']; }
+		elseif($this->has_reply){ return $this->data[$this->key]['reply_to_message']['text']; }
+		return NULL;
+	}
+
 	function text($clean = FALSE){
 		$text = @$this->data[$this->key]['text'];
+		if($this->key == "callback_query"){
+			$text = @$this->data[$this->key]['data'];
+			$text = (substr($text, 0, 2) == "T:" ? substr($text, 2) : NULL);
+		}
 		if($clean === TRUE){ $text = $this->clean('alphanumeric-full-spaces', $text); }
 		return $text;
 	}
@@ -654,7 +707,7 @@ class Telegram extends CI_Model{
 		if($cmd === TRUE){ return $cmds; }
 		if(is_string($cmd)){
 			if($cmd[0] != "/"){ $cmd = "/" .$cmd; }
-			if(in_array(strtolower($cmd), $cmds)){ return TRUE; }
+			if(in_array(strtolower($cmd), $cmds) && strpos($cmd, "@") === FALSE){ return TRUE; }
 			$name = $this->config->item('telegram_bot_name');
 			if($name){
 				if($name[0] != "@"){ $name = "@" .$name; }
@@ -691,7 +744,7 @@ class Telegram extends CI_Model{
 		$cmds = array();
 		$text = $this->text(FALSE); // No UTF-8 clean
 		foreach($this->data['message']['entities'] as $e){
-			if($e['type'] == 'url'){ $cmds[] = strtolower(substr($text, $e['offset'], $e['length'])); }
+			if($e['type'] == 'url'){ $cmds[] = substr($text, $e['offset'], $e['length']); }
 		}
 		if($cmd == NULL){ return (count($cmds) > 0 ? $cmds[0] : FALSE); }
 		if($cmd === TRUE){ return $cmds; }
@@ -784,6 +837,13 @@ class Telegram extends CI_Model{
 		return $link;
 	}
 
+	function answer_if_callback($text = NULL, $alert = FALSE){
+		if($this->key != "callback_query"){ return FALSE; }
+		return $this->send
+			->text($text)
+		->answer_callback($alert);
+	}
+
 	function dump($json = FALSE){ return($json ? json_encode($this->data) : $this->data); }
 
 	function get_admins($chat = NULL, $full = FALSE){
@@ -796,7 +856,7 @@ class Telegram extends CI_Model{
 	}
 
 	function data($type, $object = TRUE){
-		$accept = ["text", "audio", "document", "photo", "voice", "location", "contact"];
+		$accept = ["text", "audio", "video", "document", "photo", "voice", "location", "contact"];
 		$type = strtolower($type);
 		if(in_array($type, $accept) && isset($this->data['message'][$type])){
 			if($object){ return (object) $this->data['message'][$type]; }
@@ -805,14 +865,22 @@ class Telegram extends CI_Model{
 		return FALSE;
 	}
 
-	function document($object = TRUE){
-		if(!isset($this->data['message']['document'])){ return FALSE; }
-		$doc = $this->data['message']['document'];
-		if(empty($doc)){ return FALSE; }
-		if($object == TRUE){ return (object) $doc; }
-		// elseif($object == FALSE){ return array_values($doc); }
-		return $doc;
+	function _generic_content($key, $object = NULL, $rkey = 'file_id'){
+		if(!isset($this->data['message'][$key])){ return FALSE; }
+		$data = $this->data['message'][$key];
+		if(empty($data)){ return FALSE; }
+		if($object === TRUE){ return (object) $data; }
+		elseif($object === FALSE){ return array_values($data); }
+
+		if(in_array($key, ["document", "location"])){ return $data; }
+		return $data[$rkey];
 	}
+
+	function document($object = TRUE){ return $this->_generic_content('document', $object); }
+	function location($object = TRUE){ return $this->_generic_content('location', $object); }
+	function voice($object = NULL){ return $this->_generic_content('voice', $object); }
+ 	function video($object = NULL){ return $this->_generic_content('video', $object); }
+	function sticker($object = NULL){ return $this->_generic_content('sticker', $object); }
 
 	function gif(){
 		$gif = $this->document(TRUE);
@@ -831,25 +899,6 @@ class Telegram extends CI_Model{
 		elseif($retall === TRUE){ return (object) $photos[$sel]; }
 	}
 
-	function location($object = TRUE){
-		if(!isset($this->data['message']['location'])){ return FALSE; }
-		$loc = $this->data['message']['location'];
-		if(empty($loc)){ return FALSE; }
-		if($object == TRUE){ return (object) $loc; }
-		elseif($object == FALSE){ return array_values($loc); }
-		// null u otro
-		return $loc;
-	}
-
-	function voice($object = NULL){
-		if(!isset($this->data['message']['voice'])){ return FALSE; }
-		$vo = $this->data['message']['voice'];
-		if(empty($vo)){ return FALSE; }
-		if($object === TRUE){ return (object) $vo; }
-		elseif($object === FALSE){ return array_values($vo); }
-		return $vo['file_id'];
-	}
-
 	function contact($self = FALSE, $object = TRUE){
 		$contact = $this->data['message']['contact'];
 		if(empty($contact)){ return FALSE; }
@@ -862,12 +911,6 @@ class Telegram extends CI_Model{
 		}elseif($self == TRUE){
 			return FALSE;
 		}
-	}
-
-	function sticker($object = FALSE){
-		if(!isset($this->data['message']['sticker'])){ return FALSE; }
-		if($object === TRUE){ return (object) $this->data['message']['sticker']; }
-		return $this->data['message']['sticker']['file_id'];
 	}
 
 	function pinned_message($content = NULL){
@@ -888,8 +931,10 @@ class Telegram extends CI_Model{
 	}
 
 	function download($file_id){
-		// TODO
-		//
+		$data = $this->send->get_file($file_id);
+		$url = "https://api.telegram.org/file/bot" .$this->config->item('telegram_bot_id') .":" .$this->config->item('telegram_bot_key') ."/";
+		$file = $url .$data['file_path'];
+		return $file;
 	}
 
 	function emoji($text, $reverse = FALSE){
@@ -916,6 +961,8 @@ class Telegram extends CI_Model{
 			'candy' => "\ud83c\udf6c",
 			'spiral' => "\ud83c\udf00",
 			'tennis' => "\ud83c\udfbe",
+			'key' => "\ud83d\udddd",
+			'frog' => "\ud83d\udc38",
 
 			'forbid' => "\u26d4\ufe0f",
 			'times' => "\u274c",
@@ -989,6 +1036,8 @@ class Telegram extends CI_Model{
 			'candy' => [':candy:'],
 			'spiral' => [':spiral:'],
 			'tennis' => [":tennis:"],
+			'key' => [":key:"],
+			'frog' => [":frog:"],
 			'green-check' => [':ok:', ':green-check:'],
 			'warning' => [':warning:'],
 			'exclamation-red' => [':exclamation-red:'],
