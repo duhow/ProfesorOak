@@ -2878,6 +2878,7 @@ class Main extends CI_Controller {
 			$telegram->is_chat_group()
 		){
 			if(!in_array($telegram->user->id, $this->admins(TRUE))){ return; }
+			$pokemon->settings($telegram->user->id, 'command_name', "DELETE");
 			$pokemon->step($telegram->user->id, 'CUSTOM_COMMAND');
 			$telegram->send
 				->reply_to(TRUE)
