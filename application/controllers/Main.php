@@ -159,7 +159,7 @@ class Main extends CI_Controller {
 			$commands = $pokemon->settings($telegram->chat->id, 'custom_commands');
 			if($commands){
 				$commands = unserialize($commands);
-				if(is_array($commands)){
+				if(is_array($commands) && $pokemon->step($telegram->user->id) == NULL){
 					foreach($commands as $word => $action){
 						if($telegram->text_has($word, TRUE)){
 							if(
