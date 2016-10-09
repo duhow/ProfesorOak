@@ -1807,17 +1807,11 @@ class Main extends CI_Controller {
 			$level = filter_var($telegram->text(), FILTER_SANITIZE_NUMBER_INT);
 			if(is_numeric($level)){
 				$command = $pokemon->settings($user->id, 'last_command');
-				if($command == "WHOIS" && $telegram->is_chat_group()){
+				if($level == $pokeuser->lvl or $command == "LEVELUP"){
 					/* $telegram->send
 						->notification(FALSE)
-						->text("Vale, pero por favor, deja de hacer SPAM preguntándome todo el rato.")
-						// Vale. Como me vuelvas a preguntar quien eres, te mando a la mierda. Que lo sepas.
-					->send(); */
-				}elseif($level == $pokeuser->lvl or $command == "LEVELUP"){
-					$telegram->send
-						->notification(FALSE)
 						->text("Que ya lo sé, pesado...")
-					->send();
+					->send(); */
 				}
 				$this->analytics->event('Telegram', 'Change level', $level);
 				$pokemon->settings($user->id, 'last_command', 'LEVELUP');
@@ -1825,6 +1819,13 @@ class Main extends CI_Controller {
 					if($level <= $pokeuser->lvl){ return; }
 					$pokemon->update_user_data($telegram->user->id, 'lvl', $level);
 					$pokemon->log($telegram->user->id, 'levelup', $level);
+					if($command == "WHOIS" && $telegram->is_chat_group()){
+						$telegram->send
+							->notification(FALSE)
+							->text("Así que has subido al nivel *$level*... Guay!", TRUE)
+							// Vale. Como me vuelvas a preguntar quien eres, te mando a la mierda. Que lo sepas.
+						->send();
+					}
 				}
 			}
 			return;
