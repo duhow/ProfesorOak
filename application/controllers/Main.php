@@ -3007,9 +3007,11 @@ class Main extends CI_Controller {
 				->send();
 
 				if($shot == 6 && $last != -1 && $telegram->is_chat_group()){
+					if(!$pokemon->settings($telegram->chat->id, 'russian_roulette_easy')){
+						$telegram->send->ban( $telegram->user->id );
+					}
 					// Implementar modo light o hard (ban)
 					// Avisar al admin?
-					$telegram->send->ban( $telegram->user->id );
 					$pokemon->settings($telegram->chat->id, 'russian_roulette_last', 'DELETE');
 				}
 			}
