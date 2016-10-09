@@ -1295,12 +1295,29 @@ class Main extends CI_Controller {
 				$target = $target[0]['telegramid'];
 			}
 
-			if($pokemon->user_verified($target)){ return; } // Ya es válido.
+			if($pokemon->user_verified($target)){
+				$telegram->answer_if_callback($telegram->emoji("¡Ya está validado! :ok:"), TRUE);
+				$telegram->send
+					->message(TRUE)
+					->chat(TRUE)
+					->text($telegram->text_message() .$telegram->emoji(" :ok:"))
+				->edit('text');
+				return;
+			}
 			if($pokemon->verify_user($telegram->user->id, $target)){
 				$telegram->send
 					->notification(FALSE)
 					->text( $telegram->emoji(":green-check:") )
 				->send();
+
+				if($telegram->callback){
+					$telegram->answer_if_callback("¡De acuerdo, validado!");
+					$telegram->send
+						->message(TRUE)
+						->chat(TRUE)
+						->text($telegram->text_message() .$telegram->emoji(" :ok:"))
+					->edit('text');
+				}
 
 				$telegram->send
 					->notification(TRUE)
@@ -1871,7 +1888,8 @@ class Main extends CI_Controller {
 			if(empty($pokeuser->username) or $pokeuser->lvl == 1){
 				$text = "Antes de validarte, necesito saber tu *nombre o nivel actual*.\n"
 						.":triangle-right: *Me llamo ...*\n"
-						.":triangle-right: *Soy nivel ...*";
+						.":triangle-right: *Soy nivel ...*\n"
+						."Una vez hecho, vuelve a preguntarme para validarte el perfil.";
 				$telegram->send
 					->notification(TRUE)
 					->chat($telegram->user->id)
@@ -4128,6 +4146,12 @@ class Main extends CI_Controller {
 						->notification(TRUE)
 						->chat($this->config->item('creator'))
 						->text("Validar " .$user->id ." @" .$pokeuser->username ." L" .$pokeuser->lvl ." " .$pokeuser->team)
+						->inline_keyboard()
+							->row()
+								->button($telegram->emoji(":ok:"), "te valido " .$pokeuser->username, "TEXT")
+								->button($telegram->emoji(":times:"), "no te valido")
+							->end_row()
+						->show()
 					->send();
 
 					$telegram->send
