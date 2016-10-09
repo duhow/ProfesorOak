@@ -718,6 +718,11 @@ class Main extends CI_Controller {
 			}
 			return;
 		}
+		elseif($telegram->text_command("avoice") && $telegram->words() == 2){
+			$voice = $telegram->last_word();
+			$telegram->send->file("voice", $telegram->download($voice));
+			return;
+		}
 		// Limpiar antiflood
 		elseif($telegram->text_has(['/flood', '/antiflood'], TRUE) && $telegram->is_chat_group()){
 			$this->analytics->event('Telegram', 'Antiflood', 'Check');
