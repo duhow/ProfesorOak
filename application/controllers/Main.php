@@ -1608,7 +1608,7 @@ class Main extends CI_Controller {
 				$telegram->send
 					->notification(TRUE)
 					->chat($telegram->user->id)
-					->text($text, TRUE)
+					->text($text, NULL) // TODO NO Markdown.
 				->send();
 
 				if($pokeuser->verified){
