@@ -106,6 +106,8 @@ class Main extends CI_Controller {
 				$info = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
 				// $telegram->send->text(json_encode($info))->send();
 				if($info->messages <= 5){
+					if(!$telegram->text_contains(["http", "www", ".com", ".es", ".net"])){ return; } // HACK Falsos positivos.
+					// TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
 					$telegram->send
 						->message(TRUE)
 						->chat(TRUE)
@@ -115,6 +117,9 @@ class Main extends CI_Controller {
 					$telegram->send
 						->chat($this->config->item('creator'))
 						->text("*SPAM* del grupo " .$telegram->chat->id .".", TRUE)
+						->inline_keyboard()
+							->row_button("No es spam", "/nospam " .$telegram->user->id ." " .$telegram->chat->id, "TEXT")
+						->show()
 					->send();
 
 					$pokemon->user_flags($telegram->user->id, 'spam', TRUE);
