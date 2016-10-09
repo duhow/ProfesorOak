@@ -3380,6 +3380,7 @@ class Main extends CI_Controller {
 				($telegram->text_contains("@") && !$telegram->text_contains("@ ")) or
 				($telegram->text_mention())
 			) && $telegram->is_chat_group()
+			&& ($pokemon->settings($telegram->chat->id, 'no_mention') != TRUE)
 		){
 			$users = array();
 			preg_match_all("/[@]\w+/", $telegram->text(), $users, PREG_SET_ORDER);
@@ -3418,7 +3419,7 @@ class Main extends CI_Controller {
 					$resfin = FALSE;
 					foreach($find as $u){
 						// Valida que el entrenador esté en el grupo
-						if($telegram->user_in_chat($u['telegramid'])){
+						if($telegram->user_in_chat($u['telegramid']) && $pokemon->settings($u['telegramid'], 'no_mention') != TRUE){
 							$str = $name ." - ";
 							if(!empty($link)){ $str .= "<a href='$link'>" .$telegram->chat->title ."</a>:\n"; }
 							else{ $str .= "<b>" .$telegram->chat->title ."</b>:\n"; }
