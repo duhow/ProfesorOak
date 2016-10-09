@@ -1129,7 +1129,7 @@ class Main extends CI_Controller {
 		}
 
 		elseif(
-			$telegram->text_has("/get", TRUE) &&
+			$telegram->text_command("get") &&
 			in_array($telegram->words(), [2,3])
 		){
 			$get = $telegram->chat->id;
@@ -2365,7 +2365,7 @@ class Main extends CI_Controller {
 					."Espero poder ayudaros en todo lo posible, ¡muchas gracias!";
 		}elseif(
 			($telegram->text_has(["lista", "ayuda", "ayúdame", "para qué sirve"]) && $telegram->text_has(["comando", "oak", "profe", "profesor"])) or
-			$telegram->text_has("/help", TRUE)
+			$telegram->text_command("help")
 		){
 			if($telegram->is_chat_group() && $telegram->user->id != $this->config->item('creator')){
 				$q = $telegram->send->chat( $telegram->user->id )->text("*Ayuda del Oak:*", TRUE)->send();
