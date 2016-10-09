@@ -1937,6 +1937,16 @@ class Main extends CI_Controller {
 			];
 
 			$str = str_replace(array_keys($repl), array_values($repl), $str);
+			if($pokemon->settings($user->id, 'last_command') == "LEVELUP"){
+				if($chat != $telegram->chat->id){
+					/* $telegram->send
+						->chat($this->config->item('creator'))
+						->text("Me revelo contra " .$pokeuser->username ." " .$user->id ." en " .$telegram->chat->id)
+					->send();
+
+					$str = "¿Eres tonto o que? Ya te lo he dicho antes. ¿Puedes parar ya?"; */
+				}
+			}
 			$pokemon->settings($user->id, 'last_command', 'WHOIS');
 
 			$telegram->send
