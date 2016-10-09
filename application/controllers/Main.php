@@ -3114,6 +3114,7 @@ class Main extends CI_Controller {
 			$telegram->send->notification(FALSE)->file('document', "BQADBAADHgMAAo-zWQOHtZAjTKJW2QI");
 			return;
 		}elseif($telegram->text_has(["métemela", "por el culo", "por el ano"])){
+			if($this->is_shutup_jokes()){ return; }
 			$this->analytics->event('Telegram', 'Jokes', 'Metemela');
 			$telegram->send->chat_action('record_audio')->send();
 			$telegram->send->notification(FALSE)->file('voice', FCPATH . "files/metemela.ogg");
