@@ -2014,6 +2014,8 @@ class Main extends CI_Controller {
 						if(in_array("troll", $flags)){ $str .= $telegram->emoji(":joker: "); }
 						if(in_array("spam", $flags)){ $str .= $telegram->emoji(":spam: "); }
 						if(in_array("hacks", $flags)){ $str .= $telegram->emoji(":laptop: "); }
+						if(in_array("enlightened", $flags)){ $str .= $telegram->emoji(":frog: "); }
+						if(in_array("resistance", $flags)){ $str .= $telegram->emoji(":key: "); }
 					}
 				}
 			}
