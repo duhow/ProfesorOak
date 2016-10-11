@@ -162,6 +162,47 @@ elseif($telegram->text_has("/nospam", TRUE) && $telegram->words() <= 3){
     return;
 }
 
+// Ver información de un grupo
+elseif($telegram->text_command("cinfo")){
+    $id = $telegram->last_word();
+    if(empty($id) or $id == "/cinfo"){ $id = $telegram->chat->id; }
+    $info = $telegram->send->get_chat($id);
+    $count = $telegram->send->get_members_count($id);
+    $telegram->send->text( json_encode($info) ."\n$count" )->send();
+    $info = $telegram->send->get_member_info($this->config->item('telegram_bot_id'), $id);
+    $telegram->send->text( json_encode($info) )->send();
+    exit();
+}
+
+// Ver información de un usuario
+elseif($telegram->text_command("uinfo")){
+    $u = NULL;
+    if($telegram->has_reply){
+        $u = $telegram->reply_user->id;
+    }elseif($telegram->text_mention()){
+        $u = $telegram->text_mention();
+        if(is_array($u)){ $u = key($u); }
+    }elseif($telegram->words() == 2){
+        $u = $telegram->last_word(TRUE);
+    }
+
+    if(empty($u)){ return; }
+    $find = $telegram->send->get_member_info($u, $u);
+
+    $telegram->send
+        ->notification(FALSE)
+        ->text(json_encode($find))
+    ->send();
+    return;
+}
+
+// Salir de un grupo.
+elseif($telegram->text_has("salte de", TRUE) && $telegram->words() == 3){
+    $id = $telegram->last_word();
+    $telegram->send->leave_chat($id);
+    exit();
+}
+
 // Buscar usuario por grupos
 elseif($telegram->text_has(["/whereis", "dónde está"], TRUE) && !$telegram->is_chat_group() && $telegram->words() <= 3){
     $find = $telegram->last_word(TRUE);
@@ -247,6 +288,56 @@ elseif($telegram->text_command("mode")){
         $step = $pokemon->step($user, $telegram->last_word());
         $telegram->send->text("set!")->send();
     }
+    return;
+}
+
+// Conversación grupal
+elseif($telegram->text_command("speak") && $telegram->words() == 2 && !$telegram->is_chat_group()){
+    $chattalk = $telegram->last_word();
+    if(in_array(strtolower($chattalk), ["stop", "off", "false"])){
+        $chattalk = $pokemon->settings($telegram->user->id, 'speak');
+        if(!$chattalk){ return; }
+        $pokemon->settings($chattalk, 'forward_interactive', "DELETE");
+        $pokemon->settings($telegram->user->id, 'speak', "DELETE");
+        $pokemon->step($telegram->user->id, NULL);
+        $telegram->send
+            ->text($telegram->emoji(":forbid: Chat detenido."))
+        ->send();
+        return;
+    }
+    $isuser = FALSE;
+    if($chattalk[0] != "-"){
+        $pkuser = $pokemon->user($chattalk);
+        if(!$pkuser){
+            $new = $pokemon->group_find($chattalk);
+            if(empty($new)){ return; }
+            $chattalk = $new;
+        }else{
+            $chattalk = $pkuser->telegramid;
+        }
+    }
+    if(!$telegram->user_in_chat($telegram->config->item('telegram_bot_id'), $chattalk)){
+        $telegram->send
+            ->text($telegram->emoji(":times: No estoy :("))
+        ->send();
+        return;
+    }
+    $chat = $telegram->send->get_chat($chattalk);
+    // $telegram->send->text(json_encode($chat))->chat($this->config->item('creator'))->send();
+    $forward = FALSE;
+    if($chat['type'] == "private" or !$telegram->user_in_chat($telegram->config->item('creator'), $chattalk)){
+        // No mirror.
+        $pokemon->settings($chattalk, 'forward_interactive', TRUE);
+        $forward = TRUE;
+    }
+
+    $pokemon->settings($telegram->user->id, 'speak', $chattalk);
+    $pokemon->step($telegram->user->id, 'SPEAK');
+    $title = (isset($chat['title']) ? $chat['title'] : $chat['first_name'] ." " .$chat['last_name']);
+
+    $telegram->send
+        ->text($telegram->emoji(":ok: ") .($forward ? "Forwarding activo. " : "") ."Hablando en " .$title)
+    ->send();
     return;
 }
 

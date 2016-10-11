@@ -57,6 +57,42 @@ elseif(
     return;
 }
 
+// Preguntar si el usuario es administrador
+elseif($telegram->text_has(["soy", "es", "eres"], ["admin", "administrador"], TRUE) && $telegram->words() <= 5){
+    $admin = NULL;
+    if($telegram->text_has("soy")){ $admin = $telegram->user->id; }
+    elseif($telegram->text_has(["es", "eres"]) && $telegram->has_reply){ $admin = $telegram->reply_user->id; }
+    else{ return; }
+
+    $admins = $pokemon->telegram_admins(FALSE);
+    $text = "Nop.";
+    if(in_array($admin, $admins)){
+        $text = "Sip, es admin.";
+    }
+    $this->analytics->event('Telegram', 'Ask for admin');
+    $telegram->send
+        ->notification(FALSE)
+        // ->reply_to($telegram->reply_user->id)
+        ->text($text)
+    ->send();
+    return;
+}
+
+// Votar kick de usuarios.
+elseif(
+    ($telegram->text_command("votekick") or $telegram->text_command("voteban"))
+){
+    // Si el usuario que convoca el comando es troll o tiene flags, no puede votar ni usarlo.
+    if($pokemon->user_flags($telegram->user->id, ['troll', 'bot', 'hacks', 'spam', 'rager', 'ratkid'])){ return; }
+    $kickuser = NULL;
+    if($telegram->has_reply){
+        if(
+            $telegram->reply_user->id == $this->config->item('telegram_bot_id') or
+            in_array($telegram->reply_user->id, $pokemon->telegram_admins(TRUE))
+        ){ return; }
+    }
+}
+
 // Contar miembros de cada color
 elseif($telegram->text_command("count")){
     $members = $pokemon->group_get_members($telegram->chat->id);
@@ -133,6 +169,53 @@ elseif(
         // ->disable_web_page_preview()
         ->text($text)
     ->send();
+    return;
+}
+
+// Ver si un usuario está en un grupo.
+elseif(
+    $telegram->words() <= 6 &&
+    (
+        ( $telegram->text_has("está") and $telegram->text_has("aquí") ) and
+        ( !$telegram->text_has(["alguno", "alguien", "que"], ["es", "ha", "como", "está"]) ) and // Alguien está aquí? - Alguno es....
+        ( !$telegram->text_contains("desde") )
+    )
+){
+    if($telegram->words() > 3){
+        $find = $telegram->last_word(TRUE);
+    }else{
+        if(strpos($telegram->last_word(), "aqu") !== FALSE){
+            $find = $telegram->words(1, TRUE);
+        }else{
+            $find = $telegram->words(2, TRUE);
+        }
+    }
+
+    $str = "";
+    $find = str_replace(["@", "?"], "", $find);
+    if(empty($find) or strlen($find) < 4){ return; }
+    if(strpos($find, "est") !== FALSE or strpos($find, "aqu") !== FALSE){ return; }
+    $this->analytics->event('Telegram', 'Search User', $find);
+    $data = $pokemon->user($find);
+    if(empty($data)){
+        $str = "No sé quien es. ($find)";
+    }else{
+        $find = $telegram->user_in_chat($data->telegramid);
+        if(!$find){
+            $str = "No, no está.";
+        }else{
+            $str = "Si, " .$find['user']['first_name'] ." está aquí.";
+        }
+    }
+
+    if(!empty($str)){
+        $telegram->send
+            ->notification(FALSE)
+            ->reply_to(TRUE)
+            ->text($str)
+        ->send();
+    }
+
     return;
 }
 

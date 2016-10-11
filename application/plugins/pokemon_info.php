@@ -274,5 +274,24 @@ elseif(
     return;
 }
 
+// Significados de palabras
+elseif($telegram->text_has("Qué", ["significa", "es"], TRUE)){
+    $word = trim(strtolower($telegram->last_word(TRUE)));
+    if(is_numeric($word)){ return; }
+    $help = $pokemon->meaning($word);
+
+    // Buscar si contiene EL/LA si no ha encontrado el $help, y repetir proceso.
+
+    if(!empty($help) && !is_numeric($help)){
+        $this->analytics->event('Telegram', 'Help Meaning', $word);
+        $telegram->send
+            ->notification(FALSE)
+            ->reply_to(TRUE)
+            ->text($help, TRUE)
+        ->send();
+    }
+    return;
+}
+
 
 ?>

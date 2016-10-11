@@ -4,29 +4,30 @@ if($telegram->text_command("avoice") && $telegram->words() == 2){
     $voice = $telegram->last_word();
     $telegram->send->file("voice", $telegram->download($voice));
     return;
-}elseif($telegram->text_command("cinfo") && $telegram->user->id == $this->config->item('creator')){
-    $id = $telegram->last_word();
-    if(empty($id) or $id == "/cinfo"){ $id = $telegram->chat->id; }
-    $info = $telegram->send->get_chat($id);
-    $count = $telegram->send->get_members_count($id);
-    $telegram->send->text( json_encode($info) ."\n$count" )->send();
-    $info = $telegram->send->get_member_info($this->config->item('telegram_bot_id'), $id);
-    $telegram->send->text( json_encode($info) )->send();
-    exit();
 }elseif($telegram->text_has(["oak", "profe"], "dónde estoy") && $telegram->words() <= 4){
     // DEBUG
+    $texto = NULL;
     if($telegram->is_chat_group()){
-        $joke = "Estás en *" .$telegram->chat->title ."* ";
-        if(isset($telegram->chat->username)){ $joke .= "@" .$telegram->chat->username ." "; }
-        $joke .= "(" .$telegram->chat->id .").";
+        $texto = "Estás en *" .$telegram->chat->title ."* ";
+        if(isset($telegram->chat->username)){ $texto .= "@" .$telegram->chat->username ." "; }
+        $texto .= "(" .$telegram->chat->id .").";
     }else{
-        $joke = "Estás hablando por privado conmigo :)\n";
-        if(isset($telegram->chat->username)){ $joke .= "@" .$telegram->chat->username ." "; }
-        $joke .= "(" .$telegram->chat->id .").";
+        $texto = "Estás hablando por privado conmigo :)\n";
+        if(isset($telegram->chat->username)){ $texto .= "@" .$telegram->chat->username ." "; }
+        $texto .= "(" .$telegram->chat->id .").";
     }
+    if($texto){
+        $telegram->send
+            ->text($texto, TRUE)
+        ->send();
+    }
+    return;
 }elseif($telegram->text_has("oak", "versión")){
     $date = (time() - filemtime(__FILE__));
-    $joke = "Versión de hace " .floor($date / 60) ." minutos.";
+    $telegram->send
+        ->text("Versión de hace " .floor($date / 60) ." minutos.")
+    ->send();
+    return;
 }
 
 // Sistema de mención de usuarios
@@ -185,12 +186,10 @@ if($telegram->text_has(["ubicación", "mapa de"], TRUE)){
     }elseif($telegram->text_has("mapa de", TRUE)){
         $text = substr($text, strlen("mapa de"));
     }
-    $text = trim($text);
-    $text = str_replace("en ", "in ", $text);
+    $text = str_replace("en ", "in ", trim($text));
     if(empty($text) or strlen($text) <= 2){ return; }
     $data = ["text" => $text, "sourceCountry" => "ESP", "f" => "json"];
-    $data = http_build_query($data);
-    $web = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find?" .$data;
+    $web = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find?" .http_build_query($data);
     $loc = file_get_contents($web);
     $ret = json_decode($loc);
     $str = "No lo encuentro.";
@@ -210,7 +209,12 @@ if($telegram->text_has(["ubicación", "mapa de"], TRUE)){
     ->send();
 }
 
-if($telegram->text_has(["invertir", "invertir ubicación", "reverse"]) && $telegram->words() <= 5 && $telegram->has_reply && isset($telegram->reply->location)){
+if(
+    $telegram->text_has(["invertir", "invertir ubicación", "reverse"]) &&
+    $telegram->words() <= 5 &&
+    $telegram->has_reply &&
+    isset($telegram->reply->location)
+){
     $loc = (object) $telegram->reply->location;
     $telegram->send
         ->notification(FALSE)

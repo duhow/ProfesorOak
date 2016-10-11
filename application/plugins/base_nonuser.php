@@ -17,9 +17,9 @@ if($telegram->text_command("register")){
     $this->analytics->event('Telegram', 'Register', 'command');
     $str = "Hola " .$telegram->user->first_name ."! Me podrías decir tu color?\n"
             ."(*Soy* ...)";
-    if($this->is_shutup()){
+    // if($this->is_shutup()){
         $str = "Hola! Ábreme y registrate por privado :)";
-    }
+    // }
     $telegram->send
         ->notification(FALSE)
         ->text($str, TRUE)

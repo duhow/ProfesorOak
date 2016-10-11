@@ -27,6 +27,42 @@ if($chat_forward){ // Si no hay, po na.
 
 /*
 #####################
+#   Flood filter    #
+#####################
+*/
+
+$flood = $pokemon->settings($telegram->chat->id, 'antiflood');
+if($flood && !in_array($telegram->user->id, $pokemon->telegram_admins(TRUE))){
+    $amount = NULL;
+    if($telegram->text_command()){ $amount = 1; }
+    elseif($telegram->photo()){ $amount = 0.8; }
+    elseif($telegram->sticker()){ $amount = 1; }
+    // elseif($telegram->document()){ $amount = 1; }
+    elseif($telegram->gif()){ $amount = 1; }
+    elseif($telegram->text() && $telegram->words() >= 50){ $amount = 0.5; }
+    elseif($telegram->text()){ $amount = -0.4; }
+    // Spam de text/segundo.
+    // Si se repite la última palabra.
+
+    $countflood = 0;
+    if($amount !== NULL){ $countflood = $pokemon->group_spamcount($telegram->chat->id, $amount); }
+
+    if($countflood >= $flood){
+        $res = $telegram->send->kick($telegram->user->id);
+        if($res){
+            $pokemon->group_spamcount($telegram->chat->id, -1.1); // Avoid another kick.
+            $pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
+            $telegram->send
+                ->text("Usuario expulsado por flood. [" .$telegram->user->id .(isset($telegram->user->username) ? " @" .$telegram->user->username : "") ."]")
+            ->send();
+            return; // No realizar la acción ya que se ha explusado.
+        }
+        // Si tiene grupo admin asociado, avisar.
+    }
+}
+
+/*
+#####################
 #   Abandon chat    #
 #####################
 */
