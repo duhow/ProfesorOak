@@ -25,3 +25,8 @@ Puedes contribuir ideas mediante [issues](https://github.com/duhow/ProfesorOak/i
 - Crea un [_fork_](https://help.github.com/articles/fork-a-repo/) del proyecto
 - Añade tus modificaciones en un [_branch_](https://help.github.com/articles/creating-and-deleting-branches-within-your-repository/) nuevo
 - Crea un [_PR_](https://help.github.com/articles/creating-a-pull-request/) con una descripción detallada de lo que hace tu contribución
+
+---
+### Licencia
+
+Este proyecto se encuentra bajo licencia [GNU/GPL V3](https://es.m.wikipedia.org/wiki/GNU_General_Public_License), la cual puede ser leída en este archivo: [LICENSE](https://github.com/duhow/ProfesorOak/blob/master/LICENSE)
