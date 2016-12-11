@@ -80,7 +80,10 @@ class Plugin extends CI_Model{
 		}
 
 		foreach($files as $f){
-			if(!$this->is_loaded($f)){ $this->load($f); }
+			if(!$this->is_loaded($f)){
+				$load = $this->load($f);
+				if($load === -1){ die(); }
+			}
 		}
 	}
 
@@ -92,12 +95,12 @@ class Plugin extends CI_Model{
 				$telegram = $this->telegram;
 				$pokemon = $this->pokemon;
 
-				include_once $file;
+				$ret = include_once $file;
 
 				$name = strtolower(str_replace(".php", "", $name));
 				$this->loaded[] = $name;
 
-				return TRUE;
+				return ($ret === -1 ? -1 : $name);
 			}
 		}
 

@@ -1,6 +1,7 @@
 <?php
 
 if(!$telegram->is_chat_group()){ return; }
+if(!in_array($telegram->user->id, telegram_admins(TRUE))){ return; }
 
 // Echar usuario del grupo
 if($telegram->text_has(["/kick", "/ban"], TRUE)){
@@ -16,6 +17,7 @@ if($telegram->text_has(["/kick", "/ban"], TRUE)){
         }elseif($telegram->words() == 2){
             // Buscar usuario.
             $kick = $telegram->last_word();
+            if(strlen($kick) < 4){ return; }
             // Buscar si no en PKGO user DB.
         }
         if(($telegram->user->id == $this->config->item('creator')) or !in_array($kick, $admins)){ // Si es creador o no hay target a admins
@@ -30,6 +32,35 @@ if($telegram->text_has(["/kick", "/ban"], TRUE)){
             }
         }
     }
+}
+
+// Desbanear a usuario
+elseif(($telegram->text_contains("desbanea", TRUE) or $telegram->text_command("unban")) && $telegram->words() <= 3){
+    $target = NULL;
+    if($telegram->has_reply){ $target = $telegram->reply_user->id; }
+    elseif($telegram->text_mention()){
+        $target = $telegram->text_mention();
+        if(is_array($target)){ $target = key($target); }
+    }else{
+        $target = $telegram->last_word(TRUE);
+    }
+
+    if($target != NULL){
+        $telegram->send->unban($target, $telegram->chat->id);
+        $telegram->send
+            ->text("Usuario $target desbaneado.")
+        ->send();
+
+        if($telegram->callback){
+            $telegram->send
+                ->message(TRUE)
+                ->chat(TRUE)
+                ->text($telegram->text_message() ."\n" ."Desbaneado.")
+            ->edit('text');
+        }
+    }
+
+    return -1;
 }
 
 // Limpiar antiflood
@@ -57,6 +88,23 @@ elseif($telegram->text_has(['/flood', '/antiflood'], TRUE)){
         $pokemon->group_spamcount($telegram->chat->id, FALSE);
         return;
     }
+}
+
+elseif(
+    $telegram->text_has(["oak", "profe"], "limpia") or
+    $telegram->text_command("clean")
+){
+    // $admins = $pokemon->telegram_admins(TRUE);
+    $admins = telegram_admins(TRUE);
+
+    if(in_array($telegram->user->id, $admins)){
+        $this->analytics->event('Telegram', 'Clean');
+        $telegram->send
+            ->notification(FALSE)
+            ->text(".\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n.")
+        ->send();
+    }
+    return;
 }
 
 // configurar el bot por defecto (solo creador/admin)
@@ -173,7 +221,7 @@ elseif(
 elseif($telegram->text_has(["oak", "profe"], ["sal", "vete"], TRUE) && !$telegram->text_contains("salu") && $telegram->is_chat_group() && $telegram->words() < 4){
     $admins = $pokemon->telegram_admins(TRUE);
 
-    if(in_array($user->id, $admins)){
+    if(in_array($telegram->user->id, $admins)){
         $this->analytics->event('Telegram', 'Leave group');
         $telegram->send
             ->notification(FALSE)

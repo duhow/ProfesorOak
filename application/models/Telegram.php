@@ -112,7 +112,7 @@ class __Module_Telegram_InlineKeyboard_Row extends CI_Model{
 		}elseif(is_string($switch) && strtolower($switch) == "share"){
 			$enc = NULL;
 			if(is_array($request) && count($request) == 2){
-				$enc = ['url' => urlencode($request[0]), 'text' => $request[1]];
+				$enc = ['url' => urlencode($request[0]), 'text' => urldecode($request[1])];
 			}else{
 				$enc = ['url' => urlencode($request)];
 			}
@@ -502,6 +502,9 @@ class Telegram extends CI_Model{
 		parent::__construct();
 		$this->send = new __Module_Telegram_Sender();
 
+		$this->user = (object) ['id' => NULL, 'username' => NULL];
+		$this->chat = (object) ['id' => NULL, 'username' => NULL];
+
 		$content = file_get_contents("php://input");
 		// if(empty($content)){ die(); }
 		$this->raw = $content;
@@ -614,6 +617,8 @@ class Telegram extends CI_Model{
 		$input = implode("|", $input);
 		$input = strtolower($input); // HACK util o molesto en segun que casos?
 		$input = str_replace(["á", "é", "í", "ó", "ú"], ["a", "e", "i", "o", "u"], $input); // HACK mas de lo mismo, ayuda o molesta?
+		$input = str_replace(["Á", "É", "Í", "Ó", "Ú"], ["A", "E", "I", "O", "U"], $input); // HACK
+		$input = strtolower($input);
         $input = str_replace("/", "\/", $input); // CHANGED fix para escapar comandos y demás.
 
 		if(is_bool($next_word)){ $position = $next_word; $next_word = NULL; }
@@ -622,7 +627,9 @@ class Telegram extends CI_Model{
 			$next_word = implode("|", $next_word);
 			$next_word = strtolower($next_word); // HACK
 			$next_word = str_replace(["á", "é", "í", "ó", "ú"], ["a", "e", "i", "o", "u"], $next_word); // HACK
-            $input = str_replace("/", "\/", $input); // CHANGED
+			$next_word = str_replace(["Á", "É", "Í", "Ó", "Ú"], ["A", "E", "I", "O", "U"], $next_word); // HACK
+			$next_word = strtolower($next_word); // HACK
+            $next_word = str_replace("/", "\/", $next_word); // CHANGED
 		}
 
 		if($position === TRUE){
@@ -638,6 +645,8 @@ class Telegram extends CI_Model{
 
 		$text = strtolower($this->text());
 		$text = str_replace(["á", "é", "í", "ó", "ú"], ["a", "e", "i", "o", "u"], $text); // HACK
+		$text = str_replace(["Á", "É", "Í", "Ó", "Ú"], ["A", "E", "I", "O", "U"], $text); // HACK
+		$text = strtolower($text);
 		return preg_match("/" .$regex ."/", $text);
 	}
 
@@ -837,7 +846,7 @@ class Telegram extends CI_Model{
 		return $link;
 	}
 
-	function answer_if_callback($text = NULL, $alert = FALSE){
+	function answer_if_callback($text = "", $alert = FALSE){
 		if($this->key != "callback_query"){ return FALSE; }
 		return $this->send
 			->text($text)
@@ -939,66 +948,78 @@ class Telegram extends CI_Model{
 
 	function emoji($text, $reverse = FALSE){
 		$emoji = [
-			'kiss' => "\ud83d\ude18",
-			'heart' => "\u2764\ufe0f",
-			'heart-blue' => "\ud83d\udc99",
-			'heart-green' => "\ud83d\udc9a",
-			'heart-yellow' => "\ud83d\udc9b",
-			'laugh' => "\ud83d\ude02",
-			'tongue' => "\ud83d\ude1b",
-			'smiley' => "\ud83d\ude00",
-			'happy' => "\ud83d\ude19",
-			'die' => "\ud83d\ude35",
-			'cloud' => "\u2601\ufe0f",
-			'gun' => "\ud83d\udd2b",
-			'green-check' => "\u2705",
-			'antenna' => "\ud83d\udce1",
-			'spam' => "\ud83d\udce8",
-			'laptop' => "\ud83d\udcbb",
-			'pin' => "\ud83d\udccd",
-			'home' => "\ud83c\udfda",
-			'map' => "\ud83d\uddfa",
-			'candy' => "\ud83c\udf6c",
-			'spiral' => "\ud83c\udf00",
-			'tennis' => "\ud83c\udfbe",
-			'key' => "\ud83d\udddd",
-			'frog' => "\ud83d\udc38",
+			'kiss' => '\ud83d\ude18',
+			'heart' => '\u2764\ufe0f',
+			'heart-blue' => '\ud83d\udc99',
+			'heart-green' => '\ud83d\udc9a',
+			'heart-yellow' => '\ud83d\udc9b',
+			'laugh' => '\ud83d\ude02',
+			'tongue' => '\ud83d\ude1b',
+			'smiley' => '\ud83d\ude00',
+			'happy' => '\ud83d\ude19',
+			'die' => '\ud83d\ude35',
+			'cloud' => '\u2601\ufe0f',
+			'gun' => '\ud83d\udd2b',
+			'green-check' => '\u2705',
+			'antenna' => '\ud83d\udce1',
+			'spam' => '\ud83d\udce8',
+			'laptop' => '\ud83d\udcbb',
+			'pin' => '\ud83d\udccd',
+			'home' => '\ud83c\udfda',
+			'map' => '\ud83d\uddfa',
+			'candy' => '\ud83c\udf6c',
+			'spiral' => '\ud83c\udf00',
+			'tennis' => '\ud83c\udfbe',
+			'key' => '\ud83d\udddd',
+			'door' => '\ud83d\udeaa',
+			'frog' => '\ud83d\udc38',
 
-			'forbid' => "\u26d4\ufe0f",
-			'times' => "\u274c",
-			'warning' => "\u26a0\ufe0f",
-			'banned' => "\ud83d\udeab",
-			'star' => "\u2b50\ufe0f",
-			'star-shine' => "\ud83c\udf1f",
-			'mouse' => "\ud83d\udc2d",
-			'multiuser' => "\ud83d\udc65",
-			'robot' => "\ud83e\udd16",
-			'fire' => "\ud83d\udd25",
-			'collision' => "\ud83d\udca5",
-			'joker' => "\ud83c\udccf",
-			'exclamation-red' => "\u2757\ufe0f",
-			'question-red' => "\u2753",
-			'exclamation-grey' => "\u2755",
-			'question-grey' => "\u2754",
+			'forbid' => '\u26d4\ufe0f',
+			'times' => '\u274c',
+			'warning' => '\u26a0\ufe0f',
+			'banned' => '\ud83d\udeab',
+			'star' => '\u2b50\ufe0f',
+			'star-shine' => '\ud83c\udf1f',
+			'mouse' => '\ud83d\udc2d',
+			'multiuser' => '\ud83d\udc65',
+			'robot' => '\ud83e\udd16',
+			'fire' => '\ud83d\udd25',
+			'collision' => '\ud83d\udca5',
+			'joker' => '\ud83c\udccf',
+			'exclamation-red' => '\u2757\ufe0f',
+			'question-red' => '\u2753',
+			'exclamation-grey' => '\u2755',
+			'question-grey' => '\u2754',
 
-			'triangle-left' => "\u25c0\ufe0f",
-			'triangle-up' => "\ud83d\udd3c",
-			'triangle-right' => "\u25b6\ufe0f",
-			'triangle-down' => "\ud83d\udd3d",
-			'arrow-left' => "\u2b05\ufe0f",
-			'arrow-up' => "\u2b06\ufe0f",
-			'arrow-right' => "\u27a1\ufe0f",
-			'arrow-down' => "\u2b07\ufe0f",
-			'arrow-up-left' => "\u2196\ufe0f",
-			'arrow-up-right' => "\u2197\ufe0f",
-			'arrow-down-right' => "\u2198\ufe0f",
-			'arrow-down-left ' => "\u2199\ufe0f",
+			'1' => '1\u20e3',
+			'2' => '2\u20e3',
+			'3' => '3\u20e3',
+			'4' => '4\u20e3',
+			'5' => '5\u20e3',
+			'6' => '6\u20e3',
+			'7' => '7\u20e3',
+			'8' => '8\u20e3',
+			'9' => '9\u20e3',
+			'0' => '0\u20e3',
 
-			'minus' => "\u2796",
-			'plus' => "\u2795",
-			'multiply' => "\u2716\ufe0f",
-			'search-left' => "\ud83d\udd0d",
-			'search-right' => "\ud83d\udd0e",
+			'triangle-left' => '\u25c0\ufe0f',
+			'triangle-up' => '\ud83d\udd3c',
+			'triangle-right' => '\u25b6\ufe0f',
+			'triangle-down' => '\ud83d\udd3d',
+			'arrow-left' => '\u2b05\ufe0f',
+			'arrow-up' => '\u2b06\ufe0f',
+			'arrow-right' => '\u27a1\ufe0f',
+			'arrow-down' => '\u2b07\ufe0f',
+			'arrow-up-left' => '\u2196\ufe0f',
+			'arrow-up-right' => '\u2197\ufe0f',
+			'arrow-down-right' => '\u2198\ufe0f',
+			'arrow-down-left ' => '\u2199\ufe0f',
+
+			'minus' => '\u2796',
+			'plus' => '\u2795',
+			'multiply' => '\u2716\ufe0f',
+			'search-left' => '\ud83d\udd0d',
+			'search-right' => '\ud83d\udd0e',
 		];
 
 		$search = [
@@ -1007,14 +1028,26 @@ class Telegram extends CI_Model{
 			'heart-blue' => [':heart-blue:'],
 			'heart-green' => [':heart-green:'],
 			'heart-yellow' => [':heart-yellow:'],
-			'smiley' => [":smiley:", ":>", "]:D"],
-			'happy' => [":happy:", "^^"],
+			'smiley' => [':smiley:', ':>', ']:D'],
+			'happy' => [':happy:', '^^'],
 			'laugh' => [':lol:', ":'D"],
 
-			'tongue' => [":tongue:", "=P"],
-			'die' => [":die:", ">X"],
-			'cloud' => [":cloud:"],
-			'gun' => [":gun:"],
+			'tongue' => [':tongue:', '=P'],
+			'die' => [':die:', '>X'],
+			'cloud' => [':cloud:'],
+			'gun' => [':gun:'],
+			'door' => [':door:'],
+
+			'1' => [':1:'],
+			'2' => [':2:'],
+			'3' => [':3:'],
+			'4' => [':4:'],
+			'5' => [':5:'],
+			'6' => [':6:'],
+			'7' => [':7:'],
+			'8' => [':8:'],
+			'9' => [':9:'],
+			'0' => [':0:'],
 
 			'forbid' => [':forbid:'],
 			'times' => [':times:'],
@@ -1035,9 +1068,9 @@ class Telegram extends CI_Model{
 			'map' => [':map:'],
 			'candy' => [':candy:'],
 			'spiral' => [':spiral:'],
-			'tennis' => [":tennis:"],
-			'key' => [":key:"],
-			'frog' => [":frog:"],
+			'tennis' => [':tennis:'],
+			'key' => [':key:'],
+			'frog' => [':frog:'],
 			'green-check' => [':ok:', ':green-check:'],
 			'warning' => [':warning:'],
 			'exclamation-red' => [':exclamation-red:'],
@@ -1067,6 +1100,7 @@ class Telegram extends CI_Model{
 			foreach($search as $n => $k){
 				$text = str_replace($k, $emoji[$n], $text);
 			}
+			$text = str_replace("\n", '\n', $text); // FIX testing
 			return json_decode('"' . $text .'"', TRUE);
 		}
 		$text = json_encode($text); // HACK decode UTF -> ASCII para buscar y reemplazar

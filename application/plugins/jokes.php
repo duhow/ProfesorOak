@@ -155,6 +155,7 @@ if(
             ->text($joke, TRUE)
         ->send();
     }
+    return;
 }
 
 

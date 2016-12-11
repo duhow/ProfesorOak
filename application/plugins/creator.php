@@ -14,8 +14,10 @@ if($telegram->text_command("broadcast")){
         ->send();
         var_dump($res);
     }
-    return;
-}elseif($telegram->text_command("usercast")){
+    return -1;
+}
+
+elseif($telegram->text_command("usercast")){
     exit(); // TODO temporal
     $text = substr($text, strlen("/usercast "));
     // Cada 100 usuarios, enviar un mensaje de confirmación del progreso.
@@ -63,6 +65,7 @@ elseif($telegram->text_has("Éste", TRUE) && $telegram->has_reply){
 
     // guardar nombre del user
     elseif($telegram->text_has("se llama")){
+
         if($pokemon->user_exists($word)){
             $telegram->send
                 ->notification(FALSE)
@@ -89,7 +92,7 @@ elseif($telegram->text_has("Éste", TRUE) && $telegram->has_reply){
         }
     }
 
-    return;
+    return -1;
 }
 
 // Bloquear usuarios del Oak
@@ -101,7 +104,7 @@ elseif($telegram->text_contains(["/block", "/unblock"], TRUE)){
     }elseif($telegram->words() == 2 && $telegram->text_mention()){
         // $user = $telegram->text_mention(); // --> to UID.
     }
-    if(empty($user)){ return; }
+    if(empty($user)){ return -1; }
     $pokemon->update_user_data($user, 'blocked', $telegram->text_contains("/block"));
 }
 
@@ -127,7 +130,47 @@ elseif($telegram->text_command("unban")){
             ->text("Usuario $target desbaneado" .($target_chat != $telegram->chat->id ? " de $target_chat" : "") .".")
         ->send();
     }
-    return;
+    return -1;
+}
+
+elseif($telegram->text_command("ban") && !$telegram->is_chat_group() && $telegram->words() >= 3){
+    $target = NULL;
+    $chat = NULL;
+    if($telegram->text_mention()){
+        $target = $telegram->text_mention();
+        if(is_array($target)){ $target = key($target); }
+    }elseif(is_string($telegram->words(1))){
+        $target = $pokemon->user($telegram->words(1));
+        if($target){
+            $target = $target->telegramid;
+        }
+    }elseif(is_numeric($telegram->words(1))){
+        $target = $telegram->words(1);
+    }
+
+    if(!$target){ return TRUE; } // TODO exit.
+
+    $chat = $telegram->last_word();
+    if(!is_numeric($chat) && is_string($chat)){
+        // Resolver name group.
+    }
+
+    if(!$telegram->user_in_chat($target, $chat)){
+        $telegram->send
+            ->chat($this->config->item('creator'))
+            ->text($telegram->emoji(":warning:") ." Usuario no está en chat.")
+        ->send();
+    }
+
+    $q = $telegram->send->ban($target, $chat);
+    if($q){
+        $telegram->send
+            ->chat($this->config->item('creator'))
+            ->text("Usuario $target baneado de $chat .")
+        ->send();
+    }
+
+    return TRUE;
 }
 
 // Quitar tag de SPAM
@@ -159,7 +202,7 @@ elseif($telegram->text_has("/nospam", TRUE) && $telegram->words() <= 3){
             ->send();
         }
     }
-    return;
+    return -1;
 }
 
 // Ver información de un grupo
@@ -175,10 +218,11 @@ elseif($telegram->text_command("cinfo")){
 }
 
 // Ver información de un usuario
-elseif($telegram->text_command("uinfo")){
+elseif($telegram->text_command("uinfo") or $telegram->text_command("ui")){
     $u = NULL;
     if($telegram->has_reply){
-        $u = $telegram->reply_user->id;
+        $u = ($telegram->reply_is_forward ? $telegram->reply->forward_from['id'] : $telegram->reply_user->id);
+        // $u = $telegram->reply_user->id;
     }elseif($telegram->text_mention()){
         $u = $telegram->text_mention();
         if(is_array($u)){ $u = key($u); }
@@ -186,14 +230,42 @@ elseif($telegram->text_command("uinfo")){
         $u = $telegram->last_word(TRUE);
     }
 
-    if(empty($u)){ return; }
-    $find = $telegram->send->get_member_info($u, $u);
+    if(empty($u)){ return -1; }
+    $chat = ($telegram->is_chat_group() ? $telegram->chat->id : $u);
+    $pk = $pokemon->user($u);
+    if($pk){ $u = $pk->telegramid; }
+    $find = $telegram->send->get_member_info($u, $chat);
+
+    $str = "Desconocido.";
+    if($find !== FALSE){
+        $str = $find['user']['id'] . " - " .$find['user']['first_name'] ." " .$find['user']['last_name'] ." ";
+        if(in_array($find['status'], ["administrator", "creator"])){ $str .= $telegram->emoji(":star:"); }
+        elseif(in_array($find['status'], ["left"])){ $str .= $telegram->emoji(":door:"); }
+        elseif(in_array($find['status'], ["kicked"])){ $str .= $telegram->emoji(":forbid:"); }
+        else{ $str .= $telegram->emoji(":multiuser:"); }
+
+        if(!$pk){ $str .= $telegram->emoji(" :question-red:"); }
+        else{
+            $colors = ["Y" => "yellow", "R" => "red", "B" => "blue"];
+            $str .= $telegram->emoji(" :heart-" .$colors[$pk->team] .":");
+        }
+
+        $info = $pokemon->user_in_group($u, $chat);
+        if($info){
+            $str .= "\n";
+            $str .= "$info->messages msj, último el " .date("d/m/Y H:i", strtotime($info->last_date));
+        }elseif($telegram->user_in_chat($find['user']['id'])){
+            $pokemon->user_addgroup($find['user']['id'], $telegram->chat->id);
+        }
+
+    }
+
 
     $telegram->send
         ->notification(FALSE)
-        ->text(json_encode($find))
+        ->text($str)
     ->send();
-    return;
+    return -1;
 }
 
 // Salir de un grupo.
@@ -225,24 +297,25 @@ elseif($telegram->text_has(["/whereis", "dónde está"], TRUE) && !$telegram->is
     $telegram->send
         ->text($text)
     ->send();
-    return;
+    return -1;
 }
 
 // Ver flags de usuarios
 elseif($telegram->text_command("flags")){
     $uflag = NULL;
-    if($telegram->has_reply){ $uflag = $telegram->reply_user->id; }
-    elseif($telegram->text_mention()){
+    if($telegram->has_reply){
+        $uflag = ($telegram->reply_is_forward ? $telegram->reply->forward_from['id'] : $telegram->reply_user->id);
+    }elseif($telegram->text_mention()){
         $uflag = $telegram->text_mention();
         if(is_array($uflag)){ $uflag = key($uflag); }
     }elseif($telegram->words() == 2){
         $uflag = $telegram->last_word();
-        if(!is_numeric($uflag)){ return; }
+        if(!is_numeric($uflag)){ return -1; }
     }
-    if(empty($uflag)){ return; }
+    if(empty($uflag)){ return -1; }
     if(!is_numeric($uflag)){
-        $find = $pokemon->user_find($uflag);
-        if(!$find){ return; }
+        $find = $pokemon->user($uflag);
+        if(!$find){ return -1; }
         $uflag = $find->telegramid;
     }
     $flags = $pokemon->user_flags($uflag);
@@ -251,7 +324,7 @@ elseif($telegram->text_command("flags")){
         ->chat($this->config->item('creator'))
         ->text($flags)
     ->send();
-    return;
+    return -1;
 }
 
 // Poner flag a un usuario
@@ -260,7 +333,7 @@ elseif(
     (in_array($telegram->words(), [2,3]))
 ){
     if($telegram->words() == 2 and $telegram->has_reply){
-        $f_user = $telegram->reply_user->id;
+        $f_user = ($telegram->reply_is_forward ? $telegram->reply->forward_from['id'] : $telegram->reply_user->id);
     }elseif($telegram->words() == 3){
         $search = $telegram->words(1); // Penúltima
         if($telegram->text_mention()){
@@ -269,12 +342,15 @@ elseif(
             $serach = str_replace("@", "", $search);
         }
         $f_user = $pokemon->user($search);
-        if(empty($f_user)){ return; }
+        if(empty($f_user)){ return -1; }
         $f_user = $f_user->telegramid;
     }
     $flag = $telegram->last_word();
-    $pokemon->user_flags($f_user, $flag, TRUE);
-    return;
+    $flag = explode(",", $flag);
+    foreach($flag as $f){
+        $pokemon->user_flags($f_user, $f, TRUE);
+    }
+    return -1;
 }
 
 // Ver o poner STEP a un usuario.
@@ -288,7 +364,7 @@ elseif($telegram->text_command("mode")){
         $step = $pokemon->step($user, $telegram->last_word());
         $telegram->send->text("set!")->send();
     }
-    return;
+    return -1;
 }
 
 // Conversación grupal
@@ -303,14 +379,14 @@ elseif($telegram->text_command("speak") && $telegram->words() == 2 && !$telegram
         $telegram->send
             ->text($telegram->emoji(":forbid: Chat detenido."))
         ->send();
-        return;
+        return -1;
     }
     $isuser = FALSE;
     if($chattalk[0] != "-"){
         $pkuser = $pokemon->user($chattalk);
         if(!$pkuser){
             $new = $pokemon->group_find($chattalk);
-            if(empty($new)){ return; }
+            if(empty($new)){ return -1; }
             $chattalk = $new;
         }else{
             $chattalk = $pkuser->telegramid;
@@ -320,7 +396,7 @@ elseif($telegram->text_command("speak") && $telegram->words() == 2 && !$telegram
         $telegram->send
             ->text($telegram->emoji(":times: No estoy :("))
         ->send();
-        return;
+        return -1;
     }
     $chat = $telegram->send->get_chat($chattalk);
     // $telegram->send->text(json_encode($chat))->chat($this->config->item('creator'))->send();
@@ -338,14 +414,14 @@ elseif($telegram->text_command("speak") && $telegram->words() == 2 && !$telegram
     $telegram->send
         ->text($telegram->emoji(":ok: ") .($forward ? "Forwarding activo. " : "") ."Hablando en " .$title)
     ->send();
-    return;
+    return -1;
 }
 
 elseif($telegram->text_command("countonline") && $telegram->is_chat_group()){
 
     $run = $pokemon->settings($telegram->chat->id, 'investigation');
     if($run !== NULL){
-        if(time() <= ($run + 3600)){ return; }
+        if(time() <= ($run + 3600)){ return -1; }
     }
     $run = $pokemon->settings($telegram->chat->id, 'investigation', time());
 
@@ -409,13 +485,7 @@ elseif($telegram->text_command("countonline") && $telegram->is_chat_group()){
 // Registro manual - creador.
 elseif($telegram->text_command("register") && $telegram->has_reply){
     $pkuser = $pokemon->user($telegram->reply_user->id);
-    if($pkuser){
-        $telegram->send
-            ->notification(FALSE)
-            ->text("Ya está registrado.")
-        ->send();
-        return;
-    }
+
     $data['telegramid'] = $telegram->reply_user->id;
     $data['telegramuser'] = @$telegram->reply_user->username;
     foreach($telegram->words(TRUE) as $w){
@@ -426,23 +496,44 @@ elseif($telegram->text_command("register") && $telegram->has_reply){
         if($w[0] == "@" or strlen($w) >= 4){ $data['username'] = $w; }
         if(strtoupper($w) == "V"){ $data['verified'] = TRUE; }
     }
-    if(!isset($data['team'])){
-        $telegram->send
-            ->notification(FALSE)
-            ->text($telegram->emoji(":times: Falta team."))
-        ->send();
-        return;
-    }
-    if($pokemon->register($data['telegramid'], $data['team']) !== FALSE){
-        foreach($data as $k => $v){
-            if(in_array($k, ['telegramid', 'team'])){ continue; }
-            $pokemon->update_user_data($data['telegramid'], $k, $v);
+    $register = FALSE;
+    if($pkuser == FALSE or $pkuser == NULL){
+        if(!isset($data['team'])){
+            $telegram->send
+                ->notification(FALSE)
+                ->text($telegram->emoji(":times: Falta team."))
+            ->send();
+            return -1;
         }
+        if($pokemon->register($data['telegramid'], $data['team']) === FALSE){
+            $telegram->send
+                ->notification(TRUE)
+                ->text($telegram->emoji(":times: Error general."))
+            ->send();
+            return -1;
+        }
+        $register = TRUE;
+        $pkuser = $pokemon->user($telegram->reply_user->id);
     }
+
+    foreach($data as $k => $v){
+        if(in_array($k, ['telegramid', 'team'])){ continue; }
+        $pokemon->update_user_data($data['telegramid'], $k, $v);
+    }
+
+    $str = ":ok: Hecho" .(isset($data['verified']) ? " y validado!" : "!");
+    if($register === FALSE){
+        $changes = array();
+        if(isset($data['lvl']) && $pkuser->lvl != $data['lvl'] ){ $changes[] = "nivel"; }
+        if(isset($data['team']) && $pkuser->team != $data['team'] ){ $changes[] = "equipo"; }
+        if(isset($data['username']) && $pkuser->username != $data['username']){ $changes[] = "nombre"; }
+        $str = ":ok: Cambio *" .implode(", ", $changes) .(isset($data['verified']) ? "* y *valido*!" : "*!");
+    }
+
     $telegram->send
         ->notification(FALSE)
-        ->text($telegram->emoji(":ok: Hecho" .(isset($data['verified']) ? " y verificado!" : "!") ))
+        ->text($telegram->emoji($str), TRUE)
     ->send();
-    return;
+    return -1;
 }
 ?>

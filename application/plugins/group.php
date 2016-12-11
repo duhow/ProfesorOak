@@ -57,6 +57,37 @@ elseif(
     return;
 }
 
+elseif(
+    $telegram->text_command("uv") or
+    ($telegram->text_has("lista") && $telegram->text_has(["usuarios", "entrenadores"]) && $telegram->text_has(["sin", "no"], ["validar", "validados"]))
+){
+    $users = $pokemon->group_get_members($telegram->chat->id);
+    $teams_total = ['Y' => 0, 'R' => 0, 'B' => 0];
+    $teams_verified = ['Y' => 0, 'R' => 0, 'B' => 0];
+    $users_left = array();
+    foreach($users as $u){
+        $ul = $pokemon->user($u);
+        if(empty($ul)){ continue; }
+
+        $teams_total[$ul->team]++;
+        if($ul->verified){ $teams_verified[$ul->team]++; }
+        else{ $users_left[] = $ul->username; }
+    }
+
+    $colors = ['Y' => ':heart-yellow:', 'R' => ':heart-red:', 'B' => ':heart-blue:'];
+    $str = "";
+    foreach($teams_total as $t => $v){
+        $str .= $telegram->emoji($colors[$t]) ." " .$v ." (" .$teams_verified[$t] .") ";
+    }
+    if(!empty($users_left)){
+        $str .= "\n" ."Faltan: " .implode(", ", $users_left);
+    }
+    $telegram->send
+        ->text($str)
+    ->send();
+    return;
+}
+
 // Preguntar si el usuario es administrador
 elseif($telegram->text_has(["soy", "es", "eres"], ["admin", "administrador"], TRUE) && $telegram->words() <= 5){
     $admin = NULL;
@@ -80,17 +111,46 @@ elseif($telegram->text_has(["soy", "es", "eres"], ["admin", "administrador"], TR
 
 // Votar kick de usuarios.
 elseif(
-    ($telegram->text_command("votekick") or $telegram->text_command("voteban"))
+    ($telegram->text_command("votekick") or $telegram->text_command("voteban") && $telegram->words() > 1)
 ){
     // Si el usuario que convoca el comando es troll o tiene flags, no puede votar ni usarlo.
+    // TODO si hay un votekick activo, no se puede hacer otro hasta que expire.
+    // TODO anotar Message ID en settings del grupo para volver a editar el mensaje cuando toque.
+    // TODO limite de tiempo de 5m.
     if($pokemon->user_flags($telegram->user->id, ['troll', 'bot', 'hacks', 'spam', 'rager', 'ratkid'])){ return; }
     $kickuser = NULL;
+    $name = NULL;
     if($telegram->has_reply){
         if(
             $telegram->reply_user->id == $this->config->item('telegram_bot_id') or
             in_array($telegram->reply_user->id, $pokemon->telegram_admins(TRUE))
         ){ return; }
+        $kickuser = $telegram->reply_user->id;
+        $name = $telegram->reply_user->first_name;
     }
+
+    if(empty($kickuser)){ return; }
+    $action = ($telegram->text_command("voteban") ? "ban" : "kick");
+    $text = trim(substr($telegram->text(), strpos($telegram->text(), " "))) ;
+
+    $str = "Votación para <b>" .$action ."ear</b> al usuario $name ($kickuser).\n";
+    $str .= "<b>Motivo:</b> $text";
+    $telegram->send
+        ->inline_keyboard()
+            ->row()
+                ->button($telegram->emoji(":ok:"), "voto el $action $kickuser")
+                ->button($telegram->emoji(":times:"), "no voto el $action $kickuser")
+            ->end_row()
+        ->show()
+        ->text($str, 'HTML')
+    ->send();
+
+    return -1;
+}
+
+elseif($telegram->text_has("voto el", ["kick", "ban"])){
+    // ser callback
+    if($pokemon->user_flags($telegram->user->id, ['troll', 'bot', 'hacks', 'spam', 'rager', 'ratkid'])){ return; }
 }
 
 // Contar miembros de cada color
@@ -153,13 +213,13 @@ elseif(
 
     $text = "No hay reglas escritas.";
     if(!empty($rules)){ $text = json_decode($rules); }
-    $chat = $chat->id;
+    $chat = $telegram->chat->id;
     if(strlen($rules) > 500){
-        $chat = $user->id;
+        $chat = $telegram->user->id;
         $telegram->send
             ->notification(FALSE)
             ->reply_to(TRUE)
-            ->text("Te las envío por privado, " .$user->first_name .".")
+            ->text("Te las envío por privado, " .$telegram->user->first_name .".")
         ->send();
     }
 
@@ -181,15 +241,28 @@ elseif(
         ( !$telegram->text_contains("desde") )
     )
 ){
-    if($telegram->words() > 3){
-        $find = $telegram->last_word(TRUE);
-    }else{
-        if(strpos($telegram->last_word(), "aqu") !== FALSE){
-            $find = $telegram->words(1, TRUE);
-        }else{
-            $find = $telegram->words(2, TRUE);
-        }
+    $pos = [['esta', 'está'], ['aqui', 'aquí']];
+    if(
+        // está aqui X
+        in_array(strtolower($telegram->words(0)), $pos[0]) &&
+        in_array(strtolower($telegram->words(1)), $pos[1])
+    ){
+        $find = $telegram->words(2, TRUE);
+    }elseif(
+        // X está aqui
+        in_array(strtolower($telegram->words(1)), $pos[0]) &&
+        in_array(strtolower($telegram->words(2)), $pos[1])
+    ){
+        $find = $telegram->words(0, TRUE);
+    }elseif(
+        // está X aqui
+        in_array(strtolower($telegram->words(0)), $pos[0]) &&
+        in_array(strtolower($telegram->words(2)), $pos[1])
+    ){
+        $find = $telegram->words(1, TRUE);
     }
+
+    // TODO buscar si hay una @mencion
 
     $str = "";
     $find = str_replace(["@", "?"], "", $find);

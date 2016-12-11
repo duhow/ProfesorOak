@@ -12,13 +12,55 @@ class Analytics extends CI_Model{
 	}
 
 	function tracking($data = NULL){
-		$this->content['tid'] = $data;
+		$this->set('tid', $data);
 		return $this;
 	}
 
 	function client($data = NULL){
 		// GET or SET
-		$this->content['cid'] = $data;
+		/* $r = ["8","9","A","B"];
+		$data = sha1($data);
+		$data[12] = 4;
+		$data[16] = $r[mt_rand(0, count($r) - 1)];
+		$data = strtolower($data);
+		$hash = substr($data, 0, 8) ."-" .substr($data, 8, 4) ."-" .substr($data, 12, 4) ."-" .substr($data, 16, 4) ."-" .substr($data, 20, 12); */
+		$this->set('cid', $data);
+		return $this;
+	}
+
+	function source($data = NULL){
+		$this->set('ds', $data);
+		return $this;
+	}
+
+	function country($data = NULL){
+		$this->set('geoid', $data);
+		return $this;
+	}
+
+	function campaign($name = NULL, $source = NULL, $medium = NULL, $keyword = NULL, $content = NULL, $id = NULL){
+		$this
+			->set('cn', $name, TRUE)
+			->set('cs', $source, TRUE)
+			->set('cm', $medium, TRUE)
+			->set('ck', $keyword, TRUE)
+			->set('cc', $content, TRUE)
+			->set('ci', $id, TRUE);
+		return $this;
+	}
+
+	function ads($adwords = NULL, $display = NULL){
+		$this
+			->set('gclid', $adwords, TRUE)
+			->set('dclid', $display, TRUE);
+		return $this;
+	}
+
+	function screen($resolution, $window = NULL, $bits = NULL){
+		$this
+			->set('sr', $resolution)
+			->set('vp', $window, TRUE)
+			->set('sd', $bits, TRUE);
 		return $this;
 	}
 
@@ -31,14 +73,14 @@ class Analytics extends CI_Model{
 		return $this->send();
 	}
 
-	function screenview($appname, $version, $id, $installid, $screen = NULL){
+	function screenview($appname, $screen = NULL, $version = NULL, $id = NULL, $installid = NULL){
 		$this
 			->set('t', "screenview")
 			->set('an', $appname)
-			->set('av', $version) // (4.2.0)
-			->set('aid', $id) // (com.foo.test)
-			->set('aiid', $installid) // (com.android.vending)
-			->set('cd', $screen, TRUE); // (Home)
+			->set('av', $version, TRUE) // (4.2.0)
+			->set('aid', $id, TRUE) // (com.foo.test)
+			->set('aiid', $installid, TRUE) // (com.android.vending)
+			->set('cd', $screen); // (Home)
 		return $this->send();
 	}
 
@@ -80,6 +122,11 @@ class Analytics extends CI_Model{
 		return $this->send();
 	}
 
+	function user_anonymous(){
+		$this->set('aip', 1);
+		return $this;
+	}
+
 	function user_override($ip, $useragent){
 		$this
 			->set('uip', $ip, TRUE)
@@ -100,13 +147,16 @@ class Analytics extends CI_Model{
 	function _reset(){
 		$this->content['v'] = $this->_version;
 		$tid = $this->config->item("analytics_id");
-		if(!empty($tid)){ $this->content['tid'] = $tid; }
-		if(isset($this->telegram->user->id)){ $this->content['cid'] = $this->telegram->user->id; }
+		if(!empty($tid)){ $this->tracking($tid); }
+		if(isset($this->telegram->user->id)){ $this->client($this->telegram->user->id); }
+		$this
+			->user_anonymous()
+			->source('app');
 	}
 
 	function send(){
 		if(!isset($this->content['tid']) or empty($this->content['tid'])){ return FALSE; }
-		if(!isset($this->content['cid']) or empty($this->content['cid'])){ $this->content['cid'] = mt_rand(0, 1000000); }
+		if(!isset($this->content['cid']) or empty($this->content['cid'])){ $this->client(mt_rand(1000, 1000000)); }
 		$data = http_build_query($this->content);
 
 		$ch = curl_init();
@@ -121,6 +171,7 @@ class Analytics extends CI_Model{
 		$result = curl_exec($ch);
 		curl_close($ch);
 		$this->_reset();
-		return $result; // Pixel
+		return $data; // Pixel
 	}
+
 }

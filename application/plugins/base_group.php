@@ -36,7 +36,11 @@ if($flood && !in_array($telegram->user->id, $pokemon->telegram_admins(TRUE))){
     $amount = NULL;
     if($telegram->text_command()){ $amount = 1; }
     elseif($telegram->photo()){ $amount = 0.8; }
-    elseif($telegram->sticker()){ $amount = 1; }
+    elseif($telegram->sticker()){
+		if(strpos($telegram->sticker(), "AAjbFNAAB") === FALSE){ // + BQADBAAD - Oak Games
+			$amount = 1;
+		}
+	}
     // elseif($telegram->document()){ $amount = 1; }
     elseif($telegram->gif()){ $amount = 1; }
     elseif($telegram->text() && $telegram->words() >= 50){ $amount = 0.5; }
@@ -48,14 +52,36 @@ if($flood && !in_array($telegram->user->id, $pokemon->telegram_admins(TRUE))){
     if($amount !== NULL){ $countflood = $pokemon->group_spamcount($telegram->chat->id, $amount); }
 
     if($countflood >= $flood){
-        $res = $telegram->send->kick($telegram->user->id);
+
+        $ban = $pokemon->settings($telegram->chat->id, 'antiflood_ban');
+
+        if($ban == TRUE){
+            $res = $telegram->send->ban($telegram->user->id);
+			if($pokemon->settings($telegram->chat->id, 'antiflood_ban_hidebutton') != TRUE){
+				$telegram->send
+				->inline_keyboard()
+					->row_button("Desbanear", "desbanear " .$telegram->user->id, "TEXT")
+				->show();
+			}
+        }else{
+            $res = $telegram->send->kick($telegram->user->id);
+        }
+
         if($res){
             $pokemon->group_spamcount($telegram->chat->id, -1.1); // Avoid another kick.
             $pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
             $telegram->send
                 ->text("Usuario expulsado por flood. [" .$telegram->user->id .(isset($telegram->user->username) ? " @" .$telegram->user->username : "") ."]")
             ->send();
-            return; // No realizar la acción ya que se ha explusado.
+            $adminchat = $pokemon->settings($telegram->chat->id, 'admin_chat');
+            if($adminchat){
+                // TODO forward del mensaje afectado
+                $telegram->send
+                    ->chat($adminchat)
+                    ->text("Usuario " .$telegram->user->id .(isset($telegram->user->username) ? " @" .$telegram->user->username : "") ." expulsado del grupo por flood.")
+                ->send();
+            }
+            return -1; // No realizar la acción ya que se ha explusado.
         }
         // Si tiene grupo admin asociado, avisar.
     }
@@ -86,7 +112,11 @@ if($telegram->text_url() && $telegram->is_chat_group()){
     $info = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
     // $telegram->send->text(json_encode($info))->send();
     if($info->messages <= 5){
-        if(!$telegram->text_contains(["http", "www", ".com", ".es", ".net"])){ return; } // HACK Falsos positivos.
+        if(
+            !$telegram->text_contains(["http", "www", ".com", ".es", ".net"]) &&
+            !$telegram->text_contains("telegram.me")
+        ){ return -1; } // HACK Falsos positivos.
+
         // TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
         $telegram->send
             ->message(TRUE)
@@ -109,7 +139,7 @@ if($telegram->text_url() && $telegram->is_chat_group()){
         ->send();
 
         $telegram->send->ban($telegram->user->id, $telegram->chat->id);
-        return;
+        return -1;
     }
 }
 
@@ -121,7 +151,7 @@ if($telegram->text_url() && $telegram->is_chat_group()){
 
 if($telegram->data_received("migrate_to_chat_id")){
     $pokemon->group_disable($telegram->chat->id);
-    return;
+    return -1;
 }
 
 /*
@@ -150,7 +180,7 @@ if($commands){
                 if(
                     $pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'rager', 'spamkid']) or
                     $pokemon->user_blocked($telegram->user->id)
-                ){ return; }
+                ){ return -1; }
                 $content = current($action);
                 $action = key($action);
                 if($action == "text"){
@@ -158,7 +188,7 @@ if($commands){
                 }else{
                     $telegram->send->file($action, $content);
                 }
-                return;
+                return -1;
             }
         }
     }

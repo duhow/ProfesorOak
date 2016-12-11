@@ -17,14 +17,18 @@ if($telegram->text_command("register")){
     $this->analytics->event('Telegram', 'Register', 'command');
     $str = "Hola " .$telegram->user->first_name ."! Me podrías decir tu color?\n"
             ."(*Soy* ...)";
-    // if($this->is_shutup()){
+    if($telegram->is_chat_group()){
         $str = "Hola! Ábreme y registrate por privado :)";
-    // }
+        $telegram->send
+            ->inline_keyboard()
+                ->row_button("Registrar", "https://telegram.me/ProfesorOak_bot")
+            ->show();
+    }
     $telegram->send
         ->notification(FALSE)
         ->text($str, TRUE)
     ->send();
-    return;
+    return -1;
 }
 
 // Guardar color de user

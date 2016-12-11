@@ -2,8 +2,10 @@
 
 // Oak o otro usuario es añadido a una conversación
 if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_participant"){
-    $set = $pokemon->settings($chat->id, 'announce_welcome');
+    $set = $pokemon->settings($telegram->chat->id, 'announce_welcome');
     $new = $telegram->new_user;
+    $user = $telegram->user;
+    $chat = $telegram->chat;
 
     if($new->id == $this->config->item("telegram_bot_id")){
         $count = $telegram->send->get_members_count();
@@ -12,17 +14,19 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
             // A excepción de que lo agregue el creador
             if($telegram->user->id != $this->config->item('creator')){
                 $this->analytics->event('Telegram', 'Join low group');
+                $telegram->send->text("Nope.")->send();
                 $telegram->send->leave_chat();
-                return;
+                return -1;
             }
         }
 
     // Bot agregado al grupo. Yo no saludo bots :(
-    }elseif($telegram->is_bot($new->username)){ return; }
+    }elseif($telegram->is_bot($new->username)){ return -1; }
 
     $pknew = $pokemon->user($new->id);
     // El usuario nuevo es creador
     if($new->id == $this->config->item('creator')){
+        if($pokemon->settings($telegram->user->id, 'silent_join') == TRUE){ return -1; }
         $telegram->send
             ->notification(TRUE)
             ->reply_to(TRUE)
@@ -31,7 +35,7 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
         return;
     }elseif(!empty($pknew)){
         // Si el grupo es exclusivo a un color y el usuario es de otro color
-        $teamonly = $pokemon->settings($chat->id, 'team_exclusive');
+        $teamonly = $pokemon->settings($telegram->chat->id, 'team_exclusive');
         if(!empty($teamonly) && $teamonly != $pknew->team){
             $this->analytics->event('Telegram', 'Spy enter group');
             $telegram->send
@@ -41,41 +45,60 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
             ->send();
 
             // Kickear (por defecto TRUE)
-            $kick = $pokemon->settings($chat->id, 'team_exclusive_kick');
+            $kick = $pokemon->settings($telegram->chat->id, 'team_exclusive_kick');
+            // TODO excepto si el que lo agrega es admin.
             if($kick != FALSE){
-                $telegram->send->kick($user->id, $chat->id);
-                $pokemon->user_delgroup($user->id, $chat->id);
+                $telegram->send->kick($new->id, $telegram->chat->id);
+                $pokemon->user_delgroup($new->id, $telegram->chat->id);
             }
-            return;
+            return -1;
         }
 
-        $blacklist = $pokemon->settings($chat->id, 'blacklist');
+        $blacklist = $pokemon->settings($telegram->chat->id, 'blacklist');
         if(!empty($blacklist)){
             $blacklist = explode(",", $blacklist);
             $pknew_flags = $pokemon->user_flags($pknew->telegramid);
+            // TODO excepto si el que lo agrega es admin.
             foreach($blacklist as $b){
                 if(in_array($b, $pknew_flags)){
                     $this->analytics->event('Telegram', 'Join blacklist user', $b);
-                    $telegram->send->kick($user->id, $chat->id);
-                    $pokemon->user_delgroup($user->id, $chat->id);
-                    return;
+                    $telegram->send->kick($new->id, $telegram->chat->id);
+                    $pokemon->user_delgroup($new->id, $telegram->chat->id);
+                    return -1;
                 }
             }
         }
     }
 
     // Si el grupo no admite más usuarios...
-    $nojoin = $pokemon->settings($chat->id, 'limit_join');
+    $nojoin = $pokemon->settings($telegram->chat->id, 'limit_join');
+    // TODO excepto si el que lo agrega es admin.
     if($nojoin == TRUE){
         $this->analytics->event('Telegram', 'Join limit users');
-        $telegram->send->kick($user->id, $chat->id);
-        $pokemon->user_delgroup($user->id, $chat->id);
-        return;
+        $telegram->send->kick($new->id, $telegram->chat->id);
+        $pokemon->user_delgroup($new->id, $telegram->chat->id);
+        return -1;
+    }
+
+    // Si el grupo requiere validados
+    if(
+        $pokemon->settings($telegram->chat->id, 'require_verified') == TRUE &&
+        $pokemon->settings($telegram->chat->id, 'require_verified_kick') == TRUE
+    ){
+        if(empty($pknew) or $pknew->verified != TRUE){
+            $this->analytics->event('Telegram', 'Kick unverified user');
+            $telegram->send->kick($new->id, $telegram->chat->id);
+            $pokemon->user_delgroup($new->id, $telegram->chat->id);
+            $telegram->send
+                ->text("Usuario " .$new->first_name ." / " .$new->id ." kickeado por no estar verificado.")
+            ->send();
+            return -1;
+        }
     }
 
     // Si un usuario generico se une al grupo
     if($set != FALSE or $set === NULL){
-        $custom = $pokemon->settings($chat->id, 'welcome');
+        $custom = $pokemon->settings($telegram->chat->id, 'welcome');
         $text = 'Bienvenido al grupo, $nombre!' ."\n";
         if(!empty($custom)){ $text = json_decode($custom) ."\n"; }
         if(empty($pknew)){
@@ -83,13 +106,30 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
         }else{
             $emoji = ["Y" => "yellow", "B" => "blue", "R" => "red"];
             $text .= '$pokemon $nivel $equipo $valido $ingress';
+
+            if(!$pknew->verified && $pokemon->settings($telegram->chat->id, 'require_verified')){
+                $text .= "\n" ."Para estar en este grupo *debes estar validado.*";
+
+                $telegram->send
+                    ->inline_keyboard()
+                        ->row_button("Validar", "quiero validarme", "COMMAND")
+                    ->show();
+            }
         }
 
         if($new->id == $this->config->item("telegram_bot_id")){
+            $pkuser = $pokemon->user($telegram->user->id);
+            if(
+                ($pkuser && $pkuser->blocked) or
+                $pokemon->user_flags($telegram->user->id, ['hacks', 'ratkid', 'poketelegram_cheat'])
+            ){
+                $telegram->send->leave_chat();
+                return -1;
+            }
             $text = "¡Buenas a todos, entrenadores!\n¡Un placer estar con todos vosotros! :D";
         }
 
-        $pokemon->user_addgroup($new->id, $chat->id);
+        $pokemon->user_addgroup($new->id, $telegram->chat->id);
         $this->analytics->event('Telegram', 'Join user');
 
         $ingress = NULL;
@@ -104,14 +144,15 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
             '$usuario' => "@" .$new->username,
             '$pokemon' => "@" .$pknew->username,
             '$nivel' => "L" .$pknew->lvl,
-            '$valido' => ($pknew->verified ? ':green-check:' : ':warning:'),
+            '$valido' => $pknew->verified ? ':green-check:' : ':warning:',
             '$ingress' => $ingress
         ];
         $text = str_replace(array_keys($repl), array_values($repl), $text);
+		$text = $telegram->emoji($text);
         $telegram->send
             ->notification(FALSE)
             ->reply_to(TRUE)
-            ->text( $telegram->emoji($text) , TRUE)
+            ->text( $text , TRUE)
         ->send();
 
         if(!empty($pknew)){
@@ -125,11 +166,11 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
                         ->notification(TRUE)
                         ->text("Problema con pairing $team en " .$telegram->chat->id ." (" .substr($key, 0, 10) .")")
                     ->send();
-                    return;
+                    return -1;
                 }
                 // Tengo chat, comprobar blacklist
                 $black = explode(",", $pokemon->settings($teamchat, 'blacklist'));
-                if($pokemon->user_flags($telegram->user->id, $black)){ return; }
+                if($pokemon->user_flags($telegram->new_user->id, $black)){ return -1; }
 
                 $link = $pokemon->settings($teamchat, 'link_chat');
                 if(empty($link)){
@@ -138,7 +179,7 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
                         ->notification(TRUE)
                         ->text("Problema con pair link $team en " .$telegram->chat->id ." (" .substr($key, 0, 10) .")")
                     ->send();
-                    return;
+                    return -1;
                 }
                 // Si es validado
                 $color = ['Y' => 'Amarillo', 'R' => 'Rojo', 'B' => 'Azul'];
@@ -169,10 +210,10 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
             }
         }
     }
-    return;
+    return -1;
 }elseif($telegram->is_chat_group() && $telegram->data_received("left_chat_participant")){
     $pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
-    return;
+    return -1;
 }
 
 ?>

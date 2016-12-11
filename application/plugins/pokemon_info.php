@@ -38,8 +38,9 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
             ."Pero por favor, sed sinceros y nada de bromas, que yo me lo tomo muy en serio.\n"
             ."Una vez hecho, podéis preguntar por ejemplo... *Debilidad contra Pikachu* y os enseñaré como funciona.\n"
             ."Espero poder ayudaros en todo lo posible, ¡muchas gracias!";
+/*
 }elseif(
-    ($telegram->text_has(["lista", "ayuda", "ayúdame", "para qué sirve"]) && $telegram->text_has(["comando", "oak", "profe", "profesor"])) or
+    ($telegram->text_has(["lista", "ayuda", "ayúdame", "para qué sirve"]) && $telegram->text_has(["comando", "oak", "profe", "profesor"]) && !$telegram->text_contains("nido")) or
     $telegram->text_command("help")
 ){
     if($telegram->is_chat_group() && $telegram->user->id != $this->config->item('creator')){
@@ -70,6 +71,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
             ."- Si mencionáis a *@usuario* (de Pokemon), le enviaréis un mensaje directo - por si tiene el grupo silenciado, para darle un toque.\n\n"
             ."¡Y muchas más cosas que vendrán próximamente!\n"
             ."Cualquier duda, consulta, sugerencia o reporte de problemas podéis contactar con *mi creador*. :)";
+*/
 }elseif(
     !$telegram->text_contains("http") && // Descargas de juegos? No, gracias
     $telegram->text_has(["descarga", "enlace", "actualización"], ["de pokémon", "pokémon", "del juego"]) &&
@@ -93,6 +95,8 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
         $apple[$k] = trim(strip_tags($apple[$k]));
     }
 
+    $google['date'] = str_replace("octobre", "october", $google['date']); // FIXME raro de Google.
+
     $google['date'] = date("Y-m-d", strtotime($google['date']));
     $apple['date'] = date_create_from_format('d/m/Y', $apple['date'])->format('Y-m-d'); // HACK DMY -> YMD
 
@@ -101,6 +105,9 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
 
     $google['new'] = ($google['days'] <= 1);
     $apple['new'] = ($apple['days'] <= 1);
+
+    $google['days'] = ($google['days'] > 365 ? "---" : $google['days']);
+    $apple['days'] = ($apple['days'] > 365 ? "---" : $apple['days']);
 
     $dates = [0 => "hoy", 1 => "ayer"];
 
@@ -117,7 +124,14 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
     else{ $str .= "de hace " .$google['days'] ." dias "; }
     $str .= "(" .$google['version'] .")";
 
-    $telegram->send->disable_web_page_preview(TRUE);
+    $telegram->send
+        ->disable_web_page_preview(TRUE)
+        ->inline_keyboard()
+            ->row()
+                ->button("Apple", $apple['web'])
+                ->button("Android", $google['web'])
+            ->end_row()
+        ->show();
     $help = $str;
 }elseif($telegram->text_contains(["recompensa", "recibe", "consigue", "obtiene"]) && $telegram->text_has(["llegar", "nivel", "lvl", "level"]) && $telegram->words() <= 10){
     $items = $pokemon->items();
@@ -142,7 +156,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
     $help = "Puedes buscar las estadísticas aquí: http://pokemongo.gamepress.gg/pokemon-list";
 }elseif($telegram->text_has(["mapa", "página"]) && $telegram->text_has(["pokémon", "ciudad"]) && !$telegram->text_contains(["evoluci", "IV", "calcul"])){
     $this->analytics->event('Telegram', 'Map Pokemon');
-    $help = "https://goo.gl/GZb5hd";
+    // $help = "https://goo.gl/GZb5hd";
 }elseif($telegram->text_has(["evee", "evve"]) && !$telegram->text_has("eevee") && $telegram->words() >= 3){
     $help = "Se dice *Eevee*... ¬¬";
 }elseif($telegram->text_has(["cómo"]) && $telegram->text_has(["conseguir", "consigue"]) && $telegram->text_contains(["objeto", "incienso", "cebo", "huevo"])){

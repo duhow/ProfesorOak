@@ -34,83 +34,6 @@ if(
     return;
 }
 
-// Validar usuario
-elseif(
-    $telegram->text_has(["oak", "profe", "quiero", "como"]) &&
-    $telegram->text_has(["validame", "valida", "validarme", "validarse", "válido", "verificarme", "verifico"]) &&
-    $telegram->words() <= 7
-){
-    if($telegram->is_chat_group()){
-        $res = $telegram->send
-            ->notification(TRUE)
-            ->chat($telegram->user->id)
-            ->text("Hola, " .$telegram->user->first_name ."!")
-        ->send();
-
-        if(!$res){
-            $telegram->send
-                ->notification(FALSE)
-                // ->reply_to(TRUE)
-                ->text($telegram->emoji(":times: Pídemelo por privado, por favor."))
-                ->inline_keyboard()
-                    ->row_button("Validar perfil", "quiero validarme", TRUE)
-                ->show()
-            ->send();
-            return;
-        }
-    }
-
-    $pokeuser = $pokemon->user($telegram->user->id);
-
-    if($pokeuser->verified){
-        $telegram->send
-            ->notification(TRUE)
-            ->chat($telegram->user->id)
-            ->text("¡Ya estás verificado! " .$telegram->emoji(":green-check:"))
-        ->send();
-        return;
-    }
-
-    $text = "Para validarte, necesito que me envies una *captura de tu perfil Pokemon GO.* "
-            ."La captura tiene que cumplir las siguientes condiciones:\n\n"
-            .":triangle-right: Tiene que verse la hora de tu móvil, y tienes que enviarlo en un márgen de 5 minutos.\n"
-            .":triangle-right: Tiene que aparecer tu nombre de entrenador y color.\n"
-            .":triangle-right: Si te has cambiado de nombre, avisa a @duhow para tenerlo en cuenta.\n"
-            .":triangle-right: Si no tienes nombre puesto, *cancela el comando* y dime cómo te llamas.\n"
-            ."\nCuando haya confirmado la validación, te avisaré por aquí.\n\n"
-            ."Tus datos son: ";
-
-    $color = ['Y' => ':heart-yellow:', 'R' => ':heart-red:', 'B' => ':heart-blue:'];
-
-    $text .= (empty($pokeuser->username) ? "Sin nombre" : "@" .$pokeuser->username) ." L" .$pokeuser->lvl ." " .$color[$pokeuser->team];
-
-    $telegram->send
-        ->notification(TRUE)
-        ->chat($telegram->user->id)
-        ->text($telegram->emoji($text), TRUE)
-        ->keyboard()
-            ->row_button("Cancelar")
-        ->show(TRUE, TRUE)
-    ->send();
-
-    if(empty($pokeuser->username) or $pokeuser->lvl == 1){
-        $text = "Antes de validarte, necesito saber tu *nombre o nivel actual*.\n"
-                .":triangle-right: *Me llamo ...*\n"
-                .":triangle-right: *Soy nivel ...*\n"
-                ."Una vez hecho, vuelve a preguntarme para validarte el perfil.";
-        $telegram->send
-            ->notification(TRUE)
-            ->chat($telegram->user->id)
-            ->text($telegram->emoji($text), TRUE)
-            ->keyboard()->hide(TRUE)
-        ->send();
-        exit(); // Kill process for STEP
-    }
-
-    $pokemon->step($telegram->user->id, 'SCREENSHOT_VERIFY');
-    return;
-}
-
 
 // Mención de usuarios
 if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
@@ -235,6 +158,16 @@ elseif($telegram->text_command("regoff")){
         ->text($telegram->emoji($text), TRUE)
     ->send();
     return;
+}
+
+if($telegram->text_command("prueba")){
+    /* if(function_exists("time_parse")){
+        $datos = time_parse($telegram->text());
+        $telegram->send->text(json_encode($datos))->send();
+        return;
+    }*/
+
+    $telegram->send->text($this->config->item('creator'))->send();
 }
 
 ?>

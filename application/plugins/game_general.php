@@ -57,6 +57,14 @@ if($telegram->text_has(["tira", "lanza", "tirar", "roll"], ["el dado", "los dado
     ->send();
     return;
 }elseif($telegram->text_has(["Dispara", "Bang", "Disparo", "/dispara"], TRUE) && $telegram->words() <= 3){
+    if($telegram->text_contains(["oak", "te"])){ return -1; }
+    if($telegram->text_contains(" a ")){
+        $telegram->send
+            ->notification(FALSE)
+            ->text("Cobarde, no sabes jugar a la ruleta...\nSi quieres disparar a alguien, que sea a ti mismo!")
+        ->send();
+        return -1;
+    }
     $can = $pokemon->settings($telegram->chat->id, 'play_games');
     if($can != NULL and $can == FALSE){ return; }
 

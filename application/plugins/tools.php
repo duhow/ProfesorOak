@@ -1,9 +1,115 @@
 <?php
 
-if($telegram->text_command("avoice") && $telegram->words() == 2){
-    $voice = $telegram->last_word();
+if($telegram->text_command("avoice")){
+    $voice = NULL;
+    if($telegram->has_reply){
+        $voice = $telegram->reply->audio['file_id'];
+    }elseif($telegram->words() == 2){
+        $voice = $telegram->last_word();
+    }
+    if(empty($voice)){ return; }
+    $telegram->send->chat_action('upload_audio')->send();
     $telegram->send->file("voice", $telegram->download($voice));
-    return;
+    return -1;
+}elseif($telegram->text_command("dvideo")){
+    $doc = NULL;
+    if($telegram->has_reply && strpos($telegram->reply->document['mime_type'], "video") !== FALSE){
+        $doc = $telegram->reply->document['file_id'];
+    }elseif($telegram->words() == 2){
+        $doc = $telegram->last_word();
+    }
+    if(empty($doc)){ return; }
+    $telegram->send->chat_action('upload_video')->send();
+    $telegram->send->file("video", $telegram->download($doc));
+    return -1;
+}elseif(
+	$telegram->text_command("pic") or
+	$telegram->text_command("img") or
+	$telegram->text_command("photo")
+){
+    if($telegram->has_reply && isset($telegram->reply->photo)){
+	$photo = $telegram->reply->photo;
+	$telegram->send->text($photo[count($photo) - 1]['file_id'])->send();
+    }elseif($telegram->words() == 2){
+        $pic = $telegram->last_word();
+        $pic = str_replace('"', '', $pic);
+        $telegram->send->file('photo', $pic);
+    }
+    return -1;
+}elseif($telegram->text_command("vardump") && $telegram->has_reply){
+    $telegram->send->text( $telegram->dump(TRUE) )->send();
+    return -1;
+}elseif($telegram->text_command("timestamp")){
+    $str = time();
+    if($telegram->words() == 2 && is_numeric($telegram->last_word())){
+        $last = intval($telegram->last_word());
+        $str = (time() - $last);
+    }
+
+    $telegram->send
+        ->notification(FALSE)
+        ->text($str)
+    ->send();
+
+    return -1;
+}elseif($telegram->text_command("str") && $telegram->has_reply && $telegram->words() >= 2){
+    $cmd = strtolower($telegram->words(1, TRUE));
+    $rtext = $telegram->reply->text;
+    if(empty($rtext)){ return; }
+    $text = "";
+
+    if(in_array($cmd, ['lenght', 'length', 'len'])){
+        $rlenw = count(explode(" ", $rtext));
+        $text = strlen($rtext) ." ($rlenw)";
+    }elseif(in_array($cmd, ['reverse', 'revertir', 'rev'])){
+        $text = strrev($rtext);
+    }elseif(in_array($cmd, ['tolower', 'lower', 'low'])){
+        $text = strtolower($rtext);
+    }elseif(in_array($cmd, ['dec', 'decimal'])){
+        // mirar si es octal, binario o hexa
+    }elseif(in_array($cmd, ['hex', 'hexadecimal'])){
+        // si ya es hexadecimal, pasar a string. CUIDAO con carácteres raros. FIXME
+        if(preg_match("/[^A-F0-9]/i", strtoupper($rtext))){
+            if(is_numeric($rtext)){
+                // TODO mayus o minus?
+                $text = strtoupper(dechex($rtext));
+            }else{
+                $text = strtoupper(bin2hex($rtext));
+            }
+        }else{
+            // Entonces es que es hex.
+            $text = hex2bin($rtext);
+        }
+    }elseif(in_array($cmd, ['rot'])){
+        $text = str_rot13($rtext);
+    }elseif(in_array($cmd, ['sha1', 'sha'])){
+        $text = sha1($rtext);
+    }elseif(in_array($cmd, ['md5'])){
+        $text = md5($rtext);
+    }elseif(in_array($cmd, ['sha2', 'sha256'])){
+        $text = hash('sha256', $rtext);
+    }
+
+    if(in_array($cmd, ['klingon', 'tlh'])){
+        $web = 'https://api.microsofttranslator.com/v2/ajax.svc/TranslateArray?appId="TJ5Ome4IYV52l53wcVXxbCgdtV2w3lV0zFQGqWC9rjL0*"&texts=' . json_encode([$rtext]) .'&from="tlh"&to="en"';
+        $web = urlencode($web);
+        $tran = file_get_contents($web);
+        $text = json_encode($tran);
+    }elseif(in_array($cmd, ['got', 'nini', 'nininini'])){
+        if($telegram->user->id != $this->config->item('creator')){ return; }
+        $text = strtolower($rtext);
+        $text = str_replace(['a','e','o','u','á','é','ó','ú'], 'i', $text);
+        $text = str_replace("ii", 'i', $text);
+        $text .= ' ñiñiñiñi <a href="https://cdn.meme.am/cache/images/folder504/12146504.jpg">e.e</a>';
+
+        $telegram->send->text($text, 'HTML')->send();
+        return -1;
+    }
+
+    if(!empty($text)){
+        $telegram->send->text($text)->send();
+    }
+    return -1;
 }elseif($telegram->text_has(["oak", "profe"], "dónde estoy") && $telegram->words() <= 4){
     // DEBUG
     $texto = NULL;
@@ -38,6 +144,9 @@ if(
     ) && $telegram->is_chat_group()
     && ($pokemon->settings($telegram->chat->id, 'no_mention') != TRUE)
 ){
+
+	if($telegram->key == "edited_message" && $telegram->text_has("people voted")){ return; } // Anti-vote
+
     $users = array();
     preg_match_all("/[@]\w+/", $telegram->text(), $users, PREG_SET_ORDER);
     foreach($users as $i => $u){ $users[$i] = substr($u[0], 1); } // Quitamos la @
@@ -73,9 +182,13 @@ if(
             $name = (isset($telegram->user->username) ? "@" .$telegram->user->username : $telegram->user->first_name);
 
             $resfin = FALSE;
+            if(count($find) > 15 && $telegram->user->id != $this->config->item('creator')){ return; }
             foreach($find as $u){
                 // Valida que el entrenador esté en el grupo
                 if($telegram->user_in_chat($u['telegramid']) && $pokemon->settings($u['telegramid'], 'no_mention') != TRUE){
+                    if(!$pokemon->user_in_group($u['telegramid'], $telegram->chat->id)){
+                        $pokemon->user_addgroup($u['telegramid'], $telegram->chat->id);
+                    }
                     $str = $name ." - ";
                     if(!empty($link)){ $str .= "<a href='$link'>" .$telegram->chat->title ."</a>:\n"; }
                     else{ $str .= "<b>" .$telegram->chat->title ."</b>:\n"; }
@@ -176,24 +289,43 @@ if(preg_match("/([+-]?)(\d+.\d+)[,;]\s?([+-]?)(\d+.\d+)/", $telegram->text(), $l
 }
 
 // Buscar ubicación en mapa
-if($telegram->text_has(["ubicación", "mapa de"], TRUE)){
-    $flags = $pokemon->user_flags($user->id);
-    if(in_array('ratkid', $flags)){ exit(); }
+if(
+    $telegram->text_has(["ubicación", "mapa de"], TRUE) or
+    ($telegram->text_command("map") && $telegram->has_reply)
+){
+    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam'])){ exit(); }
+
     $text = $telegram->text();
+    if($telegram->text_command("map") && $telegram->has_reply){ $text = $telegram->reply->text; }
+
     $text = $telegram->clean('alphanumeric-full-spaces', $text);
     if($telegram->text_has("ubicación", TRUE)){
         $text = substr($text, strlen("ubicación"));
     }elseif($telegram->text_has("mapa de", TRUE)){
         $text = substr($text, strlen("mapa de"));
     }
-    $text = str_replace("en ", "in ", trim($text));
+    // $text = str_replace("en ", "in ", trim($text));
     if(empty($text) or strlen($text) <= 2){ return; }
-    $data = ["text" => $text, "sourceCountry" => "ESP", "f" => "json"];
-    $web = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find?" .http_build_query($data);
+
+    $data = ["address" => $text];
+    $web = "https://maps.googleapis.com/maps/api/geocode/json?" .http_build_query($data);
+
     $loc = file_get_contents($web);
     $ret = json_decode($loc);
     $str = "No lo encuentro.";
-    if(!empty($ret->locations)){
+    if($ret->status == "OK"){
+        $loc = $ret->results[0]->geometry->location;
+        $str = $ret->results[0]->formatted_address;
+        $telegram->send
+            ->location($loc->lat, $loc->lng)
+        ->send();
+    }
+
+    // GeoCode Argis OLD
+
+    // $data = ["text" => $text, "sourceCountry" => "ESP", "f" => "json"];
+    // $web = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/find?" .http_build_query($data);
+    /* if(!empty($ret->locations)){
         $loc = $ret->locations[0];
         $str = $loc->name ." (" .$loc->feature->attributes->Score ."%)";
 
@@ -202,7 +334,8 @@ if($telegram->text_has(["ubicación", "mapa de"], TRUE)){
         $telegram->send
             ->location($lat, $lon)
         ->send();
-    }
+    } */
+
     $this->analytics->event('Telegram', 'Map search');
     $telegram->send
         ->text($str)

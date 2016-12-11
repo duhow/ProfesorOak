@@ -221,9 +221,9 @@ class Pokemon extends CI_Model{
 
 	function settings($user, $key, $value = NULL){
 		$full = FALSE;
-		if(strtolower($value) == "true"){ $value = TRUE; }
-		if(strtolower($value) == "false"){ $value = FALSE; }
-		if(strtolower($value) == "null"){ $value = NULL; }
+		if(in_array(strtolower($value), ["true", "on", "yes"])){ $value = TRUE; }
+		if(in_array(strtolower($value), ["false", "off", "no"])){ $value = FALSE; }
+		if(in_array(strtolower($value), ["null", "none"])){ $value = NULL; }
 		if(strtolower($value) == "fullinfo"){ $value = NULL; $full = TRUE; }
 		if($value === NULL){
 			if(is_array($key)){
@@ -361,6 +361,20 @@ class Pokemon extends CI_Model{
 		return $list;
 	}
 
+	function telegram_admins($add_creator = TRUE, $custom = NULL){
+		$admins = $this->group_admins($this->telegram->chat->id);
+		if(empty($admins)){
+			$admins = $this->telegram->get_admins(); // Del grupo
+			$this->group_admins($this->telegram->chat->id, $admins);
+		}
+		if($add_creator){ $admins[] = $this->config->item('creator'); }
+		if($custom != NULL){
+			if(!is_array($custom)){ $custom = [$custom]; }
+			foreach($custom as $c){ $admins[] = $c; }
+		}
+		return $admins;
+	}
+
 	function group_get_members($cid, $full = FALSE){
 		$query = $this->db
 			->where('cid', $cid)
@@ -371,6 +385,14 @@ class Pokemon extends CI_Model{
 			return array_column($query->result_array(), 'uid');
 		}
 		return NULL;
+	}
+
+	function group_count_members($cid){
+		$query = $this->db
+			->select('uid')
+			->where('cid', $cid)
+		->get('user_inchat');
+		return $query->num_rows();
 	}
 
 	function group_find_member($uid, $cid = NULL){
@@ -785,6 +807,7 @@ class Pokemon extends CI_Model{
 			'southwest_longitude' => $locSW[1],
 		];
 		$url = "https://api.pokecrew.com/api/v1/seens";
+		// $url = "http://futbollab-local.ddns.net:8980/pokecrew/seens";
 		$ch = curl_init();
 		curl_setopt($ch, CURLOPT_URL, ($url ."?" .http_build_query($data)) );
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);

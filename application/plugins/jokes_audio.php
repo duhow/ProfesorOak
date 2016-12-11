@@ -2,7 +2,7 @@
 
 $joke = NULL;
 
-if($telegram->text_has("Team Rocket")){
+if($telegram->text_has("Team Rocket despega")){
     $this->analytics->event('Telegram', 'Jokes', 'Team Rocket');
     $telegram->send->notification(FALSE)->file('photo', FCPATH . "files/teamrocket.jpg", "¡¡El Team Rocket despega de nuevoooooo...!!");
     $telegram->send->notification(FALSE)->file('audio', FCPATH . "files/teamrocket.ogg");
