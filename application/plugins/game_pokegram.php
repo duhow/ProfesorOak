@@ -534,7 +534,23 @@ if(
                 }
                 // $telegram->send->text($sticker)->send();
                 return -1;
-            }
+            }elseif($telegram->has_reply){
+				$target = $telegram->reply_user->id;
+				if($telegram->reply_is_forward){
+					$target = $telegram->reply->forward_from['id'];
+				}
+
+				$str = "No registrado.";
+				if(pokegame_exists($target)){
+					$items = pokegame_items($target);
+					$str = json_encode($items);
+				}
+
+				$telegram->send
+					->text($str)
+				->send();
+				return -1;
+			}
             break;
 		case 'pokestop':
 		case 'stop':
