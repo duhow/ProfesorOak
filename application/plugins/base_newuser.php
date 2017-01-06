@@ -90,11 +90,15 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
     ){
         if(empty($pknew) or $pknew->verified != TRUE){
             $this->analytics->event('Telegram', 'Kick unverified user');
-            $telegram->send->kick($new->id, $telegram->chat->id);
-            $pokemon->user_delgroup($new->id, $telegram->chat->id);
-            $telegram->send
-                ->text("Usuario " .$new->first_name ." / " .$new->id ." kickeado por no estar verificado.")
-            ->send();
+            $q = $telegram->send->kick($new->id, $telegram->chat->id);
+			$str = "Usuario " . $new->first_name ." / " .$new->id ." no está verificado.";
+			if($q !== FALSE){
+				$pokemon->user_delgroup($new->id, $telegram->chat->id);
+				$str = "Usuario " .$new->first_name ." / " .$new->id ." kickeado por no estar verificado.";
+			}
+			$telegram->send
+				->text($str)
+			->send();
             return -1;
         }
     }

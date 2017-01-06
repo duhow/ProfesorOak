@@ -930,6 +930,25 @@ class Pokemon extends CI_Model{
 	//   Funciones de información general
 	// --------------------------------
 
+	function command_limit($command, $group, $id, $value = 0){
+		// @return FALSE si puedes ejecutar el comando. / NO se limita el comando
+		$repeat = $this->settings($group, 'command_limit');
+		$command = strtolower($command);
+
+		$commands = array();
+		if(!empty($repeat)){
+			$commands = unserialize($repeat);
+		}
+
+		if(!isset($commands[$command]) && $value == 0){ return FALSE; }
+		if(isset($commands[$command]) && $id < $commands[$command]){ return TRUE; }
+
+		$commands[$command] = ($id + $value);
+		$commands = serialize($commands);
+		$this->settings($group, 'command_limit', $commands);
+		return FALSE;
+	}
+
 	function link($text, $count = FALSE, $table = 'links'){
 		if(strtolower($text) != "all" && $text !== TRUE){
 			$this->db

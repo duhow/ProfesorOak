@@ -24,13 +24,16 @@ elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has("dónde
 
 // comprobar estado del bot
 elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has(["ping", "pong", "me recibe", "estás", "estás ahí"]) && $telegram->words() <= 4){
-    // if($this->is_shutup()){ exit(); }
+	if($pokemon->command_limit("ping", $telegram->chat->id, $telegram->message, 5)){ return -1; }
+
     $this->analytics->event('Telegram', 'Ping');
     $telegram->send->text("Pong! :D")->send();
     return -1;
 }
 
 elseif($telegram->text_command("help")){
+	if($pokemon->command_limit("help", $telegram->chat->id, $telegram->message, 5)){ return -1; }
+
     $telegram->send
         ->notification(FALSE)
         ->text('¡Aquí tienes la <a href="http://telegra.ph/Ayuda-11-30">ayuda</a>!', 'HTML')

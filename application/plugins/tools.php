@@ -299,7 +299,7 @@ if(
     $telegram->text_has(["ubicación", "mapa de"], TRUE) or
     ($telegram->text_command("map") && $telegram->has_reply)
 ){
-    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam'])){ exit(); }
+    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam'])){ return -1; }
 
     $text = $telegram->text();
     if($telegram->text_command("map") && $telegram->has_reply){ $text = $telegram->reply->text; }
