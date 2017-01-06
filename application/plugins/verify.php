@@ -1,6 +1,8 @@
 <?php
 
 if($telegram->text_command("register")){
+	if($pokemon->command_limit("register", $telegram->chat->id, $telegram->message, 10)){ return -1; }
+
     $pokeuser = $pokemon->user($telegram->user->id);
     if($pokeuser->verified){ return; }
 
@@ -73,6 +75,8 @@ elseif(
     $telegram->words() <= 7
 ){
     if($telegram->is_chat_group()){
+		if($pokemon->command_limit("validar", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+
         $res = $telegram->send
             ->notification(TRUE)
             ->chat($telegram->user->id)

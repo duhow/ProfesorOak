@@ -1,7 +1,9 @@
 <?php
 
 if($telegram->voice() && $telegram->voice(TRUE)->duration <= 7){
-    // $telegram->send->text("Recibo voz de " .$telegram->voice(TRUE)->duration ." segundos.")->send();
+	if(!file_exists("ffmpeg")){ return; } // TODO FIXME
+	// Falta indicar dependencia de las apps.
+
     $tmp = tempnam("/tmp", "vrec");
 
     file_put_contents($tmp, file_get_contents($telegram->download($telegram->voice())));

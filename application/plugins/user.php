@@ -267,8 +267,4 @@ elseif($telegram->text_command("regoff")){
     return;
 }
 
-if($telegram->text_command("prueba") && $telegram->user->id == $this->config->item('creator')){
-
-}
-
 ?>

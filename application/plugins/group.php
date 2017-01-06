@@ -18,6 +18,8 @@ elseif(
         ( $telegram->text_command("adminlist") or $telegram->text_command("admins") )
     )
 ){
+	if($pokemon->command_limit("adminlist", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+
     $admins = $telegram->get_admins($telegram->chat->id, TRUE);
     $teams = ["Y" => "yellow", "B" => "blue", "R" => "red"];
     $str = "";
@@ -155,6 +157,8 @@ elseif($telegram->text_has("voto el", ["kick", "ban"])){
 
 // Contar miembros de cada color
 elseif($telegram->text_command("count")){
+	if($pokemon->command_limit("count", $telegram->chat->id, $telegram->message, 10)){ return -1; }
+
     $members = $pokemon->group_get_members($telegram->chat->id);
     $users = $pokemon->find_users($members);
     $count = $telegram->send->get_members_count();
@@ -179,6 +183,8 @@ elseif($telegram->text_command("count")){
 
 // Link del grupo offtopic_chat
 elseif($telegram->text_has(["grupo offtopic", "/offtopic"])){
+	if($pokemon->command_limit("offtopic", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+
     $offtopic = $pokemon->settings($telegram->chat->id, 'offtopic_chat');
     $chatgroup = NULL;
     if(!empty($offtopic)){

@@ -4,6 +4,8 @@ if($pokemon->user_exists($telegram->user->id)){ return; }
 
 // Comando de información de registro para la gente que tanto lo spamea...
 if($telegram->text_command("register")){
+	if($pokemon->command_limit("register", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+
     $this->analytics->event('Telegram', 'Register', 'command');
     $str = "Hola " .$telegram->user->first_name ."! Me podrías decir tu color?\n"
             ."(*Soy* ...)";

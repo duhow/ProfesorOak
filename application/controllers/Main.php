@@ -168,7 +168,7 @@ class Main extends CI_Controller {
 			}
 
 			if(!empty($str)){
-			$chat = ($telegram->is_chat_group() && $this->is_shutup() && !in_array($telegram->user->id, $this->admins(TRUE)) ? $telegram->user->id : $telegram->chat->id);
+			// $chat = ($telegram->is_chat_group() && $this->is_shutup() && !in_array($telegram->user->id, $this->admins(TRUE)) ? $telegram->user->id : $telegram->chat->id);
 
 			$repl = [
 				// '$nombre' => $new->first_name,
@@ -182,14 +182,14 @@ class Main extends CI_Controller {
 			];
 
 			$str = str_replace(array_keys($repl), array_values($repl), $str);
-			$this->last_command('WHOIS');
+			// $this->last_command('WHOIS');
 			// $pokemon->settings($user->id, 'last_command', 'WHOIS');
 
 			// $telegram->send->chat($this->config->item('creator'))->text($text->emoji($str))->send();
 
 				$telegram->send
-					->chat($chat)
-					->reply_to( (($chat == $telegram->chat->id && $telegram->has_reply) ? $telegram->reply->message_id : NULL) )
+					// ->chat($chat)
+					// ->reply_to( (($chat == $telegram->chat->id && $telegram->has_reply) ? $telegram->reply->message_id : NULL) )
 					->notification(FALSE)
 					->text($telegram->emoji($str), TRUE)
 				->send();
@@ -356,6 +356,15 @@ class Main extends CI_Controller {
 				}
 				return;
 			}
+		}elseif($telegram->text_command("iv")){
+			if($pokemon->command_limit("iv", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+
+			$telegram->send
+				->notification(FALSE)
+				->text("/iv <*Pokémon*> <*CP*> <*HP*> <*Polvos*>", TRUE)
+			->send();
+
+			return -1;
 		}
 
 		// PARTE 2

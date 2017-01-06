@@ -292,7 +292,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
     $help = "Se dice *Eevee*... ¬¬";
 }elseif($telegram->text_has(["cómo"]) && $telegram->text_has(["conseguir", "consigue"]) && $telegram->text_contains(["objeto", "incienso", "cebo", "huevo"])){
     $help = "En principio si vas a las PokeParadas y tienes suerte, también deberías de poder conseguirlos.";
-}elseif($telegram->text_contains(["calcular", "calculadora"], ["IV", "porcentaje"])){
+}elseif($telegram->text_contains(["calcular", "calculadora", "página"], ["IV", "porcentaje"])){
     $this->analytics->event('Telegram', 'IV Calculator');
     // $help = "Puedes calcular las IVs de tus Pokemon en esta página: https://pokeassistant.com/main/ivcalculator";
     $help = "Si me dices los datos de tu Pokémon, te puedo calcular yo mismo los IV. :)";
