@@ -40,12 +40,12 @@ if($telegram->text_command("version")){
 	$str = $telegram->emoji(":warning: No se puede cargar la información Git.");
 
 	if($info !== NULL){
-		$str = '<a href="https://github.com/duhow/ProfesorOak/commit/' .$out[0] .'">' .$out[0] .'+</a>, del '
-				.date("d/m/Y H:i", $out[1]);
+		$str = '<a href="https://github.com/duhow/ProfesorOak/commit/' .$info['hash'] .'">' .$info['hash'] .'+</a>, del '
+				.date("d/m/Y H:i", $info['date']);
 	}
 
 	$telegram->send
-		->text($out, 'HTML')
+		->text($str, 'HTML')
 	->send();
 
 	return -1;
