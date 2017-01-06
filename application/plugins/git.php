@@ -38,7 +38,11 @@ if(
 	return -1;
 }
 
-if($telegram->text_command("version")){
+if(
+	$telegram->text_command("version") or
+	( ($telegram->text_has(["profe", "profesor", "oak"]) or $telegram->text_mention("ProfesorOak_bot") ) && 
+	  $telegram->text_has("versión") && $telegram->words() <= 10)
+){
 	$info = git_version();
 	$str = $telegram->emoji(":warning: No se puede cargar la información Git.");
 

@@ -140,12 +140,6 @@ if($telegram->text_command("avoice")){
         ->send();
     }
     return;
-}elseif($telegram->text_has("oak", "versión")){
-    $date = (time() - filemtime(__FILE__));
-    $telegram->send
-        ->text("Versión de hace " .floor($date / 60) ." minutos.")
-    ->send();
-    return;
 }
 
 // Sistema de mención de usuarios
