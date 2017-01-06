@@ -25,6 +25,9 @@ if(
 		->send();
 
 	$out = shell_exec("git pull");
+	if(strpos($out, "Already up-to-date") !== FALSE){
+		$out = $telegram->emoji(":ok: Ya está actualizado.");
+	}
 
 	$telegram->send
 		->chat(TRUE)
@@ -45,6 +48,7 @@ if($telegram->text_command("version")){
 	}
 
 	$telegram->send
+		->disable_web_page_preview(TRUE)
 		->text($str, 'HTML')
 	->send();
 
