@@ -1,5 +1,59 @@
 <?php
 
+function user_set_name($user, $name, $force = FALSE){
+	$telegram = new Telegram();
+	$pokemon = new Pokemon();
+	$analytics = new Analytics();
+
+	$pokeuser = $pokemon->user($user);
+	if(empty($pokeuser)){ return; }
+	if(!$force && !empty($pokeuser->username)){ return; }
+	if($name[0] == "@"){ $name = substr($name, 1); }
+	if(strlen($name) < 4 or strlen($name) > 18){ return; }
+
+	// si el nombre ya existe
+	if($pokemon->user_exists($name)){
+		$telegram->send
+			->reply_to(TRUE)
+			->notification(FALSE)
+			->text("No puede ser, ya hay alguien que se llama *@$name* :(\nHabla con @duhow para arreglarlo.", TRUE)
+		->send();
+		return FALSE;
+	}
+	// si no existe el nombre
+	else{
+		$analytics->event('Telegram', 'Register username');
+		$pokemon->update_user_data($user, 'username', $name);
+		$str = "De acuerdo, *@$name*!\n"
+				."¡Recuerda *validarte* para poder entrar en los grupos de colores!";
+		$telegram->send
+			->inline_keyboard()
+				->row_button("Validar perfil", "quiero validarme", TRUE)
+			->show()
+			->reply_to(TRUE)
+			->notification(FALSE)
+			->text($str, TRUE)
+		->send();
+	}
+	return TRUE;
+}
+
+if($pokemon->step($telegram->user->id) == "SETNAME"){
+	if($telegram->words() == 1){ user_set_name($telegram->user->id, $telegram->last_word(TRUE), TRUE); }
+	$pokemon->step($telegram->user->id, NULL);
+}
+
+// -----------------
+
+// guardar nombre de user
+if($telegram->text_has(["Me llamo", "Mi nombre es", "Mi usuario es"], TRUE) && $telegram->words() <= 4 && $telegram->words() > 2){
+	$pokeuser = $pokemon->user($telegram->user->id);
+	if(!empty($pokeuser->username)){ return -1; }
+	$word = $telegram->last_word(TRUE);
+	user_set_name($telegram->user->id, $word, FALSE);
+	return -1;
+}
+
 // Guardar nivel del user
 if(
     $telegram->text_has("Soy", ["lvl", "nivel", "L", "level"]) or
@@ -34,6 +88,59 @@ if(
     return;
 }
 
+// pedir info sobre uno mismo
+if(
+	$telegram->text_has(["Quién soy", "Cómo me llamo", "who am i"], TRUE) or
+	($telegram->text_has(["profe", "oak"]) && $telegram->text_has("Quién soy") && $telegram->words() <= 5)
+){
+	$str = "";
+	$team = ['Y' => "Amarillo", "B" => "Azul", "R" => "Rojo"];
+
+	$pokeuser = $pokemon->user($telegram->user->id);
+
+	$this->analytics->event('Telegram', 'Whois', 'Me');
+	if(empty($pokeuser->username)){ $str .= "No sé como te llamas, sólo sé que "; }
+	else{ $str .= '$pokemon, '; }
+
+	$str .= 'eres *$team* $nivel. $valido';
+
+	// si el bot no conoce el nick del usuario
+	if(empty($pokeuser->username)){ $str .= "\nPor cierto, ¿cómo te llamas *en el juego*? \n_Me llamo..._"; }
+
+	// $chat = ($telegram->is_chat_group() && $this->is_shutup() && !in_array($telegram->user->id, $this->admins(TRUE)) ? $telegram->user->id : $telegram->chat->id);
+
+	$repl = [
+		'$nombre' => $telegram->user->first_name,
+		'$apellidos' => $telegram->user->last_name,
+		'$equipo' => $team[$pokeuser->team],
+		'$team' => $team[$pokeuser->team],
+		'$usuario' => "@" .$telegram->user->username,
+		'$pokemon' => "@" .$pokeuser->username,
+		'$nivel' => "L" .$pokeuser->lvl,
+		'$valido' => ($pokeuser->verified ? ':green-check:' : ':warning:')
+	];
+
+	$str = str_replace(array_keys($repl), array_values($repl), $str);
+	if($pokemon->settings($telegram->user->id, 'last_command') == "LEVELUP"){
+		if($chat != $telegram->chat->id){
+			/* $telegram->send
+				->chat($this->config->item('creator'))
+				->text("Me revelo contra " .$pokeuser->username ." " .$user->id ." en " .$telegram->chat->id)
+			->send();
+
+			$str = "¿Eres tonto o que? Ya te lo he dicho antes. ¿Puedes parar ya?"; */
+		}
+	}
+	$pokemon->settings($telegram->user->id, 'last_command', 'WHOIS');
+
+	$telegram->send
+		// ->chat($chat)
+		// ->reply_to( ($chat == $telegram->chat->id) )
+		->notification(FALSE)
+		->text($telegram->emoji($str), TRUE)
+	->send();
+	return -1;
+}
 
 // Mención de usuarios
 if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
@@ -71,9 +178,9 @@ if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
 }
 
 // Responder el nivel de un entrenador.
-elseif($telegram->text_has("que") && $telegram->text_has(["lvl", "level", "nivel"], ["eres", "es", "soy"]) && $telegram->words() <= 7){
+elseif($telegram->text_has("que") && $telegram->text_has(["lvl", "level", "nivel"], ["eres", "es", "soy", "tiene", "tienes", "tengo"]) && $telegram->words() <= 7){
     $user = $telegram->user->id;
-    if($telegram->text_has(["eres", "es"])){
+    if($telegram->text_has(["eres", "es", "tiene", "tienes"])){
         if(!$telegram->has_reply){ return; }
         $user = $telegram->reply_user->id;
     }
@@ -82,9 +189,9 @@ elseif($telegram->text_has("que") && $telegram->text_has(["lvl", "level", "nivel
     $text = NULL;
     if(!empty($u) && $u->lvl >= 5){
         $this->analytics->event('Telegram', 'Whois', 'Level');
-        $text = ($telegram->text_has(["eres", "es"]) ? "Es" : "Eres") ." L" .$u->lvl .".";
+        $text = ($telegram->text_has(["eres", "es", "tienes", "tiene"]) ? "Es" : "Eres") ." L" .$u->lvl .".";
     }else{
-        $text = ($telegram->text_has("soy") ? "No lo sé. ¿Y si me lo dices?" : "No lo sé. :(");
+        $text = ($telegram->text_has("soy", "tengo") ? "No lo sé. ¿Y si me lo dices?" : "No lo sé. :(");
     }
     $telegram->send
         ->notification(FALSE)
@@ -160,14 +267,8 @@ elseif($telegram->text_command("regoff")){
     return;
 }
 
-if($telegram->text_command("prueba")){
-    /* if(function_exists("time_parse")){
-        $datos = time_parse($telegram->text());
-        $telegram->send->text(json_encode($datos))->send();
-        return;
-    }*/
+if($telegram->text_command("prueba") && $telegram->user->id == $this->config->item('creator')){
 
-    $telegram->send->text($this->config->item('creator'))->send();
 }
 
 ?>

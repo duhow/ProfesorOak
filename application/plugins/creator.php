@@ -2,6 +2,16 @@
 
 if($telegram->user->id != $this->config->item('creator')){ return; }
 
+if($telegram->text_contains("mal") && $telegram->words() < 4 && $telegram->has_reply){
+	$telegram->send
+		->chat($telegram->chat->id)
+		->notification(FALSE)
+		->message($telegram->reply->message_id)
+		->text("Perdon :(")
+	->edit('message');
+	return;
+}
+
 // enviar broadcast a todos los grupos (solo creador)
 if($telegram->text_command("broadcast")){
     exit();
@@ -173,6 +183,93 @@ elseif($telegram->text_command("ban") && !$telegram->is_chat_group() && $telegra
     return TRUE;
 }
 
+
+
+// Echar usuario del grupo
+if($telegram->text_command("kickold") && $telegram->words() == 2){
+	if(!in_array($this->config->item('telegram_bot_id'), $pokemon->telegram_admins(TRUE))){ // Tiene que ser admin
+		$telegram->send
+			->notification(FALSE)
+			->text("Jefe, no puedo, que no soy admin :(")
+		->send();
+		return -1;
+	}
+
+	/* if($telegram->words() == 3){
+		$ids = $telegram->last_word();
+		$ids = explode(",", $ids);
+	}else{
+		$ids = $telegram->words(2, $telegram->words() - 2);
+		$ids = $telegram->explode(" ", $ids);
+	} */
+
+	$days = $telegram->words(1);
+	if(intval($days) <= 1){
+	/* 	$telegram->send
+			->notification(FALSE)
+			->text("¿Ke dise? ¿Cuántos días?")
+		->send();
+		return -1; */
+		$days = 30;
+	}
+
+	$query = $this->db
+		->select('uid')
+		->where_in('uid', $ids)
+		->where('cid', $telegram->chat->id)
+		->group_start()
+			->where('last_date <=', date("Y-m-d H:i:s", strtotime("-" .$days ." days")))
+			->or_where('last_date IS NULL')
+		->group_end()
+	->get('user_inchat');
+
+	$telegram->send
+		->text("Cuento " .$query->num_rows() ." usuarios.")
+	->send();
+
+	$c = 0;
+	foreach($query->result_array() as $u){
+		if($u['uid'] == $this->config->item('telegram_bot_id')){ continue; }
+		$q = $telegram->send->kick($u['uid'], $telegram->chat->id);
+		if($q !== FALSE){ $c++; }
+	}
+
+	$telegram->send
+		->text("Vale, $c fuera!")
+	->send();
+
+	return -1;
+
+	// $telegram->send->text(json_encode($ids))->send();
+    /* $admins = $pokemon->telegram_admins(TRUE);
+
+    if(in_array($telegram->user->id, $admins)){ // Tiene que ser admin
+        $kick = NULL;
+        if($telegram->has_reply){
+            $kick = $telegram->reply_user->id;
+        }elseif($telegram->text_mention()){
+            $kick = $telegram->text_mention(); // Solo el primero
+            if(is_array($kick)){ $kick = key($kick); } // Get TelegramID
+        }elseif($telegram->words() == 2){
+            // Buscar usuario.
+            $kick = $telegram->last_word();
+            if(strlen($kick) < 4){ return; }
+            // Buscar si no en PKGO user DB.
+        }
+        if(($telegram->user->id == $this->config->item('creator')) or !in_array($kick, $admins)){ // Si es creador o no hay target a admins
+            if($telegram->text_contains("kick")){
+                $this->analytics->event('Telegram', 'Kick');
+                $telegram->send->kick($kick, $telegram->chat->id);
+                $pokemon->user_delgroup($kick, $telegram->chat->id);
+            }elseif($telegram->text_contains("ban")){
+                $this->analytics->event('Telegram', 'Ban');
+                $telegram->send->ban($kick, $telegram->chat->id);
+                $pokemon->user_delgroup($kick, $telegram->chat->id);
+            }
+        }
+    }*/
+}
+
 // Quitar tag de SPAM
 elseif($telegram->text_has("/nospam", TRUE) && $telegram->words() <= 3){
     // HACK text_has porque comandos no se parsean en INLINE_keyboard.
@@ -205,16 +302,43 @@ elseif($telegram->text_has("/nospam", TRUE) && $telegram->words() <= 3){
     return -1;
 }
 
+elseif($telegram->text_command("vui") && $telegram->words() >= 2){
+	if($telegram->text_mention()){
+		$id = $telegram->text_mention();
+		if(is_array($id)){ $id = key($id); }
+		else{ $id = $telegram->last_word(); }
+	}else{
+		$id = $telegram->last_word();
+	}
+
+	$info = $telegram->send->get_chat($id);
+    $count = $telegram->send->get_members_count($id);
+    $telegram->send->text( json_encode($info) ."\n$count" )->send();
+    $info = $telegram->send->get_chat($id);
+    $telegram->send->text( json_encode($info) )->send();
+	return -1;
+}
+
 // Ver información de un grupo
 elseif($telegram->text_command("cinfo")){
     $id = $telegram->last_word();
     if(empty($id) or $id == "/cinfo"){ $id = $telegram->chat->id; }
     $info = $telegram->send->get_chat($id);
     $count = $telegram->send->get_members_count($id);
-    $telegram->send->text( json_encode($info) ."\n$count" )->send();
-    $info = $telegram->send->get_member_info($this->config->item('telegram_bot_id'), $id);
-    $telegram->send->text( json_encode($info) )->send();
-    exit();
+	$str = "Nope.";
+	if($info != FALSE){
+		$str = "\ud83c\udd94 " .$info['id'] ."\n"
+				."\ud83d\udd24 " .($info['title'] ?: $info['first_name']) ."\n"
+				."\ud83c\udf10 " .($info['username'] ? "@" .$info['username'] : "---") ."\n"
+				."\ud83d\udcf3 " .$info['type'] ."\n"
+				."\ud83d\udebb " .$count ."\n";
+		$info = $telegram->send->get_member_info($this->config->item('telegram_bot_id'), $id);
+		$str .= "\u2139\ufe0f " .$info['status'];
+
+		$str = $telegram->emoji($str);
+	}
+    $telegram->send->text( $str )->send();
+    return -1;
 }
 
 // Ver información de un usuario
@@ -277,11 +401,15 @@ elseif($telegram->text_has("salte de", TRUE) && $telegram->words() == 3){
 
 // Buscar usuario por grupos
 elseif($telegram->text_has(["/whereis", "dónde está"], TRUE) && !$telegram->is_chat_group() && $telegram->words() <= 3){
-    $find = $telegram->last_word(TRUE);
-    $pkfind = $pokemon->user($find);
-    if($pkfind && !is_numeric($find)){ $find = $pkfind->telegramid; }
-    // @Pablo mencion sin @alias tambien debería valer.
-    $text = "No sé quién es.";
+	if($telegram->has_reply && $telegram->reply_is_forward){
+		$find = $telegram->reply->forward_from['id'];
+	}else{
+		$find = $telegram->last_word(TRUE);
+		$pkfind = $pokemon->user($find);
+		if($pkfind && !is_numeric($find)){ $find = $pkfind->telegramid; }
+		// @Pablo mencion sin @alias tambien debería valer.
+	}
+	$text = "No sé quién es.";
     if(is_numeric($find)){
         $groups = $pokemon->group_find_member($find, TRUE);
         if(!$groups){ $text = "No lo veo por ningún lado."; }
@@ -418,7 +546,7 @@ elseif($telegram->text_command("speak") && $telegram->words() == 2 && !$telegram
 }
 
 elseif($telegram->text_command("countonline") && $telegram->is_chat_group()){
-
+    set_time_limit(2700);
     $run = $pokemon->settings($telegram->chat->id, 'investigation');
     if($run !== NULL){
         if(time() <= ($run + 3600)){ return -1; }
@@ -484,10 +612,16 @@ elseif($telegram->text_command("countonline") && $telegram->is_chat_group()){
 
 // Registro manual - creador.
 elseif($telegram->text_command("register") && $telegram->has_reply){
-    $pkuser = $pokemon->user($telegram->reply_user->id);
+	if($telegram->reply_is_forward){
+		$data['telegramid'] = $telegram->reply->forward_from['id'];
+	    $data['telegramuser'] = @$telegram->reply->forward_from['username'];
+	}else{
+		$data['telegramid'] = $telegram->reply_user->id;
+	    $data['telegramuser'] = @$telegram->reply_user->username;
+	}
 
-    $data['telegramid'] = $telegram->reply_user->id;
-    $data['telegramuser'] = @$telegram->reply_user->username;
+    $pkuser = $pokemon->user($data['telegramid']);
+
     foreach($telegram->words(TRUE) as $w){
         $w = trim($w);
         if($w[0] == "/"){ continue; }
@@ -517,7 +651,7 @@ elseif($telegram->text_command("register") && $telegram->has_reply){
     }
 
     foreach($data as $k => $v){
-        if(in_array($k, ['telegramid', 'team'])){ continue; }
+        if(in_array($k, ['telegramid'])){ continue; } // , 'team'
         $pokemon->update_user_data($data['telegramid'], $k, $v);
     }
 
@@ -536,4 +670,38 @@ elseif($telegram->text_command("register") && $telegram->has_reply){
     ->send();
     return -1;
 }
+
+elseif($telegram->text_command("ub") && $telegram->words() <= 2){
+	$this->db
+		->select("*")
+		->from('user')
+		->join('user_inchat', 'user.telegramid = user_inchat.uid')
+		->where('user_inchat.cid', $telegram->chat->id);
+	if($telegram->words() == 1){
+		$query = $this->db->where('user.blocked', TRUE)->get();
+	}else{
+		$query = $this->db
+			->join('user_flags', 'user.telegramid = user_flags.user')
+			->where('user_flags.value', $telegram->last_word())
+		->get();
+	}
+
+	$str = "Nah, están todos bien.";
+	if($query->num_rows() > 0){
+		$str = "Hay *" .$query->num_rows() . "* liantes.\n";
+		foreach($query->result_array() as $u){
+			$str .= "- " .$u['telegramid'] ." - " .$u['username'] ."\n";
+		}
+	}
+
+	$telegram->send
+		->notification(FALSE)
+		->text($str, TRUE)
+	->send();
+
+	return -1;
+}
+
+
+
 ?>

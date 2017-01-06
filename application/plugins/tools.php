@@ -36,6 +36,18 @@ if($telegram->text_command("avoice")){
         $telegram->send->file('photo', $pic);
     }
     return -1;
+}elseif($telegram->text_command("sticker")){
+	if($telegram->words() == 2){
+		$telegram->send->file('sticker', $telegram->last_word());
+	}elseif($telegram->has_reply){
+		if(isset($telegram->reply->sticker)){
+			$telegram->send
+				->reply_to(FALSE)
+				->text($telegram->reply->sticker['file_id'])
+			->send();
+		}
+	}
+	return -1;
 }elseif($telegram->text_command("vardump") && $telegram->has_reply){
     $telegram->send->text( $telegram->dump(TRUE) )->send();
     return -1;

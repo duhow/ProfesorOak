@@ -7,18 +7,21 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
     $user = $telegram->user;
     $chat = $telegram->chat;
 
-    if($new->id == $this->config->item("telegram_bot_id")){
+	// A excepción de que lo agregue el creador
+    if($new->id == $this->config->item("telegram_bot_id") && $telegram->user->id != $this->config->item('creator')){
         $count = $telegram->send->get_members_count();
         // Si el grupo tiene <= 5 usuarios, el bot abandona el grupo
         if(is_numeric($count) && $count <= 5){
-            // A excepción de que lo agregue el creador
-            if($telegram->user->id != $this->config->item('creator')){
-                $this->analytics->event('Telegram', 'Join low group');
-                $telegram->send->text("Nope.")->send();
-                $telegram->send->leave_chat();
-                return -1;
-            }
+            $this->analytics->event('Telegram', 'Join low group');
+            $telegram->send->text("Nope.")->send();
+            $telegram->send->leave_chat();
+            return -1;
         }
+
+		if($pokemon->settings($telegram->chat->id, 'die') == TRUE){
+			$telegram->send->leave_chat();
+            return -1;
+		}
 
     // Bot agregado al grupo. Yo no saludo bots :(
     }elseif($telegram->is_bot($new->username)){ return -1; }

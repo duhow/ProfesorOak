@@ -1,8 +1,8 @@
 <?php
 
-if($telegram->text_has("participar") && $telegram->text_has(["página", "sorteo"]) && $telegram->words() <= 9){
+if($telegram->text_has(["participar", "página"]) && $telegram->text_has(["sorteo"]) && $telegram->words() <= 9){
 	if($telegram->is_chat_group()){
-		$str = "Puedes conseguir objetos especiales entrando en mi web!\nhttp://oak.duhowpi.net";
+		$str = "Apúntate al sorteo navideño y compra el Pack Ultraespecial!\nhttp://oak.duhowpi.net/sorteo";
 	}else{
 		$key = md5($telegram->user->id .":" .time());
 		$query = $this->db
@@ -24,10 +24,11 @@ if($telegram->text_has("participar") && $telegram->text_has(["página", "sorteo"
 if($telegram->is_chat_group()){ return; }
 
 if($telegram->text_command("start") && $telegram->text_has("weblogin") && $telegram->words() <= 3){
-	$this->db
-		->set('uid', $telegram->user->id)
-		->set('webkey', $telegram->last_word(TRUE))
-	->insert('weblogin');
+	$data = ['uid' => $telegram->user->id, 'webkey' => $telegram->last_word(TRUE)];
+
+	$query = $this->db->insert_string('weblogin', $data);
+	$query = str_replace('INSERT INTO','INSERT IGNORE INTO', $query);
+	$this->db->query($query);
 
 	$telegram->send
 		->text("¡Login hecho! Ya puedes volver.")

@@ -1,5 +1,136 @@
 <?php
 
+function pokemon_attack($text, $target_attack = FALSE){
+	$pokemon = new Pokemon();
+	$types = $pokemon->attack_types();
+
+	// $this->last_command("ATTACK");
+	$str = "";
+
+	if(strpos(strtolower($text), "missing") !== FALSE){
+		return "Lo siento, no encuentro ese número. Es que me parece que se ha perdido.";
+	}elseif(trim(strtolower($text)) == "mime"){
+		$text = "Mr. Mime";
+	}elseif($text[0] == "#" && is_numeric(substr($text, 1))){ // Si es número pero con #
+		$text = substr($text, 1);
+	}
+
+	// $attack contiene el primer tipo del pokemon
+	$pk = $pokemon->find($text);
+	if($pk !== FALSE){
+		$str .= "#" .$pk['id'] ." - *" .$pk['name'] ."* (*" .$types[$pk['type']] ."*" .(!empty($pk['type2']) ? " / *" .$types[$pk['type2']] ."*" : "") .")\n";
+		$primary = $pk['type'];
+		$secondary = $pk['type2'];
+	}else{
+		$str .= (!$target_attack ? "Debilidad " : "Fortaleza ");
+		if(strpos($text, "/") !== FALSE){
+			$text = explode("/", $text);
+			if(count($text) != 2){ return NULL; } // Hay más de uno o algo raro.
+			$primary = trim($text[0]);
+			$secondary = trim($text[1]);
+
+			$str .= "*" .ucwords($primary) ."* / *" .ucwords($secondary) ."*:\n";
+		}else{
+			$primary = $text;
+			$str .= "*" .ucwords($primary) ."*:\n";
+		}
+
+		$primary = $pokemon->attack_type($primary); // Attack es toda la fila, céntrate en el ID.
+		if(empty($primary)){
+			return NULL;
+			// $this->telegram->send("Eso no existe, ni en el mundo Pokemon ni en la realidad.");
+		}
+		$primary = $primary['id'];
+
+		if(!empty($secondary)){
+			$secondary = $pokemon->attack_type($secondary);
+			if(!empty($secondary)){ $secondary = $secondary['id']; }
+		}
+	}
+
+	// $table contiene todos las relaciones donde aparezcan alguno de los dos tipos del pokemon
+	$table = $pokemon->attack_table($primary);
+	$target[] = $primary;
+	if($secondary != NULL){
+		$table = array_merge($table, $pokemon->attack_table($secondary));
+		$target[] = $secondary;
+	}
+
+	// debil, muy fuerte
+	// 0.5 = poco eficaz; 2 = muy eficaz
+	$list = array();
+	$type_target = ($target_attack ? "target" : "source");
+	$type_source = ($target_attack ? "source" : "target");
+	foreach($table as $t){
+		if(in_array(strtolower($t[$type_source]), $target)){
+			if($t['attack'] == 0.5){ $list[0][] = $types[$t[$type_target]]; }
+			if($t['attack'] == 2){ $list[1][] = $types[$t[$type_target]]; }
+		}
+	}
+	foreach($list as $k => $i){ $list[$k] = array_unique($list[$k]); } // Limpiar debilidades duplicadas
+	$idex = 0;
+	foreach($list[0] as $i){
+		$jdex = 0;
+		foreach ($list[1] as $j){
+			if($i == $j){
+				// $i y $j contienen el mismo tipo, hay contradicción
+				unset($list[0][$idex]);
+				unset($list[1][$jdex]);
+			}
+			$jdex++;
+		}
+		$idex++;
+	}
+
+	if(isset($list[0]) && count($list[0]) > 0){ $str .= (!$target_attack ? "Apenas le afecta *" : "Apenas es fuerte contra *") .implode("*, *", $list[0]) ."*.\n"; }
+	if(isset($list[1]) && count($list[1]) > 0){ $str .= (!$target_attack ? "Le afecta mucho *" : "Es muy eficaz contra *") .implode("*, *", $list[1]) ."*.\n"; }
+
+	return $str;
+}
+
+function pokemon_seen($user, $poke, $loc, $cooldown = 60){
+	$pokemon = new Pokemon();
+	$telegram = new Telegram();
+	// $pk = $pokemon->settings($user->id, 'pokemon_select');
+
+	// $pokemon->settings($user->id, 'pokemon_select', 'DELETE');
+	// $pokemon->settings($user->id, 'step_action', 'DELETE');
+
+	if($cooldown !== FALSE){
+		$cd = $pokemon->settings($user, 'pokemon_cooldown');
+		if(!empty($cd) && $cd > time()){
+			$telegram->send->text("Aún no ha pasado suficiente tiempo. Espera un poco, anda. :)");
+			$pokemon->step($user, NULL);
+			return -1;
+		}
+	}
+
+	if($pokemon->user_flags($user, ['troll', 'rager', 'bot', 'forocoches', 'hacks', 'gps', 'trollmap'])){
+		$telegram->send->text("nope.")->send();
+		$pokemon->step($user, NULL);
+		return -1;
+	}
+
+	if(!is_array($loc)){
+		$loc = explode(",", $loc); // FIXME cuidado con esto, si reusamos la funcion.
+	}
+	$pokemon->add_found($poke, $user, $loc[0], $loc[1]);
+
+	// SELECT uid, SUBSTRING(value, 1, INSTR(value, ",") - 1) AS lat, SUBSTRING(value, INSTR(value, ",") + 1) AS lng FROM `settings` WHERE LEFT(uid, 1) = '-' AND type = "location"
+
+	$pokemon->settings($user, 'pokemon_cooldown', time() + $cooldown);
+	$pokemon->step($user, NULL);
+
+	// $this->analytics->event("Telegram", "Pokemon Seen", $poke);
+	$telegram->send
+		->text("Hecho! Gracias por avisar! :D")
+		->keyboard()->hide(TRUE)
+	->send();
+	return TRUE;
+}
+
+// ---------------
+
 $help = NULL;
 
 if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) && $telegram->text_has(["paradas", "pokeparadas"])){
@@ -175,8 +306,10 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
     $this->analytics->event('Telegram', 'Egg Table');
     $telegram->send
         ->notification(FALSE)
-        ->file('photo', FCPATH .'files/egg_list.png');
-    exit();
+	// AgADBAADl7MxG10JzgK-Vlne-9fNkaDZZRkABNpfQEaBRT960bsDAAEC
+	// FCPATH .'files/egg_list.png'
+        ->file('photo', 'AgADBAADl7MxG10JzgK-Vlne-9fNkaDZZRkABNpfQEaBRT960bsDAAEC');
+    return -1;
 }elseif(
     ( $telegram->text_has(["profe", "oak"]) && $telegram->text_has(["código fuente", "source"]) ) or
     $telegram->text_command("github")
@@ -255,6 +388,8 @@ elseif(
         $str = "Pokemon GO funciona correctamente! :)";
     } */
 
+	$telegram->send->chat_action("typing")->send();
+
     // Conseguir estado mediante API JSON
     $web = file_get_contents("https://go.jooas.com/status");
     $web = json_decode($web);
@@ -285,7 +420,7 @@ elseif(
         // ->reply_to(TRUE)
         ->text($str, TRUE)
     ->send();
-    return;
+    return -1;
 }
 
 // Significados de palabras
@@ -304,7 +439,57 @@ elseif($telegram->text_has("Qué", ["significa", "es"], TRUE)){
             ->text($help, TRUE)
         ->send();
     }
-    return;
+    return -1;
+}
+
+elseif($telegram->text_has(["debilidad", "debilidades", "fortaleza", "fortalezas"], ["contra", "hacia", "sobre", "de"]) && $telegram->words() <= 6){
+	// $chat = NULL;
+	$text = trim($telegram->text());
+	$filter = (strpos($telegram->text(), "/") === FALSE); // Si no hay barra, filtra.
+	if(in_array($telegram->words(), [3,4]) && $telegram->text_has("aquí", FALSE)){
+		$text = $telegram->words(2, $filter);
+		// $chat = ($telegram->is_chat_group() && $this->is_shutup() ? $telegram->user->id : $telegram->chat->id);
+	}else{
+		$text = $telegram->last_word($filter);
+		// $chat = $telegram->user->id;
+	}
+	$pk = pokemon_parse($telegram->text());
+	if(!empty($pk['pokemon'])){ $text = $pk['pokemon']; }
+	$this->analytics->event('Telegram', 'Search Pokemon Attack', ucwords(strtolower($text)));
+	$target = $telegram->text_contains("fortaleza");
+	$str = pokemon_attack($text, $target);
+
+	if(!empty($str)){
+		$telegram->send
+			->notification(FALSE)
+			->text($str, TRUE)
+		->send();
+	}
+
+	return -1;
+}
+
+elseif($telegram->text_has(["aquí hay un", "ahi hay", "hay un"], TRUE) and $telegram->has_reply and $telegram->is_chat_group()){
+	// $telegram->send->text("ke dise?")->send();
+	if(isset($telegram->reply->location)){
+		$loc = $telegram->reply->location['latitude'] ."," .$telegram->reply->location['longitude'];
+		$pk = pokemon_parse($telegram->text());
+		if(!empty($pk['pokemon'])){
+			// $pokemon->settings($telegram->user->id, 'pokemon_select', $pk['pokemon']);
+
+			$pokemon->settings($telegram->user->id, 'location', $loc);
+			pokemon_seen($telegram->user->id, $pk['pokemon'], $loc);
+			return -1;
+
+			// $pokemon->step($telegram->user->id, 'POKEMON_SEEN');
+			// $this->_step();
+		}
+		if($telegram->text_contains(["cebo", "lure"])){
+			$pokemon->settings($telegram->user->id, 'location', $loc);
+			$pokemon->step($telegram->user->id, 'LURE_SEEN');
+			// $this->_step();
+		}
+	}
 }
 
 

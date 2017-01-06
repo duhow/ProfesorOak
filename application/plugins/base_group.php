@@ -111,7 +111,7 @@ if($abandon){
 if($telegram->text_url() && $telegram->is_chat_group()){
     $info = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
     // $telegram->send->text(json_encode($info))->send();
-    if($info->messages <= 5){
+    if($info->messages <= 5 && $pokemon->settings($telegram->chat->id, 'antispam') !== FALSE){
         if(
             !$telegram->text_contains(["http", "www", ".com", ".es", ".net"]) &&
             !$telegram->text_contains("telegram.me")

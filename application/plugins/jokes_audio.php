@@ -139,6 +139,9 @@ if($telegram->text_has("Team Rocket despega")){
     $this->analytics->event('Telegram', 'Jokes', 'Pedaso');
     $telegram->send->chat_action('record_audio')->send();
     $telegram->send->notification(FALSE)->file('voice', FCPATH ."files/pedaso.mp3");
+}elseif($telegram->text_has("suspense") && $telegram->words() <= 10){
+	$this->analytics->event("Telegram", "Jokes", "Suspense");
+	$telegram->send->notification(FALSE)->file('voice', 'AwADBAADcyEAAsGgBgx9Qm3d_Dp7lgI');
 }elseif($telegram->text_has(["tdfw", "turn down for what"])){
     $this->analytics->event('Telegram', 'Jokes', 'Turn Down');
     $files = ["tdfw_botella.mp3", "tdfw_turndown.mp3"];

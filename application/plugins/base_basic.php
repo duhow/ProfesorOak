@@ -13,7 +13,6 @@ if($telegram->text_contains(["fake GPS", "fake", "fakegps", "nox"])){
     }
 }
 
-
 elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has("dónde estás") && $telegram->words() <= 5){
     $telegram->send
         ->notification(FALSE)

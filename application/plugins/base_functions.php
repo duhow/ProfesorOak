@@ -7,7 +7,8 @@ function text_find($find, $text){
 
     if(!is_array($find)){ $find = [$find]; }
     foreach($find as $w){
-        if(strpos($text, $find) !== FALSE){ return TRUE; }
+        // if(strpos($text, $find) !== FALSE){ return TRUE; }
+		if(strpos($text, $w) !== FALSE){ return TRUE; }
     }
     return FALSE;
 }
@@ -299,6 +300,43 @@ function pokemon_parse($string){
     if(text_find(["fuerte", "fuertes", "excelente", "excelentes", "impresionante", "impresionantes", "alto", "alta"], $string)){ $data['ivcalc'] = [13,14]; }
 
     return $data;
+}
+
+function color_parse($string, $retkey = TRUE){
+	if(substr($string, 0, 1) != '"'){
+		$string = json_encode($string);
+	}
+
+
+	$string = str_replace('"', '', $string);
+	$string = strtolower($string);
+
+	// return $string;
+	$equipos = [
+		'Y' => ['amarillo', 'amarilla', 'yellow', 'instinto', 'instict', 'instinct', 'instincto', 'zapdos'],
+		'R' => ['rojo', 'roja', 'red', 'valor', 'moltres'],
+		'B' => ['azul', 'azúl', 'azules', 'blue', 'sabidurí­a', 'sabiduria', 'mystic', 'articuno']
+	];
+
+
+
+	$teamsel = NULL;
+	foreach($equipos as $team => $find){
+		if(text_find($find, $string)){
+			$teamsel = $team;
+			break;
+		}
+	}
+
+	if(empty($teamsel)){ return FALSE; }
+	if($retkey == TRUE){ return $teamsel; }
+	elseif(is_array($retkey) && count($retkey) == 3){ // Pasar texto de team como array directamente
+		return $retkey[$teamsel];
+	}
+	// else
+	$teams = ['Y' => 'yellow', 'R' => 'red', 'B' => 'blue'];
+	return $teams[$teamsel];
+
 }
 
 ?>

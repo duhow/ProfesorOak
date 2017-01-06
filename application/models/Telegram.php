@@ -77,7 +77,19 @@ class __Module_Telegram_InlineKeyboard extends CI_Model{
 		parent::__construct();
 	}
 
-	function row(){ return new __Module_Telegram_InlineKeyboard_Row(); }
+	function row($push = NULL){
+		if($push === NULL){ return new __Module_Telegram_InlineKeyboard_Row(); }
+		elseif(is_array($push)){
+			$buttons = new __Module_Telegram_InlineKeyboard_Row();
+			foreach($push as $bt){
+				if(count($bt) == 1){ $bt = [current($bt), current($bt)]; } // Si no ha indicado request
+				if(count($bt) == 2){ $bt = [$bt[0], $bt[1], NULL]; }
+				$buttons->button($bt[0], $bt[1], $bt[2]);
+			}
+			return $buttons->end_row();
+		}
+	}
+
 	function row_button($text, $request = NULL, $switch = NULL){ return $this->row()->button($text, $request, $switch)->end_row(); }
 
 	function push($data){
@@ -314,6 +326,16 @@ class __Module_Telegram_Sender extends CI_Model{
 	function get_member_info($user = NULL, $chat = NULL, $keep = FALSE){ return $this->_parse_generic_chatFunctions("getChatMember", $keep, $chat, $user); }
 	function get_members_count($chat = NULL, $keep = FALSE){ return $this->_parse_generic_chatFunctions("getChatMembersCount", $keep, $chat); }
 
+	// DEBUG
+	/* function get_message($message, $chat = NULL){
+		$this->method = 'getMessage';
+		if(empty($chat) && !isset($this->context['chat_id'])){
+			$this->context['chat_id'] = $this->telegram->chat->id;
+		}
+
+		return $this->send();
+	} */
+
 	function answer_callback($alert = FALSE, $text = NULL, $id = NULL){
 		// Function overload :>
 		// $this->text can be empty. (Answer callback with empty response to finish request.)
@@ -346,6 +368,19 @@ class __Module_Telegram_Sender extends CI_Model{
 
 		return $this->send();
 	}
+
+	// TODO
+	/* function delete($message = NULL, $chat = NULL){
+		if(empty($chat) && !isset($this->context['chat_id'])){
+			$this->context['chat_id'] = $this->telegram->chat->id;
+		}
+		if(empty($message) && !isset($this->context['message_id'])){
+			$this->context['message_id'] = $this->telegram->id;
+		}
+
+		$this->method = "deleteMessage";
+		return $this->send();
+	} */
 
 	function _push($key, $val){
 		$this->content[$key] = $val;
@@ -618,6 +653,7 @@ class Telegram extends CI_Model{
 		$input = strtolower($input); // HACK util o molesto en segun que casos?
 		$input = str_replace(["á", "é", "í", "ó", "ú"], ["a", "e", "i", "o", "u"], $input); // HACK mas de lo mismo, ayuda o molesta?
 		$input = str_replace(["Á", "É", "Í", "Ó", "Ú"], ["A", "E", "I", "O", "U"], $input); // HACK
+		$input = str_replace("%20", " ", $input); // HACK web
 		$input = strtolower($input);
         $input = str_replace("/", "\/", $input); // CHANGED fix para escapar comandos y demás.
 
