@@ -442,6 +442,28 @@ elseif($telegram->text_has("Qué", ["significa", "es"], TRUE)){
     return -1;
 }
 
+// Calcular IV info
+elseif($telegram->text_command("iv") && $telegram->words() <= 2){
+	if($pokemon->command_limit("iv", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+
+	$telegram->send
+		->notification(FALSE)
+		->text("/iv <*Pokémon*> <*CP*> <*HP*> <*Polvos*>", TRUE)
+	->send();
+
+	return -1;
+}
+
+// Calcular IV TODO
+// Ver los IV o demás viendo stats Pokemon.
+elseif(
+	$telegram->words() >= 4 &&
+	($telegram->text_has(["tengo", "me ha salido", "calculame", "calcula iv", "calcular iv", "he conseguido", "he capturado"], TRUE) or
+	$telegram->text_command("iv"))
+){
+	// TODO
+}
+
 elseif($telegram->text_has(["debilidad", "debilidades", "fortaleza", "fortalezas"], ["contra", "hacia", "sobre", "de"]) && $telegram->words() <= 6){
 	// $chat = NULL;
 	$text = trim($telegram->text());

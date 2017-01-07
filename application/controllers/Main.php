@@ -356,15 +356,6 @@ class Main extends CI_Controller {
 				}
 				return;
 			}
-		}elseif($telegram->text_command("iv")){
-			if($pokemon->command_limit("iv", $telegram->chat->id, $telegram->message, 7)){ return -1; }
-
-			$telegram->send
-				->notification(FALSE)
-				->text("/iv <*Pokémon*> <*CP*> <*HP*> <*Polvos*>", TRUE)
-			->send();
-
-			return -1;
 		}
 
 		// PARTE 2
