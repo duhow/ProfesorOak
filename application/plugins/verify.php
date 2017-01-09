@@ -32,12 +32,15 @@ if($telegram->text_has("Te valido", TRUE) && $telegram->words() <= 3){
         $target = $target[0]['telegramid'];
     }
 
+	$poketarget = $pokemon->user($target);
+	$str = "Validar " .$poketarget->telegramid ." @" .$poketarget->username
+			." L" .$poketarget->lvl ." " .$poketarget->team;
     if($pokemon->user_verified($target)){
         $telegram->answer_if_callback($telegram->emoji("¡Ya está validado! :ok:"), TRUE);
         $telegram->send
             ->message(TRUE)
             ->chat(TRUE)
-            ->text($telegram->text_message() .$telegram->emoji(" :ok:"))
+            ->text($str .$telegram->emoji(" :ok:"))
         ->edit('text');
         return;
     }
@@ -52,7 +55,7 @@ if($telegram->text_has("Te valido", TRUE) && $telegram->words() <= 3){
             $telegram->send
                 ->message(TRUE)
                 ->chat(TRUE)
-                ->text($telegram->text_message() .$telegram->emoji(" :ok:"))
+                ->text($str .$telegram->emoji(" :ok:"))
             ->edit('text');
         }
 

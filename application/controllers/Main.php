@@ -60,11 +60,11 @@ class Main extends CI_Controller {
 
 		if(!empty($step)){ $this->_step(); }
 
-		$this->plugin->load('plugin_manager');
 		$this->plugin->load('vote');
 		$this->plugin->load('tools');
 
 		$this->plugin->load_all();
+		$this->plugin->load('plugin_manager'); // To manage all loaded plugins.
 
 		/*
 		##################
