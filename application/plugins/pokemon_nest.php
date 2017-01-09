@@ -257,6 +257,12 @@ elseif($telegram->text_contains("nido") && $telegram->text_has(["borra", "borrar
 	}
 
 	$ids = array_column($query->result_array(), 'id');
+	if(empty($ids)){
+		$telegram->send
+			->text("No encuentro coincidencias.")
+		->send();
+		return -1;
+	}
 
 	$query = $this->db
 		->where_in('id', $ids)
