@@ -58,6 +58,7 @@ if($telegram->text_command("avoice")){
         $str = (time() - $last);
     }else{
 		$str = substr($telegram->text(), strpos("/timestamp ") + strlen("/timestamp "));
+		$str = strtotime($str);
 	}
 
     $telegram->send

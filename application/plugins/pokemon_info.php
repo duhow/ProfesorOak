@@ -101,7 +101,7 @@ function pokemon_basic_info($poke, $obj = NULL){
 }
 
 function pokemon_movements($poke, $obj = NULL){
-	
+
 }
 
 function pokemon_seen($user, $poke, $loc, $cooldown = 60){
@@ -459,7 +459,10 @@ elseif($telegram->text_has("Qué", ["significa", "es"], TRUE)){
 }
 
 // Calcular IV info
-elseif($telegram->text_command("iv") && $telegram->words() <= 2){
+elseif(
+	($telegram->text_command("iv") or $telegram->text_command("ivs")) &&
+	$telegram->words() <= 2
+){
 	if($pokemon->command_limit("iv", $telegram->chat->id, $telegram->message, 7)){ return -1; }
 
 	$telegram->send
@@ -475,7 +478,7 @@ elseif($telegram->text_command("iv") && $telegram->words() <= 2){
 elseif(
 	$telegram->words() >= 4 &&
 	($telegram->text_has(["tengo", "me ha salido", "calculame", "calcula iv", "calcular iv", "he conseguido", "he capturado"], TRUE) or
-	$telegram->text_command("iv"))
+	$telegram->text_command("iv") or $telegram->text_command("ivs"))
 ){
 	// TODO
 }
