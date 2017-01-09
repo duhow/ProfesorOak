@@ -31,7 +31,7 @@ if($telegram->is_chat_group()){
 
 			$nextlev = expchat_level($newpoints);
 
-			if($nextlev > $curlev){
+			if($nextlev > $curlev && $nextlev > 0){
 				$telegram->send
 					->notification(FALSE)
 					->text($telegram->emoji("\u2b06\ufe0f") ." *" .$telegram->user->first_name ."* ha subido al *nivel " .$nextlev ."*!", TRUE)
