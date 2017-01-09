@@ -197,12 +197,20 @@ elseif($telegram->text_contains("nido") && $telegram->text_has(["borra", "borrar
 			->send();
 			return -1;
 		}
-		$where = substr($telegram->text(), strpos($telegram->text(), " en "));
+		$where = substr($telegram->text(), strpos($telegram->text(), " en ") + strlen(" en "));
 		$this->db
 			->where('chat', $telegram->chat->id)
 			->where('pokemon', $pk['pokemon'])
 			->like('location_string', $where);
-	}elseif($telegram->text_has("nido de")){
+	}elseif($telegram->text_has(["nido", "nidos"], "de")){
+		$allow = [$this->config->item('creator')];
+		if(!in_array($telegram->user->id, $allow)){
+			$telegram->send
+				->text("Buen intento. -.-")
+			->send();
+			return -1;
+		}
+
 		$pk = pokemon_parse($telegram->text());
 		if(!empty($pk['pokemon'])){
 			$this->db
@@ -238,6 +246,18 @@ elseif($telegram->text_contains("nido") && $telegram->text_has(["borra", "borrar
 		}
 		$this->db
 			->where('chat', $telegram->chat->id);
+	}elseif(is_numeric($telegram->words(2))){
+		$allow = [$this->config->item('creator')];
+		if(!in_array($telegram->user->id, $allow)){
+			$telegram->send
+				->text("Buen intento. -.-")
+			->send();
+			return -1;
+		}
+
+		// Jugar con rangos 1-3 1,2,3 ?
+
+		$this->db->where('id', $telegram->words(2));
 	}else{
 		$telegram->send
 			->text("No te entiendo.")
