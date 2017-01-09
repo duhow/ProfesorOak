@@ -1,22 +1,22 @@
 <?php
 
-$levels = [
-	0,
-	200,
-	500,
-	1000,
-	2000,
-	4000,
-	7500,
-	12500,
-	25000,
-	50000,
-];
-
 function expchat_level($points){
+	$levels = [
+		0,
+		200,
+		500,
+		1000,
+		2000,
+		4000,
+		7500,
+		12500,
+		25000,
+		50000,
+	];
+
 	for($i = 0; $i < count($levels); $i++){
 		if($points > $levels[$i]){ continue; }
-		return $i;
+		return ($i - 1);
 	}
 }
 
@@ -34,7 +34,7 @@ if($telegram->is_chat_group()){
 			if($nextlev > $curlev){
 				$telegram->send
 					->notification(FALSE)
-					->text($telegram->user->first_name ." ha subido al *nivel " .$nextlev ."*!", TRUE)
+					->text($telegram->emoji("\u2b06\ufe0f") ." *" .$telegram->user->first_name ."* ha subido al *nivel " .$nextlev ."*!", TRUE)
 				->send();
 			}
 			// La recompensa será el número de palabras que haya tocado, para hacer el factor diferencial.
@@ -50,7 +50,7 @@ if($telegram->text_has("mi experiencia")){
 	if(empty($points)){ $points = 0; }
 	$level = expchat_level($points);
 	$telegram->send
-		->text("L" .$points ." / $points EXP")
+		->text("*L" .$level ."* / $points EXP", TRUE)
 	->send();
 	return -1;
 }
