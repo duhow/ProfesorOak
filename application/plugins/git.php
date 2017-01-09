@@ -18,12 +18,11 @@ function git_pull(){
 	$newversion = git_version();
 	if(strpos($out, "Already up-to-date") !== FALSE){
 		$out = ":ok: Ya está actualizado.";
-	}
-
 	// TODO check si el hash coincide o no y validar si hace falta cambio o no de revertir.
-	if(empty($out) or $version['hash'] == $newversion['hash']){
+	}elseif(empty($out) or $version['hash'] == $newversion['hash']){
 		$out = ":times: Problema al actualizar.";
 	}
+
 	return $out;
 }
 
