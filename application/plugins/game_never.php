@@ -18,6 +18,14 @@ if($telegram->callback && $telegram->callback == "yo nunca si"){
 		$telegram->answer_if_callback("Ya lo sabemos, tranquilo. " .$telegram->emoji("<3"), TRUE);
 		return -1;
 	}
+
+	if(!$telegram->user_in_chat($telegram->user->id, $telegram->chat->id)){
+        $pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
+        // $telegram->send->text("Eh, que " .$telegram->user->id ." no está!")->send();
+        $telegram->answer_if_callback("Eh, tu no estás ahí!", TRUE);
+		return -1;
+	}
+
 	$str = $telegram->text_message() ."\n" .$telegram->user->first_name ." lo ha hecho.";
 	$telegram->send
 		->message(TRUE)

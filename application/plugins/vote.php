@@ -52,6 +52,11 @@ function vote_response($user, $vote, $value = NULL){
 		}
 	}
 
+	if(vote_closed($vote)){
+		// TODO
+		return -1;
+	}
+
 	$response = vote_response($user, $vote);
 
 	if($response === NULL){
@@ -91,7 +96,12 @@ function vote_response($user, $vote, $value = NULL){
 	return $CI->db->update('vote_response', $data);
 }
 
-function vote_display($vote, $tg = NULL){
+function vote_display($vote, $tg = NULL, $edit = FALSE){
+	if($tg === TRUE && $edit != FALSE){
+		$tg = $edit;
+		$edit = TRUE;
+	}
+
 	$info = vote_info($vote);
 	if(empty($info)){
 		$tg->send
@@ -145,6 +155,8 @@ function vote_display($vote, $tg = NULL){
 	$amount = count($options);
 	$i = 0;
 
+	$responses = vote_count($vote, TRUE);
+
 	// TODO cambio en Telegram API para agregar función.
 	while($i < $amount){
 		$buttons = array();
@@ -152,17 +164,27 @@ function vote_display($vote, $tg = NULL){
 			// 6 x row
 			foreach($options as $j => $opt){
 				$i = ($j+1);
+				$txtbt = $opt;
+				if(isset($responses[$i]) && $responses[$i] > 0){ $txtbt .= " " .$responses[$i]; }
 				$buttons[] = [$opt, "vota $vote $i"];
 			}
 			$i = $amount;
 		}elseif($lmax <= 14 && ($amount - $i+1) > 1){
 			// 2 x row
-			$buttons[] = [$options[$i], "vota $vote $i"];
+			$txtbt = $options[$i];
+			if(isset($responses[$i]) && $responses[$i] > 0){ $txtbt .= " " .$responses[$i]; }
+			$buttons[] = [$txtbt, "vota $vote $i"];
 			$i++;
-			$buttons[] = [$options[$i], "vota $vote $i"];
+
+			$txtbt = $options[$i];
+			if(isset($responses[$i]) && $responses[$i] > 0){ $txtbt .= " " .$responses[$i]; }
+			$buttons[] = [$txtbt, "vota $vote $i"];
 		}else{
 			// 1 x row
-			$buttons[] = [$options[$i], "vota $vote $i"];
+			$txtbt = $options[$i];
+			if(isset($responses[$i]) && $responses[$i] > 0){ $txtbt .= " " .$responses[$i]; }
+
+			$buttons[] = [$txtbt, "vota $vote $i"];
 		}
 
 		$tg->send->inline_keyboard()->row($buttons);
@@ -171,8 +193,15 @@ function vote_display($vote, $tg = NULL){
 
 	$tg->send
 		->inline_keyboard()->show()
-		->text(json_decode('"' .$title .'"'))
-	->send();
+		->text(json_decode('"' .$title .'"'));
+
+	if($edit === TRUE){
+		return $tg->send
+			->message(TRUE)
+		->edit('text');
+	}else{
+		return $tg->send->send();
+	}
 }
 
 function vote_register($user, $question, $options, $limit = NULL){
@@ -224,21 +253,17 @@ if($telegram->text_command("vote") && $telegram->words() >= 4){
 }
 
 if($telegram->callback && strpos($telegram->callback, "vota") === 0){
-	// $options = explode(" ", $telegram->callback);
-	// $vote = $options[1];
-	// $select = $options[2];
+	$options = explode(" ", $telegram->callback);
+	$vote = $options[1];
+	$select = $options[2];
 
 	// $telegram->send->text("has votado ")->send();
-	// vote_response($telegram->user->id, $vote, $select);
+	vote_response($telegram->user->id, $vote, $select);
+	vote_display($vote, $telegram, TRUE);
 
-	// $telegram->answer_if_callback("¡Hecho!");
+	$telegram->answer_if_callback("¡Hecho!");
 
-	$telegram->answer_if_callback("");
-	return -1;
-}
-
-if($telegram->user->id == $this->config->item('creator')){
-	// $telegram->send->text("asdf")->send();
+	// $telegram->answer_if_callback("");
 	return -1;
 }
 

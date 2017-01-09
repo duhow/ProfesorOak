@@ -164,6 +164,7 @@ elseif(
         'pole' => "Pole",
         'location' => "Ubicación del grupo",
         'offtopic_chat' => "Grupo offtopic",
+		'pokegram' => '¿Aparecen Pokémon?',
     ];
     foreach($check as $key => $txt){
         $set = $pokemon->settings($telegram->chat->id, $key);
@@ -197,12 +198,16 @@ elseif(
         $chat = $telegram->send->get_chat();
         $title = strtolower($telegram->emoji($chat['title'], TRUE));
         $teamsel = NULL;
-        foreach($color as $team => $words){
-            foreach($words as $word){
-                if(strpos($title, $word) !== FALSE){ $teamsel = $team; break; }
-            }
-            if($teamsel !== NULL){ break; }
-        }
+		if(function_exists("color_parse")){
+			$teamsel = color_parse($title);
+		}else{
+			foreach($color as $team => $words){
+				foreach($words as $word){
+					if(strpos($title, $word) !== FALSE){ $teamsel = $team; break; }
+				}
+				if($teamsel !== NULL){ break; }
+			}
+		}
         if($teamsel !== NULL){
             $pokemon->settings($telegram->chat->id, 'team_exclusive', $teamsel);
             $set = "detectado " .$telegram->emoji($iconteam[$teamsel]);

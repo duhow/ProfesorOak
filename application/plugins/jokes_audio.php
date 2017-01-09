@@ -164,6 +164,8 @@ if($telegram->text_has("Team Rocket despega")){
     if(mt_rand(1, 4) == 4){
         $telegram->send->file('voice', FCPATH . 'files/modem.ogg', 'ERROR 404 PKGO_FC_CHEATS NOT_FOUND');
     }
+}elseif($telegram->text_has("es fly")){
+	$telegram->send->file('video', 'BAADBAAD9AgAAjbFNAABxUA6dF63m1YC');
 }
 
 ?>

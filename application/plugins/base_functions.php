@@ -313,12 +313,10 @@ function color_parse($string, $retkey = TRUE){
 
 	// return $string;
 	$equipos = [
-		'Y' => ['amarillo', 'amarilla', 'yellow', 'instinto', 'instict', 'instinct', 'instincto', 'zapdos'],
-		'R' => ['rojo', 'roja', 'red', 'valor', 'moltres'],
-		'B' => ['azul', 'azúl', 'azules', 'blue', 'sabidurí­a', 'sabiduria', 'mystic', 'articuno']
+		'Y' => ['amarillo', 'amarilla', 'yellow', 'instinto', 'instict', 'instinct', 'instincto', 'zapdos', 'sparky', ':heart-yellow:'],
+		'R' => ['rojo', 'roja', 'red', 'valor', 'moltres', 'candela', ':heart-red:'],
+		'B' => ['azul', 'azúl', 'azules', 'blue', 'sabidurí­a', 'sabiduria', 'mystic', 'articuno', 'blanche', ':heart-blue:']
 	];
-
-
 
 	$teamsel = NULL;
 	foreach($equipos as $team => $find){

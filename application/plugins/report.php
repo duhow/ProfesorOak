@@ -23,7 +23,7 @@ if(
 	$pkuser = $pokemon->find($target);
 
 	if($telegram->text_command("reportv")){
-
+		// Información de sobre qué está reportado.
 		return -1;
 	}
 

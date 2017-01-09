@@ -88,6 +88,22 @@ function pokemon_attack($text, $target_attack = FALSE){
 	return $str;
 }
 
+function pokemon_basic_info($poke, $obj = NULL){
+	// Mostrar
+	if((is_numeric($poke) or is_string($poke)) && $obj != NULL){
+		$poke = $obj->pokedex($poke);
+	}elseif(!is_object($poke) && $obj === NULL){
+		return FALSE;
+	}
+
+	// TODO Devolver string con el texto de información del Pokémon.
+	return "";
+}
+
+function pokemon_movements($poke, $obj = NULL){
+	
+}
+
 function pokemon_seen($user, $poke, $loc, $cooldown = 60){
 	$pokemon = new Pokemon();
 	$telegram = new Telegram();

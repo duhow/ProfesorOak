@@ -13,7 +13,25 @@ function git_version(){
 }
 
 function git_pull(){
+	$version = git_version();
+	$out = shell_exec("git pull");
+	$newversion = git_version();
+	if(strpos($out, "Already up-to-date") !== FALSE){
+		$out = ":ok: Ya está actualizado.";
+	}
 
+	// TODO check si el hash coincide o no y validar si hace falta cambio o no de revertir.
+	if(empty($out) or $version['hash'] == $newversion['hash']){
+		$out = ":times: Problema al actualizar.";
+	}
+	return $out;
+}
+
+// TODO
+function git_revert($hash){
+	$out = shell_exec("git revert -i $hash");
+	if(strpos($out, "") !== FALSE){ return TRUE; }
+	return $out;
 }
 
 if(
@@ -24,10 +42,8 @@ if(
 			->text("Ejecutando...")
 		->send();
 
-	$out = shell_exec("git pull");
-	if(strpos($out, "Already up-to-date") !== FALSE){
-		$out = $telegram->emoji(":ok: Ya está actualizado.");
-	}
+	$out = git_pull();
+	$out = $telegram->emoji($out);
 
 	$telegram->send
 		->chat(TRUE)
@@ -40,7 +56,7 @@ if(
 
 if(
 	$telegram->text_command("version") or
-	( ($telegram->text_has(["profe", "profesor", "oak"]) or $telegram->text_mention("ProfesorOak_bot") ) && 
+	( ($telegram->text_has(["profe", "profesor", "oak"]) or $telegram->text_mention("ProfesorOak_bot") ) &&
 	  $telegram->text_has("versión") && $telegram->words() <= 10)
 ){
 	$info = git_version();

@@ -3,7 +3,8 @@
 if(
     ( $telegram->text_command("cleverbot") or $telegram->text_command("jordi") or
     $telegram->text_has(["oye", "dime", "escucha"], ["oak", "profe", "profesor"], TRUE) ) &&
-    $telegram->words() > 1
+    $telegram->words() > 1 &&
+	$telegram->key == "message"
 ){
     // if($pokemon->settings($telegram->chat->id, 'shutup') == TRUE){ return; }
 

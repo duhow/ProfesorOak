@@ -64,11 +64,12 @@ if(
     if(is_numeric($level)){
         $pokeuser = $pokemon->user($telegram->user->id);
         $command = $pokemon->settings($telegram->user->id, 'last_command');
-        if($level == $pokeuser->lvl or $command == "LEVELUP"){
-            /* $telegram->send
+        if($level == $pokeuser->lvl){ // or $command == "LEVELUP"
+            $telegram->send
                 ->notification(FALSE)
-                ->text("Que ya lo sé, pesado...")
-            ->send(); */
+                ->text("Si, ya lo sé...")
+            ->send();
+			return -1;
         }
         $this->analytics->event('Telegram', 'Change level', $level);
         $pokemon->settings($telegram->user->id, 'last_command', 'LEVELUP');
@@ -76,14 +77,50 @@ if(
             if($level <= $pokeuser->lvl){ return; }
             $pokemon->update_user_data($telegram->user->id, 'lvl', $level);
             $pokemon->log($telegram->user->id, 'levelup', $level);
-            if($command == "WHOIS" && $telegram->is_chat_group()){
+            if($telegram->is_chat_group()){ // $command == "WHOIS" &&
+				$editwho = $pokemon->settings($telegram->chat->id, 'whois_last');
+				if(!empty($editwho)){
+					// el mensaje será sobre self, imagino
+					// pero puede ser que haga un quien es (no yo)
+					// y responder yo, con lo que me invalida este comando.
+					// FIXME solución: el quien es tendrá el UID de la persona
+					// no del que lo escribe, si no sobre quien informa.
+					$editwho = unserialize($editwho);
+					$telegram->send
+						->message($editwho[1])
+						->chat(TRUE)
+						->text("") // TODO
+					->edit('text');
+
+					$pokemon->settings($telegram->chat->id, 'whois_last', 'DELETE');
+				}
                 $telegram->send
                     ->notification(FALSE)
                     ->text("Así que has subido al nivel *$level*... Guay!", TRUE)
                     // Vale. Como me vuelvas a preguntar quien eres, te mando a la mierda. Que lo sepas.
                 ->send();
             }
-        }
+        }elseif($level > 35 && $level <= 40){
+			if($level <= $pokeuser->lvl){ return; }
+			if($pokeuser->lvl < 35){
+				// Control de que el usuario sea un nivel inferior al que dice ser para poder controlarlo.
+				$telegram->send
+					->text("Si, ya. Claro.")
+				->send();
+				return -1;
+			// TODO Control de tiempo según log para validar esto.
+			}elseif($pokeuser->lvl != $level - 1){
+				$telegram->send
+					->text("¿Tan rápido has subido? No me lo creo.")
+				->send();
+				return -1;
+			}
+
+			$pokemon->step($telegram->user->id, 'LEVEL_SCREENSHOT');
+			$telegram->send
+				->text("¡Guau! Pues... Mándame captura para confirmarlo, anda.")
+			->send();
+		}
     }
     return;
 }
@@ -133,12 +170,17 @@ if(
 	}
 	$pokemon->settings($telegram->user->id, 'last_command', 'WHOIS');
 
-	$telegram->send
+	$q = $telegram->send
 		// ->chat($chat)
 		// ->reply_to( ($chat == $telegram->chat->id) )
 		->notification(FALSE)
 		->text($telegram->emoji($str), TRUE)
 	->send();
+
+	if($telegram->is_chat_group()){
+		$data = [$telegram->user->id, $q['message_id']];
+		$pokemon->settings($telegram->chat->id, 'whois_last', serialize($data));
+	}
 	return -1;
 }
 

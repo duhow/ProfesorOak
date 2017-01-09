@@ -134,6 +134,17 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
                 return -1;
             }
             $text = "¡Buenas a todos, entrenadores!\n¡Un placer estar con todos vosotros! :D";
+
+			$group = $pokemon->group($telegram->chat->id);
+			if($group->messages == 0){
+				$text .= "\nVeo que este grupo es nuevo, así que voy a buscar cuánta gente conozco.";
+				// TODO si el Oak es nuevo en un grupo de más de X personas,
+				// Realizar investigate sólo una vez.
+
+				// Esto se puede hacer con el count de mensajes de un grupo, si es > 0.
+				// Teniendo en cuenta que el grupo no se borre de la DB para que
+				// no vuelva a ejecutarse este método.
+			}
         }
 
         $pokemon->user_addgroup($new->id, $telegram->chat->id);
