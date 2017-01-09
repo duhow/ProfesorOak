@@ -156,6 +156,8 @@ if(
         ->send();
     }
     return;
+}elseif($telegram->text_has("dame", ["un huevo", "pokeball", "pokeballs"]) && $telegram->words() <= 6){
+	$joke = "Nope.";
 }
 
 

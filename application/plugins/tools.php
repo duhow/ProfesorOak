@@ -56,7 +56,9 @@ if($telegram->text_command("avoice")){
     if($telegram->words() == 2 && is_numeric($telegram->last_word())){
         $last = intval($telegram->last_word());
         $str = (time() - $last);
-    }
+    }else{
+		$str = substr($telegram->text(), strpos("/timestamp ") + strlen("/timestamp "));
+	}
 
     $telegram->send
         ->notification(FALSE)

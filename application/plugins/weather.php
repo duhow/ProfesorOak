@@ -30,6 +30,7 @@ if($telegram->text_command("tiempo") && $telegram->user->id == $this->config->it
 	// $telegram->send->chat($this->config->item('creator'))->text($cmd)->send();
 
 	$telegram->send->chat_action('upload_photo')->send();
+	if(!file_exists($phbin)){ return -1; }
 	exec($cmd);
 
 	$tmpfile .= ".png";

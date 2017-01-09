@@ -2,7 +2,7 @@
 
 if($telegram->text_has(["participar", "página"]) && $telegram->text_has(["sorteo"]) && $telegram->words() <= 9){
 	if($telegram->is_chat_group()){
-		$str = "Apúntate al sorteo navideño y compra el Pack Ultraespecial!\nhttp://oak.duhowpi.net/sorteo";
+		$str = "¡Consigue incienso y cebos para Telegram!\nhttp://oak.duhowpi.net/";
 	}else{
 		$key = md5($telegram->user->id .":" .time());
 		$query = $this->db
