@@ -184,4 +184,95 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
     return -1;
 }
 
+elseif($telegram->text_contains("nido") && $telegram->text_has(["borra", "borrar"])){
+	if($telegram->text_has("mis nidos")){
+		$this->db
+			->where('chat', $telegram->chat->id)
+			->where('user', $telegram->user->id);
+	}elseif($telegram->text_has("nido de") && $telegram->text_has("en")){
+		$pk = pokemon_parse($telegram->text());
+		if(empty($pk['pokemon'])){
+			$telegram->send
+				->text($telegram->emoji(":times: ¿De qué Pokémon dices?"))
+			->send();
+			return -1;
+		}
+		$where = substr($telegram->text(), strpos($telegram->text(), " en "));
+		$this->db
+			->where('chat', $telegram->chat->id)
+			->where('pokemon', $pk['pokemon'])
+			->like('location_string', $where);
+	}elseif($telegram->text_has("nido de")){
+		$pk = pokemon_parse($telegram->text());
+		if(!empty($pk['pokemon'])){
+			$this->db
+				->where('chat', $telegram->chat->id)
+				->where('pokemon', $pk['pokemon']);
+		}
+		// TODO si no, de usuario
+	}elseif($telegram->text_has("sus nidos") && $telegram->has_reply){
+		$allow = [$this->config->item('creator')];
+		if(!in_array($telegram->user->id, $allow)){
+			$telegram->send
+				->text("Buen intento. -.-")
+			->send();
+			return -1;
+		}
+
+		if(isset($telegram->reply->forward_from)){
+			$target = $telegram->reply->forward_from['id'];
+		}else{
+			$target = $telegram->reply_user->id;
+		}
+
+		$this->db
+			->where('chat', $telegram->chat->id) // HACK todos los chats o sólo el activo?
+			->where('user', $target);
+	}elseif($telegram->text_has(["toda la lista", "todos los nidos"])){
+		$allow = [$this->config->item('creator')];
+		if(!in_array($telegram->user->id, $allow)){
+			$telegram->send
+				->text("Buen intento. -.-")
+			->send();
+			return -1;
+		}
+		$this->db
+			->where('chat', $telegram->chat->id);
+	}else{
+		$telegram->send
+			->text("No te entiendo.")
+		->send();
+		return -1;
+	}
+
+	$query = $this->db
+		->select('id')
+	->get('pokemon_nests');
+
+	if($query->num_rows() >= 100){
+		$telegram->send
+			->text($telegram->emoji(":times: ¡Son demasiados!"))
+		->send();
+		return -1;
+	}
+
+	$ids = array_column($query->result_array(), 'id');
+
+	$query = $this->db
+		->where('id', $ids)
+	->delete('pokemon_nests');
+
+	$str = ":times: Error general.";
+
+	if($query){
+		$str = ":ok: *" .count($ids) ."* nidos borrados.";
+	}
+
+	$telegram->send
+		->text($telegram->emoji($str), TRUE)
+	->send();
+
+	return -1;
+}
+
 ?>
