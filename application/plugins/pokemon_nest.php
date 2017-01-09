@@ -259,7 +259,7 @@ elseif($telegram->text_contains("nido") && $telegram->text_has(["borra", "borrar
 	$ids = array_column($query->result_array(), 'id');
 
 	$query = $this->db
-		->where('id', $ids)
+		->where_in('id', $ids)
 	->delete('pokemon_nests');
 
 	$str = ":times: Error general.";
