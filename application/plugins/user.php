@@ -140,6 +140,7 @@ if(
 	else{ $str .= '$pokemon, '; }
 
 	$str .= 'eres *$team* $nivel. $valido';
+	if($pokeuser->authorized){ $str .= $telegram->emoji(" :star: "); }
 
 	// si el bot no conoce el nick del usuario
 	if(empty($pokeuser->username)){ $str .= "\nPor cierto, ¿cómo te llamas *en el juego*? \n_Me llamo..._"; }
@@ -182,6 +183,115 @@ if(
 		$pokemon->settings($telegram->chat->id, 'whois_last', serialize($data));
 	}
 	return -1;
+}
+
+elseif(
+	( $telegram->text_has("quién", ["es", "eres"]) or
+	$telegram->text_has("Conoces", "a") ) &&
+	!$telegram->text_contains(["programa", "esta"]) &&
+	$telegram->words() <= 5
+){
+	$str = "";
+	$teams = ['Y' => "Amarillo", "B" => "Azul", "R" => "Rojo"];
+	$user_search = NULL;
+	// pregunta usando respuesta
+	if($telegram->has_reply){
+		$this->analytics->event('Telegram', 'Whois', 'Reply');
+
+		$user_search = $telegram->reply_user->id;
+		if($telegram->reply_is_forward && $telegram->reply_user->id != $telegram->reply->forward_from->id){
+			$user_search = $telegram->reply->forward_from['id']; // FIXME -> to object?
+		}
+	}else{
+		$this->analytics->event('Telegram', 'Whois', 'User');
+		if($telegram->text_mention()){
+			$text = $telegram->text_mention();
+			if(is_array($text)){ $text = key($text); }
+		}
+		elseif($telegram->words() == 4){ $text = $telegram->words(2); } // 2+1 = 3 palabra
+		else{ $text = $telegram->last_word(); } // Si no hay mención, coger la última palabra
+		$text = $telegram->clean('alphanumeric', $text);
+		if(strlen($text) < 4){ return; }
+		if(text_find(["quien", "quién"], $text)){ return; } // Quien es quien?
+		$pk = pokemon_parse($text);
+		if(!empty($pk['pokemon'])){ /* $this->_pokedex($pk['pokemon']); */ return; } // TODO FIXME
+		$user_search = $text;
+	}
+
+	$info = $pokemon->user($user_search);
+
+	// si el usuario por el que se pregunta es el bot
+	if($telegram->has_reply && $telegram->reply_user->id == $this->config->item("telegram_bot_id") && !$telegram->reply_is_forward){
+		$str = "¡Pues ese soy yo mismo! ";
+	// si es un bot
+	}elseif(strtolower(substr($user_search, -3)) == "bot"){
+		$str = "Es un bot."; // Yo no me hablo con los de mi especie.\nSi, queda muy raro, pero nos hicieron así...";
+	// si no se conoce
+	}elseif(empty($info)){
+		$str = "No sé quien es $user_search.";
+		// User offline
+		$info = $pokemon->user_offline($user_search);
+		if(!empty($info)){ $str = 'Es *$team* $nivel. :question-red:'; }
+	}else{
+		if(empty($info->username)){
+			$str = "No sé como se llama, sólo sé que ";
+		}else{
+			$str = '$pokemon, ';
+		}
+		$str .= 'es *$team* $nivel. $valido' ."\n";
+	}
+
+	if(!empty($info)){
+		$flags = $pokemon->user_flags($info->telegramid);
+
+		// añadir emoticonos basado en los flags del usuario REPETIDO
+		// if($info->verified){ $str .= $telegram->emoji(":green-check: "); }
+		// else{ $str .= $telegram->emoji(":warning: "); }
+		// ----------------------
+		if($info->blocked){ $str .= $telegram->emoji(":forbid: "); }
+		if($info->authorized){ $str .= $telegram->emoji(":star: "); }
+		if(!empty($flags)){
+			if(in_array("ratkid", $flags)){ $str .= $telegram->emoji(":mouse: "); }
+			if(in_array("multiaccount", $flags)){ $str .= $telegram->emoji(":multiuser: "); }
+			if(in_array("gps", $flags)){ $str .= $telegram->emoji(":satellite: "); }
+			if(in_array("bot", $flags)){ $str .= $telegram->emoji(":robot: "); }
+			if(in_array("rager", $flags)){ $str .= $telegram->emoji(":fire: "); }
+			if(in_array("troll", $flags)){ $str .= $telegram->emoji(":joker: "); }
+			if(in_array("spam", $flags)){ $str .= $telegram->emoji(":spam: "); }
+			if(in_array("hacks", $flags)){ $str .= $telegram->emoji(":laptop: "); }
+			if(in_array("enlightened", $flags)){ $str .= $telegram->emoji(":frog: "); }
+			if(in_array("resistance", $flags)){ $str .= $telegram->emoji(":key: "); }
+		}
+	}
+
+	if(!empty($str)){
+	// $chat = ($telegram->is_chat_group() && $this->is_shutup() && !in_array($telegram->user->id, $this->admins(TRUE)) ? $telegram->user->id : $telegram->chat->id);
+
+	$repl = [
+		// '$nombre' => $new->first_name,
+		// '$apellidos' => $new->last_name,
+		'$equipo' => $teams[$info->team],
+		'$team' => $teams[$info->team],
+		// '$usuario' => "@" .$new->username,
+		'$pokemon' => "@" .$info->username,
+		'$nivel' => "L" .$info->lvl,
+		'$valido' => ($info->verified ? ':green-check:' : ':warning:')
+	];
+
+	$str = str_replace(array_keys($repl), array_values($repl), $str);
+	// $this->last_command('WHOIS');
+	// $pokemon->settings($user->id, 'last_command', 'WHOIS');
+
+	// $telegram->send->chat($this->config->item('creator'))->text($text->emoji($str))->send();
+
+		$telegram->send
+			// ->chat($chat)
+			// ->reply_to( (($chat == $telegram->chat->id && $telegram->has_reply) ? $telegram->reply->message_id : NULL) )
+			->notification(FALSE)
+			->text($telegram->emoji($str), TRUE)
+		->send();
+	}
+	return;
 }
 
 // Mención de usuarios
