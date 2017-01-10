@@ -699,7 +699,7 @@ class Telegram extends CI_Model{
 			if($e['type'] == 'text_mention'){
 				$users[] = [$e['user']['id'] => substr($text, $e['offset'], $e['length'])];
 			}elseif($e['type'] == 'mention'){
-				$u = trim(substr($text, $e['offset'], $e['length'])); // @username
+				$u = trim(substr($this->text(TRUE), $e['offset'], $e['length'])); // @username
 				// $d = $this->send->get_member_info($u); HACK
 				$d = FALSE;
 				$users[] = ($d === FALSE ? $u : [$d['user']['id'] => $u] );

@@ -16,7 +16,7 @@ function expchat_level($points){
 
 	for($i = 0; $i < count($levels); $i++){
 		if($points > $levels[$i]){ continue; }
-		return ($i - 1);
+		return (max(0, $i - 1));
 	}
 }
 
