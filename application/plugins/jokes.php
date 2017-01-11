@@ -19,6 +19,26 @@ if(
     $days = floor($birthdate / (60*60*24));
     $joke = "Cumplo " .floor($days/30) ." meses y " .($days % 30) ." días. ";
     $joke .= $telegram->emoji(":)");
+}elseif($telegram->text_has("quién es Ash") && $telegram->words() <= 7){
+	$this->analytics->event('Telegram', 'Jokes', 'Ash');
+	$telegram->send->text("Ah! Ese es un *cheater*, es nivel 100...\nLo que no sé de dónde saca tanto dinero para viajar tanto...", TRUE)->send();
+	return -1;
+}elseif($telegram->text_has("Gracias", ["profesor", "Oak", "profe"]) && !$telegram->text_has("pero", "no")){
+	// "el puto amo", "que maquina eres"
+	$this->analytics->event('Telegram', 'Jokes', 'Thank you');
+	$frases = ["De nada, entrenador! :D", "Nada, para eso estamos! ^^", "Gracias a ti :3"];
+	$n = mt_rand(0, count($frases) - 1);
+
+	$joke = $frases[$n];
+}elseif($telegram->text_has(["buenos", "buenas", "bon"], ["días", "día", "tarde", "tarda", "tardes", "noches", "nit"])){
+	/* if(
+		($telegram->is_chat_group() and $pokemon->settings($telegram->chat->id, 'say_hello') == TRUE) and
+		($pokemon->settings($telegram->user->id, 'say_hello') != FALSE or $pokemon->settings($telegram->user->id, 'say_hello') == NULL)
+	){*/
+	$joke = "Buenas a ti también, entrenador! :D";
+	if($telegram->text_has(['noches', 'nit'])){
+		$joke = "Buenas noches fiera, descansa bien! :)";
+	}
 }elseif($telegram->text_hashtag("novatos")){
     $this->analytics->event('Telegram', 'Jokes', 'Question');
     $preguntas = [
