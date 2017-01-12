@@ -379,6 +379,10 @@ function pokegame_number($legendary = FALSE, $top = 251){
 	return $num;
 }
 
+function pokegame_duel($user, $target, $tg){
+	
+}
+
 // Anti cheats
 if($pokemon->user_flags($telegram->user->id, ['summonear', 'poketelegram_cheat'])){ return; }
 
