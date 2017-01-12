@@ -133,6 +133,7 @@ elseif(
             'jokes' => TRUE,
             'pole' => TRUE,
             'play_games' => TRUE,
+			'pokegram' => TRUE,
         ],
         'silenciosa' => [
             'announce_welcome' => FALSE,
@@ -141,6 +142,7 @@ elseif(
             'jokes' => FALSE,
             'pole' => FALSE,
             'play_games' => FALSE,
+			'pokegram' => FALSE,
         ]
     ];
 

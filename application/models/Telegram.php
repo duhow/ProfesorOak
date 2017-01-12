@@ -958,6 +958,28 @@ class Telegram extends CI_Model{
 		}
 	}
 
+	function reply_target($priority = NULL){
+		if(!$this->has_reply){ return NULL; }
+		// El reply puede ser hacia la persona del mensaje al cual se hace reply
+		// o si es un forward, hacia ese usuario creador del mensaje.
+
+		$ret = $this->reply_user;
+		if($priority == NULL or $priority == TRUE or strtolower($priority) == 'forward'){
+			if($this->reply_is_forward){
+				$ret = (object) $this->reply->forward_from;
+			}
+		}
+
+		return $ret;
+	}
+
+	// Return UserID siempre que sea posible.
+	function user_selector($priority = NULL, $word = NULL){
+		$user = $this->reply_target($priority);
+		if(!empty($user)){ return $user->id; }
+		// TODO 
+	}
+
 	function pinned_message($content = NULL){
 		if(!isset($this->data['message']['pinned_message'])){ return FALSE; }
 		$pin = $this->data['message']['pinned_message'];
