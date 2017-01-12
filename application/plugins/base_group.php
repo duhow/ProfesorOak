@@ -151,6 +151,7 @@ if($telegram->text_url() && $telegram->is_chat_group()){
 
 if($telegram->data_received("migrate_to_chat_id")){
     $pokemon->group_disable($telegram->chat->id);
+	// TODO mover settings
     return -1;
 }
 
@@ -230,5 +231,7 @@ if($dubs && $telegram->key == "message"){ // HACK para editados no vale.
     }
 }
 
+// Cancelar acciones sobre comandos provenientes de mensajes de channels. STOP SPAM.
+if($telegram->has_forward && $telegram->forward_type("channel")){ return -1; }
 
 ?>

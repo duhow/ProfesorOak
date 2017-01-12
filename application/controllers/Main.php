@@ -19,9 +19,6 @@ class Main extends CI_Controller {
 		// Actualizamos datos de chat
 		$this->_update_chat();
 
-		// Cancelar acciones sobre comandos provenientes de mensajes de channels. STOP SPAM.
-		if($telegram->has_forward && $telegram->forward_type("channel")){ return; }
-
 		$this->load->model('plugin');
 		$this->plugin->load_all(TRUE); // BASE
 
@@ -35,17 +32,14 @@ class Main extends CI_Controller {
 			foreach($c as $col){ $colores[] = $col; }
 		}
 
-		// si el usuario existe, proceder a interpretar el mensaje
+		// Si el usuario no está registrado con las funciones básicas, fuera.
 		if(!$pokemon->user_exists($telegram->user->id)){ return; }
 
-		// interpretar mensajes de usuarios verificados
-		// TODO hay que reducir la complejidad de esta bestialidad de funcion ^^
+		// Si el usuario está bloqueado, fuera.
+		if($pokemon->user_blocked($telegram->user->id)){ return; }
 
 		$pokeuser = $pokemon->user($telegram->user->id);
 		$step = $pokemon->step($telegram->user->id);
-
-		// terminar si el usuario no esta verificado o esta en la blacklist
-		if($pokemon->user_blocked($telegram->user->id)){ return; }
 
 		// Cancelar pasos en general.
 		if($step != NULL && $telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
@@ -300,28 +294,6 @@ class Main extends CI_Controller {
 				->send();
 				return;
 			}
-		}elseif($telegram->text_has("mejor", ["ataque", "habilidad", "skill"])){
-			$pk = $this->parse_pokemon();
-			if(!empty($pk['pokemon'])){
-				$pokedex = $pokemon->pokedex($pk['pokemon']);
-				$skills = $pokemon->skill_learn($pk['pokemon']);
-				$sel = NULL;
-				$min = 0;
-				foreach($skills as $k => $skill){
-					if($skill->attack > $min){
-						$min = $skill->atttack;
-						$sel = $k;
-					}
-				}
-				// $chat = ($this->is_shutup() ? $telegram->user->id : $telegram->chat->id);
-				$text = "El mejor ataque de *" .$pokedex->name ."* es *" .$skills[$sel]->name_es ."*, con " .$skills[$sel]->attack ." ATK y " .$skills[$sel]->bars ." barras.";
-				$telegram->send
-					// ->chat($chat)
-					->notification(FALSE)
-					->text($text, TRUE)
-				->send();
-			}
-			return;
 		}elseif($telegram->text_has(["pokédex", "pokémon"], TRUE) or $telegram->text_command("pokedex")){
 			// $text = $telegram->text();
 			// $chat = ($telegram->text_has("aqui") && !$this->is_shutup() ? $telegram->chat->id : $telegram->user->id);
@@ -831,7 +803,7 @@ class Main extends CI_Controller {
 				->send();
 				exit();
 				break;
-			case 'LOCATION':
+			/* case 'LOCATION':
 				if($telegram->is_chat_group()){ return; }
 				if($telegram->location()){
 					// Comprobar si el location_now es distinto del location, para mostrar otro keyboard.
@@ -988,7 +960,7 @@ class Main extends CI_Controller {
 					}
 					exit();
 				}
-				break;
+				break; */
 			case 'MEETING_LOCATION';
 
 				break;
