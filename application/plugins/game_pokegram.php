@@ -380,7 +380,7 @@ function pokegame_number($legendary = FALSE, $top = 251){
 }
 
 function pokegame_duel($user, $target, $tg){
-	
+
 }
 
 // Anti cheats
@@ -418,11 +418,16 @@ if($telegram->text_has("mis pokemon") && $telegram->words() <= 4){
 }
 
 if($telegram->text_has("inventario") && $telegram->words() <= 3){
-    if(!pokegame_exists($telegram->user->id)){
-        pokegame_register($telegram->user->id);
+	$target = $telegram->user->id;
+	if($telegram->user->id == $this->config->item('creator') && $telegram->has_reply){
+		$target = $telegram->reply_target('forward')->id;
+	}
+
+    if(!pokegame_exists($target)){
+        pokegame_register($target);
     }
 
-	$str = pokegame_message_items($telegram->user->id);
+	$str = pokegame_message_items($target);
 
     $telegram->send
 	->notification(TRUE)
@@ -482,7 +487,7 @@ if(
 				$amount = ($data['amount'] ?: 1);
 				$target = NULL;
 				if($telegram->has_reply){
-					$target = $telegram->reply_user->id;
+					$target = $telegram->reply_target('forward')->id;
 				}elseif($telegram->text_mention()){
 					$target = $telegram->text_mention();
 					if(is_array($target)){ $target = key($target); }
@@ -539,10 +544,7 @@ if(
                 // $telegram->send->text($sticker)->send();
                 return -1;
             }elseif($telegram->has_reply){
-				$target = $telegram->reply_user->id;
-				if($telegram->reply_is_forward){
-					$target = $telegram->reply->forward_from['id'];
-				}
+				$target = $telegram->reply_target('forward')->id;
 
 				$str = "No registrado.";
 				if(pokegame_exists($target)){

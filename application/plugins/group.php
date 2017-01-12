@@ -189,7 +189,7 @@ elseif($telegram->text_has(["grupo offtopic", "/offtopic"])){
     $chatgroup = NULL;
     if(!empty($offtopic)){
         if($offtopic[0] != "@" and strlen($offtopic) == 22){
-            $chatgroup = "https://telegram.me/joinchat/" .$offtopic;
+            $chatgroup = "https://t.me/joinchat/" .$offtopic;
         }else{
             $chatgroup = $offtopic;
         }

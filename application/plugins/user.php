@@ -198,10 +198,7 @@ elseif(
 	if($telegram->has_reply){
 		$this->analytics->event('Telegram', 'Whois', 'Reply');
 
-		$user_search = $telegram->reply_user->id;
-		if($telegram->reply_is_forward && $telegram->reply_user->id != $telegram->reply->forward_from->id){
-			$user_search = $telegram->reply->forward_from['id']; // FIXME -> to object?
-		}
+		$user_search = $telegram->reply_target('forward')->id;
 	}else{
 		$this->analytics->event('Telegram', 'Whois', 'User');
 		if($telegram->text_mention()){

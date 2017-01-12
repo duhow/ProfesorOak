@@ -109,8 +109,7 @@ elseif($telegram->text_has("Éste", TRUE) && $telegram->has_reply){
 elseif($telegram->text_contains(["/block", "/unblock"], TRUE)){
     $user = NULL;
     if($telegram->has_reply){
-        // if($telegram->reply_is_forward)
-        $user = $telegram->reply_user->id;
+		$user = $telegram->reply_target('forward')->id;
     }elseif($telegram->words() == 2 && $telegram->text_mention()){
         // $user = $telegram->text_mention(); // --> to UID.
     }
@@ -345,8 +344,7 @@ elseif($telegram->text_command("cinfo")){
 elseif($telegram->text_command("uinfo") or $telegram->text_command("ui")){
     $u = NULL;
     if($telegram->has_reply){
-        $u = ($telegram->reply_is_forward ? $telegram->reply->forward_from['id'] : $telegram->reply_user->id);
-        // $u = $telegram->reply_user->id;
+		$u = $telegram->reply_target('forward')->id;
     }elseif($telegram->text_mention()){
         $u = $telegram->text_mention();
         if(is_array($u)){ $u = key($u); }
@@ -402,7 +400,7 @@ elseif($telegram->text_has("salte de", TRUE) && $telegram->words() == 3){
 // Buscar usuario por grupos
 elseif($telegram->text_has(["/whereis", "dónde está"], TRUE) && !$telegram->is_chat_group() && $telegram->words() <= 3){
 	if($telegram->has_reply && $telegram->reply_is_forward){
-		$find = $telegram->reply->forward_from['id'];
+		$find = $telegram->reply_target('forward')->id;
 	}else{
 		$find = $telegram->last_word(TRUE);
 		$pkfind = $pokemon->user($find);
@@ -432,7 +430,7 @@ elseif($telegram->text_has(["/whereis", "dónde está"], TRUE) && !$telegram->is
 elseif($telegram->text_command("flags")){
     $uflag = NULL;
     if($telegram->has_reply){
-        $uflag = ($telegram->reply_is_forward ? $telegram->reply->forward_from['id'] : $telegram->reply_user->id);
+        $uflag = $telegram->reply_target('forward')->id;
     }elseif($telegram->text_mention()){
         $uflag = $telegram->text_mention();
         if(is_array($uflag)){ $uflag = key($uflag); }
@@ -461,7 +459,7 @@ elseif(
     (in_array($telegram->words(), [2,3]))
 ){
     if($telegram->words() == 2 and $telegram->has_reply){
-        $f_user = ($telegram->reply_is_forward ? $telegram->reply->forward_from['id'] : $telegram->reply_user->id);
+        $f_user = $telegram->reply_target('forward')->id;
     }elseif($telegram->words() == 3){
         $search = $telegram->words(1); // Penúltima
         if($telegram->text_mention()){
@@ -483,7 +481,7 @@ elseif(
 
 // Ver o poner STEP a un usuario.
 elseif($telegram->text_command("mode")){
-    $user = ($telegram->has_reply ? $telegram->reply_user->id : $telegram->user->id);
+    $user = ($telegram->has_reply ? $telegram->reply_target('forward')->id : $telegram->user->id);
     if($telegram->words() == 1){
         $step = $pokemon->step($user);
         if(empty($step)){ $step = NULL; }
@@ -612,13 +610,8 @@ elseif($telegram->text_command("countonline") && $telegram->is_chat_group()){
 
 // Registro manual - creador.
 elseif($telegram->text_command("register") && $telegram->has_reply){
-	if($telegram->reply_is_forward){
-		$data['telegramid'] = $telegram->reply->forward_from['id'];
-	    $data['telegramuser'] = @$telegram->reply->forward_from['username'];
-	}else{
-		$data['telegramid'] = $telegram->reply_user->id;
-	    $data['telegramuser'] = @$telegram->reply_user->username;
-	}
+	$data['telegramid'] = $telegram->reply_target('forward')->id;
+	$data['telegramuser'] = @$telegram->reply_target('forward')->username;
 
     $pkuser = $pokemon->user($data['telegramid']);
 

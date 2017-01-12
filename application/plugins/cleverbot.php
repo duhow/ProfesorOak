@@ -1,5 +1,14 @@
 <?php
 
+function cleverbot_message($text){
+	require_once APPPATH ."third_party/chatter-bot-api/php/chatterbotapi.php";
+	$factory = new ChatterBotFactory();
+	$bot = $factory->create(ChatterBotType::CLEVERBOT);
+	$clever = $bot->createSession();
+
+	return $clever->think($text);
+}
+
 if(
     ( $telegram->text_command("cleverbot") or $telegram->text_command("jordi") or
     $telegram->text_has(["oye", "dime", "escucha"], ["oak", "profe", "profesor"], TRUE) ) &&
@@ -7,11 +16,6 @@ if(
 	$telegram->key == "message"
 ){
     // if($pokemon->settings($telegram->chat->id, 'shutup') == TRUE){ return; }
-
-    require APPPATH ."third_party/chatter-bot-api/php/chatterbotapi.php";
-    $factory = new ChatterBotFactory();
-    $bot = $factory->create(ChatterBotType::CLEVERBOT);
-    $clever = $bot->createSession();
 
     if(!$telegram->text_command()){
         $text = $telegram->words(2, 50);
@@ -22,10 +26,32 @@ if(
 
     if(strlen($text) <= 1){ return -1; }
 
-    $res = $clever->think($text);
+    $res = cleverbot_message($text);
+	if(!empty($res)){
+		$this->analytics->event("Telegram", "Cleverbot");
+		$q = $telegram->send->text($res)->send();
 
-    $this->analytics->event("Telegram", "Cleverbot");
-    $telegram->send->text($res)->send();
+		$pokemon->settings($telegram->chat->id, 'cleverbot', $q['message_id']);
+	}
+
+    return -1;
+}
+
+$clevid = $pokemon->settings($telegram->chat->id, 'cleverbot');
+if(
+	$clevid &&
+	$telegram->has_reply &&
+	$telegram->text() &&
+	$telegram->reply_user->id == $this->config->item('telegram_bot_id')
+){
+	$res = cleverbot_message($telegram->text());
+	if(!empty($res)){
+		$this->analytics->event("Telegram", "Cleverbot");
+		$q = $telegram->send->text($res)->send();
+
+		$pokemon->settings($telegram->chat->id, 'cleverbot', $q['message_id']);
+	}
+
     return -1;
 }
 
