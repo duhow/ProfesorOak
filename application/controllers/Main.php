@@ -76,14 +76,7 @@ class Main extends CI_Controller {
 		// Apartado de cuenta
 		// ---------------------
 
-
-		// Si pregunta por Ash...
-		if($telegram->text_has("quién es Ash") && $telegram->words() <= 7){
-			$this->analytics->event('Telegram', 'Jokes', 'Ash');
-			$telegram->send->text("Ah! Ese es un *cheater*, es nivel 100...\nLo que no sé de dónde saca tanto dinero para viajar tanto...", TRUE)->send();
-			return;
-		}
-		elseif($telegram->text_has("estoy aquí")){
+		if($telegram->text_has("estoy aquí")){
 			// Quien en cac? Que estoy aquí
 
 		// ---------------------
@@ -346,21 +339,6 @@ class Main extends CI_Controller {
 		// Administrativo
 		// ---------------------
 
-		}elseif($telegram->is_chat_group() && $telegram->text_has("dump") && $user->id == $this->config->item('creator') && $telegram->words() == 2){
-			$u = $telegram->last_word(TRUE);
-			// $data = $pokemon->user($u);
-			$str = NULL;
-			/* if(empty($data)){
-				$str = "nope";
-			}else{ */
-				$find = $telegram->send->get_member_info($u, $u);
-				$str = json_encode($find);
-			// }
-			$telegram->send
-				->notification(FALSE)
-				->text($str)
-			->send();
-			return;
 		}elseif($telegram->text_has(["team", "equipo"]) && $telegram->text_has(["sóis", "hay aquí", "estáis"])){
 			exit();
 		}elseif($telegram->text_has(["busca", "buscar", "buscame"], ["pokeparada", "pokeparadas", "pkstop", "pkstops"])){
@@ -373,49 +351,6 @@ class Main extends CI_Controller {
 		// ---------------------
 		// Chistes y tonterías
 		// ---------------------
-
-		$joke = NULL;
-
-		$this->plugin->load('games');
-
-		if($telegram->text_has("Gracias", ["profesor", "Oak", "profe"]) && !$telegram->text_has("pero", "no")){
-			// "el puto amo", "que maquina eres"
-			$this->analytics->event('Telegram', 'Jokes', 'Thank you');
-			$frases = ["De nada, entrenador! :D", "Nada, para eso estamos! ^^", "Gracias a ti :3"];
-			$n = mt_rand(0, count($frases) - 1);
-
-			$joke = $frases[$n];
-		}elseif($telegram->text_has(["buenos", "buenas", "bon"], ["días", "día", "tarde", "tarda", "tardes", "noches", "nit"])){
-			/* if(
-				($telegram->is_chat_group() and $pokemon->settings($telegram->chat->id, 'say_hello') == TRUE) and
-				($pokemon->settings($telegram->user->id, 'say_hello') != FALSE or $pokemon->settings($telegram->user->id, 'say_hello') == NULL)
-			){*/
-			if($this->is_shutup()){ return; }
-			$joke = "Buenas a ti también, entrenador! :D";
-			if($telegram->text_has(['noches', 'nit'])){
-				$joke = "Buenas noches fiera, descansa bien! :)";
-			}
-		}
-
-		if(!empty($joke)){
-			$telegram->send
-				->notification(FALSE)
-				->text($joke, TRUE)
-			->send();
-
-			exit();
-		}
-
-		/* if($telegram->text_has("compartir", TRUE)){
-			$texto = $telegram->words(1, 10);
-			$telegram->send
-				->inline_keyboard()
-					->row_button("Compartir", $texto, "SHARE")
-				->show()
-				->text("Compártelo con tus amigos!")
-			->send();
-			return;
-		} */
 
 		// Recibir ubicación
 		if($telegram->location() && !$telegram->is_chat_group()){

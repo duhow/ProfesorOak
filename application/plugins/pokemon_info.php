@@ -104,6 +104,14 @@ function pokemon_movements($poke, $obj = NULL){
 
 }
 
+function pokemon_level_multiplier($stardust, $powered = FALSE){
+
+}
+
+function pokemon_iv($pokeobj, $cp, $hp, $stardust, $extra = NULL){
+
+}
+
 function pokemon_seen($user, $poke, $loc, $cooldown = 60){
 	$pokemon = new Pokemon();
 	$telegram = new Telegram();
