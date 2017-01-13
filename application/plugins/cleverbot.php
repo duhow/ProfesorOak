@@ -15,7 +15,7 @@ if(
     $telegram->words() > 1 &&
 	$telegram->key == "message"
 ){
-    // if($pokemon->settings($telegram->chat->id, 'shutup') == TRUE){ return; }
+    if($pokemon->settings($telegram->chat->id, 'shutup') == TRUE){ return; }
 
     if(!$telegram->text_command()){
         $text = $telegram->words(2, 50);
@@ -29,6 +29,7 @@ if(
     $res = cleverbot_message($text);
 	if(!empty($res)){
 		$this->analytics->event("Telegram", "Cleverbot");
+		if(!$telegram->is_chat_group()){ $telegram->send->force_reply(TRUE); }
 		$q = $telegram->send->text($res)->send();
 
 		$pokemon->settings($telegram->chat->id, 'cleverbot', $q['message_id']);
@@ -41,12 +42,14 @@ $clevid = $pokemon->settings($telegram->chat->id, 'cleverbot');
 if(
 	$clevid &&
 	$telegram->has_reply &&
+	$telegram->reply->message_id == $clevid
 	$telegram->text() &&
 	$telegram->reply_user->id == $this->config->item('telegram_bot_id')
 ){
 	$res = cleverbot_message($telegram->text());
 	if(!empty($res)){
 		$this->analytics->event("Telegram", "Cleverbot");
+		if(!$telegram->is_chat_group()){ $telegram->send->force_reply(TRUE); }
 		$q = $telegram->send->text($res)->send();
 
 		$pokemon->settings($telegram->chat->id, 'cleverbot', $q['message_id']);

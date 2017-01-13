@@ -67,7 +67,7 @@ function user_has_cooldown($user, $cooldown = 60, $set = FALSE){
 	// return TRUE si no puede avanzar.
 	$pokemon = new Pokemon();
 	$cd = $pokemon->settings($user, 'pokemon_cooldown');
-	if(empty($cd){ $cd = (time() + 1); }
+	if(empty($cd)){ $cd = (time() + 1); }
 	$has_cooldown = ($cd < time());
 
 	if($set === TRUE){
