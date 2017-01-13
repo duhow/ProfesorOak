@@ -42,7 +42,7 @@ $clevid = $pokemon->settings($telegram->chat->id, 'cleverbot');
 if(
 	$clevid &&
 	$telegram->has_reply &&
-	$telegram->reply->message_id == $clevid
+	$telegram->reply->message_id == $clevid &&
 	$telegram->text() &&
 	$telegram->reply_user->id == $this->config->item('telegram_bot_id')
 ){
