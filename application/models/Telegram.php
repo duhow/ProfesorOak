@@ -812,6 +812,7 @@ class Telegram extends CI_Model{
 			elseif(is_string($amount)){ $filter = $amount; $amount = 1; }
 			$t = explode(" ", $this->text());
 			$a = $position + $amount;
+			$a = min($a, count($t));
 			$str = '';
 			for($i = $position; $i < $a; $i++){
 				$str .= $t[$i] .' ';
@@ -977,7 +978,7 @@ class Telegram extends CI_Model{
 	function user_selector($priority = NULL, $word = NULL){
 		$user = $this->reply_target($priority);
 		if(!empty($user)){ return $user->id; }
-		// TODO 
+		// TODO
 	}
 
 	function pinned_message($content = NULL){
