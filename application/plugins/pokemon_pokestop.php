@@ -1,7 +1,7 @@
 <?php
 
 
-if($telegram->text_has(["busca", "buscar", "buscame"], ["pokeparada", "pokeparadas", "pkstop", "pkstops"])){
+if($telegram->text_has(["busca", "buscar", "buscame"], ["pokeparada", "pokeparadas", "pkstop", "pkstops"]) && $telegram->words() <= 4 && $telegram->has_reply){
 
 }
 
