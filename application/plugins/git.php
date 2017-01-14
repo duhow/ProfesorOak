@@ -74,4 +74,21 @@ if(
 	return -1;
 }
 
+if($telegram->text_command("bug")){
+	$telegram->send
+		->notification(FALSE)
+		->inline_keyboard()
+			->row_button("Reportar", "https://github.com/duhow/ProfesorOak/issues/")
+		->show()
+		->text("Reporta el bug Github para hacer un seguimiento de él. Gracias! <3")
+	->send();
+
+	$telegram->send
+		->chat($this->config->item('creator'))
+		->text($telegram->user->first_name ." quiere reportar un bug.")
+	->send();
+
+	return -1;
+}
+
 ?>

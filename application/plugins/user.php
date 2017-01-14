@@ -38,9 +38,58 @@ function user_set_name($user, $name, $force = FALSE){
 	return TRUE;
 }
 
-if($pokemon->step($telegram->user->id) == "SETNAME"){
+$step = $pokemon->step($telegram->user->id);
+if($step == "SETNAME"){
 	if($telegram->words() == 1){ user_set_name($telegram->user->id, $telegram->last_word(TRUE), TRUE); }
 	$pokemon->step($telegram->user->id, NULL);
+}elseif($step == "CHANGE_LEVEL"){
+	// TODO get numbers
+	$level = NULL;
+
+	$pokeuser = $pokemon->user($telegram->user->id);
+	$pokemon->step($pokeuser->telegramid, NULL);
+	if($telegram->words() > 4){ return -1; } // TODO ?
+	if(is_numeric($level)){
+		if($level == $pokeuser->lvl){
+			$telegram->send
+				->text("Si, ya lo sé.")
+			->send();
+		}elseif($level > $pokeuser->lvl){
+			if($level <= 35){
+				$pokemon->update_user_data($pokeuser->telegramid, 'lvl', $level);
+				$telegram->send
+					->text("Ah, ya veo, así que $level ... Guay!")
+				->send();
+			}elseif($level > 35 && $level <= 40){
+				$pokemon->step($pokeuser->telegramid, "LEVEL_SCREENSHOT");
+				$telegram->send
+					->text("En serio? Pues... Mándame captura para demostrarlo.")
+				->send();
+			}
+		}
+	}
+	return -1;
+}elseif($step == "LEVEL_SCREENSHOT"){
+	if($telegram->photo()){
+		$telegram->send
+			->message(TRUE)
+			->chat(TRUE)
+			->forward_to($this->config->item('creator'))
+		->send();
+
+		$telegram->send
+			->chat($this->config->item('creator'))
+			->text("Dice que ha subido de nivel.")
+		->send();
+
+		$telegram->send
+			->reply_to(TRUE)
+			->text($telegram->emoji(":ok: Voy a ver..."))
+		->send();
+
+		$pokemon->step($telegram->user->id, NULL);
+		return -1;
+	}
 }
 
 // -----------------
@@ -327,7 +376,11 @@ if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
 }
 
 // Responder el nivel de un entrenador.
-elseif($telegram->text_has("que") && $telegram->text_has(["lvl", "level", "nivel"], ["eres", "es", "soy", "tiene", "tienes", "tengo"]) && $telegram->words() <= 7){
+elseif(
+	$telegram->text_has("que") &&
+	$telegram->text_has(["lvl", "level", "nivel"], ["eres", "es", "soy", "tiene", "tienes", "tengo"]) &&
+	$telegram->words() <= 7
+){
     $user = $telegram->user->id;
     if($telegram->text_has(["eres", "es", "tiene", "tienes"])){
         if(!$telegram->has_reply){ return; }
@@ -347,6 +400,11 @@ elseif($telegram->text_has("que") && $telegram->text_has(["lvl", "level", "nivel
         // ->reply_to(TRUE)
         ->text($text)
     ->send();
+
+	if($telegram->is_chat_group() && $pokemon->group_find_member($u->telegramid, $telegram->chat->id)){
+		$pokemon->step($u->telegramid, 'CHANGE_LEVEL');
+	}
+
     return;
 }
 

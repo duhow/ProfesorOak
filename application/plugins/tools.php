@@ -342,15 +342,20 @@ if(
     // $text = str_replace("en ", "in ", trim($text));
     if(empty($text) or strlen($text) <= 2){ return; }
 
+	$this->analytics->event('Telegram', 'Map search');
+
 	$ret = map_search($text);
 
     $str = "No lo encuentro.";
     if($ret->status == "OK"){
         $loc = $ret->results[0]->geometry->location;
         $str = $ret->results[0]->formatted_address;
+		$name = $ret->results[0]->address_components[0]->short_name;
         $telegram->send
             ->location($loc->lat, $loc->lng)
+			->venue($name, $str)
         ->send();
+		return -1;
     }
 
     // GeoCode Argis OLD
@@ -368,7 +373,6 @@ if(
         ->send();
     } */
 
-    $this->analytics->event('Telegram', 'Map search');
     $telegram->send
         ->text($str)
     ->send();

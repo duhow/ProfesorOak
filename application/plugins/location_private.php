@@ -1,5 +1,9 @@
 <?php
 
+// TODO buscar si hay entrenadores cerca. Si son del mismo equipo, decir quién es.
+// Si no, sólo mostrar la cantidad de gente.
+// @EnriquePato y otros 4 están cerca tuyo.
+
 function menu_call_location($user, $tg){
 	// Comprobar si el location_now es distinto del location, para mostrar otro keyboard.
 	$dist = user_distance($user, $tg->location(FALSE));
