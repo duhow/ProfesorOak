@@ -1,5 +1,31 @@
 <?php
 
+function map_search($search, $tg = NULL){
+	// $search = str_replace("en ", "in ", trim($search));
+	if(empty($search) or strlen($search) <= 2){ return NULL; }
+
+	$data = ["address" => $search];
+	$web = "https://maps.googleapis.com/maps/api/geocode/json?" .http_build_query($data);
+
+	$loc = file_get_contents($web);
+	$ret = json_decode($loc);
+	// $str = "No lo encuentro.";
+	if($ret->status == "OK"){
+		$loc = $ret->results[0]->geometry->location;
+		// $str = $ret->results[0]->formatted_address;
+		if($tg === TRUE){
+			return [$loc->lat, $loc->lng];
+			// return $loc;
+		}elseif($tg !== NULL){
+			return $tg->send
+				->location($loc->lat, $loc->lng)
+			->send();
+		}
+	}
+	if($tg === TRUE){ return FALSE; }
+	return $ret;
+}
+
 if($telegram->text_command("avoice")){
     $voice = NULL;
     if($telegram->has_reply){
@@ -316,11 +342,8 @@ if(
     // $text = str_replace("en ", "in ", trim($text));
     if(empty($text) or strlen($text) <= 2){ return; }
 
-    $data = ["address" => $text];
-    $web = "https://maps.googleapis.com/maps/api/geocode/json?" .http_build_query($data);
+	$ret = map_search($text);
 
-    $loc = file_get_contents($web);
-    $ret = json_decode($loc);
     $str = "No lo encuentro.";
     if($ret->status == "OK"){
         $loc = $ret->results[0]->geometry->location;

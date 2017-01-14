@@ -925,6 +925,21 @@ class Pokemon extends CI_Model{
 		return ($query->num_rows() > 0 ? $query->result_array() : NULL);
 	}
 
+	function pokestops_search($search, $near = NULL){
+		if(!empty($near)){
+			$res = $this->pokestops($near, 30000, 500);
+			if(empty($res)){ return NULL; }
+			$ids = array_column($ids, 'id');
+
+			$this->db->where_in('id', $ids);
+		}
+		$query = $this->db
+			->like('title', $search)
+		->get('pokestops');
+
+		return ($query->num_rows() > 0 ? $query->result_array() : NULL);
+	}
+
 	// --------------------------------
 	//   Funciones de información general
 	// --------------------------------
