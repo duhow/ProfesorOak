@@ -929,7 +929,7 @@ class Pokemon extends CI_Model{
 		if(!empty($near)){
 			$res = $this->pokestops($near, 30000, 500);
 			if(empty($res)){ return NULL; }
-			$ids = array_column($ids, 'id');
+			$ids = array_column($res, 'id');
 
 			$this->db->where_in('id', $ids);
 		}
