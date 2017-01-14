@@ -7,10 +7,19 @@ function map_search($search, $tg = NULL){
 	$data = ["address" => $search];
 	$web = "https://maps.googleapis.com/maps/api/geocode/json?" .http_build_query($data);
 
-	$loc = file_get_contents($web);
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $web);
+	curl_setopt($ch, CURLOPT_HEADER, FALSE);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+	curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 0);
+	curl_setopt($ch, CURLOPT_TIMEOUT, 7); //timeout in seconds
+
+	$loc = curl_exec($ch);
+	curl_close($ch);
+
 	$ret = json_decode($loc);
 	// $str = "No lo encuentro.";
-	if($ret->status == "OK"){
+	if(!empty($ret) && $ret->status == "OK"){
 		$loc = $ret->results[0]->geometry->location;
 		// $str = $ret->results[0]->formatted_address;
 		if($tg === TRUE){
