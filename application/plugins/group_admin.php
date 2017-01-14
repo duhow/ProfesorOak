@@ -3,6 +3,51 @@
 if(!$telegram->is_chat_group()){ return; }
 if(!in_array($telegram->user->id, telegram_admins(TRUE))){ return; }
 
+$step = $pokemon->step($telegram->user->id);
+// FIXME
+if($step == "CUSTOM_COMMAND"){
+	if(!$telegram->is_chat_group() or !in_array($telegram->user->id, telegram_admins(TRUE))){ return; }
+	$command = $pokemon->settings($telegram->user->id, 'command_name');
+	if(empty($command)){
+		if($telegram->text()){
+			$pokemon->settings($telegram->user->id, 'command_name', strtolower($telegram->text()) );
+			$telegram->send
+				->text("¡De acuerdo! Ahora envíame la respuesta que quieres enviar.")
+			->send();
+		}
+		return -1; // HACK
+	}
+	$cmds = $pokemon->settings($telegram->chat->id, 'custom_commands');
+	if($cmds){ $cmds = unserialize($cmds); }
+	if(!is_array($cmds) or empty($cmds)){
+		$pokemon->settings($telegram->chat->id, 'custom_commands', "DELETE");
+		$cmds = array();
+	}
+
+	if(isset($cmds[$command])){ unset($cmds[$command]); }
+	if($telegram->text()){
+		if(strlen(trim($telegram->text())) < 4){ return; }
+		$cmds[$command] = ["text" => $telegram->text_encoded()];
+	}elseif($telegram->photo()){
+		$cmds[$command] = ["photo" => $telegram->photo()];
+	}elseif($telegram->voice()){
+		$cmds[$command] = ["voice" => $telegram->voice()];
+	}elseif($telegram->gif()){
+		$cmds[$command] = ["document" => $telegram->gif()];
+	}elseif($telegram->sticker()){
+		$cmds[$command] = ["sticker" => $telegram->sticker()];
+	}
+
+	$cmds = serialize($cmds);
+	$pokemon->settings($telegram->chat->id, 'custom_commands', $cmds);
+	$pokemon->settings($telegram->user->id, 'command_name', "DELETE");
+	$pokemon->step($telegram->user->id, NULL);
+	$telegram->send
+		->text("¡Comando creado correctamente!")
+	->send();
+	return -1;
+}
+
 // Echar usuario del grupo
 if($telegram->text_has(["/kick", "/ban"], TRUE)){
     $admins = $pokemon->telegram_admins(TRUE);

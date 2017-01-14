@@ -171,8 +171,10 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
         $telegram->send->chat($telegram->user->id);
     }
 
-    $telegram->send->text($str)->send();
-    $telegram->answer_if_callback("");
+    $q = $telegram->send->text($str)->send();
+
+	$str = ($q === FALSE ? "Ábreme por privado primero." : "");
+    $telegram->answer_if_callback($str, TRUE);
 
     // Avisar por grupo.
     if($query->num_rows() > 12 && !$telegram->callback){
