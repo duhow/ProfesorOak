@@ -230,6 +230,16 @@ class __Module_Telegram_Sender extends CI_Model{
 		return $this;
 	}
 
+	function venue($title, $address, $foursquare = NULL){
+		if(isset($this->content['latitude']) && isset($this->content['longitude'])){
+			$this->content['title'] = $title;
+			$this->content['address'] = $address;
+			if(!empty($foursquare)){ $this->content['foursquare_id'] = $foursquare; }
+			$this->method = "sendVenue";
+		}
+		return $this;
+	}
+
 	function dump(){
 		var_dump($this->method); var_dump($this->content);
 		$bm = $this->method;
