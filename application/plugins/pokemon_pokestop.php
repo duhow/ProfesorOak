@@ -104,9 +104,9 @@ elseif(
 		}
 		$text .= '<a href="' .$url .'">IMG</a>';
 	}
-	$chat = ($telegram->is_chat_group() && $this->is_shutup() ? $telegram->user->id : $telegram->chat->id);
+	// $chat = ($telegram->is_chat_group() && $this->is_shutup() ? $telegram->user->id : $telegram->chat->id);
 	$telegram->send
-		->chat($chat)
+		// ->chat($chat)
 		->keyboard()->hide(TRUE)
 		->text($text, 'HTML')
 	->send();
