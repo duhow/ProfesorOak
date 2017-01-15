@@ -957,7 +957,7 @@ if(
     ($telegram->text_command("summon") && $telegram->user->id == $this->config->item('creator'))
 ){
     if($telegram->sticker() == 'BQADBAADcAgAAjbFNAABpv0WcvCzRoIC'){
-        if($pokemon->group_count_members($telegram->chat->id) <= 25){
+        if($pokemon->group_count_members($telegram->chat->id) <= 20){
             $telegram->send
                 ->notification(FALSE)
                 ->text("Esto está muy desierto...")
@@ -976,8 +976,8 @@ if(
         pokegame_item_remove($telegram->user->id, 'incense');
     }else{
         if(
-            !$telegram->text_command("summon") &&
-            $pokemon->group_count_members($telegram->chat->id) <= 15
+			$pokemon->group_count_members($telegram->chat->id) <= 15 &&
+			($telegram->text_command("summon") && $telegram->user->id != $this->config->item('creator'))
         ){ return; }
     }
 
