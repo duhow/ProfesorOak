@@ -7,6 +7,8 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
     $user = $telegram->user;
     $chat = $telegram->chat;
 
+	$count = 0;
+
 	// A excepción de que lo agregue el creador
     if($new->id == $this->config->item("telegram_bot_id") && $telegram->user->id != $this->config->item('creator')){
         $count = $telegram->send->get_members_count();
@@ -24,7 +26,7 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 		}
 
     // Bot agregado al grupo. Yo no saludo bots :(
-    }elseif($telegram->is_bot($new->username)){ return -1; }
+    }elseif($new->id != $this->config->item('telegram_bot_id') && $telegram->is_bot($new->username)){ return -1; }
 
     $pknew = $pokemon->user($new->id);
     // El usuario nuevo es creador
@@ -125,6 +127,15 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
         }
 
         if($new->id == $this->config->item("telegram_bot_id")){
+			$text = "\ud83c\udd95 ¡Grupo nuevo!\n"
+					."\ud83d\udd24 " .$telegram->chat->title ."\n"
+					."\ud83c\udd94 " .$telegram->chat->id ."\n"
+					."\ud83d\udec2 " .$count ."\n" // del principio de ejecución.
+					."\ud83d\udeb9 " .$telegram->user->id ." - " .$telegram->user->first_name;
+			$telegram->send
+				->chat($this->config->item('creator'))
+				->text($telegram->emoji($text))
+			->send();
             $pkuser = $pokemon->user($telegram->user->id);
             if(
                 ($pkuser && $pkuser->blocked) or
