@@ -387,10 +387,11 @@ class Pokemon extends CI_Model{
 		return NULL;
 	}
 
-	function group_count_members($cid){
+	function group_count_members($cid, $min_messages = 0){
 		$query = $this->db
 			->select('uid')
 			->where('cid', $cid)
+			->where('messages >=', $min_messages)
 		->get('user_inchat');
 		return $query->num_rows();
 	}

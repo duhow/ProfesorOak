@@ -796,7 +796,7 @@ if($telegram->id % 66 == 0){
         pokegame_register($telegram->user->id);
     }
 
-    if($pokemon->group_count_members($telegram->chat->id) >= 15){
+    if($pokemon->group_count_members($telegram->chat->id, 10) >= 15){
         $items = ["pokeball", "superball", "ultraball"];
         $sel = mt_rand(0, count($items) - 1);
 
@@ -807,7 +807,7 @@ if($telegram->id % 66 == 0){
 }
 
 // Egg
-if($pokemon->group_count_members($telegram->chat->id) >= 22){
+if($pokemon->group_count_members($telegram->chat->id, 10) >= 22){
     pokegame_egg_step($telegram->user->id);
 }
 
@@ -892,7 +892,7 @@ if(
     ($telegram->text_command("pokestop") && $telegram->user->id == $this->config->item('creator'))
 ){
     if($telegram->sticker() == "BQADBAADdAgAAjbFNAABYcghFn7ZiQIC"){
-        if($pokemon->group_count_members($telegram->chat->id) <= 15){
+        if($pokemon->group_count_members($telegram->chat->id, 10) <= 15){
             $telegram->send
                 ->notification(FALSE)
                 ->text("No hay ninguna Pokeparada por aquí cerca...")
@@ -912,7 +912,7 @@ if(
     }else{
         if(
             !$telegram->text_command("pokestop") &&
-            $pokemon->group_count_members($telegram->chat->id) <= 25
+            $pokemon->group_count_members($telegram->chat->id, 10) <= 25
         ){ return; }
     }
 
@@ -952,12 +952,14 @@ if(
 
 if(
     ($telegram->key == 'message' && // No edited or callback
-    $telegram->message % 49 == 0) or
+    $telegram->message % 49 == 0 &&
+	!$telegram->text_command() &&
+	$telegram->words() > 1) or
     $telegram->sticker() == 'BQADBAADcAgAAjbFNAABpv0WcvCzRoIC' or
     ($telegram->text_command("summon") && $telegram->user->id == $this->config->item('creator'))
 ){
     if($telegram->sticker() == 'BQADBAADcAgAAjbFNAABpv0WcvCzRoIC'){
-        if($pokemon->group_count_members($telegram->chat->id) <= 20){
+        if($pokemon->group_count_members($telegram->chat->id, 10) <= 20){
             $telegram->send
                 ->notification(FALSE)
                 ->text("Esto está muy desierto...")
@@ -976,7 +978,7 @@ if(
         pokegame_item_remove($telegram->user->id, 'incense');
     }else{
         if(
-			$pokemon->group_count_members($telegram->chat->id) <= 15 &&
+			$pokemon->group_count_members($telegram->chat->id, 10) <= 15 &&
 			($telegram->text_command("summon") && $telegram->user->id != $this->config->item('creator'))
         ){ return; }
     }
@@ -1050,7 +1052,10 @@ if($telegram->sticker() == 'BQADBAADKAgAAjbFNAABUl6LvyvgffoC'){
 				"Tu no aprendes, ¿verdad? Luego no me vengas llorando.",
 				"Has muerto para mi.",
 				"Mira tio, vete a la mierda.",
-				"Tu sigues en parvulitos, ¿no? Teniendo esa mentalidad, no mereces ni que te hable."
+				"Tu sigues en parvulitos, ¿no? Teniendo esa mentalidad, no mereces ni que te hable.",
+				"Que conste que ya te he avisado. No quiero quejas.",
+				"Pues nada, otro jugador menos.",
+				"Una cosa es aburrirse, y otra es hacer el monguer. Yo ya... Mira, paso de ti."
 			];
 
 			$rand = mt_rand(0, count($frases) - 1);
@@ -1072,7 +1077,7 @@ if($telegram->sticker() == 'BQADBAADKAgAAjbFNAABUl6LvyvgffoC'){
 			pokegame_item_remove($telegram->user->id, 'ultraball', 15);
 
 			$telegram->send
-		        ->text("¡Un subnormal ha llamado al <b>Team Rocket</b> y <b>le han endeudado muchas Pokeball</b>! No va a poder jugar durante un tiempo...\n(Yo no volvería a hacerlo. Tu mismo. Luego no hay perdón que valga.)", 'HTML')
+		        ->text("¡Alguien ha llamado al <b>Team Rocket</b> y <b>le han endeudado muchas Pokeball</b>! No va a poder jugar durante un tiempo...\n(Yo no volvería a hacerlo. Tu mismo. Luego no hay perdón que valga.)", 'HTML')
 		    ->send();
 		}else{
 			pokegame_half_inventory($telegram->user->id);
