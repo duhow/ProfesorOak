@@ -20,23 +20,23 @@ class Main extends TelegramApp\Module {
 		$this->_update_chat();
 
 		// Si el usuario no está registrado con las funciones básicas, fuera.
-		if(!$pokemon->user_exists($telegram->user->id)){ return; }
+		if(!$pokemon->user_exists($telegram->user->id)){ $this->end(); }
 
 		// Si el usuario está bloqueado, fuera.
-		if($pokemon->user_blocked($telegram->user->id)){ return; }
+		if($pokemon->user_blocked($telegram->user->id)){ $this->end(); }
 
-		$pokeuser = $pokemon->user($telegram->user->id);
-		$step = $pokemon->step($telegram->user->id);
+		$user = new User($telegram->user, $telegram->chat);
 
 		// Cancelar pasos en general.
-		if($step != NULL && $telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
-			$pokemon->step($telegram->user->id, NULL);
-			$this->telegram->send
+		if($user->step != NULL && $telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
+			$user->step = NULL;
+			$user->update();
+			$telegram->send
 				->notification(FALSE)
 				->keyboard()->selective(FALSE)->hide()
 				->text("Acción cancelada.")
 			->send();
-			die();
+			$this->end();
 		}
 
 		if(!empty($step)){ $this->_step(); }
