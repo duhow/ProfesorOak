@@ -979,8 +979,8 @@ if(
     }else{
         if(
 			$pokemon->group_count_members($telegram->chat->id, 10) <= 15 &&
-			($telegram->text_command("summon") && $telegram->user->id != $this->config->item('creator'))
-        ){ return; }
+			$telegram->user->id != $this->config->item('creator')
+		){ return; }
     }
 
     $chat = $telegram->chat->id;
