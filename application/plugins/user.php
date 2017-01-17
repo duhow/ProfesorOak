@@ -359,11 +359,15 @@ if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
     $req = FALSE;
 
     if(!empty($usertouch)){
-        $req = $telegram->send
-            ->notification(TRUE)
-            ->chat($usertouch->telegramid)
-            ->text("$name te ha tocado.")
-        ->send();
+		$can = $pokemon->settings($usertouch->telegramid, 'touch');
+		$req = FALSE;
+		if($can == NULL && $can != FALSE){
+			$req = $telegram->send
+				->notification(TRUE)
+				->chat($usertouch->telegramid)
+				->text("$name te ha tocado.")
+			->send();
+		}
     }
 
     $text = ($req ? $telegram->emoji(":green-check:") : $telegram->emoji(":times:"));
