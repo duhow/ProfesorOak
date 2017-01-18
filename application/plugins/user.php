@@ -361,7 +361,7 @@ if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
     if(!empty($usertouch)){
 		$can = $pokemon->settings($usertouch->telegramid, 'touch');
 		$req = FALSE;
-		if($can == NULL && $can != FALSE){
+		if($can == NULL or $can == TRUE){
 			$req = $telegram->send
 				->notification(TRUE)
 				->chat($usertouch->telegramid)
