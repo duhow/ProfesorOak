@@ -32,6 +32,9 @@ function telegram_admins($add_creator = TRUE, $custom = NULL){
 }
 
 function time_parse($string){
+	$string = strtolower($string);
+	$string = str_replace(["á","é"], ["a","e"], $string);
+	$string = str_replace(["?", "¿", "!"], "", $string);
     $s = explode(" ", $string);
     $data = array();
     $number = NULL;
@@ -57,16 +60,12 @@ function time_parse($string){
     $last_week = FALSE;
     $this_week_day = FALSE;
     foreach($s as $w){
-        $w = strtolower($w);
-        $w = str_replace(["á","é"], ["a","e"], $w);
-        $w = str_replace("?", "", $w);
-
         if($w == "de" && (!isset($data['date']) or empty($data['date']) )){ $waiting_month = TRUE; } // FIXME not working?
         if($w == "la" && !isset($data['hour'])){ $waiting_time = TRUE; }
         if($w == "las" && !isset($data['hour'])){ $waiting_time = TRUE; }
         if($w == "en" && !isset($data['hour'])){ $waiting_time_add = TRUE; }
 
-        if(is_numeric($w)){
+        if(is_numeric($w) or (in_array(strlen($w), [2,3]) && substr($w, -1) == "h")){
             $number = (int) $w;
             if($waiting_time){
                 if($number >= 24){ continue; }
