@@ -2,15 +2,20 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Main extends TelegramApp\Module {
+	public $user;
 
 	public function __construct(){
-		  parent::__construct();
+		// comprobar IP del host
+		if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ die(); }
+		// TODO log
+		$this->user = new User($this->telegram->user);
+		if($this->user->load() !== TRUE){
+			// Solo puede registrarse.
+		}
+		if($this->user->blocked){ $this->end(); }
 	}
 
 	public function hooks(){
-		// comprobar IP del host
-		if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ die(); }
-
 		// iniciar variables
 		$telegram = $this->telegram;
 		// $pokemon = $this->pokemon;
@@ -22,15 +27,10 @@ class Main extends TelegramApp\Module {
 		// Si el usuario no está registrado con las funciones básicas, fuera.
 		if(!$pokemon->user_exists($telegram->user->id)){ $this->end(); }
 
-		// Si el usuario está bloqueado, fuera.
-		if($pokemon->user_blocked($telegram->user->id)){ $this->end(); }
-
-		$user = new User($telegram->user, $telegram->chat);
-
 		// Cancelar pasos en general.
-		if($user->step != NULL && $telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
-			$user->step = NULL;
-			$user->update();
+		if($this->user->step != NULL && $telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
+			$this->user->step = NULL;
+			$this->user->update();
 			$telegram->send
 				->notification(FALSE)
 				->keyboard()->selective(FALSE)->hide()
@@ -137,7 +137,7 @@ class Main extends TelegramApp\Module {
 											$cps[] = $cp; // DEBUG
 										}
 									}
-									if($user->id == $this->config->item('creator')){
+									if($this->user->id == $this->config->item('creator')){
 										// $telegram->send->text(json_encode($cps))->send(); // DEBUG
 									}
 								}
@@ -210,7 +210,7 @@ class Main extends TelegramApp\Module {
 						}
 
 						$telegram->send->chat($chat)->text($text, TRUE)->send();
-						if($user->id == $this->config->item('creator') && !$telegram->is_chat_group()){
+						if($this->user->id == $this->config->item('creator') && !$telegram->is_chat_group()){
 							// $telegram->send->text(json_encode($table))->send(); // DEBUG
 						}
 					}
@@ -344,7 +344,7 @@ class Main extends TelegramApp\Module {
 		$user = $telegram->user;
 		$chat = $telegram->chat;
 
-		$pokeuser = $pokemon->user($user->id);
+		$pokeuser = $pokemon->user($this->user->id);
 		if(empty($pokeuser)){ return; } // HACK cuidado
 
 		$admins = NULL;
@@ -450,13 +450,13 @@ class Main extends TelegramApp\Module {
 				if($telegram->text_has(["bajo", "muy bajo", "poco que desear", "bien"])){ $data['ivcalc'] = [0,1,2,3,4,5,6,7]; }
 				if($telegram->text_has(["fuerte", "fuertes", "excelente", "excelentes", "impresionante", "impresionantes", "alto", "alta"])){ $data['ivcalc'] = [13,14]; }
 
-				if($pokemon->settings($user->id, 'debug')){
+				if($pokemon->settings($this->user->id, 'debug')){
 					$telegram->send->text(json_encode($data))->send();
 				}
 
-				$pokemon->step($user->id, NULL);
-				if($pokemon->settings($user->id, 'pokemon_return')){
-					$pokemon->settings($user->id, 'pokemon_return', "DELETE");
+				$pokemon->step($this->user->id, NULL);
+				if($pokemon->settings($this->user->id, 'pokemon_return')){
+					$pokemon->settings($this->user->id, 'pokemon_return', "DELETE");
 					return $data;
 				}
 				break;
@@ -616,19 +616,19 @@ class Main extends TelegramApp\Module {
 					$data['left_hours'] = floor(($strdate - time()) / 3600);
 					$data['left_minutes'] = floor(($strdate - time()) / 60);
 				}
-				if($pokemon->settings($user->id, 'debug')){
+				if($pokemon->settings($this->user->id, 'debug')){
 					$telegram->send->text(json_encode($data))->send();
 				}
 
-				$pokemon->step($user->id, NULL);
-				if($pokemon->settings($user->id, 'pokemon_return')){
-					$pokemon->settings($user->id, 'pokemon_return', "DELETE");
+				$pokemon->step($this->user->id, NULL);
+				if($pokemon->settings($this->user->id, 'pokemon_return')){
+					$pokemon->settings($this->user->id, 'pokemon_return', "DELETE");
 					return $data;
 				}
 				break;
 			case 'RULES':
 				if(!$telegram->is_chat_group()){ break; }
-				if(!in_array($user->id, $admins)){ $pokemon->step($user->id, NULL); break; }
+				if(!in_array($this->user->id, $admins)){ $pokemon->step($this->user->id, NULL); break; }
 
 				$text = $telegram->text_encoded();
 				if(strlen($text) < 4){ exit(); }
@@ -643,11 +643,11 @@ class Main extends TelegramApp\Module {
 				$telegram->send
 					->text("Hecho!")
 				->send();
-				$pokemon->step($user->id, NULL);
+				$pokemon->step($this->user->id, NULL);
 				break;
 			case 'WELCOME':
 				if(!$telegram->is_chat_group()){ break; }
-				if(!in_array($user->id, $admins)){ $pokemon->step($user->id, NULL); break; }
+				if(!in_array($this->user->id, $admins)){ $pokemon->step($this->user->id, NULL); break; }
 
 				$text = $telegram->text_encoded();
 				if(strlen($text) < 4){ exit(); }
@@ -662,12 +662,12 @@ class Main extends TelegramApp\Module {
 				$telegram->send
 					->text("Hecho!")
 				->send();
-				$pokemon->step($user->id, NULL);
+				$pokemon->step($this->user->id, NULL);
 				break;
 			case 'CHOOSE_POKEMON':
 				// $pk = NULL;
 				$pk = $this->parse_pokemon();
-				$pokemon->step($user->id, 'CHOOSE_POKEMON');
+				$pokemon->step($this->user->id, 'CHOOSE_POKEMON');
 				/* if($telegram->text()){
 					$pk = trim($telegram->words(0, TRUE));
 					// if( preg_match('/^(#?)\d{1,3}$/', $word) ){ }
@@ -681,9 +681,9 @@ class Main extends TelegramApp\Module {
 							->text("El Pokémon mencionado no existe.")
 						->send();
 					}else{
-						$s = $pokemon->settings($user->id, 'step_action');
-						$pokemon->step($user->id, $s);
-						$pokemon->settings($user->id, 'pokemon_select', $pk['pokemon']);
+						$s = $pokemon->settings($this->user->id, 'step_action');
+						$pokemon->step($this->user->id, $s);
+						$pokemon->settings($this->user->id, 'pokemon_select', $pk['pokemon']);
 						$this->_step(); // HACK relaunch
 					}
 				}
@@ -693,30 +693,30 @@ class Main extends TelegramApp\Module {
 				// Tienes que estar en el lugar para poder haber reportado el Pokemon
 				// Si tienes flags TROLL, FC u otras, no podrás enviarlo.
 				// Solo puedes hacer uno cada minuto.
-				$pk = $pokemon->settings($user->id, 'pokemon_select');
+				$pk = $pokemon->settings($this->user->id, 'pokemon_select');
 
-				$pokemon->settings($user->id, 'pokemon_select', 'DELETE');
-				$pokemon->settings($user->id, 'step_action', 'DELETE');
+				$pokemon->settings($this->user->id, 'pokemon_select', 'DELETE');
+				$pokemon->settings($this->user->id, 'step_action', 'DELETE');
 
-				$cd = $pokemon->settings($user->id, 'pokemon_cooldown');
+				$cd = $pokemon->settings($this->user->id, 'pokemon_cooldown');
 				if(!empty($cd) && $cd > time()){
 					$telegram->send->text("Aún no ha pasado suficiente tiempo. Espera un poco, anda. :)");
-					$pokemon->step($user->id, NULL);
+					$pokemon->step($this->user->id, NULL);
 					exit();
 				}
 
-				if($pokemon->user_flags($user->id, ['troll', 'rager', 'bot', 'forocoches', 'hacks', 'gps', 'trollmap'])){
+				if($pokemon->user_flags($this->user->id, ['troll', 'rager', 'bot', 'forocoches', 'hacks', 'gps', 'trollmap'])){
 					$telegram->send->text("nope.")->send();
-					$pokemon->step($user->id, NULL);
+					$pokemon->step($this->user->id, NULL);
 					exit();
 				}
-				$loc = explode(",", $pokemon->settings($user->id, 'location')); // FIXME cuidado con esto, si reusamos la funcion.
-				$pokemon->add_found($pk, $user->id, $loc[0], $loc[1]);
+				$loc = explode(",", $pokemon->settings($this->user->id, 'location')); // FIXME cuidado con esto, si reusamos la funcion.
+				$pokemon->add_found($pk, $this->user->id, $loc[0], $loc[1]);
 
 				// SELECT uid, SUBSTRING(value, 1, INSTR(value, ",") - 1) AS lat, SUBSTRING(value, INSTR(value, ",") + 1) AS lng FROM `settings` WHERE LEFT(uid, 1) = '-' AND type = "location"
 
-				$pokemon->settings($user->id, 'pokemon_cooldown', time() + 60);
-				$pokemon->step($user->id, NULL);
+				$pokemon->settings($this->user->id, 'pokemon_cooldown', time() + 60);
+				$pokemon->step($this->user->id, NULL);
 
 				$this->analytics->event("Telegram", "Pokemon Seen", $pk);
 				$telegram->send
@@ -729,21 +729,21 @@ class Main extends TelegramApp\Module {
 				// Tienes que estar en el lugar para poder haber reportado el Pokemon
 				// Si tienes flags TROLL, FC u otras, no podrás enviarlo.
 				// Solo puedes hacer uno cada minuto.
-				$pokemon->settings($user->id, 'step_action', 'DELETE');
+				$pokemon->settings($this->user->id, 'step_action', 'DELETE');
 
-				$cd = $pokemon->settings($user->id, 'pokemon_cooldown');
+				$cd = $pokemon->settings($this->user->id, 'pokemon_cooldown');
 				if(!empty($cd) && $cd > time()){
 					$telegram->send->text("Aún no ha pasado suficiente tiempo. Espera un poco, anda. :)");
-					$pokemon->step($user->id, NULL);
+					$pokemon->step($this->user->id, NULL);
 					exit();
 				}
 
-				if($pokemon->user_flags($user->id, ['troll', 'rager', 'bot', 'forocoches', 'hacks', 'gps', 'trollmap'])){
+				if($pokemon->user_flags($this->user->id, ['troll', 'rager', 'bot', 'forocoches', 'hacks', 'gps', 'trollmap'])){
 					$telegram->send->text("nope.")->send();
-					$pokemon->step($user->id, NULL);
+					$pokemon->step($this->user->id, NULL);
 					exit();
 				}
-				$loc = explode(",", $pokemon->settings($user->id, 'location')); // FIXME cuidado con esto, si reusamos la funcion.
+				$loc = explode(",", $pokemon->settings($this->user->id, 'location')); // FIXME cuidado con esto, si reusamos la funcion.
 
 				// Buscar Pokeparada correspondiente o cercana.
 				$pkstop = $pokemon->pokestops($loc, 160, 1);
@@ -760,7 +760,7 @@ class Main extends TelegramApp\Module {
 				$pkstop = $pkstop[0];
 				$loc = [$pkstop['lat'], $pkstop['lng']];
 
-				$pokemon->add_lure_found($user->id, $loc[0], $loc[1]);
+				$pokemon->add_lure_found($this->user->id, $loc[0], $loc[1]);
 
 				$nearest = $pokemon->group_near($loc);
 				foreach($nearest as $g){
@@ -777,8 +777,8 @@ class Main extends TelegramApp\Module {
 				}
 				// SELECT uid, SUBSTRING(value, 1, INSTR(value, ",") - 1) AS lat, SUBSTRING(value, INSTR(value, ",") + 1) AS lng FROM `settings` WHERE LEFT(uid, 1) = '-' AND type = "location"
 
-				$pokemon->settings($user->id, 'pokemon_cooldown', time() + 60);
-				$pokemon->step($user->id, NULL);
+				$pokemon->settings($this->user->id, 'pokemon_cooldown', time() + 60);
+				$pokemon->step($this->user->id, NULL);
 
 				$this->analytics->event("Telegram", "Lure Seen", $pk);
 				$telegram->send
@@ -814,7 +814,7 @@ class Main extends TelegramApp\Module {
 					$telegram->send
 						->notification(TRUE)
 						->chat($this->config->item('creator'))
-						->text("Validar " .$user->id ." @" .$pokeuser->username ." L" .$pokeuser->lvl ." " .$pokeuser->team)
+						->text("Validar " .$this->user->id ." @" .$pokeuser->username ." L" .$pokeuser->lvl ." " .$pokeuser->team)
 						->inline_keyboard()
 							->row()
 								->button($telegram->emoji(":ok:"), "te valido " .$pokeuser->telegramid, "TEXT")
@@ -825,12 +825,12 @@ class Main extends TelegramApp\Module {
 
 					$telegram->send
 						->notification(TRUE)
-						->chat($user->id)
+						->chat($this->user->id)
 						->keyboard()->hide(TRUE)
 						->text("¡Enviado correctamente! El proceso de validar puede tardar un tiempo.")
 					->send();
 
-					$pokemon->step($user->id, NULL);
+					$pokemon->step($this->user->id, NULL);
 					exit();
 				}
 				break;
@@ -1035,8 +1035,8 @@ class Main extends TelegramApp\Module {
 		$pokemon = $this->pokemon;
 		$user = $this->telegram->user;
 
-		$pokemon->settings($user->id, 'pokemon_return', TRUE);
-		$pokemon->step($user->id, 'POKEMON_PARSE');
+		$pokemon->settings($this->user->id, 'pokemon_return', TRUE);
+		$pokemon->step($this->user->id, 'POKEMON_PARSE');
 		$pk = $this->_step();
 		return $pk;
 	}
@@ -1123,13 +1123,13 @@ class Main extends TelegramApp\Module {
 		}
 
 		$query = $this->db
-			->where('uid', $user->id)
+			->where('uid', $this->user->id)
 			->where('cid', $chat->id)
 		->get('user_inchat');
 		if($query->num_rows() == 1){
 			// UPDATE
 			$this->db
-				->where('uid', $user->id)
+				->where('uid', $this->user->id)
 				->where('cid', $chat->id)
 				->set('messages', 'messages + 1', FALSE)
 				->set('last_date', date("Y-m-d H:i:s"))
