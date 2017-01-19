@@ -35,6 +35,7 @@ if(
 		($telegram->is_chat_group() and $pokemon->settings($telegram->chat->id, 'say_hello') == TRUE) and
 		($pokemon->settings($telegram->user->id, 'say_hello') != FALSE or $pokemon->settings($telegram->user->id, 'say_hello') == NULL)
 	){*/
+	if($pokemon->command_limit("hello", $telegram->chat->id, $telegram->message, 7)){ return -1; }
 	$joke = "Buenas a ti también, entrenador! :D";
 	if($telegram->text_has(['noches', 'nit'])){
 		$joke = "Buenas noches fiera, descansa bien! :)";
