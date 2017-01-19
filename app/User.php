@@ -1,41 +1,9 @@
 <?php
 defined('BASEPATH') OR exit('No direct script access allowed');
 
-class User extends TelegramApp\Module {
-	private $id;
-	private $chat;
-	private $data;
-	private $loaded = FALSE;
-
-	public function __construct($id = NULL, $chat = NULL){
-		  parent::__construct();
-		  if(!empty($chat)){
-			  if($chat instanceof Telegram\Chat){ $chat = $chat->id; }
-			  $this->chat = $chat;
-		  }
-		  if(!empty($id)){
-			  if($id instanceof Telegram\User){ $id = $id->id; }
-			  $this->id = $id;
-			  $this->load();
-		  }
-	}
-
-	public function __get($key){
-		if(isset($this->$key)){ return $this->$key; }
-		if(isset($this->data[$key])){ return $this->data[$key]; }
-		return NULL;
-	}
-
-	public function __set($key, $value){
-		if(isset($this->$key)){ $this->$key = $value; }
-		else{ $this->data[$key] = $value; }
-
-		if($this->loaded === TRUE){
-			$this->db
-				->where('telegramid', $this->id)
-				->set($key, $value)
-			->update('user');
-		}
+class User extends TelegramApp\User {
+	public function __construct($input){
+		  parent::__construct($input);
 	}
 
 	// Custom Properties
@@ -63,8 +31,12 @@ class User extends TelegramApp\Module {
 		return ($this->telegram->send->unban($this->id, $chat) !== FALSE);
 	}
 
-	function update(){
+	function update($key, $value){
 		// get set variables and set them to DB-table
+		$this->db
+			->where('telegramid', $this->id)
+			->set($key, $value)
+		->update('user');
 	}
 
 	function load(){
@@ -82,6 +54,7 @@ class User extends TelegramApp\Module {
 		$this->load_settings();
 
 		$this->loaded = TRUE;
+		return TRUE;
 	}
 
 	private function load_flags(){
