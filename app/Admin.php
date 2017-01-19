@@ -1,5 +1,4 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Admin extends TelegramApp\Module {
 
@@ -8,7 +7,7 @@ class Admin extends TelegramApp\Module {
 	}
 
 	public function hooks(){
-		
+
 	}
 
 	public function kick($user, $chat){

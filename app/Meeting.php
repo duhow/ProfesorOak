@@ -1,5 +1,4 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Meeting extends TelegramApp\Module {
 
@@ -8,6 +7,6 @@ class Meeting extends TelegramApp\Module {
 	}
 
 	public function hooks(){
-		
+
 	}
 }

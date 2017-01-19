@@ -1,25 +1,97 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Main extends TelegramApp\Module {
 	public $user;
+	public $pokemon;
+	protected $runCommands = FALSE;
 
-	public function __construct(){
+	public function run(){
+		$this->core->load('User');
+		$this->core->load('Tools');
+		$this->core->load('Pokemon');
 		// comprobar IP del host
-		if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ die(); }
+		// if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ $this->end(); }
 		// TODO log
-		$this->user = new User($this->telegram->user);
+		$this->_log(json_encode( $this->telegram->dump() ));
+
+		$this->user =& $GLOBALS['User'];
+		$this->pokemon =& $GLOBALS['Pokemon'];
 		if($this->user->load() !== TRUE){
 			// Solo puede registrarse.
+			$this->telegram->send->text("Probando...")->send();
+			$color = Tools::Color($this->telegram->text());
+			if(
+				($this->telegram->text_has(["Soy", "Equipo", "Team"]) && $color) or
+		    	($color && $this->telegram->words() == 1)
+			){
+				return $this->register($color);
+			}elseif($this->telegram->text_command("register")){
+				return $this->register(NULL);
+			}
+			$this->end();
 		}
 		if($this->user->blocked){ $this->end(); }
+
+		parent::run();
+	}
+
+	function register($team = NULL){
+		$str = NULL;
+		if($this->user->telegramid === NULL){
+			if($team === NULL){
+				$str = "Hola " .$this->user->telegram->first_name ."! ¿Puedes decirme qué color eres?\n"
+				."<b>Di:</b> Soy...";
+				if($this->telegram->is_chat_group()){
+					$str = "Hola " .$this->user->telegram->first_name ."! Ábreme por privado para registrate! :)";
+					$this->telegram->send
+					->inline_keyboard()
+						->row_button("Registrar", "https://t.me/ProfesorOak_bot")
+					->show();
+				}
+			}elseif($team === FALSE){
+				$this->telegram->send->reply_to(TRUE);
+				$str = "No te he entendido bien...\n¿Puedes decirme sencillamente <b>soy rojo, soy azul</b> o <b>soy amarillo</b>?";
+			}else{
+				// Intentar registrar, ignorar si es anonymous.
+				if($this->user->load() !== FALSE){
+					$this->user->step = "SETNAME";
+					$str = "Muchas gracias " .$this->user->telegram->first_name ."! Por cierto, ¿cómo te llamas <b>en el juego</b>? \n<i>(Me llamo...)</i>";
+				}
+			}
+		}elseif($this->user->username === NULL){
+			$str = "Oye, ¿cómo te llamas? <b>Di:</b> Me llamo ...";
+		}elseif($this->user->verified == FALSE){
+			$str = $this->telegram->emoji(":warning:") ."¿Entiendo que quieres <b>validarte</b>?";
+			$this->telegram->send
+	        ->inline_keyboard()
+	            ->row_button("Validar", "quiero validarme", TRUE)
+	        ->show();
+		}
+		if(!empty($str)){
+			$this->telegram->send
+				->notification(FALSE)
+				->text($str, 'HTML')
+			->send();
+		}
+		$this->end();
+	}
+
+	function help(){
+		$this->telegram->send
+			->text("¡Aquí tienes la ayuda!")
+		->send();
 	}
 
 	public function hooks(){
 		// iniciar variables
 		$telegram = $this->telegram;
 		// $pokemon = $this->pokemon;
-		$this->_log(json_encode( $telegram->dump() ));
+
+		$this->telegram->send->text("asdf")->send();
+		if($this->telegram->text_command("register")){ return $this->register(); }
+		if($this->telegram->text_command("info")){ $this->telegram->send->text($this->user->telegramid)->send(); }
+
+		$this->end();
 
 		// Actualizamos datos de chat
 		$this->_update_chat();
