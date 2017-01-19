@@ -1,9 +1,8 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
 
 class User extends TelegramApp\User {
-	public function __construct($input){
-		  parent::__construct($input);
+	public function __construct($input = NULL, $db = NULL){
+		  parent::__construct($input, $db);
 	}
 
 	// Custom Properties
@@ -33,10 +32,9 @@ class User extends TelegramApp\User {
 
 	function update($key, $value){
 		// get set variables and set them to DB-table
-		$this->db
+		return $this->db
 			->where('telegramid', $this->id)
-			->set($key, $value)
-		->update('user');
+		->update('user', [$key => $value]);
 	}
 
 	function load(){
@@ -63,15 +61,14 @@ class User extends TelegramApp\User {
 			->where('user', $this->id)
 		->get('user_flags');
 		if(count($query) > 0){
-			foreach($query as $flag){
-				$this->flags[] = $flag['value'];
-			}
+			$this->flags = array_column($query, 'value');
 		}
 		return $this->flags;
 	}
 
 	private function load_chats(){
 		$this->chats = array();
+		$chats = array();
 		$query = $this->db
 			->where('uid', $this->id)
 		->get('user_inchat');
@@ -80,8 +77,9 @@ class User extends TelegramApp\User {
 				$chatobj = $chat;
 				$chatobj['id'] = $chat['cid'];
 				unset($chatobj['uid']);
-				$this->chats[$chat['cid']] = (object) $chatobj;
+				$chats[$chat['cid']] = (object) $chatobj;
 			}
+			$this->chats = $chats;
 		}
 		return $this->chats;
 	}
@@ -92,10 +90,9 @@ class User extends TelegramApp\User {
 			->where('uid', $this->id)
 		->get('settings');
 		if(count($query) > 0){
-			foreach($query as $setting){
-				$this->settings[$setting['type']] = $setting['value'];
-			}
+			$this->settings = array_column($query, 'value', 'type');
 		}
+		return $this->settings;
 	}
 
 	function in_chat($chat = NULL, $check_telegram = FALSE){

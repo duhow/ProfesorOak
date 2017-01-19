@@ -1,5 +1,4 @@
 <?php
-defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Git extends TelegramApp\Module {
 
@@ -8,6 +7,6 @@ class Git extends TelegramApp\Module {
 	}
 
 	public function hooks(){
-		
+
 	}
 }
