@@ -1,12 +1,10 @@
 <?php
 
 class Main extends TelegramApp\Module {
-	public $user;
 	public $pokemon;
 	protected $runCommands = FALSE;
 
 	public function run(){
-		$this->core->load('User');
 		$this->core->load('Tools');
 		$this->core->load('Pokemon');
 		// comprobar IP del host
@@ -14,8 +12,6 @@ class Main extends TelegramApp\Module {
 		// TODO log
 		$this->_log(json_encode( $this->telegram->dump() ));
 
-		$this->user =& $GLOBALS['User'];
-		$this->pokemon =& $GLOBALS['Pokemon'];
 		if($this->user->load() !== TRUE){
 			// Solo puede registrarse.
 			$this->telegram->send->text("Probando...")->send();
