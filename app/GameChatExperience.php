@@ -18,7 +18,26 @@ class GameChatExperience extends TelegramApp\Module {
 
 	protected function hooks(){
 		if($this->telegram->is_chat_group()){
-			e
+			$amount = $this->telegram->words();
+			if($amount == mt_rand(2, 9)){
+				$timeout = $this->user->settings['expchat_timeout'];
+				if(empty($timeout) or time() >= $timeout){
+					$points = $this->get_experience($this->user);
+
+					$curlev = $this->get_level($points);
+					$nextlev = $this->get_level($points + $amount);
+
+					if($nextlev > $curlev && $nextlev > 0){
+						$this->telegram->send
+							->notification(FALSE)
+							->text($this->telegram->emoji("\u2b06\ufe0f") ." *" .$this->telegram->user->first_name ."* ha subido al *nivel " .$nextlev ."*!", TRUE)
+						->send();
+					}
+					// La recompensa será el número de palabras que haya tocado, para hacer el factor diferencial.
+					// Puede favorecer a los spamers, así que cuidado.
+					$this->add_experience($amount, $this->user);
+				}
+			}
 		}
 
 		if($this->telegram->text_has("mi experiencia")){
@@ -35,12 +54,15 @@ class GameChatExperience extends TelegramApp\Module {
 	}
 
 	public function add_experience($amount, $user = NULL){
-		if(empty($user)){ $user = $this->telegram->user; }
+		if(empty($user)){ $user = $this->user; }
+		$user->settings['expchat_points'] += $amount;
+		$user->settings['expchat_timeout'] = (time() + 60);
+		return $user->settings['expchat_points'];
 	}
 
 	public function get_experience($user = NULL){
-		if(empty($user)){ $user = $this->telegram->user; }
-
+		if(empty($user)){ $user = $this->user; }
+		return $user->settings['expchat_points'];
 	}
 
 	public function get_level($points){
