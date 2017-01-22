@@ -53,7 +53,7 @@ class User extends TelegramApp\User {
 			'username' => NULL,
 			'fullname' => $this->telegram->first_name or NULL,
 			'team' => $team,
-			'register_date' => date("Y-m-d H:i:s")
+			'register_date' => date("Y-m-d H:i:s"),
 			'verified' => FALSE,
 			'blocked' => FALSE
 		];
