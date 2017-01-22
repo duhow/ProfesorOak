@@ -5,7 +5,7 @@ namespace Pokemon;
 class TrainerRewards {
 
 	function __construct($level){
-		public $rewards = [
+		$rewards = [
 			1 => [],
 			2 => ['POKE_BALL' => 10],
 			3 => ['POKE_BALL' => 15],
