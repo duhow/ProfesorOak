@@ -23,6 +23,7 @@ class GameGeneral extends TelegramApp\Module {
 		return $dice;
 	}
 
+	function rpsls(){ return $this->rps(TRUE); }
 	function rps($ls = FALSE){
 		// $this->analytics->event('Telegram', 'Games', 'RPS');
 
@@ -35,6 +36,7 @@ class GameGeneral extends TelegramApp\Module {
 		// return choice?
 	}
 
+	function flip(){ return $this->coin(); }
 	function coin(){
 		// $this->analytics->event('Telegram', 'Games', 'Coin');
 	    $n = mt_rand(0, 99);
