@@ -45,6 +45,20 @@ class User extends TelegramApp\User {
 
 	}
 
+	public function register($team){
+		if(!empty($this->team)){ return FALSE; }
+		$data = [
+			'telegramid' => $this->id,
+			'telegramuser' => $this->telegram->user->username or NULL,
+			'username' => NULL,
+			'fullname' => $this->telegram->user->first_name or NULL,
+			'team' => $team,
+			'verified' => FALSE,
+			'blocked' => FALSE
+		];
+		return $this->db->insert('user', $data);
+	}
+
 	public function load(){
 		// load variables and set them here.
 		$query = $this->db
