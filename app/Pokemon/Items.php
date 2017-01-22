@@ -36,7 +36,7 @@ class Items {
 
 	static function array(){
 		$oClass = new ReflectionClass(__CLASS__);
-		$array = $oClass->getConstants()
+		$array = $oClass->getConstants();
         return array_flip($array);
 	}
 }
