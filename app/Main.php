@@ -14,7 +14,6 @@ class Main extends TelegramApp\Module {
 
 		if($this->user->load() !== TRUE){
 			// Solo puede registrarse.
-			$this->telegram->send->text("Probando...")->send();
 			$color = Tools::Color($this->telegram->text());
 			if(
 				($this->telegram->text_has(["Soy", "Equipo", "Team"]) && $color) or
@@ -78,6 +77,24 @@ class Main extends TelegramApp\Module {
 		$this->end();
 	}
 
+	function setname($name, $user = NULL){
+		if(empty($user)){ $user = $this->user; }
+		try {
+			$user->username = $name;
+		} catch (Exception $e) {
+			$this->telegram->send
+				->text("Ya hay alguien que se llama @$name. Habla con @duhow para arreglarlo.")
+			->send();
+			$this->end();
+		}
+		$str = "De acuerdo, @$name!\n"
+				."¡Recuerda <b>validarte</b> para poder entrar en los grupos de colores!";
+		$this->telegram->send
+			->text($str, 'HTML')
+		->send();
+		return TRUE;
+	}
+
 	function help(){
 		$this->telegram->send
 			->text("¡Aquí tienes la ayuda!")
@@ -88,18 +105,6 @@ class Main extends TelegramApp\Module {
 		// iniciar variables
 		$telegram = $this->telegram;
 		// $pokemon = $this->pokemon;
-
-		$this->telegram->send->text("asdf")->send();
-		if($this->telegram->text_command("register")){ return $this->register(); }
-		if($this->telegram->text_command("info")){ $this->telegram->send->text($this->user->telegramid)->send(); }
-
-		$this->end();
-
-		// Actualizamos datos de chat
-		$this->_update_chat();
-
-		// Si el usuario no está registrado con las funciones básicas, fuera.
-		if(!$pokemon->user_exists($telegram->user->id)){ $this->end(); }
 
 		// Cancelar pasos en general.
 		if($this->user->step != NULL && $telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
@@ -113,13 +118,20 @@ class Main extends TelegramApp\Module {
 			$this->end();
 		}
 
-		if(!empty($step)){ $this->_step(); }
+		$this->telegram->send->text("asdf")->send();
+		if($this->telegram->text_command("register")){ return $this->register(); }
+		if($this->user->step == "SETNAME" && $this->telegram->words() == 1){
+			$this->setname($this->telegram->last_word(TRUE));
+			$this->end();
+		}
+		if($this->telegram->text_command("info")){ $this->telegram->send->text($this->user->telegramid)->send(); }
 
-		$this->plugin->load('vote');
-		$this->plugin->load('tools');
+		$this->end();
 
-		$this->plugin->load_all();
-		$this->plugin->load('plugin_manager'); // To manage all loaded plugins.
+		// Actualizamos datos de chat
+		$this->_update_chat();
+
+		// Si el usuario no está registrado con las funciones básicas, fuera.
 
 		/*
 		##################
