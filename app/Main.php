@@ -49,6 +49,12 @@ class Main extends TelegramApp\Module {
 				$str = "No te he entendido bien...\n¿Puedes decirme sencillamente <b>soy rojo, soy azul</b> o <b>soy amarillo</b>?";
 			}else{
 				// Intentar registrar, ignorar si es anonymous.
+				if($this->user->register($team) === FALSE){
+					$this->telegram->send
+						->text("Error general al registrar.")
+					->send();
+					$this->end();
+				}
 				if($this->user->load() !== FALSE){
 					$this->user->step = "SETNAME";
 					$str = "Muchas gracias " .$this->user->telegram->first_name ."! Por cierto, ¿cómo te llamas <b>en el juego</b>? \n<i>(Me llamo...)</i>";
