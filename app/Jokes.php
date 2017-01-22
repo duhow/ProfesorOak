@@ -4,6 +4,13 @@ class Jokes extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
 	public function hooks(){
+		if($this->telegram->text_has(["alguien", "alguno"]) && $this->telegram->text_has(["decir", "dice", "sabe"])){
+			if(mt_rand(1, 7) == 7){
+				$this->send_text($this->pa_ke_saberlo());
+				$this->end();
+			}
+		}
+
 		if($this->telegram->text_has("Team Rocket despega")){
 			return $this->team_rocket();
 		}elseif($this->telegram->text_contains("sextape")){
@@ -26,12 +33,156 @@ class Jokes extends TelegramApp\Module {
 			return $this->hello_spongebob();
 		}elseif($this->telegram->text_has(["muéstrame", "mostrar"]) && $this->telegram->text_has(["pokebola", "pokeball"]) && $this->telegram->words() <= 5){
 			return $this->muestrame_pokebola();
+		}elseif($this->telegram->text_has(["msn", "zumbido"])){
+			return $this->zumbido();
+		}elseif($this->telegram->text_has("maincra")){
+			return $this->maincra();
+		}elseif($this->telegram->text_command("taladro")){
+			if($this->user->id != CREATOR){ return; }
+			return $this->taladro();
+		}elseif($this->telegram->text_has("yo", "no") && !$this->telegram->text_has(["tuyo", "suyo"]) && $this->telegram->words() <= 3){
+			return $this->yono();
+		}elseif($this->telegram->text_has(["votos a favor", "votos en contra"])){
+			return $this->yono();
+		}elseif($this->telegram->text_command("fichas") or $this->telegram->text_has("te", ["follo", "follaba"])){
+			return $this->fichas();
+		}elseif(
+			$this->telegram->text_command("tennis") or
+			$this->telegram->text_has("maria", ["sharapova", "sarapova"]) or
+			$this->telegram->text_has($this->telegram->emoji(":tennis:"), TRUE)
+		){
+			return $this->tennis();
+		}elseif($this->telegram->text_has("corre", "corre")){
+			return $this->corre_corre();
+		}elseif($this->telegram->text_has(["quiero", "necesito"], ["abrazo", "abrazarte", "un abrazo"])){
+			return $this->hug();
+		}elseif($this->telegram->text_has(["transferir", "transfiere", "recicla"]) && $this->telegram->text_has(["pokémon"])){
+			return $this->pidgey_candy();
+		}elseif($this->telegram->text_has("fanta") && $this->telegram->words() > 3){
+			return $this->fanta();
+		}elseif($this->telegram->text_has(["vas a la", "hay una", "es una"], "fiesta")){
+			return $this->fiesta();
+		}elseif($this->telegram->text_has("oak", "oak") or $this->telegram->text_has("toda", "toda")){
+			return $this->oak_oak();
+		}elseif($this->telegram->text_has(["soy", "luke"]) and $this->telegram->text_has(["tu padre", "papa"])){
+			return $this->luke_padre();
+		}elseif($this->telegram->text_has(["subnor", "subnormal"]) and $this->telegram->text_has(["alerta", "detectado", "detected", "eres"])){
+			return $this->alerta_subnormal();
+		}elseif($this->telegram->text_has(["saca", "dame"]) and $this->telegram->text_has("látigo")){
+			return $this->latigo();
+		}elseif($this->telegram->text_command("whip")){
+			return $this->latigo();
+		}elseif($this->telegram->text_has(["guerra", "callaos", "callaros"]) and $this->telegram->words() <= 6){
+			return $this->callaos();
+		}elseif($this->telegram->text_has(["warns", "/warns"])){
+			return $this->buarns();
+		}elseif($this->telegram->text_has("no", ["llevo nada", "llevara nada"])){
+			return $this->no_llevara_nada();
+		}elseif($this->telegram->text_has("pedaso")){
+			return $this->pedaso();
+		}elseif($this->telegram->text_has("suspense") && $this->telegram->words() <= 10){
+			return $this->suspense();
+		}elseif($this->telegram->text_has(["tdfw", "turn down for what"])){
+			return $this->turn_down();
+		}elseif($this->telegram->text_has(["es", "eres"], "tonto") && $this->telegram->words() <= 5){
+			return $this->eres_tonto();
+		}elseif($this->telegram->text_has(["eres muy", "que"], ["sexy", "saxo"]) && $this->telegram->words() <= 5){
+			return $this->careless_whisper();
+		}elseif($this->telegram->text_has(["bug", "bugeate", "bugeado"]) && $this->telegram->words() <= 4){
+			if(mt_rand(1, 4) == 4){
+				// return $this->bugeate();
+			}
+			return;
+		}elseif($this->telegram->text_has("es fly")){
+			return $this->soy_una_avioneta();
 		}
+
+		// -----------
+
+		elseif(
+			( $this->telegram->text_has(["necesitas", "necesitáis"], ["novio", "un novio", "novia", "una novia", "pareja", "una pareja", "follar"]) ) or
+		    ( $this->telegram->text_has("Tengo", TRUE) && $this->telegram->words() == 2 && !is_numeric($this->telegram->last_word()) )
+		){
+			$word = "Novia";
+			if($this->telegram->text_has("Tengo", TRUE)){ $word = $this->telegram->last_word(); }
+			return $this->send_text($this->need_something($word));
+		}elseif(
+			$telegram->text_contains(["oak", "profe"]) &&
+			$telegram->text_has(["cuántos", "cuándo", "qué"]) &&
+			$telegram->text_contains(["años", "edad", "cumple"])
+		){
+			return $this->send_text($this->birthday());
+		}elseif($this->telegram->text_has("Quién es Ash") && $this->telegram->words() <= 7){
+			return $this->send_text($this->whois_ash(), "Ash");
+		}elseif(
+			$this->telegram->text_has("Gracias", ["profesor", "Oak", "profe"]) &&
+			!$this->telegram->text_has("pero", "no")
+		){
+			return $this->send_text($this->thank_you());
+		}elseif($this->telegram->text_has(["buenos", "buenas", "bon"], ["días", "día", "tarde", "tarda", "tardes", "noches", "nit"])){
+			// if($pokemon->command_limit("hello", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+			return $this->send_text($this->hello_day());
+		}elseif($this->telegram->text_hashtag("novatos")){
+			// return $this->send_text($this->novatos());
+		}elseif($this->telegram->text_command("drama")){
+			return $this->drama_spanish();
+		}elseif($this->telegram->text_has(["a que sí"], ["profe", "oak", "profesor"])){
+			return $this->send_text($this->reply_yes_no(), 'Reply yes or no');
+		}elseif(
+			$this->telegram->text_has(["profe", "profesor", "oak", "bot"]) &&
+			$this->telegram->text_has(["programado", "funcionas"])
+		){
+			return $this->send_text($this->dev());
+		}elseif(
+			!$this->telegram->text_has(["qué", "cómo"]) &&
+			$this->telegram->text_has(["quién", "oak", "profe"]) &&
+			$this->telegram->text_has(["es", "te", "tu", "hizo a", "le"]) &&
+			$this->telegram->text_has(["programado", "hecho", "hizo", "creado", "creador"]) &&
+			$this->telegram->words() <= 8
+		){
+			return $this->send_text($this->creator());
+		}elseif(
+			$this->telegram->text_has("qué hora", ["es", "son"]) &&
+			!$this->telegram->text_has("a qué hora") &&
+			$this->telegram->text_contains("?") &&
+			$this->telegram->words() <= 5
+		){
+			return $this->send_text($this->date());
+		}elseif(
+			$this->telegram->text_has(["profe", "profesor", "oak"]) &&
+			$this->telegram->text_has("te", ["quiero", "amo", "adoro"])
+		){
+			return $this->send_text($this->iloveyou());
+		}elseif(
+			$telegram->text_contains(["te la com", "te lo com", "un hijo", "me ha dolido"]) &&
+			$telegram->text_has(["oak", "profe", "bot"])
+		){
+			return $this->send_text($this->eat_dick(TRUE));
+		}
+
+		if($this->telegram->text_command("banana")){
+			
+		}elseif($this->telegram->text_command("me") && $this->telegram->words() > 1){
+
+		}
+
+		if($this->telegram->text_has("dame", ["un huevo", "pokeball", "pokeballs"]) && $this->telegram->words() <= 6){
+			return $this->send_text("Nope.");
+		}
+
+	}
+
+	private function send_text($text, $tag_analytic = NULL){
+		if(!empty($tag_analytic)){ } // $this->analytics->event('Telegram', 'Jokes', $tag_analytic);
+		return $this->telegram->send
+			->notification(FALSE)
+			->text($text, TRUE)
+		->send();
 	}
 
 	private function send_sticker($id, $tag_analytic = NULL){
 		if(!empty($tag_analytic)){ } // $this->analytics->event('Telegram', 'Jokes', $tag_analytic);
-		$this->telegram->send
+		return $this->telegram->send
 			->notification(FALSE)
 			->file('sticker', $id);
 	}
@@ -132,6 +283,11 @@ class Jokes extends TelegramApp\Module {
 		return $frases[$n];
 	}
 
+	public function iloveyou(){
+		$text = "¡Yo también te quiero! <3";
+		return $this->telegram->emoji($text);
+	}
+
 	public function hello_day(){
 		// if($pokemon->command_limit("hello", $telegram->chat->id, $telegram->message, 7)){ return -1; }
 		$text = "Buenas a ti también, entrenador! :D";
@@ -180,14 +336,14 @@ class Jokes extends TelegramApp\Module {
 	}
 
 	public function pa_ke_saberlo(){
-		$text = NULL;
-		if(mt_rand(1, 7) == 7){ $text = "pa k kieres saber eso jaja salu2"; }
+		$text = "pa k kieres saber eso jaja salu2";
 		return $text;
 	}
 
 	public function dev(){
-		$text = "Pues yo funciono con *PHP* (_CodeIgniter_) :)";
-		return $text;
+		$text = "Pues yo funciono con *PHP* :)\n"
+				."Antes usaba _CodeIgniter_, pero ahora tengo mi propia librería y todo. :cool:";
+		return $this->telegram->emoji($text);
 	}
 
 	public function creator(){
@@ -201,14 +357,12 @@ class Jokes extends TelegramApp\Module {
 		return $text;
 	}
 
-	public function eat_dick(){
+	public function eat_dick($sticker = FALSE){
 		if($this->telegram->text_has("no")){
 			$text = "¿Pues entonces para que me dices nada? Gilipollas.";
 		}else{
-			// if($this->is_shutup_jokes()){ return; }
-
 			$text = "Tu sabes lo que es el fiambre? Pues tranquilo, que no vas a pasar hambre... ;)";
-			$this->send_sticker('BQADBAADGgAD9VikAAEvUZ8dGx1_fgI');
+			if($sticker){ $this->send_sticker('BQADBAADGgAD9VikAAEvUZ8dGx1_fgI'); }
 		}
 		return $text;
 	}
