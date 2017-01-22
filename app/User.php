@@ -49,9 +49,9 @@ class User extends TelegramApp\User {
 		if(!empty($this->team)){ return FALSE; }
 		$data = [
 			'telegramid' => $this->id,
-			'telegramuser' => $this->telegram->username or NULL,
+			'telegramuser' => @$this->telegram->username,
 			'username' => NULL,
-			'fullname' => $this->telegram->first_name or NULL,
+			'fullname' => @$this->telegram->first_name,
 			'team' => $team,
 			'register_date' => date("Y-m-d H:i:s"),
 			'verified' => FALSE,
