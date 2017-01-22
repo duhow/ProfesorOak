@@ -5,7 +5,7 @@ namespace Pokemon;
 class Levels {
 
 	function __construct(){
-		public $levels = [
+		$levels = [
 			200 => [
 				[1.0 => 0.094],
 				[1.5 => 0.135137],
@@ -126,7 +126,7 @@ class Levels {
 				[40.0 => 0.7903]
 			]
 		];
-	}	
+	}
 }
 
 ?>
