@@ -32,9 +32,13 @@ class User extends TelegramApp\User {
 
 	public function update($key, $value, $table = 'user', $idcol = 'telegramid'){
 		// get set variables and set them to DB-table
-		return $this->db
+		$query = $this->db
 			->where($idcol, $this->id)
 		->update($table, [$key => $value]);
+		if($this->db->getLastErrno() !== 0){
+			throw new Exception('Error en la consulta: ' .$this->db->getLastError());
+		}
+		return $query;
 	}
 
 	protected function insert($data, $table){
