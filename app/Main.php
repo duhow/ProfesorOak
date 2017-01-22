@@ -78,7 +78,7 @@ class Main extends TelegramApp\Module {
 		->send();
 	}
 
-	public function hooks(){
+	protected function hooks(){
 		// iniciar variables
 		$telegram = $this->telegram;
 		// $pokemon = $this->pokemon;

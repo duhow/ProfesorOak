@@ -2,10 +2,6 @@
 
 class Tools extends TelegramApp\Functions {
 
-	public function __construct(){
-		  parent::__construct();
-	}
-
 	function Find($find, $text){
 	    $text = strtolower($text);
 	    $text = str_replace(["á","é"], ["a","e"], $text);
@@ -201,7 +197,7 @@ class Tools extends TelegramApp\Functions {
 	}
 
 	function Pokemon($string){
-	    $pokemon = new Pokemon();
+	    $pokemon = $this->core->load('Pokemon');
 
 	    $pokes = $pokemon->pokedex();
 	    $s = explode(" ", $pokemon->misspell($string));

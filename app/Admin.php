@@ -3,7 +3,7 @@
 class Admin extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
-	public function hooks(){
+	protected function hooks(){
 
 	}
 

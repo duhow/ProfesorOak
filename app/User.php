@@ -30,14 +30,22 @@ class User extends TelegramApp\User {
 		return ($this->telegram->send->unban($this->id, $chat) !== FALSE);
 	}
 
-	function update($key, $value){
+	public function update($key, $value, $table = 'user', $idcol = 'telegramid'){
 		// get set variables and set them to DB-table
 		return $this->db
-			->where('telegramid', $this->id)
-		->update('user', [$key => $value]);
+			->where($idcol, $this->id)
+		->update($table, [$key => $value]);
 	}
 
-	function load(){
+	protected function insert($data, $table){
+
+	}
+
+	protected function delete($data, $table){
+
+	}
+
+	public function load(){
 		// load variables and set them here.
 		$query = $this->db
 			->where('telegramid', $this->id)
