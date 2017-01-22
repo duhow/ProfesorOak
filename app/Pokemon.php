@@ -3,6 +3,13 @@
 class Pokemon extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
+	public function __construct(){
+		$folder = dirname(__FILE__) ."/Pokemon/";
+		foreach(scandir($folder) as $file){
+			if(substr($file, -4) == ".php"){ require_once $folder .$file; }
+		}
+	}
+
 	public function load($search){
 		if(is_numeric($search) or is_string($search)){  } // load Pokemon Pokedex.
 		return $search;
