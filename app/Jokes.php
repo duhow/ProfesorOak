@@ -114,6 +114,8 @@ class Jokes extends TelegramApp\Module {
 			return $this->send_text($this->birthday());
 		}elseif($this->telegram->text_has("Quién es Ash") && $this->telegram->words() <= 7){
 			return $this->send_text($this->whois_ash(), "Ash");
+			}elseif($this->telegram->text_has("Quién es Brock") && $this->telegram->words() <= 7){
+			return $this->send_text($this->whois_rock(), "brock");
 		}elseif(
 			$this->telegram->text_has("Gracias", ["profesor", "Oak", "profe"]) &&
 			!$this->telegram->text_has("pero", "no")
@@ -273,7 +275,11 @@ class Jokes extends TelegramApp\Module {
 		$text = "Ah! Ese es un *cheater*, es nivel 100...\nLo que no sé de dónde saca tanto dinero para viajar tanto...";
 		return $text;
 	}
-
+public function whois_brock(){
+		// $this->analytics->event('Telegram', 'Jokes', 'brock');
+		$text = "Eh! ese es el mejor criador de pokemon, lider de gimnasio, y amigo de Ash... Pero en cuanto ve una falda se pierde... Por cierto llevamos temporadas sin verle :O";
+		return $text;
+	}
 	public function thank_you($nigga = FALSE){
 		// $this->analytics->event('Telegram', 'Jokes', 'Thank you');
 		if($nigga){ return "Yeah ma nigga 8-)"; }
