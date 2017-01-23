@@ -2,13 +2,13 @@
 
 class Meeting extends TelegramApp\Module {
 	protected $runCommands = FALSE;
-	public $meeting = NULL;
+	public $id = NULL;
 
 	public function hooks(){
 
 	}
 
-	public function join($meeting, $value = TRUE, $user = NULL){
+	public function join($meetid, $value = TRUE, $user = NULL){
 
 	}
 
@@ -16,19 +16,19 @@ class Meeting extends TelegramApp\Module {
 
 	}
 
-	public function delete($meeting){
+	public function delete($meetid){
 
 	}
 
-	public function list($meeting){
+	public function list($meetid){
 
 	}
 
-	public function addLocation($meeting, $location){
+	public function addLocation($meetid, $location){
 
 	}
 
-	public function addTopic($meeting, $location){
+	public function addTopic($meetid, $location){
 
 	}
 }
