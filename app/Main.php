@@ -1,7 +1,6 @@
 <?php
 
 class Main extends TelegramApp\Module {
-	public $pokemon;
 	protected $runCommands = FALSE;
 
 	public function run(){
@@ -11,23 +10,63 @@ class Main extends TelegramApp\Module {
 		// if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ $this->end(); }
 		// TODO log
 		$this->_log(json_encode( $this->telegram->dump() ));
+		// $this->_update_chat();
+
+		if($this->user->settings['forward_interactive']){
+			$this->forward_creator();
+		}
+
+		if($this->telegram->is_chat_group()){
+			if($this->user->settings['forwarding_to']){ $this->forward_groups(); }
+			if($this->user->settings['antiflood']){ $this->check_flood(); }
+			if($this->telegram->text_url() && $this->user->settings['antispam'] !== FALSE){ $this->antispam(); }
+			if($this->user->settings['die'] && $this->user->id != CREATOR){ $this->end(); }
+
+			if($this->telegram->data_received("migrate_to_chat_id")){
+				// $pokemon->group_disable($telegram->chat->id);
+				// TODO mover settings
+				$this->end();
+			}
+		}
 
 		if($this->user->load() !== TRUE){
-			// Solo puede registrarse.
+			// Solo puede registrarse o pedir ayuda por privado.
 			$color = Tools::Color($this->telegram->text());
 			if(
 				($this->telegram->text_has(["Soy", "Equipo", "Team"]) && $color) or
-		    	($color && $this->telegram->words() == 1)
+				($color && $this->telegram->words() == 1)
 			){
-				return $this->register($color);
-			}elseif($this->telegram->text_command("register")){
-				return $this->register(NULL);
+				$this->register($color);
+			}elseif(
+				$this->telegram->text_command("register") or
+				($this->telegram->text_command("start") and
+				!$this->telegram->is_chat_group())
+			){
+				$this->register(NULL);
+			}elseif(
+				$this->telegram->text_command("help") and
+				!$this->telegram->is_chat_group()
+			){
+				$this->help();
 			}
 			$this->end();
 		}
+
 		if($this->user->blocked){ $this->end(); }
 
 		parent::run();
+	}
+
+	function ping(){
+		return $this->telegram->send
+			->text("¡Pong!")
+		->send();
+	}
+
+	function help(){
+		$this->telegram->send
+			->text('¡Aquí tienes la <a href="http://telegra.ph/Ayuda-11-30">ayuda</a>!', 'HTML')
+		->send();
 	}
 
 	function register($team = NULL){
@@ -79,6 +118,7 @@ class Main extends TelegramApp\Module {
 
 	function setname($name, $user = NULL){
 		if(empty($user)){ $user = $this->user; }
+		if($user->step == "SETNAME"){ $user->step = NULL; }
 		try {
 			$user->username = $name;
 		} catch (Exception $e) {
@@ -95,10 +135,86 @@ class Main extends TelegramApp\Module {
 		return TRUE;
 	}
 
-	function help(){
-		$this->telegram->send
-			->text("¡Aquí tienes la ayuda!")
+	function forward_creator(){
+		return $this->telegram->send
+			->notification(FALSE)
+			->chat($this->telegram->chat->id)
+			->message(TRUE)
+			->forward_to(CREATOR)
 		->send();
+	}
+
+	function forward_groups(){
+		/* if($this->telegram->user_in_chat($this->config->item('telegram_bot_id'), $chat_forward)){ // Si el Oak está en el grupo forwarding
+			$chat_accept = explode(",", $pokemon->settings($chat_forward, 'forwarding_accept'));
+			if(in_array($telegram->chat->id, $chat_accept)){ // Si el chat actual se acepta como forwarding...
+				$telegram->send
+					->message($telegram->message)
+					->chat($telegram->chat->id)
+					->forward_to($chat_forward)
+				->send();
+			}
+		} */
+	}
+
+	function check_flood(){
+		if($this->user->is_admin){ return; }
+		$amount = NULL;
+		if($telegram->text_command()){ $amount = 1; }
+		elseif($telegram->photo()){ $amount = 0.8; }
+		elseif($telegram->sticker()){
+			if(strpos($telegram->sticker(), "AAjbFNAAB") === FALSE){ // + BQADBAAD - Oak Games
+				$amount = 1;
+			}
+		}
+		// elseif($telegram->document()){ $amount = 1; }
+		elseif($telegram->gif()){ $amount = 1; }
+		elseif($telegram->text() && $telegram->words() >= 50){ $amount = 0.5; }
+		elseif($telegram->text()){ $amount = -0.4; }
+		// Spam de text/segundo.
+		// Si se repite la última palabra.
+
+		$countflood = 0;
+		if($amount !== NULL){ $countflood = $pokemon->group_spamcount($telegram->chat->id, $amount); }
+
+		if($countflood >= $flood){
+
+			$ban = $pokemon->settings($telegram->chat->id, 'antiflood_ban');
+
+			if($ban == TRUE){
+				$res = $telegram->send->ban($telegram->user->id);
+				if($pokemon->settings($telegram->chat->id, 'antiflood_ban_hidebutton') != TRUE){
+					$telegram->send
+					->inline_keyboard()
+						->row_button("Desbanear", "desbanear " .$telegram->user->id, "TEXT")
+					->show();
+				}
+			}else{
+				$res = $telegram->send->kick($telegram->user->id);
+			}
+
+			if($res){
+				$pokemon->group_spamcount($telegram->chat->id, -1.1); // Avoid another kick.
+				$pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
+				$telegram->send
+					->text("Usuario expulsado por flood. [" .$telegram->user->id .(isset($telegram->user->username) ? " @" .$telegram->user->username : "") ."]")
+				->send();
+				$adminchat = $pokemon->settings($telegram->chat->id, 'admin_chat');
+				if($adminchat){
+					// TODO forward del mensaje afectado
+					$telegram->send
+						->chat($adminchat)
+						->text("Usuario " .$telegram->user->id .(isset($telegram->user->username) ? " @" .$telegram->user->username : "") ." expulsado del grupo por flood.")
+					->send();
+				}
+				return -1; // No realizar la acción ya que se ha explusado.
+			}
+			// Si tiene grupo admin asociado, avisar.
+		}
+	}
+
+	function antispam(){
+
 	}
 
 	protected function hooks(){
