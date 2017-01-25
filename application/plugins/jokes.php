@@ -25,19 +25,19 @@ if(
 	return -1;
 	}elseif($telegram->text_has("quién es Brock") && $telegram->words() <= 7){
 	$this->analytics->event('Telegram', 'Jokes', 'Brock');
-	$telegram->send->text("Eh! ese es el mejor criador de pokemon, lider de gimnasio, y amigo de Ash... Pero en cuanto ve una falda se pierde... Por cierto llevamos temporadas sin verle :O", TRUE)->send();
+	$frases =("Eh! ese es el mejor criador de pokemon, lider de gimnasio, y amigo de Ash... Pero en cuanto ve una falda se pierde... Por cierto llevamos temporadas sin verle :O", TRUE)->send();
 	return -1;
 	}elseif($telegram->text_has("quién es Misty") && $telegram->words() <= 7){
 	$this->analytics->event('Telegram', 'Jokes', 'Misty');
-	$telegram->send->text("es la lider del gimnasio celeste... pero lo abandonó porque se enamoro loca y secretamente de Ash con la escusa de que le pagara una bici", TRUE)->send();
+	$frases =("es la lider del gimnasio celeste... pero lo abandonó porque se enamoro loca y secretamente de Ash con la escusa de que le pagara una bici", TRUE)->send();
 	return -1;
 	}elseif($telegram->text_has("quién es Rojo") && $telegram->words() <= 7){
 	$this->analytics->event('Telegram', 'Jokes', 'Rojo');
-	$telegram->send->text("Ese... ese es un cabrón...le quitó el titulo a mi nieto nada mas obtenerlo :(", TRUE)->send();
+	$frases =("Ese... ese es un cabrón...le quitó el titulo a mi nieto nada mas obtenerlo :(", TRUE)->send();
 	return -1;
 	}elseif($telegram->text_has("quién es Gary") && $telegram->words() <= 7){
 	$this->analytics->event('Telegram', 'Jokes', 'Gary');
-	$telegram->send->text("Anda... Pero si es mi nieto... ¿es chico o chica?... y... ¿cómo dices que se llama?", TRUE)->send();
+	$frases =("Anda... Pero si es mi nieto... ¿es chico o chica?... y... ¿cómo dices que se llama?", TRUE)->send();
 	return -1;
 }elseif($telegram->text_has("Gracias", ["profesor", "Oak", "profe"]) && !$telegram->text_has("pero", "no")){
 	// "el puto amo", "que maquina eres"
