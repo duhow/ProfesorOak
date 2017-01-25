@@ -120,6 +120,8 @@ class Jokes extends TelegramApp\Module {
 			return $this->send_text($this->whois_misty(), "Misty");
 			}elseif($this->telegram->text_has("Quién es Rojo") && $this->telegram->words() <= 7){
 			return $this->send_text($this->whois_rojo(), "Rojo");
+			}elseif($this->telegram->text_has("Quién es Gary") && $this->telegram->words() <= 7){
+			return $this->send_text($this->whois_gary(), "Gary");
 		}elseif(
 			$this->telegram->text_has("Gracias", ["profesor", "Oak", "profe"]) &&
 			!$this->telegram->text_has("pero", "no")
@@ -292,6 +294,11 @@ public function whois_brock(){
 	public function whois_rojo(){
 		// $this->analytics->event('Telegram', 'Jokes', 'Rojo');
 		$text = "Ese... ese es un cabrón...le quitó el titulo a mi nieto nada mas obtenerlo :(";
+		return $text;
+	}
+	public function whois_gary(){
+		// $this->analytics->event('Telegram', 'Jokes', 'Gary');
+		$text = "Anda es mi nieto... ¿es chico o chica?... y... ¿cómo dices que se llama?";
 		return $text;
 	}
 	public function thank_you($nigga = FALSE){
