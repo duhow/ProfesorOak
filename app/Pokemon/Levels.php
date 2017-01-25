@@ -4,7 +4,7 @@ namespace Pokemon;
 
 class Levels {
 
-	function __construct(){
+	function __construct($ret = NULL){
 		$levels = [
 			200 => [
 				[1.0 => 0.094],
@@ -126,6 +126,17 @@ class Levels {
 				[40.0 => 0.7903]
 			]
 		];
+		if($ret === NULL){ return $levels; }
+		if($ret > 0 && $ret < 200){
+			foreach($levels as $stardust => $mdata){
+				foreach($mdata as $lvl => $mul){
+					if($ret == $lvl){ return $mul; }
+				}
+			}
+		}elseif($ret >= 200){
+			if(isset($levels[$ret])){ return $levels[$ret]; }
+		}
+		return NULL;
 	}
 }
 

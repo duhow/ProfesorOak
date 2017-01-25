@@ -1,7 +1,6 @@
 <?php
 
 class Main extends TelegramApp\Module {
-	public $pokemon;
 	protected $runCommands = FALSE;
 
 	public function run(){
@@ -11,23 +10,63 @@ class Main extends TelegramApp\Module {
 		// if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ $this->end(); }
 		// TODO log
 		$this->_log(json_encode( $this->telegram->dump() ));
+		// $this->_update_chat();
+
+		if($this->user->settings['forward_interactive']){
+			$this->forward_creator();
+		}
+
+		if($this->telegram->is_chat_group()){
+			if($this->user->settings['forwarding_to']){ $this->forward_groups(); }
+			if($this->user->settings['antiflood']){ $this->check_flood(); }
+			if($this->telegram->text_url() && $this->user->settings['antispam'] !== FALSE){ $this->antispam(); }
+			if($this->user->settings['die'] && $this->user->id != CREATOR){ $this->end(); }
+
+			if($this->telegram->data_received("migrate_to_chat_id")){
+				// $pokemon->group_disable($telegram->chat->id);
+				// TODO mover settings
+				$this->end();
+			}
+		}
 
 		if($this->user->load() !== TRUE){
-			// Solo puede registrarse.
+			// Solo puede registrarse o pedir ayuda por privado.
 			$color = Tools::Color($this->telegram->text());
 			if(
 				($this->telegram->text_has(["Soy", "Equipo", "Team"]) && $color) or
-		    	($color && $this->telegram->words() == 1)
+				($color && $this->telegram->words() == 1)
 			){
-				return $this->register($color);
-			}elseif($this->telegram->text_command("register")){
-				return $this->register(NULL);
+				$this->register($color);
+			}elseif(
+				$this->telegram->text_command("register") or
+				($this->telegram->text_command("start") and
+				!$this->telegram->is_chat_group())
+			){
+				$this->register(NULL);
+			}elseif(
+				$this->telegram->text_command("help") and
+				!$this->telegram->is_chat_group()
+			){
+				$this->help();
 			}
 			$this->end();
 		}
+
 		if($this->user->blocked){ $this->end(); }
 
 		parent::run();
+	}
+
+	function ping(){
+		return $this->telegram->send
+			->text("¡Pong!")
+		->send();
+	}
+
+	function help(){
+		$this->telegram->send
+			->text('¡Aquí tienes la <a href="http://telegra.ph/Ayuda-11-30">ayuda</a>!', 'HTML')
+		->send();
 	}
 
 	function register($team = NULL){
@@ -79,6 +118,7 @@ class Main extends TelegramApp\Module {
 
 	function setname($name, $user = NULL){
 		if(empty($user)){ $user = $this->user; }
+		if($user->step == "SETNAME"){ $user->step = NULL; }
 		try {
 			$user->username = $name;
 		} catch (Exception $e) {
@@ -95,10 +135,86 @@ class Main extends TelegramApp\Module {
 		return TRUE;
 	}
 
-	function help(){
-		$this->telegram->send
-			->text("¡Aquí tienes la ayuda!")
+	function forward_creator(){
+		return $this->telegram->send
+			->notification(FALSE)
+			->chat($this->telegram->chat->id)
+			->message(TRUE)
+			->forward_to(CREATOR)
 		->send();
+	}
+
+	function forward_groups(){
+		/* if($this->telegram->user_in_chat($this->config->item('telegram_bot_id'), $chat_forward)){ // Si el Oak está en el grupo forwarding
+			$chat_accept = explode(",", $pokemon->settings($chat_forward, 'forwarding_accept'));
+			if(in_array($telegram->chat->id, $chat_accept)){ // Si el chat actual se acepta como forwarding...
+				$telegram->send
+					->message($telegram->message)
+					->chat($telegram->chat->id)
+					->forward_to($chat_forward)
+				->send();
+			}
+		} */
+	}
+
+	function check_flood(){
+		if($this->user->is_admin){ return; }
+		$amount = NULL;
+		if($telegram->text_command()){ $amount = 1; }
+		elseif($telegram->photo()){ $amount = 0.8; }
+		elseif($telegram->sticker()){
+			if(strpos($telegram->sticker(), "AAjbFNAAB") === FALSE){ // + BQADBAAD - Oak Games
+				$amount = 1;
+			}
+		}
+		// elseif($telegram->document()){ $amount = 1; }
+		elseif($telegram->gif()){ $amount = 1; }
+		elseif($telegram->text() && $telegram->words() >= 50){ $amount = 0.5; }
+		elseif($telegram->text()){ $amount = -0.4; }
+		// Spam de text/segundo.
+		// Si se repite la última palabra.
+
+		$countflood = 0;
+		if($amount !== NULL){ $countflood = $pokemon->group_spamcount($telegram->chat->id, $amount); }
+
+		if($countflood >= $flood){
+
+			$ban = $pokemon->settings($telegram->chat->id, 'antiflood_ban');
+
+			if($ban == TRUE){
+				$res = $telegram->send->ban($telegram->user->id);
+				if($pokemon->settings($telegram->chat->id, 'antiflood_ban_hidebutton') != TRUE){
+					$telegram->send
+					->inline_keyboard()
+						->row_button("Desbanear", "desbanear " .$telegram->user->id, "TEXT")
+					->show();
+				}
+			}else{
+				$res = $telegram->send->kick($telegram->user->id);
+			}
+
+			if($res){
+				$pokemon->group_spamcount($telegram->chat->id, -1.1); // Avoid another kick.
+				$pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
+				$telegram->send
+					->text("Usuario expulsado por flood. [" .$telegram->user->id .(isset($telegram->user->username) ? " @" .$telegram->user->username : "") ."]")
+				->send();
+				$adminchat = $pokemon->settings($telegram->chat->id, 'admin_chat');
+				if($adminchat){
+					// TODO forward del mensaje afectado
+					$telegram->send
+						->chat($adminchat)
+						->text("Usuario " .$telegram->user->id .(isset($telegram->user->username) ? " @" .$telegram->user->username : "") ." expulsado del grupo por flood.")
+					->send();
+				}
+				return -1; // No realizar la acción ya que se ha explusado.
+			}
+			// Si tiene grupo admin asociado, avisar.
+		}
+	}
+
+	function antispam(){
+
 	}
 
 	protected function hooks(){
@@ -128,32 +244,8 @@ class Main extends TelegramApp\Module {
 
 		$this->end();
 
-		// Actualizamos datos de chat
-		$this->_update_chat();
-
-		// Si el usuario no está registrado con las funciones básicas, fuera.
-
-		/*
-		##################
-		# Comandos admin #
-		##################
-		*/
-
-		// ---------------------
-		// Apartado de cuenta
-		// ---------------------
-
-		if($telegram->text_has("estoy aquí")){
-			// Quien en cac? Que estoy aquí
-
-		// ---------------------
-		// Información General Pokemon
-		// ---------------------
-
-		}
-
 		// Ver los IV o demás viendo stats Pokemon.
-		elseif(
+		if(
 			$telegram->words() >= 4 &&
 			($telegram->text_has(["tengo", "me ha salido", "calculame", "calcula iv", "calcular iv", "he conseguido", "he capturado"], TRUE) or
 			$telegram->text_command("iv"))
@@ -439,279 +531,6 @@ class Main extends TelegramApp\Module {
 
 		$step = $pokeuser->step;
 		switch ($step) {
-			case 'POKEMON_PARSE':
-				$pokes = $pokemon->pokedex();
-				$s = explode(" ", $pokemon->misspell($telegram->text()));
-				$data = array();
-				$number = NULL;
-				$hashtag = FALSE;
-				// ---------
-				$data['pokemon'] = NULL;
-				foreach($s as $w){
-					$hashtag = ($w[0] == "#" and strlen($w) > 1);
-					$w = $telegram->clean('alphanumeric', $w);
-					$w = strtolower($w);
-
-					if($data['pokemon'] === NULL){
-						foreach($pokes as $pk){
-							if($w == strtolower($pk->name)){ $data['pokemon'] = $pk->id; break; }
-						}
-					}
-
-					if(is_numeric($w)){
-						// tengo un número pero no se de qué. se supone que la siguiente palabra me lo dirá.
-						// a no ser que la palabra sea un "DE", en cuyo caso paso a la siguiente.
-						if($hashtag == TRUE and $data['pokemon'] === NULL){
-							$data['pokemon'] = (int) $w;
-						}else{
-							$number = (int) $w;
-						}
-					}
-
-					// Buscar distancia
-					if(substr($w, -1) == "m"){ // Metros
-						$n = substr($w, 0, -1);
-						if(!is_numeric($n) && substr($n, -1) == "k"){ // Kilometros
-							$n = substr($n, 0, -1);
-							if(is_numeric($n)){ $n = $n * 1000; }
-						}
-						if(is_numeric($n)){
-							$data['distance'] = $n;
-						}
-					}
-
-					// Si se escribe numero junto a palabra, separar
-					$conj = ['cp', 'pc', 'hp', 'ps'];
-					foreach($conj as $wf){
-						if(substr($w, -2) == $wf){
-							$n = substr($w, 0, -2);
-							if(is_numeric($n)){
-								$number = $n;
-								$w = $wf;
-							}
-						}
-					}
-
-
-					$search = ['cp', 'pc', 'hp', 'ps', 'polvo', 'polvos', 'caramelo', 'polvoestelar', 'stardust', 'm', 'metro', 'km'];
-					$enter = FALSE;
-					foreach($search as $q){
-						if(strpos($w, $q) !== FALSE){ $enter = TRUE; break; }
-					}
-					if($enter){
-						$action = NULL;
-						if(strpos($w, 'cp') !== FALSE or strpos($w, 'pc') !== FALSE){ $action = 'cp'; }
-						if(strpos($w, 'hp') !== FALSE or strpos($w, 'ps') !== FALSE){ $action = 'hp'; }
-						if(strpos($w, 'polvo') !== FALSE or strpos($w, 'stardust') !== FALSE or strpos($w, 'polvoestelar') !== FALSE){ $action = 'stardust'; }
-						if(strpos($w, 'm') !== FALSE && strlen($w) == 1){ $action = 'distance'; }
-						if(strpos($w, 'caramelo') !== FALSE){ $action = 'candy'; }
-						if(strpos($w, 'metro') !== FALSE){ $action = 'distance'; }
-						if(strpos($w, 'km') !== FALSE && strlen($w) == 2){ $action = 'distance'; $number = $number * 1000; }
-
-						if(strlen($w) > 2 && $number === NULL){
-							// Creo que me lo ha puesto junto. Voy a sacar números...
-							$number = filter_var($w, FILTER_SANITIZE_NUMBER_INT);
-						}
-
-						if(
-							(!empty($number) && !empty($action)) and
-							( ($action == 'hp' && $number > 5 && $number < 300) or
-							($action == 'stardust' && $number > 200 && $number <= 10000) or
-							($action == 'distance') or
-							($number > 5 && $number < 4000) )
-						){
-							$data[$action] = $number;
-							$number = NULL;
-						}
-					}
-				}
-				$data['attack'] = ($telegram->text_has(["ataque", "ATQ", "ATK"]));
-				$data['defense'] = ($telegram->text_has(["defensa", "DEF"]));
-				$data['stamina'] = ($telegram->text_has(["salud", "stamina", "estamina", "STA"]));
-				$data['powered'] = ($telegram->text_has(["mejorado", "entrenado", "powered"]) && !$telegram->text_has(["sin", "no"], ["mejorar", "mejorado"]));
-				$data['egg'] = ($telegram->text_contains("huevo"));
-
-				if($telegram->text_has(["muy fuerte", "lo mejor", "flipando", "fuera de", "muy fuertes", "muy alto", "muy alta", "muy altas"])){ $data['ivcalc'] = [15]; }
-				if($telegram->text_has(["bueno", "bastante bien", "buenas", "normal", "muy bien"])){ $data['ivcalc'] = [8,9,10,11,12]; }
-				if($telegram->text_has(["bajo", "muy bajo", "poco que desear", "bien"])){ $data['ivcalc'] = [0,1,2,3,4,5,6,7]; }
-				if($telegram->text_has(["fuerte", "fuertes", "excelente", "excelentes", "impresionante", "impresionantes", "alto", "alta"])){ $data['ivcalc'] = [13,14]; }
-
-				if($pokemon->settings($this->user->id, 'debug')){
-					$telegram->send->text(json_encode($data))->send();
-				}
-
-				$pokemon->step($this->user->id, NULL);
-				if($pokemon->settings($this->user->id, 'pokemon_return')){
-					$pokemon->settings($this->user->id, 'pokemon_return', "DELETE");
-					return $data;
-				}
-				break;
-			case 'TIME_PARSE':
-				$s = explode(" ", $telegram->text());
-				$data = array();
-				$number = NULL;
-				$hashtag = FALSE;
-				// ---------
-				$days = [
-					'lunes' => 'monday', 'martes' => 'tuesday',
-					'miercoles' => 'wednesday', 'jueves' => 'thursday',
-					'viernes' => 'friday', 'sabado' => 'saturday',
-					'domingo' => 'sunday'
-				];
-				$months = [
-					'enero' => 'january', 'febrero' => 'february', 'marzo' => 'march',
-					'abril' => 'april', 'mayo' => 'may', 'junio' => 'june',
-					'julio' => 'july', 'agosto' => 'august', 'septiembre' => 'september',
-					'octubre' => 'october', 'noviembre' => 'november', 'diciembre' => 'december'
-				];
-				$waiting_month = FALSE;
-				$waiting_time = FALSE;
-				$waiting_time_add = FALSE;
-				$select_week = FALSE;
-				$next_week = FALSE;
-				$last_week = FALSE;
-				$this_week_day = FALSE;
-				foreach($s as $w){
-					// $w = $telegram->clean('alphanumeric', $w); // HACK filtrar?
-					$w = strtolower($w);
-					$w = str_replace(["á","é"], ["a","e"], $w);
-					$w = str_replace("?", "", $w);
-
-					if($w == "de" && (!isset($data['date']) or empty($data['date']) )){ $waiting_month = TRUE; } // FIXME not working?
-					if($w == "la" && !isset($data['hour'])){ $waiting_time = TRUE; }
-					if($w == "las" && !isset($data['hour'])){ $waiting_time = TRUE; }
-					if($w == "en" && !isset($data['hour'])){ $waiting_time_add = TRUE; }
-
-					if(is_numeric($w)){
-						$number = (int) $w;
-						if($waiting_time){
-							if($number >= 24){ continue; }
-							if($number <= 6){ $number = $number + 12; }
-							$data['hour'] = $number .":00";
-							$waiting_time = FALSE;
-						}
-						continue;
-					}
-
-					if(!isset($data['hour']) && preg_match("/(\d\d?):(\d\d)/", $w, $hour)){
-						if($hour[1] >= 24){ $hour[1] = "00"; }
-						if($hour[2] >= 60){ $hour[2] = "00"; }
-						$data['hour'] = "$hour[1]:$hour[2]";
-						continue;
-					}
-
-					if($waiting_time && in_array($w, ['tarde']) && !isset($data['hour'])){
-						$data['hour'] = "18:00";
-						$waiting_time = FALSE;
-						continue;
-					}
-					if($waiting_time && in_array($w, ['mañana', 'maana', 'manana']) && !isset($data['hour'])){
-						$data['hour'] = "11:00";
-						$waiting_time = FALSE;
-						continue;
-					}
-					if($waiting_time_add && in_array($w, ['hora', 'horas']) && !isset($data['hour'])){
-						$hour = date("H") + $number;
-						if(date("i") >= 30){ $hour++; } // Si son más de y media, suma una hora.
-						$data['hour'] = $hour .":00";
-						if(!isset($data['date'])){ $data['date'] = date("Y-m-d"); } // HACK bien?
-						$waiting_time_add = FALSE;
-						continue;
-					}
-					if(in_array($w, array_keys($days)) && ($next_week or $last_week or $this_week_day) && !isset($data['date'])){
-						$selector = "+1 week next";
-						if($this_week_day && date("w") <= date("w", strtotime($days[$w]))){ $selector = "this"; }
-						if($this_week_day && date("w") > date("w", strtotime($days[$w]))){ $selector = "next"; }
-						if($last_week){ $selector = "last"; } // && date("w") > date("w", strtotime($days[$w]))
-						if($next_week && date("w") >= date("w", strtotime($days[$w]))){ $selector = "next"; }
-						$data['date'] = date("Y-m-d", strtotime($selector ." " .$days[$w]));
-						$next_week = FALSE;
-						$last_week = FALSE;
-						$this_week_day = FALSE;
-						continue;
-					}
-					if(in_array($w, array_keys($months))){ // FIXME $waiting_month no funciona
-						if($number >= 1 && $number <= 31){
-							$data['date'] = date("Y-m-d", strtotime($months[$w] ." " .$number));
-						}
-						$waiting_month = FALSE;
-						continue;
-					}
-					if($w == "semana" && !isset($data['date'])){
-						if($next_week){
-							$data['date'] = date("Y-m-d", strtotime("next week"));
-							$next_week = FALSE;
-							continue;
-						}
-						$select_week = TRUE;
-						continue;
-					}
-					if(in_array($w, ["proximo", "próximo", "proxima", "próxima", "siguiente"])){
-						// proximo lunes != ESTE lunes, esta semana
-						if($select_week && !isset($data['date'])){
-							$data['date'] = date("Y-m-d", strtotime("next week"));
-							$select_week = FALSE;
-							continue;
-						}
-						$next_week = TRUE;
-						continue;
-					}
-					if(in_array($w, ["pasado", "pasada"])){
-						if(!isset($data['date']) or empty($data['date'])){
-							if($this_week_day){ $this_week_day = FALSE; }
-							if($select_week){
-								// last week = LUNES, marca el dia de hoy!
-								$en_days = array_values($days);
-								$data['date'] = date("Y-m-d", strtotime("last week " .$en_days[date("N") - 1]));
-								$select_week = FALSE;
-								continue;
-							}
-							$last_week = TRUE;
-							continue;
-						}
-						// el pasado martes, el martes pasado.
-						$tmp = new DateTime($data['date']);
-						$tmp->modify('-1 week');
-						$data['date'] = $tmp->format('Y-m-d');
-						continue;
-					}
-					if(in_array($w, ["este", "el"])){
-						// este lunes
-						$this_week_day = TRUE;
-						continue;
-					}
-					if(in_array($w, ['mañana', 'maana', 'manana']) && !isset($data['date'])){
-						// Distinguir mañana de "por la mañana"
-						$data['date'] = date("Y-m-d", strtotime("tomorrow"));
-						continue;
-					}
-					if($w == "hoy" && !isset($data['date'])){
-						$data['date'] = date("Y-m-d"); // TODAY
-						continue;
-					}
-					if($w == "ayer" && !isset($data['date'])){
-						$data['date'] = date("Y-m-d", strtotime("yesterday"));
-						continue;
-					}
-				}
-
-				if(isset($data['date'])){
-					$strdate = $data['date'] ." ";
-					$strdate .= (isset($data['hour']) ? $data['hour'] : "00:00");
-					$strdate = strtotime($strdate);
-					$data['left_hours'] = floor(($strdate - time()) / 3600);
-					$data['left_minutes'] = floor(($strdate - time()) / 60);
-				}
-				if($pokemon->settings($this->user->id, 'debug')){
-					$telegram->send->text(json_encode($data))->send();
-				}
-
-				$pokemon->step($this->user->id, NULL);
-				if($pokemon->settings($this->user->id, 'pokemon_return')){
-					$pokemon->settings($this->user->id, 'pokemon_return', "DELETE");
-					return $data;
-				}
-				break;
 			case 'RULES':
 				if(!$telegram->is_chat_group()){ break; }
 				if(!in_array($this->user->id, $admins)){ $pokemon->step($this->user->id, NULL); break; }
@@ -960,38 +779,6 @@ class Main extends TelegramApp\Module {
 		// exit(); // FIXME molesta. se queda comentado.
 	}
 
-	function _joke(){
-		$this->analytics->event('Telegram', 'Games', 'Jokes');
-		$this->last_command("JOKE");
-
-		$jokes = $this->pokemon->settings($this->telegram->chat->id, 'jokes');
-		$shut = $this->pokemon->settings($this->telegram->chat->id, 'shutup');
-
-		$admins = array();
-		if($this->telegram->is_chat_group()){ $admins = $this->telegram->get_admins(); }
-		$admins[] = $this->config->item('creator');
-
-		if(
-			$this->telegram->is_chat_group() &&
-			!in_array($this->telegram->user->id, $admins) &&
-			( $jokes == FALSE or $shut == TRUE )
-		){ return; }
-
-		$joke = $this->pokemon->joke();
-
-		if(filter_var($joke, FILTER_VALIDATE_URL) !== FALSE){
-			// Foto
-			$this->telegram->send
-				->notification( !$this->telegram->is_chat_group() )
-				->file('photo', $joke);
-		}else{
-			$this->telegram->send
-				->notification( !$this->telegram->is_chat_group() )
-				->text($joke, TRUE)
-			->send();
-		}
-	}
-
 	// function _pokedex($chat = NULL){
 	function _pokedex($text = NULL, $chat = NULL){
 		$telegram = $this->telegram;
@@ -1117,16 +904,6 @@ class Main extends TelegramApp\Module {
 		$telegram->send->keyboard()->hide()->text($str, TRUE)->send();
 	}
 
-	function parse_pokemon(){
-		$pokemon = $this->pokemon;
-		$user = $this->telegram->user;
-
-		$pokemon->settings($this->user->id, 'pokemon_return', TRUE);
-		$pokemon->step($this->user->id, 'POKEMON_PARSE');
-		$pk = $this->_step();
-		return $pk;
-	}
-
 	function last_command($action){
 		$user = $this->telegram->user->id;
 		$chat = $this->telegram->chat->id;
@@ -1169,16 +946,11 @@ class Main extends TelegramApp\Module {
 		return $admins;
 	}
 
-	function _blocked(){
-		exit();
-	}
-
 	function _log($texto){
 		$fp = fopen('error.loga', 'a');
 		fwrite($fp, $texto ."\n");
 		fclose($fp);
 	}
-
 
 	function _update_chat(){
 		$chat = $this->telegram->chat;

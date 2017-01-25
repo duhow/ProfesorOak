@@ -1,6 +1,6 @@
 <?php
 
-class Pole extends TelegramApp\Module {
+class GamePole extends TelegramApp\Module {
 	protected $runCommands = TRUE;
 
 	public function pole(){

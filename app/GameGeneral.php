@@ -9,7 +9,23 @@ class GameGeneral extends TelegramApp\Module {
 	}
 
 	public function hooks(){
-
+		if($this->telegram->text_has(["tira", "lanza", "tirar", "roll"], ["el dado", "los dados", "the dice"], TRUE) or $telegram->text_has("/dado", TRUE)){
+			$num = $this->telegram->last_word();
+			if(!is_numeric($num)){ $num = 6}
+			$this->dado($num);
+			$this->end();
+		}elseif(
+			( $this->telegram->text_has("piedra") and
+		    $this->telegram->text_has("papel") and
+		    $this->telegram->text_has(["tijera", "tijeras"]) ) or
+		    $this->telegram->text_has(["/rps", "/rpsls"], TRUE)
+		){
+			$this->rps();
+			$this->end();
+		}elseif($this->telegram->text_has(["cara o cruz", "/coin", "/flip"])){
+			$this->coin();
+			$this->end();
+		}
 	}
 
 	function dado($num = 6){
