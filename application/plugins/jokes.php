@@ -37,7 +37,7 @@ if(
 	return -1;
 	}elseif($telegram->text_has("quién es Gary") && $telegram->words() <= 7){
 	$this->analytics->event('Telegram', 'Jokes', 'Gary');
-	$telegram->send->text("Anda es mi nieto... ¿es chico o chica?... y... ¿cómo dices que se llama?", TRUE)->send();
+	$telegram->send->text("Anda... Pero si es mi nieto... ¿es chico o chica?... y... ¿cómo dices que se llama?", TRUE)->send();
 	return -1;
 }elseif($telegram->text_has("Gracias", ["profesor", "Oak", "profe"]) && !$telegram->text_has("pero", "no")){
 	// "el puto amo", "que maquina eres"
