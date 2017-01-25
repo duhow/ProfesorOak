@@ -21,8 +21,19 @@ if(
     $joke .= $telegram->emoji(":)");
 }elseif($telegram->text_has("quién es Ash") && $telegram->words() <= 7){
 	$this->analytics->event('Telegram', 'Jokes', 'Ash');
-	$telegram->send->text("Ah! Ese es un *cheater*, es nivel 100...\nLo que no sé de dónde saca tanto dinero para viajar tanto...", TRUE)->send();
-	return -1;
+	$joke = "Ah! Ese es un *cheater*, es nivel 100...\nLo que no sé de dónde saca tanto dinero para viajar tanto...";
+}elseif($telegram->text_has("quién es Brock") && $telegram->words() <= 7){
+	$this->analytics->event('Telegram', 'Jokes', 'Brock');
+	$joke = "Eh! Ese es el mejor criador de Pokémon, líder de gimnasio, y amigo de Ash... Pero en cuanto vñe una falda se pierde... Por cierto, llevamos temporadas sin verle :O";
+}elseif($telegram->text_has("quién es Misty") && $telegram->words() <= 7){
+	$this->analytics->event('Telegram', 'Jokes', 'Misty');
+	$joke = "Es la líder del gimnasio Celeste... Pero lo abandonó porque se enamoró loca y secretamente de Ash, con la excusa de que le pagará una bici.";
+}elseif($telegram->text_has("quién es Rojo") && $telegram->words() <= 7){
+	$this->analytics->event('Telegram', 'Jokes', 'Rojo');
+	$joke = "Ese... ese es un cabrón... Le quitó el titulo a mi nieto nada más obtenerlo :(";
+}elseif($telegram->text_has("quién es Gary") && $telegram->words() <= 7){
+	$this->analytics->event('Telegram', 'Jokes', 'Gary');
+	$joke = "Anda... Pero si es mi nieto... ¿es chico o chica?... y... ¿cómo dices que se llama?";
 }elseif($telegram->text_has("Gracias", ["profesor", "Oak", "profe"]) && !$telegram->text_has("pero", "no")){
 	// "el puto amo", "que maquina eres"
 	$this->analytics->event('Telegram', 'Jokes', 'Thank you');
