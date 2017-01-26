@@ -58,7 +58,7 @@ elseif(
     // TODO el usuario debe estar validado y tiempo mínimo de registro 2 semanas.
     $pkuser = $pokemon->user($telegram->user->id);
     if(!$pkuser->verified){ return; }
-    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam'])){ return; }
+    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'troll_nest', 'spam'])){ return; }
 
     $text = $telegram->text();
     $pk = pokemon_parse($text);
