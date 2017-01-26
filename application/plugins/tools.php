@@ -229,23 +229,27 @@ if(
             if(count($find) > 15 && $telegram->user->id != $this->config->item('creator')){ return; }
             foreach($find as $u){
                 // Valida que el entrenador esté en el grupo
-                if($telegram->user_in_chat($u['telegramid']) && $pokemon->settings($u['telegramid'], 'no_mention') != TRUE){
-                    if(!$pokemon->user_in_group($u['telegramid'], $telegram->chat->id)){
-                        $pokemon->user_addgroup($u['telegramid'], $telegram->chat->id);
-                    }
-                    $str = $name ." - ";
-                    if(!empty($link)){ $str .= "<a href='$link'>" .$telegram->chat->title ."</a>:\n"; }
-                    else{ $str .= "<b>" .$telegram->chat->title ."</b>:\n"; }
-                    $str .= $telegram->text();
+                if(
+					$u['telegramid'] != $this->config->item('creator') and // Si es el creador / duhow, avisarle aunque no esté en el grupo. PROV.
+					(!$telegram->user_in_chat($u['telegramid']) or
+					$pokemon->settings($u['telegramid'], 'no_mention') == TRUE)
+				){ continue; }
 
-                    $res = $telegram->send
-                        ->chat($u['telegramid'])
-                        ->notification(TRUE)
-                        ->disable_web_page_preview(TRUE)
-                        ->text($str, 'HTML')
-                    ->send();
-                    if($res != FALSE){ $resfin = TRUE; }
+                if(!$pokemon->user_in_group($u['telegramid'], $telegram->chat->id) and $telegram->user_in_chat($u['telegramid'])){
+                    $pokemon->user_addgroup($u['telegramid'], $telegram->chat->id);
                 }
+                $str = $name ." - ";
+                if(!empty($link)){ $str .= "<a href='$link'>" .$telegram->chat->title ."</a>:\n"; }
+                else{ $str .= "<b>" .$telegram->chat->title ."</b>:\n"; }
+                $str .= $telegram->text();
+
+                $res = $telegram->send
+                    ->chat($u['telegramid'])
+                    ->notification(TRUE)
+                    ->disable_web_page_preview(TRUE)
+                    ->text($str, 'HTML')
+                ->send();
+                if($res != FALSE){ $resfin = TRUE; }
             }
 
             if($admins && $resfin === FALSE){
