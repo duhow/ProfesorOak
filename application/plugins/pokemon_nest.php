@@ -155,6 +155,10 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
     ->get('pokemon_nests');
 
     if($query->num_rows() == 0){
+		if($telegram->callback){
+			$telegram->answer_if_callback("No hay ningún nido registrado.", TRUE);
+			return -1;
+		}
         $telegram->send->text("No hay ningún nido registrado.")->send();
         return -1;
     }
