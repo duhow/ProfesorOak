@@ -877,7 +877,7 @@ if(
 
 		$telegram->send
 			->notification(TRUE)
-		->file('sticker', 'BQADBAADKAgAAjbFNAABUl6LvyvgffoC');
+		->file('sticker', FCPATH .'files/team_rocket.webp');
 
 		$telegram->send
 			->text("¡Ha aparecido <b>el Team Rocket</b> y os ha robado un cuarto de vuestro inventario!", 'HTML')
