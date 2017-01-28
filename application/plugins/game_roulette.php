@@ -16,6 +16,20 @@ if($telegram->text_has(["ruleta", "apuesto", "apostar"], "al") && $telegram->wor
 		$win = TRUE;
 	}elseif($word == 'negro' && in_array($num, $numbers)){
 		$win = TRUE;
+	}elseif($word == 'par' && ($num % 2) == 0){
+		$win = TRUE;
+	}elseif($word == 'impar' && ($num % 2) == 1){
+		$win = TRUE;
+	}elseif($word == 'primero' && $num <= 12){
+		$win = TRUE;
+	}elseif($word == 'segundo' && $num > 12 && $num <= 24){
+		$win = TRUE;
+	}elseif($word == 'tercero' && $num > 24 && $num <= 36){
+		$win = TRUE;
+	}elseif($word == 'principio' && $num <= 18){
+		$win = TRUE;
+	}elseif($word == 'final' && $num > 18){
+		$win = TRUE;
 	}elseif(is_numeric($word) && $word == $num){
 		$win = TRUE;
 	}
