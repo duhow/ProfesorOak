@@ -65,6 +65,7 @@ if($telegram->text_has(["/kick", "/ban"], TRUE)){
             if(strlen($kick) < 4){ return; }
             // Buscar si no en PKGO user DB.
         }
+		if($kick == $this->config->item('telegram_bot_id')){ return -1; }
         if(($telegram->user->id == $this->config->item('creator')) or !in_array($kick, $admins)){ // Si es creador o no hay target a admins
             if($telegram->text_contains("kick")){
                 $this->analytics->event('Telegram', 'Kick');
