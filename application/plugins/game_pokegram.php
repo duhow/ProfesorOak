@@ -887,9 +887,11 @@ if(
 }
 
 if(
-    (!$telegram->callback && $telegram->message % 667 == 0) or
-    ($telegram->sticker() == "BQADBAADdAgAAjbFNAABYcghFn7ZiQIC") or
-    ($telegram->text_command("pokestop") && $telegram->user->id == $this->config->item('creator'))
+	(
+	    (!$telegram->callback && $telegram->message % 667 == 0) or
+	    ($telegram->sticker() == "BQADBAADdAgAAjbFNAABYcghFn7ZiQIC") or
+	    ($telegram->text_command("pokestop") && $telegram->user->id == $this->config->item('creator'))
+	) and $telegram->key == "message" // Fix edited messages
 ){
     if($telegram->sticker() == "BQADBAADdAgAAjbFNAABYcghFn7ZiQIC"){
         if($pokemon->group_count_members($telegram->chat->id, 10) <= 15){
