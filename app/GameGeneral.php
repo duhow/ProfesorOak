@@ -1,23 +1,25 @@
 <?php
 
 class GameGeneral extends TelegramApp\Module {
-	function run(){
-		// $can = $pokemon->settings($telegram->chat->id, 'play_games');
-	    // if($can != NULL and $can == FALSE){ return; }
+	public function run(){
+		if($this->chat->settings['play_games'] === FALSE){ return; }
 
 		parent::run();
 	}
 
-	public function hooks(){
-		if($this->telegram->text_has(["tira", "lanza", "tirar", "roll"], ["el dado", "los dados", "the dice"], TRUE) or $telegram->text_has("/dado", TRUE)){
+	protected function hooks(){
+		if(
+			$this->telegram->text_has(["tira", "lanza", "tirar", "roll"], ["el dado", "los dados", "the dice"]) or
+			$this->telegram->text_has("/dado", TRUE)
+		){
 			$num = $this->telegram->last_word();
-			if(!is_numeric($num)){ $num = 6}
+			if(!is_numeric($num)){ $num = 6; }
 			$this->dado($num);
 			$this->end();
 		}elseif(
 			( $this->telegram->text_has("piedra") and
 		    $this->telegram->text_has("papel") and
-		    $this->telegram->text_has(["tijera", "tijeras"]) ) or
+		    $this->telegram->text_contains("tijera") ) or
 		    $this->telegram->text_has(["/rps", "/rpsls"], TRUE)
 		){
 			$this->rps();
@@ -28,7 +30,7 @@ class GameGeneral extends TelegramApp\Module {
 		}
 	}
 
-	function dado($num = 6){
+	public function dado($num = 6){
 		// $this->analytics->event('Telegram', 'Games', 'Dice');
 
 	    if(!is_numeric($num) or ($num < 0 or $num > 1000)){ $num = 6; } // default MAX
@@ -39,8 +41,8 @@ class GameGeneral extends TelegramApp\Module {
 		return $dice;
 	}
 
-	function rpsls(){ return $this->rps(TRUE); }
-	function rps($ls = FALSE){
+	public function rpsls(){ return $this->rps(TRUE); }
+	public function rps($ls = FALSE){
 		// $this->analytics->event('Telegram', 'Games', 'RPS');
 
 	    $rps = ["Piedra", "Papel", "Tijera"];
@@ -52,9 +54,10 @@ class GameGeneral extends TelegramApp\Module {
 		// return choice?
 	}
 
-	function flip(){ return $this->coin(); }
-	function coin(){
+	public function flip(){ return $this->coin(); }
+	public function coin(){
 		// $this->analytics->event('Telegram', 'Games', 'Coin');
+
 	    $n = mt_rand(0, 99);
 	    $flip = ["Cara!", "Cruz!"];
 
@@ -63,5 +66,47 @@ class GameGeneral extends TelegramApp\Module {
 			->text("*" .$flip[$coin] ."*", TRUE)
 		->send();
 		return $coin;
+	}
+
+	public function roulette($action){
+		$numbers = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]; // black
+		if(is_string($action)){ $action = trim(strtolower($action)); }
+
+		$num = mt_rand(0, 36);
+		$win = FALSE;
+
+		if($action == 'rojo' && $num != 0 && !in_array($num, $numbers)){
+			$win = TRUE;
+		}elseif($action == 'negro' && in_array($num, $numbers)){
+			$win = TRUE;
+		}elseif($action == 'par' && ($num % 2) == 0){
+			$win = TRUE;
+		}elseif($action == 'impar' && ($num % 2) == 1){
+			$win = TRUE;
+		}elseif($action == 'primero' && $num <= 12){
+			$win = TRUE;
+		}elseif($action == 'segundo' && $num > 12 && $num <= 24){
+			$win = TRUE;
+		}elseif($action == 'tercero' && $num > 24 && $num <= 36){
+			$win = TRUE;
+		}elseif($action == 'principio' && $num <= 18){
+			$win = TRUE;
+		}elseif($action == 'final' && $num > 18){
+			$win = TRUE;
+		}elseif(is_numeric($action) && $action == $num){
+			$win = TRUE;
+		}
+
+		$str = $num ." ";
+		if($num == 0){ $str .= ":ok:"; } // zero
+		elseif(in_array($num, $numbers)){ $str .= "\u26ab\ufe0f"; } // black
+		else{$str .= "\ud83d\udd34"; } // red
+
+		$str .= " - " .($win ? ":ok:" : ":times:");
+		$this->telegram->send
+			->notification(FALSE)
+			->text($this->telegram->emoji($str))
+		->send();
+		return $win;
 	}
 }
