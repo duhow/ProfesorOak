@@ -1,12 +1,8 @@
 <?php
 
 class GameRussianRoulette extends TelegramApp\Module {
-	private $chat;
-
 	function run(){
-		$this->chat = new Chat($this->telegram->chat, $this->db)->load();
 		if(isset($this->chat->settings['play_games']) && $this->chat->settings['play_games'] == FALSE){ return; }
-
 		parent::run();
 	}
 

@@ -107,9 +107,9 @@ class Jokes extends TelegramApp\Module {
 			if($this->telegram->text_has("Tengo", TRUE)){ $word = $this->telegram->last_word(); }
 			return $this->send_text($this->need_something($word));
 		}elseif(
-			$telegram->text_contains(["oak", "profe"]) &&
-			$telegram->text_has(["cuántos", "cuándo", "qué"]) &&
-			$telegram->text_contains(["años", "edad", "cumple"])
+			$this->telegram->text_contains(["oak", "profe"]) &&
+			$this->telegram->text_has(["cuántos", "cuándo", "qué"]) &&
+			$this->telegram->text_contains(["años", "edad", "cumple"])
 		){
 			return $this->send_text($this->birthday());
 		}elseif($this->telegram->text_has("Quién es Ash") && $this->telegram->words() <= 7){
@@ -156,8 +156,8 @@ class Jokes extends TelegramApp\Module {
 		){
 			return $this->send_text($this->iloveyou());
 		}elseif(
-			$telegram->text_contains(["te la com", "te lo com", "un hijo", "me ha dolido"]) &&
-			$telegram->text_has(["oak", "profe", "bot"])
+			$this->telegram->text_contains(["te la com", "te lo com", "un hijo", "me ha dolido"]) &&
+			$this->telegram->text_has(["oak", "profe", "bot"])
 		){
 			return $this->send_text($this->eat_dick(TRUE));
 		}
@@ -426,7 +426,7 @@ class Jokes extends TelegramApp\Module {
 	}
 
 	public function seguro_dental(){
-		return $this->send_video(FCPATH . "files/seguro_dental.mp4", "Seguro dental")
+		return $this->send_video(FCPATH . "files/seguro_dental.mp4", "Seguro dental");
 	}
 
 	public function no_paras(){

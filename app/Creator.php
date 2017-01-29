@@ -14,7 +14,7 @@ class Creator extends TelegramApp\Module {
 			$this->end();
 		}
 
-		if($this->telegram->has_reply && $this->telegram->text_has("Este") $this->telegram->words() > 3){
+		if($this->telegram->has_reply && $this->telegram->text_has("Este") && $this->telegram->words() > 3){
 			$reply = $this->telegram->reply_user;
 			$word = $this->telegram->last_word();
 

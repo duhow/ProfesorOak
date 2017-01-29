@@ -9,7 +9,8 @@ class Ingress extends TelegramApp\Module {
 	];
 
 	protected function hooks(){
-		if($this->telegram->text_has(["soy", "soy de la"], array_values($this->teams))){
+		$teams = array_values($this->teams["RES"]) + array_values($this->teams["ENL"]);
+		if($this->telegram->text_has(["soy", "soy de la"], array_values($teams))){
 			if(in_array(['resistance', 'enlightened'], $this->user->flags)){ $this->end(); }
 
 			$team = NULL;
@@ -39,7 +40,7 @@ class Ingress extends TelegramApp\Module {
 		->send();
 	}
 
-	public function ingress(){
+	public function cingress(){
 		if(!$this->telegram->is_chat_group()){ return FALSE; }
 		$ingress = ['resistance' => 0, 'enlightened' => 0];
 		/* $users = $pokemon->group_get_members($telegram->chat->id);

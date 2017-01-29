@@ -2,8 +2,7 @@
 
 class GameGeneral extends TelegramApp\Module {
 	public function run(){
-		if($this->chat->settings['play_games'] === FALSE){ return; }
-
+		if(isset($this->chat->settings['play_games']) && $this->chat->settings['play_games'] == FALSE){ return; }
 		parent::run();
 	}
 
@@ -26,6 +25,9 @@ class GameGeneral extends TelegramApp\Module {
 			$this->end();
 		}elseif($this->telegram->text_has(["cara o cruz", "/coin", "/flip"])){
 			$this->coin();
+			$this->end();
+		}elseif($this->telegram->text_has(["apuesto", "apostar", "ruleta"], "al") && $this->telegram->words() == 3){
+			$this->roulette($this->telegram->last_word());
 			$this->end();
 		}
 	}

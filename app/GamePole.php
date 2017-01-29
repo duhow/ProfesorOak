@@ -3,6 +3,11 @@
 class GamePole extends TelegramApp\Module {
 	protected $runCommands = TRUE;
 
+	public function run(){
+		if(isset($this->chat->settings['pole']) && $this->chat->settings['pole'] == FALSE){ return; }
+		parent::run();
+	}
+
 	public function pole(){
 		return $this->polear(1);
 	}
@@ -30,7 +35,7 @@ class GamePole extends TelegramApp\Module {
 			return $this->subpole();
 		}elseif($this->telegram->text_has(["bronce", "!bronce"], TRUE)){
 			return $this->bronce();
-		}elseif($this->telegram->text_has(["!polerank", "!pole rank"]), TRUE){
+		}elseif($this->telegram->text_has(["!polerank", "!pole rank"], TRUE)){
 			return $this->polerank();
 		}
 	}
