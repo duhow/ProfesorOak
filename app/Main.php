@@ -242,6 +242,15 @@ class Main extends TelegramApp\Module {
 		}
 		if($this->telegram->text_command("info")){ $this->telegram->send->text($this->user->telegramid)->send(); }
 
+		$folder = dirname(__FILE__) .'/';
+		foreach(scandir($folder) as $file){
+			if(is_readable($folder . $file) && substr($file, -4) == ".php"){
+				$name = substr($file, 0, -4);
+				if(in_array($name, ["Main", "User", "Chat"])){ continue; }
+				$this->core->load($name, TRUE);
+			}
+		}
+
 		$this->end();
 
 		// Ver los IV o demás viendo stats Pokemon.
