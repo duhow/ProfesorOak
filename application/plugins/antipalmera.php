@@ -9,6 +9,10 @@ if($telegram->sticker() && $telegram->is_chat_group()){
         'BQADBAAD4wEAAqKYZgABGO27mNGhdSUC',
         'BQADBAAD5QEAAqKYZgABe9jp1bTT8jcC',
         'BQADBAAD5wEAAqKYZgABiX1O201m5X0C',
+		// Kemedaiwa Puke Rainbow
+		'BQADBAADjAADl4mhCRp2GRnaNZ2EAg',
+		'BQADBAADpgADl4mhCfVfg6PMDlAyAg',
+		'BQADBAADqAADl4mhCVMHew7buZpwAg',
     ];
     if(in_array($telegram->sticker(), $palmeras)){
         $admins = array();
