@@ -39,14 +39,15 @@ class Admin extends TelegramApp\Module {
 	}
 
 	public function kick($user, $chat){
-
+		$this->ban($user, $chat);
+		return $this->unban($user, $chat);
 	}
 
 	public function ban($user, $chat){
-
+		return $this->telegram->send->ban($user, $chat);
 	}
 
 	public function unban($user, $chat){
-
+		return $this->telegram->send->unban($user, $chat);
 	}
 }
