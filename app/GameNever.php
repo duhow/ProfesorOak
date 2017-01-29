@@ -26,13 +26,30 @@ class GameNever extends TelegramApp\Module {
 	}
 
 	function yonunca($edit = FALSE){
-		$text = $this->frase();
+		$this->telegram->send
+			->inline_keyboard()
+				->row_button("Yo si", "yo nunca si")
+			->show();
 
 		if($edit){
 			$text = $this->telegram->text_message();
 			if(strpos($text, $this->telegram->user->first_name) !== FALSE){
 				$this->telegram->answer_if_callback("Ya lo sabemos, tranquilo. " .$this->telegram->emoji("<3"), TRUE);
 			}
+
+			$str = $this->telegram->text_message() ."\n" .$this->telegram->user->first_name ." lo ha hecho.";
+			$this->telegram->send
+				->message(TRUE)
+				->chat(TRUE)
+				->text($str)
+			->edit('text');
+
+			$this->telegram->answer_if_callback("");
+			$this->end();
 		}
+
+		$this->telegram->send
+			->text("Yo nunca " .$this->frase() .".")
+		->send();
 	}
 }
