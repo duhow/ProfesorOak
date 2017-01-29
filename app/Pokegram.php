@@ -9,6 +9,15 @@ class Pokegram extends TelegramApp\Module {
 		'eggs' => 'pokegame_eggs',
 	];
 
+	public function run(){
+		if($this->telegram->key == "edited_message"){ return; }
+		parent::run();
+	}
+
+	protected function hooks(){
+
+	}
+
 	// TODO hacer Ataque X, Defensa X, Vida X para subir el IV de un Pokémon de forma permanente.
 	// TODO hacer Carameloraro para subir de nivel a un Pokémon.
 	// TODO hacer policía o incienso para alejar al Team Rocket y atraer más Pokémon.
@@ -390,11 +399,6 @@ class Pokegram extends TelegramApp\Module {
 	}
 
 	function duel($user, $target, $tg){
-
-	}
-
-
-	public function hooks(){
 
 	}
 }

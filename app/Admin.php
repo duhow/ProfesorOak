@@ -17,6 +17,10 @@ class Admin extends TelegramApp\Module {
 		        'BQADBAAD4wEAAqKYZgABGO27mNGhdSUC',
 		        'BQADBAAD5QEAAqKYZgABe9jp1bTT8jcC',
 		        'BQADBAAD5wEAAqKYZgABiX1O201m5X0C',
+				// Puke Rainbow
+				'BQADBAADjAADl4mhCRp2GRnaNZ2EAg',
+				'BQADBAADpgADl4mhCfVfg6PMDlAyAg',
+				'BQADBAADqAADl4mhCVMHew7buZpwAg',
 		    ];
 			if(in_array($this->telegram->sticker(), $palmeras)){
 		        // $admins = array();
