@@ -9,11 +9,11 @@ class Git extends TelegramApp\Module {
 			$this->telegram->text_command("git") &&
 			$this->telegram->words() > 1
 		){
-			return $this->git($this->telegram->words(1));
+			return $this->git_command($this->telegram->words(1));
 		}
 	}
 
-	public function git($action){
+	public function git_command($action){
 		$action = strtolower($action);
 		if($action == "update"){
 			$m = $this->telegram->send
