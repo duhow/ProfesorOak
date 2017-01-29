@@ -3,7 +3,7 @@
 class GameNever extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
-	public function hooks(){
+	protected function hooks(){
 		if(
 			$this->telegram->text_has("Yo nunca", TRUE) or
 			$this->telegram->text_command("yonunca")
@@ -14,7 +14,7 @@ class GameNever extends TelegramApp\Module {
 		}
 	}
 
-	function frase($id = NULL){
+	public function frase($id = NULL){
 		if($id !== NULL && is_numeric($id)){ $this->db->where('id', $id); }
 
 		$query = $this->db
@@ -31,7 +31,7 @@ class GameNever extends TelegramApp\Module {
 		if($edit){
 			$text = $this->telegram->text_message();
 			if(strpos($text, $this->telegram->user->first_name) !== FALSE){
-				$this->telegram->answer_if_callback("Ya lo sabemos, tranquilo. " .$telegram->emoji("<3"), TRUE);
+				$this->telegram->answer_if_callback("Ya lo sabemos, tranquilo. " .$this->telegram->emoji("<3"), TRUE);
 			}
 		}
 	}
