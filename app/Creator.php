@@ -32,23 +32,30 @@ class Creator extends TelegramApp\Module {
 		){
 			$this->end();
 		}elseif($this->telegram->text_command("unban")){
-			/* $target = NULL;
+			$target = NULL;
 		    $target_chat = NULL;
 
-		    if($telegram->has_reply){
-		        $target = $telegram->reply_user->id;
-		        if($telegram->is_chat_group()){ $target_chat = $telegram->chat->id; }
-		    }elseif($telegram->words() == 3){
-		        $target = $telegram->words(1);
-		        $target_chat = $telegram->words(2);
+		    if($this->telegram->has_reply){
+		        $target = $this->telegram->reply_target('forward')->id;
+		        if($this->telegram->is_chat_group()){ $target_chat = $this->chat->id; }
+				elseif($this->telegram->words() == 2){ $target_chat = $this->telegram->last_word(); }
+		    }elseif($this->telegram->words() == 3){
+		        $target = $this->telegram->words(1);
+		        $target_chat = $this->telegram->words(2);
 		    }
 
 		    if(!empty($target) && !empty($target_chat)){
-		        $telegram->send->unban($target, $target_chat);
-		        $telegram->send
-		            ->text("Usuario $target desbaneado" .($target_chat != $telegram->chat->id ? " de $target_chat" : "") .".")
+		        $q = $this->telegram->send->unban($target, $target_chat);
+				$str = "No puedo :(";
+
+				if($q !== FALSE){
+					$str = "Usuario $target desbaneado" .($target_chat != $this->telegram->chat->id ? " de $target_chat" : "") .".";
+				}
+
+		        $this->telegram->send
+		            ->text($str)
 		        ->send();
-		    } */
+		    }
 			$this->end();
 		}elseif($this->telegram->text_command("ban") && !$this->telegram->is_chat_group() && $this->telegram->words() >= 3){
 
@@ -92,8 +99,8 @@ class Creator extends TelegramApp\Module {
 	}
 
 	function chat_info($id){
-		$info = $telegram->send->get_chat($id);
-	    $count = $telegram->send->get_members_count($id);
+		$info = $this->telegram->send->get_chat($id);
+	    $count = $this->telegram->send->get_members_count($id);
 		$str = "Nope.";
 		if($info != FALSE){
 			$str = "\ud83c\udd94 " .$info['id'] ."\n"
@@ -101,11 +108,12 @@ class Creator extends TelegramApp\Module {
 					."\ud83c\udf10 " .($info['username'] ? "@" .$info['username'] : "---") ."\n"
 					."\ud83d\udcf3 " .$info['type'] ."\n"
 					."\ud83d\udebb " .$count ."\n";
-			$info = $telegram->send->get_member_info($this->config->item('telegram_bot_id'), $id);
+			$info = $this->telegram->send->get_member_info($this->telegram->bot->id, $id);
 			$str .= "\u2139\ufe0f " .$info['status'];
 
-			$str = $telegram->emoji($str);
+			$str = $this->telegram->emoji($str);
 		}
+		return $str;
 	}
 
 	function nospam($user, $chat = NULL){
@@ -156,6 +164,12 @@ class Creator extends TelegramApp\Module {
 	        // $user = $this->telegram->text_mention(); // --> to UID.
 	    }
 	    if(empty($user)){ return -1; }
-	    $pokemon->update_user_data($user, 'blocked', $this->telegram->text_contains("/block"));
+		$ruser = new User($user);
+		if(empty($ruser)){ return FALSE; }
+
+		$ruser->blocked = (bool) $value;
+		$ruser->update();
+
+		return TRUE;
 	}
 }
