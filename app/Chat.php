@@ -77,8 +77,12 @@ class Chat extends TelegramApp\Chat {
 		}
 		$this->count = $this->users; // Move setting
 
-		$this->load_users();
-		$this->load_admins();
+		// TODO check
+		if($this->telegram->is_chat_group()){
+			$this->load_users();
+			$this->load_admins();
+		}
+
 		$this->load_settings();
 
 		$this->loaded = TRUE;

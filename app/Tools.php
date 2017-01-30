@@ -15,24 +15,6 @@ class Tools extends TelegramApp\Functions {
 	    return FALSE;
 	}
 
-	/* function telegram_admins($add_creator = TRUE, $custom = NULL){
-	    $CI =& get_instance();
-	    $pokemon = new Pokemon();
-	    $telegram = new Telegram();
-
-	    $admins = $pokemon->group_admins($telegram->chat->id);
-	    if(empty($admins)){
-	        $admins = $telegram->get_admins(); // Del grupo
-	        $pokemon->group_admins($telegram->chat->id, $admins);
-	    }
-	    if($add_creator){ $admins[] = $CI->config->item('creator'); }
-	    if($custom != NULL){
-	        if(!is_array($custom)){ $custom = [$custom]; }
-	        foreach($custom as $c){ $admins[] = $c; }
-	    }
-	    return $admins;
-	} */
-
 	function Time($string){
 		$string = strtolower($string);
 		$string = str_replace(["á","é"], ["a","e"], $string);
