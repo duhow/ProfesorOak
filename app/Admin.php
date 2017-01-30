@@ -147,4 +147,25 @@ class Admin extends TelegramApp\Module {
 	public function unban($user, $chat){
 		return $this->telegram->send->unban($user, $chat);
 	}
+
+	public function countold($days = 30, $chat = NULL){
+		// Cargar todos los usuarios
+		// Quitar al Oak de la lista
+	}
+
+	public function kickold($days = 30, $chat = NULL){
+		$users = $this->countold($days, $chat);
+		if(count($users) == 0){ return FALSE; }
+
+		$c = 0;
+		foreach($users as $user){
+			$q = $this->kick($user, $chat);
+			if($q !== FALSE){ $c++; }
+		}
+
+		$this->telegram->send
+			->text("Vale, " .$c ." fuera!")
+		->send();
+		return $c;
+	}
 }
