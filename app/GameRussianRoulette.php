@@ -62,7 +62,7 @@ class GameRussianRoulette extends TelegramApp\Module {
 		}else{
 			if($this->telegram->is_chat_group()){
 				$last = $this->chat->settings['russian_roulette_last'];
-				if($last == $telegram->user->id){
+				if($last == $this->user->id){
 					$last = -1;
 					$text = "Tu ya has disparado, ¡pásale el arma a otra persona!";
 				}else{
@@ -87,7 +87,7 @@ class GameRussianRoulette extends TelegramApp\Module {
 			->send();
 
 			if($shot == 6 && $last != -1 && $this->telegram->is_chat_group()){
-				if($this->chat->settings['russian_roulette_easy'] !== TRUE){
+				if(!isset($this->chat->settings['russian_roulette_easy']) or $this->chat->settings['russian_roulette_easy'] !== TRUE){
 					$this->telegram->send->ban( $this->telegram->user->id );
 				}
 				// Implementar modo light o hard (ban)
