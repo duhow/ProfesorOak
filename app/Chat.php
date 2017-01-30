@@ -78,6 +78,7 @@ class Chat extends TelegramApp\Chat {
 		$this->count = $this->users; // Move setting
 
 		$this->load_users();
+		$this->load_admins();
 		$this->load_settings();
 
 		$this->loaded = TRUE;
@@ -111,6 +112,37 @@ class Chat extends TelegramApp\Chat {
 			$this->settings = array_column($query, 'value', 'type');
 		}
 		return $this->settings;
+	}
+
+	private function load_admins(){
+		$this->admins = array();
+		$admins = array();
+		$query = $this->db
+			->where('gid', $this->id)
+			->where('expires >=', date("Y-m-d H:i:s"))
+		->get('user_admins');
+		if(count($query) == 0){
+			// Load and insert
+			$admins = $this->telegram->get_admins();
+			$timeout = 3600;
+			$data = array();
+			foreach($admins as $admin){
+				$data[] = [
+					'gid' => $this->id,
+					'uid' => $admin,
+					'expires' => time() + $timeout,
+				];
+			}
+			$ids = $this->db->insertMulti('user_admins', $data);
+			if(!$ids) {
+				// TODO DEBUG
+    			echo 'insert failed: ' . $this->db->getLastError();
+			}
+		}else{
+			$admins = array_column($query, 'uid');
+		}
+		$this->admins = $admins;
+		return $this->admins;
 	}
 
 	public function in_chat($chat = NULL, $check_telegram = FALSE){
