@@ -3,7 +3,14 @@
 class Jokes extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
-	public function hooks(){
+	public function run(){
+		if(!$this->chat->settings['jokes']){ return; }
+		$res = parent::run();
+
+		if($res !== NULL){ $this->end(); }
+	}
+
+	protected function hooks(){
 		if($this->telegram->text_has(["alguien", "alguno"]) && $this->telegram->text_has(["decir", "dice", "sabe"])){
 			if(mt_rand(1, 7) == 7){
 				$this->send_text($this->pa_ke_saberlo());

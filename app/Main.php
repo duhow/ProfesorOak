@@ -148,7 +148,7 @@ class Main extends TelegramApp\Module {
 	}
 
 	function forward_groups(){
-		/* if($this->telegram->user_in_chat($this->config->item('telegram_bot_id'), $chat_forward)){ // Si el Oak está en el grupo forwarding
+		/* if($this->telegram->user_in_chat($this->telegram->bot->id, $chat_forward)){ // Si el Oak está en el grupo forwarding
 			$chat_accept = explode(",", $pokemon->settings($chat_forward, 'forwarding_accept'));
 			if(in_array($telegram->chat->id, $chat_accept)){ // Si el chat actual se acepta como forwarding...
 				$telegram->send
@@ -171,7 +171,7 @@ class Main extends TelegramApp\Module {
 		// $this->user = new User($this->telegram->new_user);
 
 		// A excepción de que lo agregue el creador
-		if($new->id == $this->config->item("telegram_bot_id") && $this->telegram->user->id != CREATOR){
+		if($new->id == $this->telegram->bot->id && $this->telegram->user->id != CREATOR){
 			$count = $this->telegram->send->get_members_count();
 			// Si el grupo tiene <= 5 usuarios, el bot abandona el grupo
 			if(is_numeric($count) && $count <= 5){
@@ -187,7 +187,7 @@ class Main extends TelegramApp\Module {
 			}
 
 		// Bot agregado al grupo. Yo no saludo bots :(
-		}elseif($new->id != $this->config->item('telegram_bot_id') && $this->telegram->is_bot($new->username)){ $this->end(); }
+		}elseif($new->id != $this->telegram->bot->id && $this->telegram->is_bot($new->username)){ $this->end(); }
 
 		// $pknew = $pokemon->user($new->id);
 		// El usuario nuevo es creador
@@ -287,7 +287,7 @@ class Main extends TelegramApp\Module {
 				}
 			}
 
-			if($new->id == $this->config->item("telegram_bot_id")){
+			if($new->id == $this->telegram->bot->id){
 				$text = "\ud83c\udd95 ¡Grupo nuevo!\n"
 						."\ud83d\udd24 " .$this->telegram->chat->title ."\n"
 						."\ud83c\udd94 " .$this->telegram->chat->id ."\n"

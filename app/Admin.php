@@ -46,7 +46,7 @@ class Admin extends TelegramApp\Module {
 	}
 
 	function check_flood(){
-		if($this->user->is_admin){ return; }
+		if($this->chat->is_admin($this->user->id)){ return; }
 		$amount = NULL;
 		if($this->telegram->text_command()){ $amount = 1; }
 		elseif($this->telegram->photo()){ $amount = 0.8; }
@@ -63,7 +63,7 @@ class Admin extends TelegramApp\Module {
 		// Si se repite la última palabra.
 
 		$countflood = 0;
-		if($amount !== NULL){ $countflood = $pokemon->group_spamcount($this->telegram->chat->id, $amount); }
+		if($amount !== NULL){ $countflood = (float) $this->chat->settings['spam']; }
 
 		if($countflood >= $flood){
 
@@ -88,7 +88,7 @@ class Admin extends TelegramApp\Module {
 				$this->telegram->send
 					->text("Usuario expulsado por flood. [" .$this->user->id .(isset($this->telegram->user->username) ? " @" .$this->telegram->user->username : "") ."]")
 				->send();
-				$adminchat = $pokemon->settings($this->telegram->chat->id, 'admin_chat');
+				$adminchat = $this->chat->settings['admin_chat'];
 				if($adminchat){
 					// TODO forward del mensaje afectado
 					$this->telegram->send
@@ -96,14 +96,43 @@ class Admin extends TelegramApp\Module {
 						->text("Usuario " .$this->telegram->user->id .(isset($this->telegram->user->username) ? " @" .$this->telegram->user->username : "") ." expulsado del grupo por flood.")
 					->send();
 				}
-				return -1; // No realizar la acción ya que se ha explusado.
+				$this->end(); // No realizar la acción ya que se ha explusado.
 			}
 			// Si tiene grupo admin asociado, avisar.
 		}
 	}
 
 	function antispam(){
+	    if($this->user->messages <= 5 && $this->chat->settings['antispam'] != FALSE){
+	        if(
+	            !$this->telegram->text_contains(["http", "www", ".com", ".es", ".net"]) &&
+	            !$this->telegram->text_contains("telegram.me")
+	        ){ return FALSE; } // HACK Falsos positivos.
 
+	        // TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
+	        $this->telegram->send
+	            ->message(TRUE)
+	            ->chat(TRUE)
+	            ->forward_to(CREATOR)
+	        ->send();
+
+	        $this->telegram->send
+	            ->chat(CREATOR)
+	            ->text("*SPAM* del grupo " .$this->chat->id .".", TRUE)
+	            ->inline_keyboard()
+	                ->row_button("No es spam", "/nospam " .$this->user->id ." " .$this->chat->id, "TEXT")
+	            ->show()
+	        ->send();
+
+			$this->user->flags[] = 'spam';
+			$this->user->update();
+
+	        $this->telegram->send
+	            ->text("¡*SPAM* detectado!", TRUE)
+	        ->send();
+
+	        $this->ban($this->user->id, $this->chat->id);
+	    }
 	}
 
 	public function kick($user, $chat){
