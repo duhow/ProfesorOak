@@ -24,9 +24,11 @@ class Cleverbot extends TelegramApp\Module {
 
 	protected function hooks(){
 		if($this->telegram->text_has("Oye", ["Oak", "profe"], TRUE) && $this->telegram->words() > 2){
-			return $this->think($this->telegram->words(2, 20));
+			$this->think($this->telegram->words(2, 20));
+			$this->end();
 		}elseif($this->telegram->text_command("cleverbot") && $this->telegram->words() > 1){
-			return $this->think($this->telegram->words(1, 20));
+			$this->think($this->telegram->words(1, 20));
+			$this->end();
 		}
 	}
 }

@@ -6,17 +6,19 @@ class GameRussianRoulette extends TelegramApp\Module {
 		parent::run();
 	}
 
-	public function hooks(){
+	protected function hooks(){
 		if(
 			($this->telegram->text_has("Recarga", TRUE) or $this->telegram->text_command("recarga")) &&
 			$this->telegram->words() < 4
 		){
-			return $this->reload();
+			$this->reload();
+			$this->end();
 		}
 		elseif(
 			$this->telegram->text_has(["Dispara", "Bang", "Disparo", "/dispara"], TRUE) && $telegram->words() < 4
 		){
-
+			$this->shoot();
+			$this->end();
 		}
 	}
 

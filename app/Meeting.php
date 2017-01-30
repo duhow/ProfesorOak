@@ -4,7 +4,7 @@ class Meeting extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 	public $id = NULL;
 
-	public function hooks(){
+	protected function hooks(){
 
 	}
 
