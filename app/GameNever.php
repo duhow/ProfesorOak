@@ -25,7 +25,7 @@ class GameNever extends TelegramApp\Module {
 		return NULL;
 	}
 
-	function yonunca($edit = FALSE){
+	public function yonunca($edit = FALSE){
 		$this->telegram->send
 			->inline_keyboard()
 				->row_button("Yo si", "yo nunca si")
@@ -35,6 +35,7 @@ class GameNever extends TelegramApp\Module {
 			$text = $this->telegram->text_message();
 			if(strpos($text, $this->telegram->user->first_name) !== FALSE){
 				$this->telegram->answer_if_callback("Ya lo sabemos, tranquilo. " .$this->telegram->emoji("<3"), TRUE);
+				$this->end();
 			}
 
 			$str = $this->telegram->text_message() ."\n" .$this->telegram->user->first_name ." lo ha hecho.";

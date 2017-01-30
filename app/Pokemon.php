@@ -66,7 +66,7 @@ class Pokemon extends TelegramApp\Module {
 
 	}
 
-	public function hooks(){
+	protected function hooks(){
 		if(
 			$this->telegram->text_command("iv") or
 			$this->telegram->text_command("ivs")

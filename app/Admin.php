@@ -3,6 +3,13 @@
 class Admin extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
+	public function run(){
+		// get si Oak es admin.
+		// get si el user es admin.
+		// carga y guarda caché de admin.
+		parent::run();
+	}
+
 	protected function hooks(){
 
 	}
@@ -36,6 +43,67 @@ class Admin extends TelegramApp\Module {
 		    }
 		}
 		return FALSE;
+	}
+
+	function check_flood(){
+		if($this->user->is_admin){ return; }
+		$amount = NULL;
+		if($this->telegram->text_command()){ $amount = 1; }
+		elseif($this->telegram->photo()){ $amount = 0.8; }
+		elseif($this->telegram->sticker()){
+			if(strpos($this->telegram->sticker(), "AAjbFNAAB") === FALSE){ // + BQADBAAD - Oak Games
+				$amount = 1;
+			}
+		}
+		// elseif($this->telegram->document()){ $amount = 1; }
+		elseif($this->telegram->gif()){ $amount = 1; }
+		elseif($this->telegram->text() && $this->telegram->words() >= 50){ $amount = 0.5; }
+		elseif($this->telegram->text()){ $amount = -0.4; }
+		// Spam de text/segundo.
+		// Si se repite la última palabra.
+
+		$countflood = 0;
+		if($amount !== NULL){ $countflood = $pokemon->group_spamcount($this->telegram->chat->id, $amount); }
+
+		if($countflood >= $flood){
+
+			$ban = $this->chat->settings['antiflood_ban'];
+
+			if($ban == TRUE){
+				$res = $this->ban($this->user->id, $this->chat->id);
+
+				if($this->chat->settings['antiflood_ban_hidebutton'] != TRUE){
+					$this->telegram->send
+					->inline_keyboard()
+						->row_button("Desbanear", "desbanear " .$this->telegram->user->id, "TEXT")
+					->show();
+				}
+			}else{
+				$res = $this->kick($this->user->id, $this->chat->id);
+			}
+
+			if($res){
+				// $pokemon->group_spamcount($this->telegram->chat->id, -1.1); // Avoid another kick.
+				// $pokemon->user_delgroup($this->telegram->user->id, $this->telegram->chat->id);
+				$this->telegram->send
+					->text("Usuario expulsado por flood. [" .$this->user->id .(isset($this->telegram->user->username) ? " @" .$this->telegram->user->username : "") ."]")
+				->send();
+				$adminchat = $pokemon->settings($this->telegram->chat->id, 'admin_chat');
+				if($adminchat){
+					// TODO forward del mensaje afectado
+					$this->telegram->send
+						->chat($adminchat)
+						->text("Usuario " .$this->telegram->user->id .(isset($this->telegram->user->username) ? " @" .$this->telegram->user->username : "") ." expulsado del grupo por flood.")
+					->send();
+				}
+				return -1; // No realizar la acción ya que se ha explusado.
+			}
+			// Si tiene grupo admin asociado, avisar.
+		}
+	}
+
+	function antispam(){
+
 	}
 
 	public function kick($user, $chat){
