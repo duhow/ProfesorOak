@@ -30,14 +30,14 @@ class Config extends TelegramApp\Module {
 		if(!empty($chat)){ $lchat = new Chat($chat); }
 		$lchat->load();
 
-		$res = $lchat->settings[$key];
+		$res = @$lchat->settings[$key];
 		if(in_array(strtolower($key), ["all", "*"]) && $this->user->id == CREATOR){
 			$res = "";
 			foreach($lchat->settings as $k => $v){
 				$v = $this->parse_value($v);
 				if(is_array($v)){ $v = json_encode($v); }
 
-				$res = $k .": " .$v ."\n";
+				$res .= $k .": " .$v ."\n";
 			}
 		}
 
