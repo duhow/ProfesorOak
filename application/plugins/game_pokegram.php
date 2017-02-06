@@ -67,9 +67,9 @@ function pokegame_notify_item($target, $item){
     $telegram = new Telegram();
 
     $items = [
-        'pokeball' => 'BQADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
-        'superball' => 'BQADBAADDggAAjbFNAABArAsznkfzmAC',
-        'ultraball' => 'BQADBAADEAgAAjbFNAABc1c6B4iXJosC'
+        'pokeball' => 'CAADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
+        'superball' => 'CAADBAADDggAAjbFNAABArAsznkfzmAC',
+        'ultraball' => 'CAADBAADEAgAAjbFNAABc1c6B4iXJosC'
     ];
 
     if(!in_array($item, array_keys($items))){ return FALSE; }
@@ -577,10 +577,10 @@ $play = $pokemon->settings($telegram->chat->id, 'pokegram');
 if($play != NULL && $play == FALSE){ return; }
 
 $pokeballs_sticker = [
-    'pokeball' => 'BQADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
-    'superball' => 'BQADBAADDggAAjbFNAABArAsznkfzmAC',
-    'ultraball' => 'BQADBAADEAgAAjbFNAABc1c6B4iXJosC',
-    'masterball' => 'BQADBAADEggAAjbFNAABanVUlBU9VxwC'
+    'pokeball' => 'CAADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
+    'superball' => 'CAADBAADDggAAjbFNAABArAsznkfzmAC',
+    'ultraball' => 'CAADBAADEAgAAjbFNAABc1c6B4iXJosC',
+    'masterball' => 'CAADBAADEggAAjbFNAABanVUlBU9VxwC'
 ];
 
 if(
@@ -849,7 +849,7 @@ if(
         $telegram->send
             ->notification(FALSE)
             ->chat($target)
-        ->file('sticker', 'BQADBAADcggAAjbFNAAB4a2hODCkLw8C');
+        ->file('sticker', 'CAADBAADcggAAjbFNAAB4a2hODCkLw8C');
 
         $telegram->send
             ->notification(TRUE)
@@ -889,11 +889,11 @@ if(
 if(
 	(
 	    (!$telegram->callback && $telegram->message % 667 == 0) or
-	    ($telegram->sticker() == "BQADBAADdAgAAjbFNAABYcghFn7ZiQIC") or
+	    ($telegram->sticker() == "CAADBAADdAgAAjbFNAABYcghFn7ZiQIC") or
 	    ($telegram->text_command("pokestop") && $telegram->user->id == $this->config->item('creator'))
 	) and $telegram->key == "message" // Fix edited messages
 ){
-    if($telegram->sticker() == "BQADBAADdAgAAjbFNAABYcghFn7ZiQIC"){
+    if($telegram->sticker() == "CAADBAADdAgAAjbFNAABYcghFn7ZiQIC"){
         if($pokemon->group_count_members($telegram->chat->id, 10) <= 15){
             $telegram->send
                 ->notification(FALSE)
@@ -957,10 +957,10 @@ if(
     $telegram->message % 49 == 0 &&
 	!$telegram->text_command() &&
 	$telegram->words() > 1) or
-    $telegram->sticker() == 'BQADBAADcAgAAjbFNAABpv0WcvCzRoIC' or
+    $telegram->sticker() == 'CAADBAADcAgAAjbFNAABpv0WcvCzRoIC' or
     ($telegram->text_command("summon") && $telegram->user->id == $this->config->item('creator'))
 ){
-    if($telegram->sticker() == 'BQADBAADcAgAAjbFNAABpv0WcvCzRoIC'){
+    if($telegram->sticker() == 'CAADBAADcAgAAjbFNAABpv0WcvCzRoIC'){
         if($pokemon->group_count_members($telegram->chat->id, 10) <= 20){
             $telegram->send
                 ->notification(FALSE)

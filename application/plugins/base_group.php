@@ -37,7 +37,7 @@ if($flood && !in_array($telegram->user->id, $pokemon->telegram_admins(TRUE))){
     if($telegram->text_command()){ $amount = 1; }
     elseif($telegram->photo()){ $amount = 0.8; }
     elseif($telegram->sticker()){
-		if(strpos($telegram->sticker(), "AAjbFNAAB") === FALSE){ // + BQADBAAD - Oak Games
+		if(strpos($telegram->sticker(), "CAADBAAD") === FALSE){ // + BQADBAAD - Oak Games
 			$amount = 1;
 		}
 	}
