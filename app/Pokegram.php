@@ -8,11 +8,23 @@ class Pokegram extends TelegramApp\Module {
 		'pokemon' => 'pokegame_sightseens',
 		'eggs' => 'pokegame_eggs',
 	];
+
+	protected $sticker = [
+	    'pokeball' => 'CAADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
+	    'superball' => 'CAADBAADDggAAjbFNAABArAsznkfzmAC',
+	    'ultraball' => 'CAADBAADEAgAAjbFNAABc1c6B4iXJosC',
+	    'masterball' => 'CAADBAADEggAAjbFNAABanVUlBU9VxwC',
+		'egg' => 'CAADBAADcggAAjbFNAAB4a2hODCkLw8C',
+		'incense' => 'CAADBAADcAgAAjbFNAABpv0WcvCzRoIC',
+		'lure' => 'CAADBAADdAgAAjbFNAABYcghFn7ZiQIC',
+		'pokestop' => 'BQADAgADAQIAApb6EgUZaAnSEGh43gI'
+	];
+
 	protected $pokeballs_sticker = [
-	    'pokeball' => 'BQADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
-	    'superball' => 'BQADBAADDggAAjbFNAABArAsznkfzmAC',
-	    'ultraball' => 'BQADBAADEAgAAjbFNAABc1c6B4iXJosC',
-	    'masterball' => 'BQADBAADEggAAjbFNAABanVUlBU9VxwC'
+		'CAADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
+		'CAADBAADDggAAjbFNAABArAsznkfzmAC',
+		'CAADBAADEAgAAjbFNAABc1c6B4iXJosC',
+		'CAADBAADEggAAjbFNAABanVUlBU9VxwC',
 	];
 
 	public function run(){
@@ -54,7 +66,7 @@ class Pokegram extends TelegramApp\Module {
 
 		if(
 			($this->telegram->callback && $this->telegram->text_has("capturar") && $this->telegram->words() == 2) or
-			($this->telegram->sticker() && in_array($this->telegram->sticker(), array_values($this->pokeballs_sticker)))
+			($this->telegram->sticker() && in_array($this->telegram->sticker(), $this->pokeballs_sticker))
 		){
 			// TODO
 			$this->pokemon_capture($this->telegram->last_word());
@@ -63,6 +75,7 @@ class Pokegram extends TelegramApp\Module {
 				$this->telegram->answer_if_callback("");
 				$this->end();
 			}
+
 			// .................
 			$this->answer_if_callback("");
 			$this->end();
@@ -77,19 +90,30 @@ class Pokegram extends TelegramApp\Module {
 	// TODO hacer Carameloraro para subir de nivel a un Pokémon.
 	// TODO hacer policía o incienso para alejar al Team Rocket y atraer más Pokémon.
 
-	function account_exists($user){
+	public function account_exists($user){
 	    $query = $this->db
 			->where('uid', $user)
 		->get($this->tables['account']);
 	    return ($this->db->count == 1);
 	}
 
-	function account_register($user){
+	public function account_register($user){
 	    $query = $this->db->insert($this->tables['account'], ['uid' => $user]);
 	    return $query;
 	}
 
-	function half_inventory($user, $div = 2){
+	private function user_in_chat($user = NULL){
+		if(empty($user)){ $user = $this->user->id; }
+		if(!$this->telegram->user_in_chat($user, $this->chat->id)){
+			// TODO remove user from group
+	        // $pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
+	        // $telegram->send->text("Eh, que " .$telegram->user->id ." no está!")->send();
+	        $this->telegram->answer_if_callback("Eh, tu no estás ahí!", TRUE);
+	        $this->end(); // HACK ?
+	    }
+	}
+
+	public function half_inventory($user, $div = 2){
 		$data = [
 			'pokeball' => '(pokeball * ' .(1 - (1/$div)) .')',
 			'superball' => '(superball * ' .(1 - (1/$div)) .')',
@@ -101,13 +125,13 @@ class Pokegram extends TelegramApp\Module {
 		return $query;
 	}
 
-	function pokestop_register($chat, $spins = 10){
+	public function pokestop_register($chat, $spins = 10){
 		$data = ['chat' => $chat, 'spins' => $spins];
 	    $query = $this->db->insert($this->tables['pokestop'], $data);
 	    return $query;
 	}
 
-	function pokestop_spin($id, $user, $amount = NULL){
+	public function pokestop_spin($id, $user, $amount = NULL){
 	    $pokestop = $this->db
 	        ->where('id', $id)
 	    ->get($this->tables['pokestop']);
@@ -132,13 +156,13 @@ class Pokegram extends TelegramApp\Module {
 	    return ($pokestop->spins - 1);
 	}
 
-	function notify_item($target, $item){
-	    if(!in_array($item, array_keys($this->pokeballs_sticker))){ return FALSE; }
+	public function notify_item($target, $item){
+	    if(!in_array($item, array_keys($this->sticker))){ return FALSE; }
 
 	    $this->telegram->send
 	        ->chat($target)
 	        ->notification(FALSE)
-	    ->file('sticker', $this->pokeballs_sticker[$item]);
+	    ->file('sticker', $this->sticker[$item]);
 	    usleep(100000);
 
 	    $this->telegram->send
@@ -154,12 +178,12 @@ class Pokegram extends TelegramApp\Module {
 	    }
 	}
 
-	function pokemon_add($data){
+	public function pokemon_add($data){
 	    $query = $this->db->insert($this->tables['pokemon'], $data);
 	    return $query;
 	}
 
-	function pokemon_view($id){
+	public function pokemon_view($id){
 	    $query = $this->db
 			->where('id', $id)
 		->get($this->tables['pokemon']);
@@ -167,21 +191,22 @@ class Pokegram extends TelegramApp\Module {
 	    return FALSE;
 	}
 
-	function pokemon_setowner($id, $user){
+	public function pokemon_setowner($id, $user){
 	    $data = ['owner' => $user, 'tries' => 0];
 	    return $this->db
 	        ->where('id', $id)
 	    ->update($this->tables['pokemon']);
 	}
 
-	function pokemon_trydown($id){
+	public function pokemon_trydown($id){
 	    $data = ['tries' => 'tries - 1'];
 	    return $this->db
 	        ->where('id', $id)
+			->where('tries >', 0)
 	    ->update($this->tables['pokemon'], $data);
 	}
 
-	function pokemon_generate($chat, $num = NULL, $res = FALSE){
+	public function pokemon_generate($chat, $num = NULL, $res = FALSE){
 		if(empty($num)){
 			$num = $this->number(FALSE, 251);
 			// if(in_array($num, [144, 145, 146])){ $num = 1; } // HACK No legendarios
@@ -236,7 +261,7 @@ class Pokegram extends TelegramApp\Module {
 		return $data;
 	}
 
-	function pokemon_appearview($chat, $id, $poke = NULL){
+	public function pokemon_appearview($chat, $id, $poke = NULL){
 		$pokemon = new Pokemon();
 
 		$data = $this->pokemon_view($id);
@@ -261,7 +286,7 @@ class Pokegram extends TelegramApp\Module {
 		$this->chat->settings['pokemon_summon'] = $id .":" .$q['message_id'];
 	}
 
-	function pokemon_find_last($pokemon, $chat){
+	public function pokemon_find_last($pokemon, $chat){
 	    $query = $this->db
 	        ->where('pokemon', $pokemon)
 	        ->where('gid', $chat)
@@ -271,7 +296,7 @@ class Pokegram extends TelegramApp\Module {
 	    return (object) $query;
 	}
 
-	function egg_generate($user, $pokemon = NULL){
+	public function egg_generate($user, $pokemon = NULL){
 	    if(empty($pokemon)){
 	        $pokemon = $this->number(FALSE, 251);
 	    }
@@ -296,7 +321,7 @@ class Pokegram extends TelegramApp\Module {
 	    return (object) $data;
 	}
 
-	function egg_active($user){
+	public function egg_active($user){
 	    $query = $this->db
 	        ->where('uid', $user)
 	        ->where('steps > 0')
@@ -306,7 +331,7 @@ class Pokegram extends TelegramApp\Module {
 	    return array_column($query, 'id');
 	}
 
-	function egg_step($user){
+	public function egg_step($user){
 		$data = ['steps' => 'steps - 1'];
 	    return $this->db
 	        ->where('uid', $user)
@@ -314,7 +339,7 @@ class Pokegram extends TelegramApp\Module {
 	    ->update($this->tables['eggs'], $data);
 	}
 
-	function egg_open($user, $open = FALSE, $force = FALSE){
+	public function egg_open($user, $open = FALSE, $force = FALSE){
 	    if($open == FALSE){
 	        if(!$force){ $this->db->where('steps <= 0'); }
 	        $query = $this->db
@@ -335,7 +360,7 @@ class Pokegram extends TelegramApp\Module {
 	    }
 	}
 
-	function _item_manage($user, $item, $action = "+", $amount = 1){
+	private function _item_manage($user, $item, $action = "+", $amount = 1){
 	    $item = strtolower($item);
 	    if(!in_array($item, ['pokeball', 'superball', 'ultraball', 'lure', 'incense'])){ return FALSE; }
 
@@ -346,10 +371,10 @@ class Pokegram extends TelegramApp\Module {
 	    return $query;
 	}
 
-	function item_add($user, $item, $amount = 1){ return $this->_item_manage($user, $item, "+", $amount); }
-	function item_remove($user, $item, $amount = 1){ return $this->_item_manage($user, $item, "-", $amount); }
+	public function item_add($user, $item, $amount = 1){ return $this->_item_manage($user, $item, "+", $amount); }
+	public function item_remove($user, $item, $amount = 1){ return $this->_item_manage($user, $item, "-", $amount); }
 
-	function items($user){
+	public function items($user){
 	    $query = $this->db->where('uid', $user)->get($this->tables['account']);
 
 	    $items = array();
@@ -373,11 +398,11 @@ class Pokegram extends TelegramApp\Module {
 	    return (object) $items;
 	}
 
-	function captured($user){
+	public function captured($user){
 	    $query = $this->db
 	        ->where('owner', $user)
-		->where('disabled', FALSE)
-	        // ->order_by('pokemon', 'ASC')
+			->where('disabled', FALSE)
+	        // ->orderBy('pokemon', 'ASC')
 	        ->orderBy('cp', 'DESC')
 	    ->get($this->tables['pokemon']);
 
@@ -385,7 +410,7 @@ class Pokegram extends TelegramApp\Module {
 	    return $query;
 	}
 
-	function message_items($user){
+	public function message_items($user){
 		$items = $this->items($user);
 	    $str = "El inventario está vacío.";
 
@@ -402,7 +427,7 @@ class Pokegram extends TelegramApp\Module {
 		return $str;
 	}
 
-	function delay_can_continue($chat, $amount = 2) {
+	public function delay_can_continue($chat, $amount = 2) {
 		// $pokemon = new Pokemon();
 		$last_throw = $this->chat->settings['pokegame_lastthrow'];
 		if(!empty($last_throw)){
@@ -416,17 +441,17 @@ class Pokegram extends TelegramApp\Module {
 		return TRUE;
 	}
 
-	function is_legendary($number){
+	public function is_legendary($number){
 	    return in_array($number, [144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251]);
 	}
 
-	function number($legendary = FALSE, $top = 251){
+	public function number($legendary = FALSE, $top = 251){
 		$num = mt_rand(1, $top);
 		if(!$legendary && $this->is_legendary($num)){ return call_user_func(__FUNCTION__, $legendary, $top); }
 		return $num;
 	}
 
-	function duel($user, $target, $tg){
+	public function duel($user, $target, $tg){
 
 	}
 }
