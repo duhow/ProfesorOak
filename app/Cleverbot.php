@@ -14,12 +14,15 @@ class Cleverbot extends TelegramApp\Module {
 		}
 	}
 
-	public function think($text){
+	public function think($text, $ret = FALSE){
 		if($this->chatter === NULL){ return FALSE; }
-		return $this->telegram->send
+		$response = $this->chatter->think($text);
+		$q = $this->telegram->send
 			->notification(FALSE)
-			->text($text)
+			->text($response)
 		->send();
+
+		return ($ret ? $response : $q);
 	}
 
 	protected function hooks(){

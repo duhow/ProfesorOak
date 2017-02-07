@@ -31,11 +31,12 @@ class Config extends TelegramApp\Module {
 		$lchat->load();
 
 		$res = @$lchat->settings[$key];
+		if(is_array($res) or is_bool($res)){ $res = json_encode($res); }
 		if(in_array(strtolower($key), ["all", "*"]) && $this->user->id == CREATOR){
 			$res = "";
 			foreach($lchat->settings as $k => $v){
 				$v = $this->parse_value($v);
-				if(is_array($v)){ $v = json_encode($v); }
+				if(is_array($v) or is_bool($v)){ $v = json_encode($v); }
 
 				$res .= $k .": " .$v ."\n";
 			}

@@ -51,7 +51,7 @@ class Chat extends TelegramApp\Chat {
 
 	}
 
-	public function register(){
+	public function register($ret = FALSE){
 		$data = [
 			'id' => $this->id,
 			'type' => $this->type,
@@ -63,7 +63,8 @@ class Chat extends TelegramApp\Chat {
 			'users' => $this->telegram->send->get_members_count($this->id),
 			// 'spam' => to setting
 		];
-		return $this->db->insert('chats', $data);
+		$id = $this->db->insert('chats', $data);
+		return ($ret == FALSE ? $id : $data);
 	}
 
 	public function load(){
@@ -71,7 +72,7 @@ class Chat extends TelegramApp\Chat {
 		$query = $this->db
 			->where('id', $this->id)
 		->getOne('chats');
-		if(empty($query)){ return NULL; }
+		if(empty($query)){ $query = $this->register(TRUE); }
 		foreach($query as $k => $v){
 			$this->$k = $v;
 		}
@@ -156,7 +157,7 @@ class Chat extends TelegramApp\Chat {
 		}
 	}
 
-	function is_admin($user){
+	public function is_admin($user){
 		$user = $this->get_userid($user);
 		$query = $this->db
 			->where('gid', $this->id)
