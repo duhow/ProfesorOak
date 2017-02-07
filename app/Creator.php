@@ -30,6 +30,13 @@ class Creator extends TelegramApp\Module {
 			$this->telegram->text_command("block") or
 			$this->telegram->text_command("unblock")
 		){
+			$id = NULL;
+			if($this->telegram->has_reply){
+				$id = $this->telegram->reply_target('forward')->id;
+			}
+			if(empty($id)){ $this->end(); }
+			$target = new User($id);
+			$target->blocked = ($this->telegram->text_command("block"));
 			$this->end();
 		}elseif($this->telegram->text_command("unban")){
 			$target = NULL;

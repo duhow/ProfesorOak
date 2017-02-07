@@ -18,7 +18,7 @@ class Main extends TelegramApp\Module {
 
 		if($this->telegram->is_chat_group()){
 			$this->core->load('Admin');
-			$Admin = $GLOBALS['Admin'];
+			global $Admin;
 
 			if($this->chat->settings['forwarding_to']){ $Admin->forward_groups(); }
 			if($this->chat->settings['antiflood']){ $Admin->check_flood(); }

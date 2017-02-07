@@ -7,6 +7,7 @@ class Admin extends TelegramApp\Module {
 		// get si Oak es admin.
 		// get si el user es admin.
 		// carga y guarda caché de admin.
+		if(!$this->chat->is_group()){ return; }
 		parent::run();
 	}
 
@@ -30,6 +31,8 @@ class Admin extends TelegramApp\Module {
 				'BQADBAADqAADl4mhCVMHew7buZpwAg',
 		    ];
 			if(in_array($this->telegram->sticker(), $palmeras)){
+				if($this->user->is_admin() or $this->user->id == CREATOR){ return; }
+				if(!$this->chat->is_admin($this->telegram->bot->id)){ return; }
 		        // $admins = array();
 		        /* if(function_exists('telegram_admins')){
 		            $admins = telegram_admins(TRUE);
