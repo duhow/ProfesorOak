@@ -160,15 +160,22 @@ class Admin extends TelegramApp\Module {
 		$users = $this->countold($days, $chat);
 		if(count($users) == 0){ return FALSE; }
 
+		$c = $this->kick_array($users, $chat);
+		$str = "No puedo echar a nadie :(";
+		if($c > 0){ $str = "Vale, " .$c ." fuera!"; }
+
+		$this->telegram->send
+			->text($str)
+		->send();
+		return $c;
+	}
+
+	private function kick_array($users, $chat = NULL){
 		$c = 0;
 		foreach($users as $user){
 			$q = $this->kick($user, $chat);
 			if($q !== FALSE){ $c++; }
 		}
-
-		$this->telegram->send
-			->text("Vale, " .$c ." fuera!")
-		->send();
 		return $c;
 	}
 }
