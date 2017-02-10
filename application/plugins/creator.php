@@ -269,6 +269,54 @@ if($telegram->text_command("kickold") && $telegram->words() == 2){
     }*/
 }
 
+elseif($this->telegram->text_command("kickteam")){
+	$team = NULL;
+	if($this->telegram->words() == 2){
+		if(strlen($this->telegram->last_word()) == 1){
+			$team = $this->telegram->last_word();
+		}else{
+			$team = color_parse($this->telegram->last_word());
+		}
+	}else{
+		$team = $this->pokemon->settings($telegram->chat->id, 'team_exclusive');
+	}
+
+	if(empty($team)){
+		$this->telegram->send
+			->text($this->telegram->emoji(":times: ") ."No hay excluisivdad de equipo.")
+		->send();
+		return -1;
+	}
+
+	if(!in_array($this->config->item('telegram_bot_id'), telegram_admins())){
+		$this->telegram->send
+			->text($this->telegram->emoji(":times: ") ."No soy admin... :(")
+		->send();
+		return -1;
+	}
+
+	$users = $pokemon->group_get_members($this->telegram->chat->id);
+	$tbk = array();
+	foreach($users as $u){
+		if($u == $this->config->item('telegram_bot_id')){ continue; }
+		if($u == $this->config->item('creator')){ continue; }
+
+		$pku = $pokemon->user($u);
+		if(!empty($pku)){
+			if($pku->team == $team){ $tbk[] = $u; }
+		}
+	}
+
+	foreach($tbk as $u){
+		$this->telegram->send->kick($u);
+	}
+
+	$this->telegram->send
+		->text(json_encode($tbk))
+	->send();
+	return -1;
+}
+
 // Quitar tag de SPAM
 elseif($telegram->text_has("/nospam", TRUE) && $telegram->words() <= 3){
     // HACK text_has porque comandos no se parsean en INLINE_keyboard.

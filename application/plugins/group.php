@@ -273,7 +273,7 @@ elseif(
     $str = "";
     $find = str_replace(["@", "?"], "", $find);
     if(empty($find) or strlen($find) < 4){ return; }
-    if(strpos($find, "est") !== FALSE or strpos($find, "aqu") !== FALSE){ return; }
+    if(strpos($find, "est") !== FALSE or strpos($find, "aqu") !== FALSE or strpos($find, "pues") !== FALSE){ return; }
     $this->analytics->event('Telegram', 'Search User', $find);
     $data = $pokemon->user($find);
     if(empty($data)){

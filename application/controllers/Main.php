@@ -815,6 +815,7 @@ class Main extends CI_Controller {
 							->text($telegram->emoji($text), TRUE)
 							->keyboard()->hide(TRUE)
 						->send();
+						$pokemon->step($telegram->user->id, NULL);
 						exit();
 					}
 

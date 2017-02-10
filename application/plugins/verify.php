@@ -143,6 +143,7 @@ elseif(
             ->text($telegram->emoji($text), TRUE)
             ->keyboard()->hide(TRUE)
         ->send();
+		$pokemon->step($telegram->user->id, NULL);
         exit(); // Kill process for STEP
     }
 
