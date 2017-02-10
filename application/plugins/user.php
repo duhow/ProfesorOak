@@ -72,19 +72,19 @@ if($step == "SETNAME"){
 }elseif($step == "LEVEL_SCREENSHOT"){
 	if($telegram->photo()){
 		$telegram->send
-			->message(TRUE)
-			->chat(TRUE)
-			->forward_to($this->config->item('creator'))
+			->reply_to(TRUE)
+			->text($telegram->emoji(":ok: Voy a ver..."))
 		->send();
 
 		$telegram->send
 			->chat($this->config->item('creator'))
-			->text("Dice que ha subido de nivel.")
+			->text($telegram->user->first_name ." " .$telegram->user->id ." dice que ha subido de nivel.")
 		->send();
 
 		$telegram->send
-			->reply_to(TRUE)
-			->text($telegram->emoji(":ok: Voy a ver..."))
+			->message(TRUE)
+			->chat(TRUE)
+			->forward_to($this->config->item('creator'))
 		->send();
 
 		$pokemon->step($telegram->user->id, NULL);
@@ -169,6 +169,8 @@ if(
 			$telegram->send
 				->text("¡Guau! Pues... Mándame captura para confirmarlo, anda.")
 			->send();
+
+			return -1;
 		}
     }
     return;
