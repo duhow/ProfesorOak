@@ -3,12 +3,19 @@
 if(!$telegram->is_chat_group()){ return; }
 
 // el bot explusa al emisor del mensaje
-if($telegram->text_command("autokick")){
+if($telegram->text_command("autokick") or $telegram->text_command("adios") or $telegram->text_has("bomba de humo")){
     $this->analytics->event('Telegram', 'AutoKick');
     $res = $telegram->send->kick($telegram->user->id, $telegram->chat->id);
-    if($res){ $pokemon->user_delgroup($telegram->user->id, $telegram->chat->id); }
+    if($res){
+        $pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
+        if($this->telegram->text_has("bomba de humo")){
+            $this->telegram->send
+                ->notification(FALSE)
+            ->file('sticker', 'CAADBAADFQgAAjbFNAABxSRoqJmT9U8C');
+        }
+    }
     if(!$res){ $telegram->send->text("No puedo :(")->send(); }
-    return;
+    return -1;
 }
 
 // Lista de administradores
