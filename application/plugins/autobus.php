@@ -46,7 +46,7 @@ function autobus_cordoba($codigo){
     curl_close ($ch);
 
     if(!empty($get)){
-        $json = json_decode($get, FALSE);
+        $json = json_decode($get, TRUE);
 		if($json['res'] == FALSE){ return array(); }
 		$lineas = array();
 		foreach($json['estimaciones'] as $r){
