@@ -1,6 +1,7 @@
 <?php
 
-function autobus($codigo){
+// AMBTempsBus
+function autobus_barcelona($codigo){
     $url = "http://www.ambmobilitat.cat/AMBtempsbus";
     $data = ['codi' => str_pad($codigo, 6, '0', STR_PAD_LEFT)];
 
@@ -29,7 +30,40 @@ function autobus($codigo){
     return array();
 }
 
-if($this->telegram->text_command("amb") && $this->telegram->words() == 2){
+// AUCORSA
+function autobus_cordoba($codigo){
+    $url = "http://m.aucorsa.es/action.admin_operaciones.php";
+    $data = ['op' => 'tiempos', 'parada' => $codigo];
+	$url = $url ."?" .http_build_query($data);
+
+    $ch = curl_init();
+
+    curl_setopt($ch, CURLOPT_URL, $url);
+    // curl_setopt($ch, CURLOPT_POST, TRUE);
+    // curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+    $get = curl_exec($ch);
+    curl_close ($ch);
+
+    if(!empty($get)){
+        $json = json_decode($get, FALSE);
+		if($json['res'] == FALSE){ return array(); }
+		$lineas = array();
+		foreach($json['estimaciones'] as $r){
+			$lineas[] = "Linea " .$r['linea'] ." - en " .$r['minutos1'] ." min y " .$r['minutos2'] ." min.";
+		}
+		return $lineas;
+    }
+    return array();
+}
+
+if(
+	$this->telegram->words() == 2 &&
+	(
+		$this->telegram->text_command("amb") or
+		$this->telegram->text_command("aucorsa")
+	)
+){
     $num = $this->telegram->last_word(TRUE);
     if(!is_numeric($num)){
         $this->telegram->send
@@ -42,7 +76,11 @@ if($this->telegram->text_command("amb") && $this->telegram->words() == 2){
         ->text($this->telegram->emoji("\ud83d\udd51 ") ."Ejecutando...")
     ->send();
 
-    $paradas = autobus($num);
+	if($this->telegram->text_command("amb")){
+		$paradas = autobus_barcelona($num);
+	}elseif($this->telegram->text_command("aucorsa")){
+		$paradas = autobus_cordoba($num);
+	}
 
     $str = "No encuentro paradas.";
     if(!empty($paradas)){
