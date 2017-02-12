@@ -82,12 +82,101 @@ function autobus_titsa($codigo){
     return array();
 }
 
+// EMT - Málaga
+function autobus_malaga($codigo){
+	$url = "http://www.emtmalaga.es/emt-mobile/informacionParada.html";
+	$data = ['codParada' => $codigo];
+	$url = $url ."?" .http_build_query($data);
+
+	$ch = curl_init();
+
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+	$get = curl_exec($ch);
+	curl_close ($ch);
+
+	if(!empty($get)){
+		if(strpos($get, 'No se encontr') !== FALSE){ return array(); } // 404 Parada
+		$get = substr($get, strpos($get, '<ul data-role='));
+        $pos = 0;
+        $lineas = array();
+        while( ($pos = strpos($get, '<li', $pos)) !== FALSE){
+            $pos = strpos($get, '<span', $pos);
+            $last = strpos($get, '</li>', $pos) - $pos;
+            $linea = trim(strip_tags(substr($get, $pos, $last)));
+			$linea = preg_replace('/\s+/', ' ', $linea); // Remove space between
+            $lineas[] = "Línea " .$linea;
+        }
+        return $lineas;
+    }
+    return array();
+}
+
+// EMT - Valencia
+function autobus_valencia($codigo, $rec = FALSE){
+	$url = "https://www.emtvalencia.es/ciudadano/modules/mod_tiempo/sugiere_parada.php";
+	$data = ['id_parada' => $codigo];
+
+	if($rec){
+		$url = "https://www.emtvalencia.es/ciudadano/modules/mod_tiempo/busca_parada.php";
+		$data = ['parada' => $codigo, 'adaptados' => 0, 'usuario' => 'Anonimo', 'idioma' => 'es'];
+	}
+
+	$ch = curl_init();
+
+	curl_setopt($ch, CURLOPT_URL, $url);
+	curl_setopt($ch, CURLOPT_POST, TRUE);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
+	$get = curl_exec($ch);
+	curl_close ($ch);
+
+	if(!empty($get)){
+		if($rec == FALSE){
+			$pos = 0;
+			$lineas = array();
+			while( ($pos = strpos($get, '<li', $pos)) !== FALSE){
+				$last = strpos($get, '</li>', $pos) - $pos;
+				$linea = trim(strip_tags(substr($get, $pos, $last)));
+				$linea = explode(" - ", $linea, 2);
+				$lineas[$linea[0]] = $linea[1];
+				$pos++; // HACK avoid infinte loop
+			}
+			if(isset($lineas[$codigo])){
+				$parada = $codigo ." - " . $lineas[$codigo];
+				return autobus_valencia($parada, TRUE);
+			}
+			return array(); // Not found
+		}
+		// ----------
+		$pos = 0;
+		$lineas = array();
+		while(($pos = strpos($get, '<span', $pos)) !== FALSE){
+			$pos = strpos($get, "title=", $pos) + strlen('title="');
+			$last = strpos($get, '" ', $pos) - $pos;
+			$parada = trim(substr($get, $pos, $last));
+
+			$pos = strpos($get, "<span", $pos);
+			$last = strpos($get, "<br>", $pos) - $pos;
+			$linea = trim(strip_tags(substr($get, $pos, $last)));
+			$linea = str_replace("&nbsp;", "", $linea);
+			$pos++;
+
+			$lineas[] = "Linea " .$parada ." - " .$linea;
+		}
+		return $lineas;
+	}
+	return array();
+}
+
 if(
 	$this->telegram->words() == 2 &&
 	(
 		$this->telegram->text_command("amb") or
 		$this->telegram->text_command("aucorsa") or
-		$this->telegram->text_command("titsa")
+		$this->telegram->text_command("titsa") or
+		$this->telegram->text_command("emtmal") or
+		$this->telegram->text_command("emtval")
 	)
 ){
     $num = $this->telegram->last_word(TRUE);
@@ -108,6 +197,10 @@ if(
 		$paradas = autobus_cordoba($num);
 	}elseif($this->telegram->text_command("titsa")){
 		$paradas = autobus_titsa($num);
+	}elseif($this->telegram->text_command("emtmal")){
+		$paradas = autobus_malaga($num);
+	}elseif($this->telegram->text_command("emtval")){
+		$paradas = autobus_valencia($num);
 	}
 
     $str = "No encuentro paradas.";

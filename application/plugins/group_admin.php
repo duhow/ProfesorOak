@@ -552,14 +552,32 @@ elseif(
 elseif(
     ( $telegram->text_has("crear", "comando", TRUE) or $telegram->text_command("command") )
 ){
-    if(!in_array($telegram->user->id, $pokemon->telegram_admins(TRUE))){ return; }
     $pokemon->settings($telegram->user->id, 'command_name', "DELETE");
     $pokemon->step($telegram->user->id, 'CUSTOM_COMMAND');
     $telegram->send
         ->reply_to(TRUE)
         ->text("Dime el comando / frase a crear.")
     ->send();
-    return;
+    return -1;
+}
+
+// Lista de comandos
+elseif($this->telegram->text_has("lista de comandos") && $this->telegram->words() <= 5){
+	$commands = $pokemon->settings($telegram->chat->id, 'custom_commands');
+	$commands = unserialize($commands);
+	$str = "No hay comandos.";
+	if(is_array($commands)){
+		$str = count($commands) ." comandos:\n";
+		foreach($commands as $k => $v){
+			$str .= "$k\n";
+		}
+	}
+
+	$this->telegram->send
+		->notification(FALSE)
+		->text($str)
+	->send();
+	return -1;
 }
 
 ?>
