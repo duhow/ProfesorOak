@@ -424,7 +424,6 @@ class Main extends TelegramApp\Module {
 			$this->end();
 		}
 
-		$this->telegram->send->text("asdf")->send();
 		if($this->telegram->text_command("register")){ return $this->register(); }
 		if($this->user->step == "SETNAME" && $this->telegram->words() == 1){
 			$this->setname($this->telegram->last_word(TRUE));
@@ -486,60 +485,8 @@ class Main extends TelegramApp\Module {
 					// Si tiene HP y CP puesto, calvular IV
 					if(isset($pk['hp']) and isset($pk['cp'])){
 						$chat = ($telegram->is_chat_group() && $this->is_shutup(TRUE) ? $telegram->user->id : $telegram->chat->id);
-						$pokedex = $pokemon->pokedex($pk['pokemon']);
+						// $pokedex = $pokemon->pokedex($pk['pokemon']);
 						$this->analytics->event("Telegram", "Calculate IV", $pokedex->name);
-						// De los niveles que tiene...
-						$table = array();
-						$low = 100;
-						$high = 0; // HACK invertidas
-						foreach($levels as $lvl){
-							$lvlmp = $pokemon->level($lvl)->multiplier;
-							$pow = pow($lvlmp, 2) * 0.1;
-							for($IV_STA = 0; $IV_STA < 16; $IV_STA++){
-								$hp = max(floor(($pokedex->stamina + $IV_STA) * $lvlmp), 10);
-								// Si tenemos el IV de HP y coincide con su vida...
-								if($hp == $pk['hp']){
-									$lvl_STA = sqrt($pokedex->stamina + $IV_STA) * $pow;
-									$cps = array(); // DEBUG
-									for($IV_DEF = 0; $IV_DEF < 16; $IV_DEF++){
-			                            for($IV_ATK = 0; $IV_ATK < 16; $IV_ATK++){
-											$cp = floor( ($pokedex->attack + $IV_ATK) * sqrt($pokedex->defense + $IV_DEF) * $lvl_STA);
-											// Si el CP calculado coincide con el nuestro, agregar posibilidad.
-											if($cp == $pk['cp']){
-												$sum = (($IV_ATK + $IV_DEF + $IV_STA) / 45) * 100;
-												if($sum > $high){ $high = $sum; }
-												if($sum < $low){ $low = $sum; }
-												$table[] = ['level' => $lvl, 'atk' => $IV_ATK, 'def' => $IV_DEF, 'sta' => $IV_STA];
-											}
-											$cps[] = $cp; // DEBUG
-										}
-									}
-									if($this->user->id == $this->config->item('creator')){
-										// $telegram->send->text(json_encode($cps))->send(); // DEBUG
-									}
-								}
-							}
-						}
-						if(count($table) > 1 and ($pk['attack'] or $pk['defense'] or $pk['stamina'])){
-							// si tiene ATK, DEF O STA, los resultados
-							// que lo superen, quedan descartados.
-							foreach($table as $i => $r){
-								if($pk['attack'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['atk'] )){ unset($table[$i]); continue; }
-								if($pk['defense'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['def'] )){ unset($table[$i]); continue; }
-								if($pk['stamina'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['sta'] )){ unset($table[$i]); continue; }
-								if($pk['attack'] and isset($pk['ivcalc']) and !in_array($r['atk'], $pk['ivcalc'])){ unset($table[$i]); continue; }
-								if($pk['defense'] and isset($pk['ivcalc']) and !in_array($r['def'], $pk['ivcalc'])){ unset($table[$i]); continue; }
-								if($pk['stamina'] and isset($pk['ivcalc']) and !in_array($r['sta'], $pk['ivcalc'])){ unset($table[$i]); continue; }
-								if((!$pk['attack'] or !$pk['defense'] or !$pk['stamina']) and ($r['atk'] + $r['def'] + $r['sta'] == 45)){ unset($table[$i]); continue; }
-							}
-							$low = 100;
-							$high = 0;
-							foreach($table as $r){
-								$sum = (($r['atk'] + $r['def'] + $r['sta']) / 45) * 100;
-								if($sum > $high){ $high = $sum; }
-								if($sum < $low){ $low = $sum; }
-							}
-						}
 
 						$frases = [
 							'Es una.... mierda. Si quieres caramelos, ya sabes que hacer.',
@@ -731,42 +678,8 @@ class Main extends TelegramApp\Module {
 		$step = $pokeuser->step;
 		switch ($step) {
 			case 'RULES':
-				if(!$telegram->is_chat_group()){ break; }
-				if(!in_array($this->user->id, $admins)){ $pokemon->step($this->user->id, NULL); break; }
-
-				$text = $telegram->text_encoded();
-				if(strlen($text) < 4){ exit(); }
-				if(strlen($text) > 4000){
-					$telegram->send
-						->text("Buah, demasiadas normas. Relájate un poco anda ;)")
-					->send();
-					exit();
-				}
-				$this->analytics->event('Telegram', 'Set rules');
-				$pokemon->settings($telegram->chat->id, 'rules', $text);
-				$telegram->send
-					->text("Hecho!")
-				->send();
-				$pokemon->step($this->user->id, NULL);
 				break;
 			case 'WELCOME':
-				if(!$telegram->is_chat_group()){ break; }
-				if(!in_array($this->user->id, $admins)){ $pokemon->step($this->user->id, NULL); break; }
-
-				$text = $telegram->text_encoded();
-				if(strlen($text) < 4){ exit(); }
-				if(strlen($text) > 4000){
-					$telegram->send
-						->text("Buah, demasiado texto! Relájate un poco anda ;)")
-					->send();
-					exit();
-				}
-				$this->analytics->event('Telegram', 'Set welcome');
-				$pokemon->settings($telegram->chat->id, 'welcome', $text);
-				$telegram->send
-					->text("Hecho!")
-				->send();
-				$pokemon->step($this->user->id, NULL);
 				break;
 			case 'CHOOSE_POKEMON':
 				// $pk = NULL;
@@ -1159,38 +1072,47 @@ class Main extends TelegramApp\Module {
 		$query = $this->db
 			->where('id', $chat->id)
 		->get('chats');
-		if($query->num_rows() == 1){
+		if($this->db->count == 1){
 			// UPDATE
+			$data = [
+				'type' => $chat->type,
+				'title' => @$chat->title,
+				'last_date' => date("Y-m-d H:i:s"),
+				'active' => TRUE,
+				'messages' => 'messages + 1',
+			];
+
 			$this->db
-				->set('type', $chat->type)
-				->set('title', @$chat->title)
-				->set('last_date', date("Y-m-d H:i:s"))
-				->set('active', TRUE)
-				->set('messages', 'messages + 1', FALSE)
 				->where('id', $chat->id)
-			->update('chats');
+			->update('chats', $data);
 		}else{
-			$this->db
-				->set('id', $chat->id)
-				->set('type', $chat->type)
-				->set('title', $chat->title)
-				->set('active', TRUE)
-				->set('register_date', date("Y-m-d H:i:s"))
-			->insert('chats');
+			$data = [
+				'id' => $chat->id,
+				'type' => $chat->type,
+				'title' => $chat->title,
+				'active' => TRUE,
+				'register_date' => date("Y-m-d H:i:s"),
+			];
+
+			$this->db->insert('chats', $data);
 		}
 
 		$query = $this->db
 			->where('uid', $this->user->id)
 			->where('cid', $chat->id)
 		->get('user_inchat');
-		if($query->num_rows() == 1){
+
+		if($this->db->count == 1){
 			// UPDATE
+			$data = [
+				'messages' => 'messages + 1',
+				'last_date' => date("Y-m-d H:i:s")
+			];
+
 			$this->db
 				->where('uid', $this->user->id)
 				->where('cid', $chat->id)
-				->set('messages', 'messages + 1', FALSE)
-				->set('last_date', date("Y-m-d H:i:s"))
-			->update('user_inchat');
+			->update('user_inchat', $data);
 		}
 
 		if($this->pokemon->user_exists($this->telegram->user->id)){

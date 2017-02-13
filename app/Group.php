@@ -5,7 +5,37 @@ class Group extends TelegramApp\Module {
 
 	public function run(){
 		if(!$this->chat->is_group()){ return; }
+		if($this->user->step != NULL){ $this->step(); }
 		parent::run();
+	}
+
+	protected function step(){
+		$step = $this->user->step;
+		if($step == "RULES" or $step == "WELCOME"){
+			if(!$this->chat->is_admin($this->user->id)){
+				$this->user->step = NULL;
+				$this->end();
+			}
+
+			$text = $this->telegram->text_encoded();
+			if(strlen($text) < 4){ $this->end(); }
+			if(strlen($text) > 4000){
+				$this->telegram->send
+					->text("Buah, demasiado texto! Relájate un poco anda ;)")
+				->send();
+				$this->end();
+			}
+			// $this->analytics->event('Telegram', 'Set rules');
+			// $this->analytics->event('Telegram', 'Set welcome');
+
+			$this->chat->settings[strtolower($step)] = $text;
+			$this->user->step = NULL;
+
+			$this->telegram->send
+				->text("Hecho!")
+			->send();
+			$this->end();
+		}
 	}
 
 	protected function hooks(){

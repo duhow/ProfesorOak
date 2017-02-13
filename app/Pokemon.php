@@ -63,7 +63,55 @@ class Pokemon extends TelegramApp\Module {
 			$pokemon = $pokemon[0];
 		}
 		$pokemon = $this->load($pokemon);
+		$levels = new Pokemon\Levels($stardust);
+		$table = array();
+		$low = 100; $high = 0; // HACK
+		foreach($levels as $lvl => $mul){
+			$pow = pow($mul, 2) * 0.1;
+			for($IV_STA = 0; $IV_STA < 16; $IV_STA++){
+				$cal['hp'] = max(floor(($pokemon->stamina + $IV_STA) * $mul), 10);
+				if($cal['hp'] == $hp){
+					$lvl_STA = sqrt($pokemon->stamina + $IV_STA) * $pow;
+					// $cps = array(); // DEBUG
+					for($IV_DEF = 0; $IV_DEF < 16; $IV_DEF++){
+						for($IV_ATK = 0; $IV_ATK < 16; $IV_ATK++){
+							$cal['cp'] = floor( ($pokemon->attack + $IV_ATK) * sqrt($pokemon->defense + $IV_DEF) * $lvl_STA);
+							// Si el CP calculado coincide con el nuestro, agregar posibilidad.
+							if($cal['cp'] == $cp){
+								$sum = (($IV_ATK + $IV_DEF + $IV_STA) / 45) * 100;
+								if($sum > $high){ $high = $sum; }
+								if($sum < $low){ $low = $sum; }
+								$table[] = ['level' => $lvl, 'atk' => $IV_ATK, 'def' => $IV_DEF, 'sta' => $IV_STA];
+							}
+							// $cps[] = $cp; // DEBUG
+						}
+					}
+				}
+			}
+		}
 
+		if(count($table) > 1 and ($pk['attack'] or $pk['defense'] or $pk['stamina'])){
+			// si tiene ATK, DEF O STA, los resultados
+			// que lo superen, quedan descartados.
+			foreach($table as $i => $r){
+				if($pk['attack'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['atk'] )){ unset($table[$i]); continue; }
+				if($pk['defense'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['def'] )){ unset($table[$i]); continue; }
+				if($pk['stamina'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['sta'] )){ unset($table[$i]); continue; }
+				if($pk['attack'] and isset($pk['ivcalc']) and !in_array($r['atk'], $pk['ivcalc'])){ unset($table[$i]); continue; }
+				if($pk['defense'] and isset($pk['ivcalc']) and !in_array($r['def'], $pk['ivcalc'])){ unset($table[$i]); continue; }
+				if($pk['stamina'] and isset($pk['ivcalc']) and !in_array($r['sta'], $pk['ivcalc'])){ unset($table[$i]); continue; }
+				if((!$pk['attack'] or !$pk['defense'] or !$pk['stamina']) and ($r['atk'] + $r['def'] + $r['sta'] == 45)){ unset($table[$i]); continue; }
+			}
+			$low = 100;
+			$high = 0;
+			foreach($table as $r){
+				$sum = (($r['atk'] + $r['def'] + $r['sta']) / 45) * 100;
+				if($sum > $high){ $high = $sum; }
+				if($sum < $low){ $low = $sum; }
+			}
+		}
+
+		return $table;
 	}
 
 	protected function hooks(){
