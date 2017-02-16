@@ -301,7 +301,7 @@ elseif(
 		if(!empty($flags)){
 			if(in_array("ratkid", $flags)){ $str .= $telegram->emoji(":mouse: "); }
 			if(in_array("multiaccount", $flags)){ $str .= $telegram->emoji(":multiuser: "); }
-			if(in_array("gps", $flags)){ $str .= $telegram->emoji(":satellite: "); }
+			if(in_array("gps", $flags)){ $str .= $telegram->emoji(":antenna: "); }
 			if(in_array("bot", $flags)){ $str .= $telegram->emoji(":robot: "); }
 			if(in_array("rager", $flags)){ $str .= $telegram->emoji(":fire: "); }
 			if(in_array("troll", $flags)){ $str .= $telegram->emoji(":joker: "); }
