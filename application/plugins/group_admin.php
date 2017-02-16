@@ -552,6 +552,13 @@ elseif(
 elseif(
     ( $telegram->text_has("crear", "comando", TRUE) or $telegram->text_command("command") )
 ){
+	$can = $pokemon->settings($telegram->chat->id, 'custom_commands');
+	if($can != NULL && $can == FALSE){
+		$telegram->send
+			->text("Nope.")
+		->send();
+		return -1;
+	}
     $pokemon->settings($telegram->user->id, 'command_name', "DELETE");
     $pokemon->step($telegram->user->id, 'CUSTOM_COMMAND');
     $telegram->send
