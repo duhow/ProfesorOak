@@ -84,8 +84,7 @@ if($telegram->is_chat_group()){ return; }
 $step = $pokemon->step($telegram->user->id);
 
 if(!empty($step)){
-	switch ($step) {
-		case 'LOCATION':
+	if($step == 'LOCATION'){
 		if($telegram->location()){
 			return menu_call_location($telegram->user->id, $telegram);
 		}elseif($telegram->text()){
@@ -198,10 +197,8 @@ if(!empty($step)){
 					break;
 			}
 		}
-		break; // End LOCATION
+		return -1; // HACK ?
 	}
-
-	return -1; // HACK ?
 }
 
 if($telegram->location()){
