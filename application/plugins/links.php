@@ -45,6 +45,14 @@ if(
 			$text = "Te invito al grupo *" .$color[$team] ."* asociado a " .$telegram->chat->title .". "
 					."¡No le pases este enlace a nadie!\n"
 					.$telegram->grouplink($teamlink);
+
+			if($telegram->is_chat_group()){
+				if(!$pokemon->command_limit("link_color", $telegram->chat->id, $telegram->message, 7)){
+					$telegram->send
+						->text($telegram->emoji("Ahora mismo! Te abro por privado :D"))
+					->send();
+				}
+			}
 		}
 
 		$telegram->send
