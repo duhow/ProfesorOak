@@ -2,7 +2,7 @@
 
 if(
     $telegram->text_has(["donde", "conocéis", "sabéis", "sabe", "cual", "listado", "lista"]) &&
-    $telegram->text_contains(["visto", "encontra", "encuentro", "salen", "sale", "nido"]) && $telegram->text_contains("?") &&
+    $telegram->text_contains(["visto", "encontra", "encuentro", "hay", "salen", "sale", "nido"]) && $telegram->text_contains("?") &&
     $telegram->words() <= 10 && $telegram->is_chat_group()
 ){
     $text = str_replace("?", "", $telegram->text());
@@ -117,6 +117,19 @@ elseif(
 
 elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && $telegram->words() <= 8){
     if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam'])){ return; }
+	$uinfo = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
+
+	if($uinfo->messages <= 7){
+		$str = "¿Acabas de llegar y ya estás pidiendo nidos? Te calmas.";
+		if($telegram->callback){
+			$telegram->answer_if_callback($str, TRUE);
+			return -1;
+		}
+		$telegram->send
+			->text($str)
+		->send();
+		return -1;
+	}
 
     $target = (is_numeric(str_replace("-", "", $telegram->last_word())) ? $telegram->last_word() : $telegram->chat->id);
 
