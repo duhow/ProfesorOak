@@ -744,6 +744,15 @@ elseif($telegram->text_command("ub") && $telegram->words() <= 2){
 	return -1;
 }
 
-
+elseif($telegram->text_command("c")){
+	$in = 10;
+	if($telegram->words() > 1){ $in = (int) $telegram->last_word(); }
+	$count = $pokemon->group_count_members($telegram->chat->id, $in);
+	$telegram->send
+		->notification(FALSE)
+		->text($count)
+	->send();
+	return -1;
+}
 
 ?>
