@@ -519,6 +519,7 @@ elseif(
         if(empty($f_user)){ return -1; }
         $f_user = $f_user->telegramid;
     }
+	if(empty($f_user)){ return -1; } // Double and final check
     $flag = $telegram->last_word();
     $flag = explode(",", $flag);
     foreach($flag as $f){
