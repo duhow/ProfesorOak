@@ -230,7 +230,10 @@ if($telegram->text_command("kickold") && $telegram->words() == 2){
 	foreach($query->result_array() as $u){
 		if($u['uid'] == $this->config->item('telegram_bot_id')){ continue; }
 		$q = $telegram->send->kick($u['uid'], $telegram->chat->id);
-		if($q !== FALSE){ $c++; }
+		if($q !== FALSE){
+			$pokemon->user_delgroup($u['uid'], $telegram->chat->id);
+			$c++;
+		}
 	}
 
 	$telegram->send
@@ -298,7 +301,10 @@ if($telegram->text_command("kickmsg") && $telegram->words() == 2){
 	foreach($query->result_array() as $u){
 		if($u['uid'] == $this->config->item('telegram_bot_id')){ continue; }
 		$q = $telegram->send->kick($u['uid'], $telegram->chat->id);
-		if($q !== FALSE){ $c++; }
+		if($q !== FALSE){
+			$pokemon->user_delgroup($u['uid'], $telegram->chat->id);
+			$c++;
+		}
 	}
 
 	$telegram->send
