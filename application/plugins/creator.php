@@ -269,6 +269,46 @@ if($telegram->text_command("kickold") && $telegram->words() == 2){
     }*/
 }
 
+// Echar a usuarios que no hablan.
+if($telegram->text_command("kickmsg") && $telegram->words() == 2){
+	if(!in_array($this->config->item('telegram_bot_id'), $pokemon->telegram_admins(TRUE))){ // Tiene que ser admin
+		$telegram->send
+			->notification(FALSE)
+			->text("Jefe, no puedo, que no soy admin :(")
+		->send();
+		return -1;
+	}
+
+	$messages = $telegram->words(1);
+	if(intval($messages) <= 1){
+		$messages = 6;
+	}
+
+	$query = $this->db
+		->select('uid')
+		->where('cid', $telegram->chat->id)
+		->where('messages <=', $messages)
+	->get('user_inchat');
+
+	$telegram->send
+		->text("Cuento " .$query->num_rows() ." usuarios.")
+	->send();
+
+	$c = 0;
+	foreach($query->result_array() as $u){
+		if($u['uid'] == $this->config->item('telegram_bot_id')){ continue; }
+		$q = $telegram->send->kick($u['uid'], $telegram->chat->id);
+		if($q !== FALSE){ $c++; }
+	}
+
+	$telegram->send
+		->text("Vale, $c fuera!")
+	->send();
+
+	return -1;
+}
+
+
 elseif($this->telegram->text_command("kickteam")){
 	$team = NULL;
 	if($this->telegram->words() == 2){
