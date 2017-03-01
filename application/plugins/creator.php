@@ -694,7 +694,12 @@ elseif($telegram->text_command("register") && $telegram->has_reply){
 
     foreach($data as $k => $v){
         if(in_array($k, ['telegramid'])){ continue; } // , 'team'
-        $pokemon->update_user_data($data['telegramid'], $k, $v);
+        $q = $pokemon->update_user_data($data['telegramid'], $k, $v);
+		if($q === FALSE){
+			$telegram->send
+				->text($telegram->emoji(":times:") . " Error al cambiar $k.")
+			->send();
+		}
     }
 
     $str = ":ok: Hecho" .(isset($data['verified']) ? " y validado!" : "!");
