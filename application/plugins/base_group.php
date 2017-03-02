@@ -114,9 +114,9 @@ if($telegram->text_url() && $telegram->is_chat_group()){
     if($info->messages <= 5 && $pokemon->settings($telegram->chat->id, 'antispam') !== FALSE){
         if(
             !$telegram->text_contains(["http", "www", ".com", ".es", ".net"]) &&
-            !$telegram->text_contains("telegram.me") &&
-            !$telegram->text_contains(["PokéTrack", "PokeTrack"]) &&
-            !$telegram->text_contains(["maps.google", "google.com/maps"])
+            !$telegram->text_contains("telegram.me") or
+            $telegram->text_contains(["PokéTrack", "PokeTrack"]) or
+            $telegram->text_contains(["maps.google", "google.com/maps"])
         ){ return -1; } // HACK Falsos positivos.
 
         // TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
