@@ -15,7 +15,7 @@ if($this->telegram->text_has(["I found a", "Encontré un"], TRUE) && $this->tele
 
 	$txt = explode("\n", $telegram->text());
 
-	$title = $poke->name ." " .trim($txt[1]);
+	$title = $poke['name'] ." " .trim($txt[1]);
 	$subtitle = trim($txt[4]);
 
 	$this->telegram->send

@@ -315,6 +315,7 @@ if($telegram->text_url() && $telegram->text_contains("//goo.gl/maps/")){
 }
 
 if(preg_match("/([+-]?)(\d+.\d+)[,;]\s?([+-]?)(\d+.\d+)/", $telegram->text(), $loc)){
+	if($telegram->text_contains("PokéTrack")){ return; }
     $loc = $loc[0];
     if(strpos($loc, ";") !== FALSE){ $loc = explode(";", $loc); }
     elseif(strpos($loc, ",") !== FALSE){ $loc = explode(",", $loc); }
