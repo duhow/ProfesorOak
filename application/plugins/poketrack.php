@@ -9,14 +9,18 @@ if($this->telegram->text_has(["I found a", "Encontré un"], TRUE) && $this->tele
     if(strpos($loc, ";") !== FALSE){ $loc = explode(";", $loc); }
     elseif(strpos($loc, ",") !== FALSE){ $loc = explode(",", $loc); }
 
-	$poke = pokemon_parse($this->telegram->text());
-	if(empty($poke)){ return -1; }
-	$poke = $pokemon->find($poke['pokemon']);
-
 	$txt = explode("\n", $telegram->text());
 
-	$title = $poke['name'] ." " .trim($txt[1]);
-	$subtitle = trim($txt[4]);
+	$poke = $this->telegram->words(2, TRUE);
+	if($this->telegram->text_has("I found a")){ $poke = $this->telegram->words(3, TRUE); }
+	$poke = str_replace("IV", "", $poke); // BUG Aparece como PokemonIV
+	$poke = trim($poke);
+
+	$poke = $pokemon->find($poke); // Load data
+	if(empty($poke)){ return -1; }
+
+	$title = $poke['name'] ." " .trim($txt[1]); // Name + IV
+	$subtitle = trim($txt[4]); // Time left
 
 	$this->telegram->send
 		->location($loc[0], $loc[1])
