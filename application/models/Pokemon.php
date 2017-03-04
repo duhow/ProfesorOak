@@ -486,6 +486,8 @@ class Pokemon extends CI_Model{
 	// --------------------------------
 
 	function find($search){
+		$search = str_replace("ñ", "", $search);
+
 		$query = $this->db
 			->where('id', $search)
 			->or_where('name', $search)
@@ -577,6 +579,8 @@ class Pokemon extends CI_Model{
 	}
 
 	function attack_type($search = NULL){
+		$search = str_replace("ñ", "", $search);
+
 		if($search !== NULL){
 			$this->db->where('id', $search)
 			->or_where('type', $search)
