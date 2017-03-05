@@ -107,7 +107,8 @@ if($telegram->text_has(["Me llamo", "Mi nombre es", "Mi usuario es"], TRUE) && $
 if(
     $telegram->text_has("Soy", ["lvl", "nivel", "L", "level"]) or
     $telegram->text_has("Soy L", TRUE) or // HACK L junta
-    $telegram->text_has("Acabo de subir al")
+    $telegram->text_has("Acabo de subir al") &&
+	!$telegram->text_has("No") // Si, la gente es gilipollas.
 ){
     $level = filter_var($telegram->text(), FILTER_SANITIZE_NUMBER_INT);
     if(is_numeric($level)){
