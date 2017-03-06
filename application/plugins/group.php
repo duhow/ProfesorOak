@@ -80,7 +80,7 @@ elseif(
 
         $teams_total[$ul->team]++;
         if($ul->verified){ $teams_verified[$ul->team]++; }
-        else{ $users_left[] = $ul->username; }
+        elseif(!empty($ul->username)){ $users_left[] = $ul->username; }
     }
 
     $colors = ['Y' => ':heart-yellow:', 'R' => ':heart-red:', 'B' => ':heart-blue:'];
