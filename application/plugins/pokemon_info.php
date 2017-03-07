@@ -477,7 +477,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
         ->notification(FALSE)
 	// AgADBAADl7MxG10JzgK-Vlne-9fNkaDZZRkABNpfQEaBRT960bsDAAEC
 	// FCPATH .'files/egg_list.png'
-        ->file('photo', 'AgADBAADl7MxG10JzgK-Vlne-9fNkaDZZRkABNpfQEaBRT960bsDAAEC');
+        ->file('photo', 'AgADBAADBqgxG4TZ-FHLVafu9g61IAZmZBkABBqA7YEDvJ5-zKYDAAEC');
     return -1;
 }elseif(
     ( $telegram->text_has(["profe", "oak"]) && $telegram->text_has(["código fuente", "source"]) ) or
