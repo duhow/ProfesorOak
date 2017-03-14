@@ -17,6 +17,10 @@ if($this->telegram->text_command("bw") && $telegram->words() > 1){
 	if($query->num_rows() == 1){
 		$target = $query->row()->uid;
 		$blackwords = $this->pokemon->settings($target, 'blackword');
+	}else{
+		// Si estás en el grupo no-admin porque no existe
+		// y tu no eres admin, entonces... adios.
+		if(!in_array($this->telegram->user->id, telegram_admins(TRUE))){ return; }
 	}
 
     $txt = $this->telegram->words(1, 10);
