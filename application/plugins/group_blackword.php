@@ -16,7 +16,9 @@ if($this->telegram->text_command("bw") && $telegram->words() > 1){
 
     $blackwords[] = $txt;
     $blackwords = array_unique($blackwords);
-    $this->pokemon->settings($this->telegram->chat->id, 'blackword', implode(",", $blackwords));
+    if(count($blackwords) == 1){ $blackwords = $blackwords[0]; }
+    else{ $blackwords = implode(",", $blackwords); }
+    $this->pokemon->settings($this->telegram->chat->id, 'blackword', $blackwords);
 
     $this->telegram->send
         ->text($this->telegram->emoji(":ok: ") ."Agregado.")
@@ -26,7 +28,7 @@ if($this->telegram->text_command("bw") && $telegram->words() > 1){
 
 if(!empty($blackwords)){
     $blackwords = explode(",", $blackwords);
-    if(!$this->telegram->text_has($blackwords)){ return; }
+    if(!$this->telegram->text_contains($blackwords)){ return; }
     if(in_array($this->telegram->user->id, telegram_admins(TRUE))){ return; }
 
     $adminchat = $pokemon->settings($this->telegram->chat->id, 'admin_chat');
@@ -38,6 +40,7 @@ if(!empty($blackwords)){
         ->send();
 
         $this->telegram->send
+            ->chat($adminchat)
             ->text("Ha dicho algo malo :(")
         ->send();
     }else{
