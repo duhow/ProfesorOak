@@ -61,6 +61,51 @@ if(
 }
 
 elseif(
+	$telegram->is_chat_group()
+	$telegram->text_has(["sale", "sale algo", "que hay", "que nidos hay", "algun nido", "hay nidos", "hay nido"], "en") &&
+	$telegram->text_contains("?") &&
+	$telegram->words() > 4
+){
+	$txt = $telegram->text(TRUE);
+	$txt = substr($txt, strpos($txt, " en ") + strlen(" en "));
+	$txt = trim($txt);
+	if(in_array(substr($txt, 0, 2), ['el', 'la'])){
+		$txt = substr($txt, 3);
+		$txt = trim($txt);
+	}
+	if(strlen($txt) < 4){ return; }
+
+	$query = $this->db
+		->where('chat', $this->telegram->chat->id)
+		->like('location_string', $txt)
+	->get('pokemon_nests');
+
+	$frases = [
+		'Pues no he visto nada por ahí.',
+		'No lo sé.',
+		'Creo que no.',
+		'No estoy muy seguro...'
+	];
+	$n = mt_rand(0, count($frases) - 1);
+	$str = $frases[$n];
+
+	if($query->num_rows() > 0){
+		$pokedex = $pokemon->pokedex();
+		if($query->num_rows() == 1){
+			$str = "He visto un " .$pokedex[$query->row()->pokemon]->name ." en " .$query->row()->location_string .".";
+		}else{
+			$str = "Hay varias cosas por ahí:\n";
+			foreach($query->result_array() as $nest){
+				$str .= "- " .$pokedex[$nest['pokemon']]->name ." en " .$nest['location_string'] ."\n";
+			}
+		}
+	}
+
+	$telegram->send->text($str, 'HTML')->send();
+	return -1;
+}
+
+elseif(
     $telegram->text_has(["confirmo", "confirmar", "confirmado", "hay"], ["nido", "un nido", "el nido"], TRUE) &&
     $telegram->text_has("en") &&
     $telegram->is_chat_group()
