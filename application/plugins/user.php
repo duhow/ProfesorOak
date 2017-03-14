@@ -261,7 +261,7 @@ elseif(
 		else{ $text = $telegram->last_word(); } // Si no hay mención, coger la última palabra
 		$text = $telegram->clean('alphanumeric', $text);
 		if(strlen($text) < 4){ return; }
-		if(text_find(["quien", "quién"], $text)){ return; } // Quien es quien?
+		if(text_find(["quien", "quién", "eres"], $text)){ return; } // Quien es quien?
 		$pk = pokemon_parse($text);
 		if(!empty($pk['pokemon'])){ /* $this->_pokedex($pk['pokemon']); */ return; } // TODO FIXME
 		$user_search = $text;
