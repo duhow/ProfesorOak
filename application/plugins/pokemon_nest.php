@@ -1,8 +1,9 @@
 <?php
 
 function get_paired_groups($groups){
+    $CI =& get_instance();
 	$groups = explode(",", $groups);
-	$query = $this->db
+	$query = $CI->db
 		->group_start()
 			->like('type', 'pair_team_')
 			->where_in('value', $groups)
@@ -31,8 +32,16 @@ if(
     $pk = pokemon_parse($text);
     if(empty($pk['pokemon'])){ return; }
 
+    $groups = $pokemon->settings($telegram->chat->id, 'pair_groups');
+    $target = array();
+    if($groups){
+        $target = get_paired_groups($groups);
+    }
+    $target[] = $this->telegram->chat->id;
+    $target = array_unique($target);
+
     $query = $this->db
-        ->where('chat', $telegram->chat->id)
+        ->where_in('chat', $target)
     ->get('pokemon_nests');
 
     if($query->num_rows() == 0){
@@ -43,14 +52,6 @@ if(
         $telegram->send->text("No hay ningún nido registrado.")->send();
         return -1;
     }
-
-    $groups = $pokemon->settings($telegram->chat->id, 'pair_groups');
-    $target = array();
-    if($groups){
-        $target = get_paired_groups($groups);
-    }
-    $target[] = $this->telegram->chat->id;
-    $target = array_unique($target);
 
     $query = $this->db
         ->where_in('chat', $target)
