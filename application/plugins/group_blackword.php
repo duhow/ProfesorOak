@@ -9,9 +9,10 @@ if($this->telegram->text_command("bw") && $telegram->words() > 1){
     $txt = strtolower(trim($txt));
 
     if(!empty($blackwords)){
-        $blackwords = array();
-    }else{
         $blackwords = explode(",", $blackwords);
+        if(!is_array($blackwords)){ $blackwords = [$blackwords]; }
+    }else{
+        $blackwords = array();
     }
 
     $blackwords[] = $txt;
@@ -27,7 +28,7 @@ if($this->telegram->text_command("bw") && $telegram->words() > 1){
 }
 
 if(!empty($blackwords)){
-    $blackwords = explode(",", $blackwords);
+    $blackwords = (strpos($blackwords, ",") === FALSE ? [$blackwords] : explode(",", $blackwords) );
     if(!$this->telegram->text_contains($blackwords)){ return; }
     if(in_array($this->telegram->user->id, telegram_admins(TRUE))){ return; }
 
