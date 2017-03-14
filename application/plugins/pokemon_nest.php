@@ -61,10 +61,10 @@ if(
 }
 
 elseif(
-	$telegram->is_chat_group()
+	$telegram->is_chat_group() &&
 	$telegram->text_has(["sale", "sale algo", "que hay", "que nidos hay", "algun nido", "hay nidos", "hay nido"], "en") &&
 	$telegram->text_contains("?") &&
-	$telegram->words() > 4
+	$telegram->words() >= 4
 ){
 	$txt = $telegram->text(TRUE);
 	$txt = substr($txt, strpos($txt, " en ") + strlen(" en "));
