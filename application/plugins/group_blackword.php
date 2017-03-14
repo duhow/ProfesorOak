@@ -5,6 +5,20 @@ if(!$this->telegram->is_chat_group()){ return; }
 $blackwords = $this->pokemon->settings($this->telegram->chat->id, 'blackword');
 
 if($this->telegram->text_command("bw") && $telegram->words() > 1){
+	// Target chat to save
+	$target = $this->telegram->chat->id;
+
+	$query = $this->db
+		->where('type', 'admin_chat')
+		->where('value', $target)
+	->get('settings');
+
+	// Si estás en un grupo admin, cargar info del grupo que administras.
+	if($query->num_rows() == 1){
+		$target = $query->row()->uid;
+		$blackwords = $this->pokemon->settings($target, 'blackword');
+	}
+
     $txt = $this->telegram->words(1, 10);
     $txt = strtolower(trim($txt));
 
@@ -19,7 +33,7 @@ if($this->telegram->text_command("bw") && $telegram->words() > 1){
     $blackwords = array_unique($blackwords);
     if(count($blackwords) == 1){ $blackwords = $blackwords[0]; }
     else{ $blackwords = implode(",", $blackwords); }
-    $this->pokemon->settings($this->telegram->chat->id, 'blackword', $blackwords);
+    $this->pokemon->settings($target, 'blackword', $blackwords);
 
     $this->telegram->send
         ->text($this->telegram->emoji(":ok: ") ."Agregado.")
@@ -40,10 +54,10 @@ if(!empty($blackwords)){
             ->forward_to($adminchat)
         ->send();
 
-        $this->telegram->send
+        /* $this->telegram->send
             ->chat($adminchat)
             ->text("Ha dicho algo malo :(")
-        ->send();
+        ->send(); */
     }else{
         $this->telegram->send
             ->text("Eh, te calmas.")
