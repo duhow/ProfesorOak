@@ -1,10 +1,32 @@
 <?php
 
+function get_paired_groups($groups){
+	$groups = explode(",", $groups);
+	$query = $this->db
+		->group_start()
+			->like('type', 'pair_team_')
+			->where_in('value', $groups)
+		->group_end()
+		/* ->or_group_start()
+			->where('type', 'common');
+		->group_end() */
+	->get('settings');
+
+    $target = array();
+	if($query->num_rows() > 0){
+		foreach($query->result_array() as $g){
+			$target[] = $g['uid'];
+		}
+	}
+    return $target;
+}
+
 if(
     $telegram->text_has(["donde", "conocéis", "sabéis", "sabe", "cual", "listado", "lista"]) &&
     $telegram->text_contains(["visto", "encontra", "encuentro", "está", "aparece", "hay", "salen", "sale", "nido"]) && $telegram->text_contains("?") &&
     $telegram->words() <= 10 && $telegram->is_chat_group()
 ){
+    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam'])){ return; }
     $text = str_replace("?", "", $telegram->text());
     $pk = pokemon_parse($text);
     if(empty($pk['pokemon'])){ return; }
@@ -22,8 +44,16 @@ if(
         return -1;
     }
 
+    $groups = $pokemon->settings($telegram->chat->id, 'pair_groups');
+    $target = array();
+    if($groups){
+        $target = get_paired_groups($groups);
+    }
+    $target[] = $this->telegram->chat->id;
+    $target = array_unique($target);
+
     $query = $this->db
-        ->where('chat', $telegram->chat->id)
+        ->where_in('chat', $target)
         ->where('pokemon', $pk['pokemon'])
     ->get('pokemon_nests');
 
@@ -47,7 +77,15 @@ if(
                 ->location($res->lat, $res->lng)
             ->send();
         }
-        $telegram->send->text("Sólo lo encuentro en " .$res->location_string .".")->send();
+        $frases = [
+            'Sólo lo he visto en',
+            'Prueba a buscar en',
+            'Mira a ver si te sale en',
+            'Lo he visto en',
+            'Tal vez lo encuentres en'
+        ];
+        $n = mt_rand(0, count($frases) - 1);
+        $telegram->send->text($frases[$n] ." " .$res->location_string .".")->send();
     }elseif($query->num_rows() > 1){
         $str = "Está en varios lugares:\n";
         foreach($query->result_array() as $res){
@@ -66,6 +104,7 @@ elseif(
 	$telegram->text_contains("?") &&
 	$telegram->words() >= 4
 ){
+    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam'])){ return; }
 	$txt = $telegram->text(TRUE);
 	$txt = substr($txt, strpos($txt, " en ") + strlen(" en "));
 	$txt = trim($txt);
@@ -75,8 +114,16 @@ elseif(
 	}
 	if(strlen($txt) < 4){ return; }
 
+    $groups = $pokemon->settings($telegram->chat->id, 'pair_groups');
+    $target = array();
+    if($groups){
+        $target = get_paired_groups($groups);
+    }
+    $target[] = $this->telegram->chat->id;
+    $target = array_unique($target);
+
 	$query = $this->db
-		->where('chat', $this->telegram->chat->id)
+		->where_in('chat', $target)
 		->like('location_string', $txt)
 	->get('pokemon_nests');
 
@@ -94,7 +141,7 @@ elseif(
 		if($query->num_rows() == 1){
 			$str = "He visto un " .$pokedex[$query->row()->pokemon]->name ." en " .$query->row()->location_string .".";
 		}else{
-			$str = "Hay varias cosas por ahí:\n";
+			$str = "Hay varios Pokémon por ahí:\n";
 			foreach($query->result_array() as $nest){
 				$str .= "- " .$pokedex[$nest['pokemon']]->name ." en " .$nest['location_string'] ."\n";
 			}
@@ -194,28 +241,10 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
 
     $groups = $pokemon->settings($telegram->chat->id, 'pair_groups');
     if($groups){
-    	$groups = explode(",", $groups);
-    	$query = $this->db
-    		->group_start()
-    			->like('type', 'pair_team_')
-    			->where_in('value', $groups)
-    		->group_end()
-    		/* ->or_group_start()
-    			->where('type', 'common');
-    		->group_end() */
-    	->get('settings');
-
-    	if($query->num_rows() > 0){
-            $target = [$target];
-    		foreach($query->result_array() as $g){
-    			$target[] = $g['uid'];
-    		}
-    	}
+        $target = get_paired_groups($groups);
+        $target[] = $this->telegram->chat->id;
+        $target = array_unique($target);
     }
-
-    // $groups = [$target];
-    // $groups[] = $target;
-    // $groups = array_unique($groups);
 
     $query = $this->db
         ->where_in('chat', $target)
