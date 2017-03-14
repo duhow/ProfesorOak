@@ -2,7 +2,7 @@
 
 if(
     $telegram->text_has(["donde", "conocéis", "sabéis", "sabe", "cual", "listado", "lista"]) &&
-    $telegram->text_contains(["visto", "encontra", "encuentro", "aparece", "hay", "salen", "sale", "nido"]) && $telegram->text_contains("?") &&
+    $telegram->text_contains(["visto", "encontra", "encuentro", "está", "aparece", "hay", "salen", "sale", "nido"]) && $telegram->text_contains("?") &&
     $telegram->words() <= 10 && $telegram->is_chat_group()
 ){
     $text = str_replace("?", "", $telegram->text());
