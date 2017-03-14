@@ -203,7 +203,7 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
         $telegram->send->chat($telegram->user->id);
     } */
 
-    $q = $telegram->send->text($str)->send();
+    $q = $telegram->send->text($str, 'HTML')->send();
 
 	// $str = ($q === FALSE ? "Ábreme por privado primero." : "");
     // $telegram->answer_if_callback($str, TRUE);
