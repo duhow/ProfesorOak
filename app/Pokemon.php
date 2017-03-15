@@ -94,13 +94,24 @@ class Pokemon extends TelegramApp\Module {
 			// si tiene ATK, DEF O STA, los resultados
 			// que lo superen, quedan descartados.
 			foreach($table as $i => $r){
-				if($pk['attack'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['atk'] )){ unset($table[$i]); continue; }
-				if($pk['defense'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['def'] )){ unset($table[$i]); continue; }
-				if($pk['stamina'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['sta'] )){ unset($table[$i]); continue; }
-				if($pk['attack'] and isset($pk['ivcalc']) and !in_array($r['atk'], $pk['ivcalc'])){ unset($table[$i]); continue; }
-				if($pk['defense'] and isset($pk['ivcalc']) and !in_array($r['def'], $pk['ivcalc'])){ unset($table[$i]); continue; }
-				if($pk['stamina'] and isset($pk['ivcalc']) and !in_array($r['sta'], $pk['ivcalc'])){ unset($table[$i]); continue; }
-				if((!$pk['attack'] or !$pk['defense'] or !$pk['stamina']) and ($r['atk'] + $r['def'] + $r['sta'] == 45)){ unset($table[$i]); continue; }
+				if
+				(
+					( $pk['attack'] and (
+						( max($r['atk'], $r['def'], $r['sta']) != $r['atk'] ) or
+						( isset($pk['ivcalc']) and !in_array($r['atk'], $pk['ivcalc']) )
+					) ) or (
+					$pk['defense'] and (
+						( max($r['atk'], $r['def'], $r['sta']) != $r['def'] ) or
+						( isset($pk['ivcalc']) and !in_array($r['def'], $pk['ivcalc']) )
+					) ) or (
+					$pk['stamina'] and (
+						( max($r['atk'], $r['def'], $r['sta']) != $r['sta'] ) or
+						( isset($pk['ivcalc']) and !in_array($r['sta'], $pk['ivcalc']) )
+					) ) or (
+						(!$pk['attack'] or !$pk['defense'] or !$pk['stamina']) and
+						($r['atk'] + $r['def'] + $r['sta'] == 45)
+					)
+				){ unset($table[$i]); continue; }
 			}
 			$low = 100;
 			$high = 0;
