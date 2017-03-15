@@ -139,6 +139,14 @@ class Admin extends TelegramApp\Module {
 	}
 
 	public function kick($user, $chat){
+		if(is_array($user)){
+			$c = 0;
+			foreach($user as $u){
+				$q = $this->kick($u, $chat);
+				if($q !== FALSE){ $c++; }
+			}
+			return $c;
+		}
 		$this->ban($user, $chat);
 		return $this->unban($user, $chat);
 	}
@@ -160,7 +168,7 @@ class Admin extends TelegramApp\Module {
 		$users = $this->countold($days, $chat);
 		if(count($users) == 0){ return FALSE; }
 
-		$c = $this->kick_array($users, $chat);
+		$c = $this->kick($users, $chat);
 		$str = "No puedo echar a nadie :(";
 		if($c > 0){ $str = "Vale, " .$c ." fuera!"; }
 
@@ -170,12 +178,11 @@ class Admin extends TelegramApp\Module {
 		return $c;
 	}
 
-	private function kick_array($users, $chat = NULL){
-		$c = 0;
-		foreach($users as $user){
-			$q = $this->kick($user, $chat);
-			if($q !== FALSE){ $c++; }
-		}
-		return $c;
+	public function kickunverified($chat = NULL){
+		// List all users in group and kick those who are unverified.
+	}
+
+	public function kickmessages($min = 6, $chat = NULL){
+		// List all users in group and kick those who haven't send minimum messages.
 	}
 }
