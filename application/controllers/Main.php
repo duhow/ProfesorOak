@@ -87,6 +87,9 @@ class Main extends CI_Controller {
 		){
 			$pk = $this->parse_pokemon();
 			// TODO contar si faltan polvos o si se han especificado "caramelos" en lugar de polvos, etc.
+			if($telegram->text_command("iv") && empty($pk['pokemon'])){
+				if(is_numeric($telegram->words(1))){ $pk['pokemon'] = (int) $telegram->words(1); }
+			}
 			if(!empty($pk['pokemon'])){
 				if($telegram->text_command("iv")){
 					$pk["cp"] = $telegram->words(2);
