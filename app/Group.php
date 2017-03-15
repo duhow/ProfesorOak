@@ -81,7 +81,7 @@ class Group extends TelegramApp\Module {
 			$this->telegram->text_command("count") or
 			$this->telegram->text_has("lista de", ["miembros", "usuarios", "entrenadores"])
 		){
-			$this->count();
+			$this->count(TRUE);
 			$this->end();
 		}
 
@@ -116,8 +116,50 @@ class Group extends TelegramApp\Module {
 		}
 	}
 
-	public function count(){
+	public function count($chat = NULL, $say = FALSE){
+		if(is_bool($chat)){ $say = $chat; $chat = NULL; }
+		if(empty($chat)){ $chat = $this->chat->id; }
 
+		$total = $this->telegram->send->get_members_count($chat);
+		$query = $this->db
+			->where('cid', $chat)
+		->get('user_inchat');
+		$members = $this->db->count;
+
+		$sels = [
+			"SUM(if(team = 'Y', 1, 0)) AS 'Y'",
+			"SUM(if(team = 'R', 1, 0)) AS 'R'",
+			"SUM(if(team = 'B', 1, 0)) AS 'B'",
+			// "COUNT(team) AS 'Total'"
+		];
+
+		$users = $this->db
+			->join("user_inchat", "user.telegramid = user_inchat.uid")
+			->where('user_inchat.cid', $chat)
+			->where('user.telegramid', ['NOT IN' => [$this->telegram->bot->id]])
+		->get('user', implode(", ", $sels)); // TODO check
+
+		if(!$say){
+			return (object) [
+				'team' => $users,
+				'total' => $total,
+				'count' => $members
+			];
+		}
+
+		// if($pokemon->command_limit("count", $telegram->chat->id, $telegram->message, 10)){ return FALSE; }
+
+	    $str = "Veo a $members ($total) y conozco " .array_sum($users) ." (" .round((array_sum($users) / $total) * 100)  ."%) :\n"
+	            .":heart-yellow: " .$users["Y"] ." "
+	            .":heart-red: " .$users["R"] ." "
+	            .":heart-blue: " .$users["B"] ."\n"
+	            ."Faltan: " .($total - array_sum($users));
+	    $str = $this->telegram->emoji($str);
+
+	    return $this->telegram->send
+	        ->notification(FALSE)
+	        ->text($str)
+	    ->send();
 	}
 
 	public function autokick(){
@@ -125,7 +167,14 @@ class Group extends TelegramApp\Module {
 	}
 
 	public function adminlist($chat = NULL){
-
+		// Get cache admin DB
+		// If empty or expired, get from telegram
+		if(empty($chat)){ $chat = $this->chat->id; }
+		$admins = $this->telegram->send->get_admins($chat);
+		$str = "No hay admins! :o";
+		if(!empty($admins)){
+			
+		}
 	}
 
 	public function userlist_verified($chat = NULL){
