@@ -1,0 +1,3 @@
+[submodule "libs/chatter-bot-api"]
+	path = libs/chatter-bot-api
+	url = https://github.com/pierredavidbelanger/chatter-bot-api.git

@@ -98,7 +98,7 @@ class Group extends TelegramApp\Module {
 		        $this->telegram->text_has(['dime', 'ver'], ["las reglas", "las normas", "reglas", "normas"], TRUE) or
 		        $this->telegram->text_has(["/rules", "/normas"], TRUE)
 		    ) and
-	    	!$this->telegram->text_has(["poner", "actualizar", "redactar", "escribir", "cambiar"]) and
+	    	!$this->telegram->text_has(["poner", "actualizar", "redactar", "escribir", "cambiar"])
 		){
 			$this->rules();
 			$this->end();
@@ -173,7 +173,7 @@ class Group extends TelegramApp\Module {
 		$admins = $this->telegram->send->get_admins($chat);
 		$str = "No hay admins! :o";
 		if(!empty($admins)){
-			
+
 		}
 	}
 
