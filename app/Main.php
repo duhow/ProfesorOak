@@ -55,6 +55,7 @@ class Main extends TelegramApp\Module {
 			$this->end();
 		}
 
+		// TODO Tiene que pasar TODOS los filtros (aparte de Admin).
 		if($this->user->blocked){ $this->end(); }
 
 		parent::run();

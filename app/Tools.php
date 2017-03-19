@@ -277,10 +277,10 @@ class Tools extends TelegramApp\Functions {
 	        }
 	    }
 
-	    if(text_find(["muy fuerte", "lo mejor", "flipando", "fuera de", "muy fuertes", "muy alto", "muy alta", "muy altas"], $string)){ $data['ivcalc'] = [15]; }
-	    if(text_find(["bueno", "bastante bien", "buenas", "normal", "muy bien"], $string)){ $data['ivcalc'] = [8,9,10,11,12]; }
-	    if(text_find(["bajo", "muy bajo", "poco que desear", "bien"], $string)){ $data['ivcalc'] = [0,1,2,3,4,5,6,7]; }
-	    if(text_find(["fuerte", "fuertes", "excelente", "excelentes", "impresionante", "impresionantes", "alto", "alta"], $string)){ $data['ivcalc'] = [13,14]; }
+	    if(self::Find(["muy fuerte", "lo mejor", "flipando", "fuera de", "muy fuertes", "muy alto", "muy alta", "muy altas"], $string)){ $data['ivcalc'] = [15]; }
+	    if(self::Find(["bueno", "bastante bien", "buenas", "normal", "muy bien"], $string)){ $data['ivcalc'] = [8,9,10,11,12]; }
+	    if(self::Find(["bajo", "muy bajo", "poco que desear", "bien"], $string)){ $data['ivcalc'] = [0,1,2,3,4,5,6,7]; }
+	    if(self::Find(["fuerte", "fuertes", "excelente", "excelentes", "impresionante", "impresionantes", "alto", "alta"], $string)){ $data['ivcalc'] = [13,14]; }
 
 	    return $data;
 	}
