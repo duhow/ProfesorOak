@@ -73,16 +73,14 @@ class Admin extends TelegramApp\Module {
 		// TODO Si se repite la última palabra.
 
 		$countflood = 0;
-		if($amount !== NULL){ $countflood = (float) $this->chat->settings['spam']; }
+		if($amount !== NULL){ $countflood = (float) $this->chat->settings('spam'); }
 
 		if($countflood >= $flood){
 
-			$ban = $this->chat->settings['antiflood_ban'];
-
-			if($ban == TRUE){
+			if($this->chat->settings('antiflood_ban') == TRUE){
 				$res = $this->ban($this->user->id, $this->chat->id);
 
-				if($this->chat->settings['antiflood_ban_hidebutton'] != TRUE){
+				if($this->chat->settings('antiflood_ban_hidebutton') != TRUE){
 					$this->telegram->send
 					->inline_keyboard()
 						->row_button("Desbanear", "desbanear " .$this->telegram->user->id, "TEXT")
@@ -98,7 +96,7 @@ class Admin extends TelegramApp\Module {
 				$this->telegram->send
 					->text("Usuario expulsado por flood. [" .$this->user->id .(isset($this->telegram->user->username) ? " @" .$this->telegram->user->username : "") ."]")
 				->send();
-				$adminchat = $this->chat->settings['admin_chat'];
+				$adminchat = $this->chat->settings('admin_chat');
 				if($adminchat){
 					// TODO forward del mensaje afectado
 					$this->telegram->send
@@ -113,7 +111,7 @@ class Admin extends TelegramApp\Module {
 	}
 
 	function antispam(){
-	    if($this->user->messages <= 5 && $this->chat->settings['antispam'] != FALSE){
+	    if($this->user->messages <= 5 && $this->chat->settings('antispam') != FALSE){
 	        if(
 	            !$this->telegram->text_contains(["http", "www", ".com", ".es", ".net"]) &&
 	            !$this->telegram->text_contains("telegram.me")
