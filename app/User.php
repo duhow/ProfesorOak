@@ -41,12 +41,52 @@ class User extends TelegramApp\User {
 		return $query;
 	}
 
-	protected function insert($data, $table){
+	public function settings($key, $value = NULL){
+		if($value === NULL){
+			return $this->settings[$key];
+		}elseif(strtoupper($value) == "DELETE"){
+			return $this->settings_delete($key);
+		}
 
+		// Si los datos son array, serializar para insertar en DB.
+		if(is_array($value)){
+			$value = serialize($value);
+		}
+
+		if(isset($this->settings[$key])){
+			$this->update($key, $value, 'settings', 'uid');
+		}else{
+			$data = [
+				'uid' => $this->id,
+				'type' => $key,
+				'value' => $value,
+				'hidden' => FALSE,
+				'displaylist' => TRUE,
+				'lastupdate' => date("Y-m-d H:i:s")
+			];
+			return $this->insert($data, 'settings');
+		}
 	}
 
-	protected function delete($data, $table){
+	public function settings_delete($key){
+		if(isset($this->settings[$key])){ unset($this->settings[$key]); }
+		return $this->db
+			->where('uid', $this->id)
+			->where('type', $key)
+		->delete('settings');
+	}
 
+	protected function insert($data, $table){
+		return $this->db($table, $data);
+	}
+
+	protected function delete($table, $where, $value, $usercol = FALSE){
+		if($usercol !== FALSE){
+			$this->db->where($usercol, $this->id);
+		}
+		return $this->db
+			->where($where, $value)
+		->delete($table);
 	}
 
 	public function register($team){

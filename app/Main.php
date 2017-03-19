@@ -12,7 +12,7 @@ class Main extends TelegramApp\Module {
 		$this->_log(json_encode( $this->telegram->dump() ));
 		// $this->_update_chat();
 
-		if($this->chat->settings['forward_interactive']){
+		if($this->chat->settings('forward_interactive')){
 			$this->forward_creator();
 		}
 
@@ -20,10 +20,10 @@ class Main extends TelegramApp\Module {
 			$this->core->load('Admin');
 			global $Admin;
 
-			if($this->chat->settings['forwarding_to']){ $Admin->forward_groups(); }
-			if($this->chat->settings['antiflood']){ $Admin->check_flood(); }
-			if($this->telegram->text_url() && $this->chat->settings['antispam'] !== FALSE){ $Admin->antispam(); }
-			if($this->chat->settings['die'] && $this->user->id != CREATOR){ $this->end(); }
+			if($this->chat->settings('forwarding_to')){ $Admin->forward_groups(); }
+			if($this->chat->settings('antiflood')){ $Admin->check_flood(); }
+			if($this->telegram->text_url() && $this->chat->settings('antispam') !== FALSE){ $Admin->antispam(); }
+			if($this->chat->settings('die') && $this->user->id != CREATOR){ $this->end(); }
 
 			if($this->telegram->data_received("migrate_to_chat_id")){
 				// $pokemon->group_disable($telegram->chat->id);
@@ -139,7 +139,7 @@ class Main extends TelegramApp\Module {
 		return TRUE;
 	}
 
-	function forward_creator(){
+	private function forward_creator(){
 		return $this->telegram->send
 			->notification(FALSE)
 			->chat($this->telegram->chat->id)
@@ -148,8 +148,9 @@ class Main extends TelegramApp\Module {
 		->send();
 	}
 
-	function forward_groups(){
+	private function forward_groups($to){
 		/* if($this->telegram->user_in_chat($this->telegram->bot->id, $chat_forward)){ // Si el Oak está en el grupo forwarding
+			// $forward = new Chat($to);
 			$chat_accept = explode(",", $pokemon->settings($chat_forward, 'forwarding_accept'));
 			if(in_array($telegram->chat->id, $chat_accept)){ // Si el chat actual se acepta como forwarding...
 				$telegram->send
@@ -162,7 +163,7 @@ class Main extends TelegramApp\Module {
 	}
 
 	public function new_member(){
-		$this->chat->settings['announce_welcome'];
+		$this->chat->settings('announce_welcome');
 		$new = $this->telegram->new_user;
 
 		$count = 0;
@@ -182,7 +183,7 @@ class Main extends TelegramApp\Module {
 				$this->end();
 			}
 
-			if($this->chat->settings['die'] == TRUE){
+			if($this->chat->settings('die')){
 				$this->telegram->send->leave_chat();
 				$this->end();
 			}
@@ -193,7 +194,7 @@ class Main extends TelegramApp\Module {
 		// $pknew = $pokemon->user($new->id);
 		// El usuario nuevo es creador
 		if($new->id == CREATOR){
-			if($this->user->settings['silent_join'] == TRUE){ $this->end(); }
+			if($this->user->settings('silent_join')){ $this->end(); }
 			$this->telegram->send
 				->notification(TRUE)
 				->reply_to(TRUE)
@@ -202,7 +203,7 @@ class Main extends TelegramApp\Module {
 			$this->end();
 		}elseif(!empty($pknew)){
 			// Si el grupo es exclusivo a un color y el usuario es de otro color
-			$teamonly = $this->chat->settings['team_exclusive'];
+			$teamonly = $this->chat->settings('team_exclusive');
 			if(!empty($teamonly) && $teamonly != $this->user->team){
 				// $this->analytics->event('Telegram', 'Spy enter group');
 				$this->telegram->send
@@ -212,16 +213,15 @@ class Main extends TelegramApp\Module {
 				->send();
 
 				// Kickear (por defecto TRUE)
-				$kick = $pokemon->settings($telegram->chat->id, 'team_exclusive_kick');
 				// TODO excepto si el que lo agrega es admin.
-				if($this->chat->settings['team_exclusive_kick'] != FALSE){
+				if($this->chat->settings('team_exclusive_kick') != FALSE){
 					$this->telegram->send->kick($new->id, $this->chat->id);
 					// $pokemon->user_delgroup($new->id, $telegram->chat->id);
 				}
 				$this->end();
 			}
 
-			$blacklist = $this->chat->settings['blacklist'];
+			$blacklist = $this->chat->settings('blacklist');
 			if(!empty($blacklist)){
 				$blacklist = explode(",", $blacklist);
 				$pknew_flags = $pokemon->user_flags($pknew->telegramid);
@@ -238,7 +238,7 @@ class Main extends TelegramApp\Module {
 		}
 
 		// Si el grupo no admite más usuarios...
-		$nojoin = $this->chat->settings['limit_join'];
+		$nojoin = $this->chat->settings('limit_join');
 		// TODO excepto si el que lo agrega es admin.
 		if($nojoin == TRUE){
 			// $this->analytics->event('Telegram', 'Join limit users');
@@ -249,8 +249,8 @@ class Main extends TelegramApp\Module {
 
 		// Si el grupo requiere validados
 		if(
-			$this->chat->settings['require_verified'] == TRUE &&
-			$this->chat->settings['require_verified_kick'] == TRUE
+			$this->chat->settings('require_verified') &&
+			$this->chat->settings('require_verified_kick')
 		){
 			if(empty($pknew) or $pknew->verified != TRUE){
 				// $this->analytics->event('Telegram', 'Kick unverified user');
@@ -269,7 +269,7 @@ class Main extends TelegramApp\Module {
 
 		// Si un usuario generico se une al grupo
 		if($set != FALSE or $set === NULL){
-			$custom = $this->chat->settings['welcome'];
+			$custom = $this->chat->settings('welcome');
 			$text = 'Bienvenido al grupo, $nombre!' ."\n";
 			if(!empty($custom)){ $text = json_decode($custom) ."\n"; }
 			if(empty($pknew)){
@@ -278,7 +278,7 @@ class Main extends TelegramApp\Module {
 				$emoji = ["Y" => "yellow", "B" => "blue", "R" => "red"];
 				$text .= '$pokemon $nivel $equipo $valido $ingress';
 
-				if(!$pknew->verified && $this->chat->settings['require_verified']){
+				if(!$pknew->verified && $this->chat->settings('require_verified')){
 					$text .= "\n" ."Para estar en este grupo *debes estar validado.*";
 
 					$this->telegram->send
@@ -348,14 +348,14 @@ class Main extends TelegramApp\Module {
 
 			if(!empty($pknew)){
 				$team = $pknew->team;
-				$key = $pokemon->settings($telegram->chat->id, 'pair_team_' .$team);
+				$key = $this->chat->settings("pair_team_$team");
 				if(!empty($key)){
 					$teamchat = $pokemon->group_pair($telegram->chat->id, $team);
 					if(!$teamchat){
 						$telegram->send
 							->chat($this->config->item('creator'))
 							->notification(TRUE)
-							->text("Problema con pairing $team en " .$telegram->chat->id ." (" .substr($key, 0, 10) .")")
+							->text("Problema con pairing $team en " .$this->chat->id ." (" .substr($key, 0, 10) .")")
 						->send();
 						return -1;
 					}
@@ -634,10 +634,10 @@ class Main extends TelegramApp\Module {
 		// ---------------------
 
 		// Recibir ubicación
-		if($telegram->location() && !$telegram->is_chat_group()){
-		    $loc = implode(",", $telegram->location(FALSE));
-		    $pokemon->settings($telegram->user->id, 'location', $loc);
-		    $pokemon->step($telegram->user->id, 'LOCATION');
+		if($this->telegram->location() && !$this->telegram->is_chat_group()){
+		    $loc = implode(",", $this->telegram->location(FALSE));
+			$this->user->settings('location', $loc);
+			$this->user->step = 'LOCATION';
 		    $this->_step();
 		}
 
@@ -656,9 +656,9 @@ class Main extends TelegramApp\Module {
 		} */
 
 		// NUEVO MOLESTO
-		if($telegram->photo() && $telegram->user->id != $this->config->item('creator')){
-			if($pokeuser->verified){ return; }
-			$pokemon->step($telegram->user->id, 'SCREENSHOT_VERIFY');
+		if($this->telegram->photo() && $this->user->id != CREATOR){
+			if($this->user->verified){ return; }
+			$this->user->step = 'SCREENSHOT_VERIFY';
 			$this->_step();
 		}
 	}
@@ -688,7 +688,7 @@ class Main extends TelegramApp\Module {
 				$pokemon->step($this->user->id, 'CHOOSE_POKEMON');
 				/* if($telegram->text()){
 					$pk = trim($telegram->words(0, TRUE));
-					// if( preg_match('/^(#?)\d{1,3}$/', $word) ){ }
+					// if( preg_match('/^(?)\d{1,3}$/', $word) ){ }
 				}elseif($telegram->sticker()){
 					// Decode de la lista de stickers cuál es el Pokemon.
 				} */
@@ -920,7 +920,7 @@ class Main extends TelegramApp\Module {
 		if(!empty($pokedex)){
 			$skills = $pokemon->skill_learn($pokedex->id);
 
-			$str = "*#" .$pokedex->id ."* - " .$pokedex->name ."\n"
+			$str = "*" .$pokedex->id ."* - " .$pokedex->name ."\n"
 					.$types[$pokedex->type] .($pokedex->type2 ? " / " .$types[$pokedex->type2] : "") ."\n"
 					."ATK " .$pokedex->attack ." - DEF " .$pokedex->defense ." - STA " .$pokedex->stamina ."\n\n";
 
@@ -1013,35 +1013,31 @@ class Main extends TelegramApp\Module {
 			}
 		}
 		$time = (empty($list) ? 10 : 15); // Cooldown en función de resultado
-		$pokemon->settings($telegram->user->id, 'pokemap_cooldown', time() + $time);
+		$this->user->settings('pokemap_cooldown', time() + $time);
 		$telegram->send->keyboard()->hide()->text($str, TRUE)->send();
 	}
 
 	function last_command($action){
-		$user = $this->telegram->user->id;
-		$chat = $this->telegram->chat->id;
-		$pokemon = $this->pokemon;
-
-		$command = $pokemon->settings($user, 'last_command');
+		$command = $this->user->settings('last_command');
 		$amount = 1;
 		if($command == $action){
-			$count = $pokemon->settings($user, 'last_command_count');
-			$add = ($user == $chat ? 0 : 1); // Solo agrega si es grupo
+			$count = $this->user->settings('last_command_count');
+			$add = ($this->telegram->is_chat_group() ? 0 : 1); // Solo agrega si es grupo
 			$amount = (empty($count) ? 1 : ($count + $add));
 		}
-		$pokemon->settings($user, 'last_command', $action);
-		$pokemon->settings($user, 'last_command_count', $amount);
+		$this->user->settings('last_command', $action);
+		$this->user->settings('last_command_count', $amount);
 	}
 
 	function is_shutup($creator = TRUE){
 		$admins = $this->admins($creator);
-		$shutup = $this->pokemon->settings($this->telegram->chat->id, 'shutup');
+		$shutup = $this->chat->settings('shutup');
 		return ($shutup && !in_array($this->telegram->user->id, $admins));
 		// $this->telegram->user->id != $this->config->item('creator')
 	}
 
 	function is_shutup_jokes(){
-		$can = $this->pokemon->settings($this->telegram->chat->id, 'jokes');
+		$can = $this->chat->settings('jokes');
 		return ($this->is_shutup() or ($can != NULL && $can == FALSE));
 	}
 
