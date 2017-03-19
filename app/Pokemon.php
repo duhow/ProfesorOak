@@ -3,16 +3,46 @@
 class Pokemon extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
-	public function __construct(){
+	public function __construct($name = NULL){
 		$folder = dirname(__FILE__) ."/Pokemon/";
 		foreach(scandir($folder) as $file){
 			if(substr($file, -4) == ".php"){ require_once $folder .$file; }
 		}
+		if($name !== NULL){
+			$this->load($name);
+		}
 	}
 
-	public function load($search){
-		if(is_numeric($search) or is_string($search)){  } // load Pokemon Pokedex.
-		return $search;
+	public function load($search, $misspell = FALSE){
+		if(is_string($search) && !is_numeric($search)){
+			if($misspell){
+				$m = $this->misspell($search);
+
+				if($m !== FALSE){ $this->db->where('name', $search); }
+				else{ $search = $m; }
+			}else{
+				$this->db->where('name', $search);
+			}
+		}
+
+		if(is_numeric($search)){
+			$this->db->where('id', $search);
+		}
+
+		$res = $this->db->get('pokedex');
+		if($this->db->count == 0){ return FALSE; }
+
+		// TODO Load data to this object.
+
+		return TRUE;
+	}
+
+	public function name($id){
+		$res = $this->db
+			->where('id', $id)
+		->get('pokedex');
+		if($this->db->count == 1){ return $res[0]['name']; }
+		return FALSE;
 	}
 
 	public function pokedex($search){
@@ -51,7 +81,32 @@ class Pokemon extends TelegramApp\Module {
 
 	public function misspell($name, $retnum = FALSE){
 		if(strtolower(substr($name, -1)) == 's'){ $name = substr($name, 0, -1); } // Plural
+		// TODO Join Pokémon real name
+		$res = $this->db
+			->where('word', $name)
+		->get('pokemon_misspell');
+		if($this->db->count == 0){ return FALSE; } // Not found.
 
+		// Increase view.
+		$this->db
+			->where('word', $name)
+		->update('pokemon_misspell', ['visits' => 'visits + 1']);
+
+		if($retnum){ return $res[0]['pokemon']; } // Return Pokémon ID.
+		return $this->name($res[0]['pokemon']); // ELSE Return Pokémon Name.
+	}
+
+	// TODO Return what?
+	public function misspell_multi($str){
+		if(is_string($str)){ $str = explode(" ", $str); }
+		// TODO Join Pokémon real name
+		$res = $this->db
+			->where('word', $str, 'IN')
+		->get('pokemon_misspell');
+		if($this->db->count == 0){ return FALSE; } // All OK.
+
+		$str = implode(" ", $str);
+		// $str = str_ireplace()
 	}
 
 	public function iv($pokemon, $cp = NULL, $hp = NULL, $stardust = NULL, $extra = NULL){
@@ -133,12 +188,12 @@ class Pokemon extends TelegramApp\Module {
 			if($this->telegram->words() < 5){
 				$this->telegram->send
 					->notification(FALSE)
-					->text('/iv *[Pokémon] [CP] [HP] [Polvos]*', TRUE)
+					->text('/iv *[Pokémon] [CP] [HP] [Polvos] <Mejorado> <Ataque | Defensa | Salud>*', TRUE)
 				->send();
 				$this->end();
 			}else{
 				$args = $this->telegram->words(TRUE);
-				array_shift($args);
+				array_shift($args); // Remove command
 				$ivs = $this->iv($args);
 			}
 		}
