@@ -54,16 +54,23 @@ class Admin extends TelegramApp\Module {
 		if($this->telegram->text_command()){ $amount = 1; }
 		elseif($this->telegram->photo()){ $amount = 0.8; }
 		elseif($this->telegram->sticker()){
-			if(strpos($this->telegram->sticker(), "AAjbFNAAB") === FALSE){ // + BQADBAAD - Oak Games
-				$amount = 1;
+			$allowed = [
+				"AAjbFNAAB" // + BQADBAAD - Oak Games
+			];
+			$amount = 1; // Default
+			foreach($allowed as $s){
+				if(strpos($this->telegram->sticker(), $s) === FALSE){
+					$amount = 0;
+					break;
+				}
 			}
 		}
 		// elseif($this->telegram->document()){ $amount = 1; }
 		elseif($this->telegram->gif()){ $amount = 1; }
 		elseif($this->telegram->text() && $this->telegram->words() >= 50){ $amount = 0.5; }
 		elseif($this->telegram->text()){ $amount = -0.4; }
-		// Spam de text/segundo.
-		// Si se repite la última palabra.
+		// TODO Spam de text/segundo.
+		// TODO Si se repite la última palabra.
 
 		$countflood = 0;
 		if($amount !== NULL){ $countflood = (float) $this->chat->settings['spam']; }
