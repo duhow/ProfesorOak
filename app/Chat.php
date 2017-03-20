@@ -221,5 +221,9 @@ class Chat extends TelegramApp\Chat {
 		// level -> 5 + timestamp
 	}
 
+	public function disable(){
+		// TODO algo mas?
+		return $this->update('active', FALSE);
+	}
 
 }

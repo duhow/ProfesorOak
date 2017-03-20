@@ -210,6 +210,15 @@ class Admin extends TelegramApp\Module {
 		return $this->multikick(array_column($users, 'uid'));
 	}
 
+	// Migrate settings from old chat to new chat.
+	public function migrate_settings($to, $from = NULL){
+		if(empty($from)){ $from = $this->chat->id; }
+
+		return $this->db
+			->where('uid', $from)
+		->update('settings', ['uid' => $to]);
+	}
+
 	// Forward the current message to the groups set.
 	public function forward_to_groups(){
 

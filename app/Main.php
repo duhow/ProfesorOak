@@ -24,8 +24,8 @@ class Main extends TelegramApp\Module {
 			if($this->chat->settings('die') && $this->user->id != CREATOR){ $this->end(); }
 
 			if($this->telegram->data_received("migrate_to_chat_id")){
-				// $pokemon->group_disable($telegram->chat->id);
-				// TODO mover settings
+				$Admin->migrate_settings($this->telegram->migrate_chat, $this->chat->id);
+				$this->chat->disable();
 				$this->end();
 			}
 		}
