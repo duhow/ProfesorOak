@@ -8,8 +8,6 @@ class Main extends TelegramApp\Module {
 		$this->core->load('Pokemon');
 		// comprobar IP del host
 		// if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ $this->end(); }
-		// TODO log
-		$this->_log(json_encode( $this->telegram->dump() ));
 		// $this->_update_chat();
 
 		if($this->chat->settings('forward_interactive')){
@@ -20,9 +18,9 @@ class Main extends TelegramApp\Module {
 			$this->core->load('Admin');
 			global $Admin;
 
-			if($this->chat->settings('forwarding_to')){ $Admin->forward_groups(); }
-			if($this->chat->settings('antiflood')){ $Admin->check_flood(); }
-			if($this->telegram->text_url() && $this->chat->settings('antispam') !== FALSE){ $Admin->antispam(); }
+			if($this->chat->settings('forwarding_to')){ $Admin->forward_to_groups(); }
+			if($this->chat->settings('antiflood')){ $Admin->antiflood(); }
+			if($this->telegram->text_url() && $this->chat->settings('antispam') != FALSE){ $Admin->antispam(); }
 			if($this->chat->settings('die') && $this->user->id != CREATOR){ $this->end(); }
 
 			if($this->telegram->data_received("migrate_to_chat_id")){
@@ -61,19 +59,19 @@ class Main extends TelegramApp\Module {
 		parent::run();
 	}
 
-	function ping(){
+	public function ping(){
 		return $this->telegram->send
 			->text("¡Pong!")
 		->send();
 	}
 
-	function help(){
+	public function help(){
 		$this->telegram->send
 			->text('¡Aquí tienes la <a href="http://telegra.ph/Ayuda-11-30">ayuda</a>!', 'HTML')
 		->send();
 	}
 
-	function register($team = NULL){
+	public function register($team = NULL){
 		$str = NULL;
 		if($this->user->telegramid === NULL){
 			if($team === NULL){
@@ -120,7 +118,7 @@ class Main extends TelegramApp\Module {
 		$this->end();
 	}
 
-	function setname($name, $user = NULL){
+	private function setname($name, $user = NULL){
 		if(empty($user)){ $user = $this->user; }
 		if($user->step == "SETNAME"){ $user->step = NULL; }
 		try {
@@ -1053,12 +1051,6 @@ class Main extends TelegramApp\Module {
 			foreach($custom as $c){ $admins[] = $c; }
 		}
 		return $admins;
-	}
-
-	function _log($texto){
-		$fp = fopen('error.loga', 'a');
-		fwrite($fp, $texto ."\n");
-		fclose($fp);
 	}
 
 	function _update_chat(){
