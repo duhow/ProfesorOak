@@ -48,7 +48,7 @@ class Admin extends TelegramApp\Module {
 		return FALSE;
 	}
 
-	function check_flood(){
+	public function antiflood(){
 		if($this->chat->is_admin($this->user->id)){ return; }
 		$amount = NULL;
 		if($this->telegram->text_command()){ $amount = 1; }
@@ -110,11 +110,13 @@ class Admin extends TelegramApp\Module {
 		}
 	}
 
-	function antispam(){
+	public function antispam(){
 	    if($this->user->messages <= 5 && $this->chat->settings('antispam') != FALSE){
 	        if(
-	            !$this->telegram->text_contains(["http", "www", ".com", ".es", ".net"]) &&
-	            !$this->telegram->text_contains("telegram.me")
+				!$this->telegram->text_contains(["http", "www", ".com", ".es", ".net"]) &&
+	            !$this->telegram->text_contains("telegram.me") or
+	            $this->telegram->text_contains(["PokéTrack", "PokeTrack"]) or
+	            $this->telegram->text_contains(["maps.google", "google.com/maps"])
 	        ){ return FALSE; } // HACK Falsos positivos.
 
 	        // TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
@@ -164,15 +166,8 @@ class Admin extends TelegramApp\Module {
 		return $this->telegram->send->unban($user, $chat);
 	}
 
-	public function countold($days = 30, $chat = NULL){
-		// Cargar todos los usuarios
-		// Quitar al Oak de la lista
-	}
-
-	public function kickold($days = 30, $chat = NULL){
-		$users = $this->countold($days, $chat);
-		if(count($users) == 0){ return FALSE; }
-
+	public function multikick($users){
+		// TODO Quitar al Oak de la lista
 		$c = $this->kick($users, $chat);
 		$str = "No puedo echar a nadie :(";
 		if($c > 0){ $str = "Vale, " .$c ." fuera!"; }
@@ -183,11 +178,40 @@ class Admin extends TelegramApp\Module {
 		return $c;
 	}
 
-	public function kickunverified($chat = NULL){
-		// List all users in group and kick those who are unverified.
+	// Kick all users who didn't say anything during X days.
+	public function kick_old($days = 30, $chat = NULL, $countonly = FALSE){
+		$users = $this->db
+			->where('cid', $chat)
+			->where('(last_date <= ? OR last_date = ?)', [date("Y-m-d H:i:s", strtotime("-$days days")), "0000-00-00 00:00:00"])
+		->get('user_inchat');
+		if($this->db->count == 0 or $countonly){ return $this->db->count; }
+		return $this->multikick(array_column($users, 'uid'));
 	}
 
-	public function kickmessages($min = 6, $chat = NULL){
-		// List all users in group and kick those who haven't send minimum messages.
+	// List all users in group and kick those who are unverified.
+	public function kick_unverified($chat = NULL, $countonly = FALSE){
+		// TODO Comprobar que los que no estén registrados, también los eche. LEFT/RIGHT ?
+		$users = $this->db
+			->join('user_inchat c', 'u.telegramid = c.uid')
+			->where('c.cid', $chat)
+			->where('u.verified', FALSE)
+		->get("user u", null, "c.uid");
+		if($this->db->count == 0 or $countonly){ return $this->db->count; }
+		return $this->multikick(array_column($users, 'uid'));
+	}
+
+	// List all users in group and kick those who haven't send minimum messages.
+	public function kick_messages($min = 6, $chat = NULL, $countonly = FALSE){
+		$users = $this->db
+			->where('cid', $chat)
+			->where('messages >=', $min)
+		->get('user_inchat');
+		if($this->db->count == 0 or $countonly){ return $this->db->count; }
+		return $this->multikick(array_column($users, 'uid'));
+	}
+
+	// Forward the current message to the groups set.
+	public function forward_to_groups(){
+
 	}
 }
