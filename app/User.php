@@ -158,6 +158,10 @@ class User extends TelegramApp\User {
 		->get('settings');
 		if(count($query) > 0){
 			$this->settings = array_column($query, 'value', 'type');
+			foreach($this->settings as $k => $v){
+				if($v == 1){ $this->settings[$k] = TRUE; }
+				elseif($v == 0){ $this->settings[$k] = FALSE; }
+			}
 		}
 		return $this->settings;
 	}
