@@ -58,9 +58,10 @@ class Git extends TelegramApp\Module {
 	}
 
 	private function git_pull(){
-		$version = git_version();
+		$version = $this->git_version();
 		$out = shell_exec("git pull");
-		$newversion = git_version();
+		// TODO Check more errors
+		$newversion = $this->git_version();
 		if(strpos($out, "Already up-to-date") !== FALSE){
 			$out = ":ok: Ya está actualizado.";
 		// TODO check si el hash coincide o no y validar si hace falta cambio o no de revertir.
