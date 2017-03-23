@@ -89,6 +89,8 @@ elseif(($telegram->text_contains("desbanea", TRUE) or $telegram->text_command("u
         if(is_array($target)){ $target = key($target); }
     }else{
         $target = $telegram->last_word(TRUE);
+		$user = $pokemon->user($target);
+		if(!empty($user)){ $target = $user->telegramid; }
     }
 
     if($target != NULL){
