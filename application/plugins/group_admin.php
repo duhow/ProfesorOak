@@ -94,10 +94,12 @@ elseif(($telegram->text_contains("desbanea", TRUE) or $telegram->text_command("u
     }
 
     if($target != NULL){
-        $telegram->send->unban($target, $telegram->chat->id);
-        $telegram->send
-            ->text("Usuario $target desbaneado.")
-        ->send();
+        $q = $telegram->send->unban($target, $telegram->chat->id);
+		if($q !== FALSE){
+			$telegram->send
+				->text("Usuario $target desbaneado.")
+			->send();
+		}
 
         if($telegram->callback){
             $telegram->send

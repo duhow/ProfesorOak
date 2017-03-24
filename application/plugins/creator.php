@@ -131,13 +131,19 @@ elseif($telegram->text_command("unban")){
     }elseif($telegram->words() == 3){
         $target = $telegram->words(1);
         $target_chat = $telegram->words(2);
-    }
+    }elseif($telegram->words() == 2 && $telegram->is_chat_group()){
+		$user = $pokemon->user($telegram->last_word());
+		if(!empty($user)){ $target = $user->telegramid; }
+		$target_chat = $this->chat->id;
+	}
 
     if(!empty($target) && !empty($target_chat)){
-        $telegram->send->unban($target, $target_chat);
-        $telegram->send
-            ->text("Usuario $target desbaneado" .($target_chat != $telegram->chat->id ? " de $target_chat" : "") .".")
-        ->send();
+        $q = $telegram->send->unban($target, $target_chat);
+        if($q !== FALSE){
+			$telegram->send
+	            ->text("Usuario $target desbaneado" .($target_chat != $telegram->chat->id ? " de $target_chat" : "") .".")
+	        ->send();
+		}
     }
     return -1;
 }
