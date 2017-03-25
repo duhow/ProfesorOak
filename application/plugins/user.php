@@ -40,7 +40,7 @@ function user_set_name($user, $name, $force = FALSE){
 
 $step = $pokemon->step($telegram->user->id);
 if($step == "SETNAME"){
-	if($telegram->words() == 1 !$telegram->text_command()){ user_set_name($telegram->user->id, $telegram->last_word(TRUE), TRUE); }
+	if($telegram->words() == 1 && !$telegram->text_command()){ user_set_name($telegram->user->id, $telegram->last_word(TRUE), TRUE); }
 	$pokemon->step($telegram->user->id, NULL);
 }elseif($step == "CHANGE_LEVEL"){
 	// TODO get numbers
