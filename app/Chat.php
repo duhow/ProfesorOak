@@ -52,7 +52,7 @@ class Chat extends TelegramApp\Chat {
 
 	public function settings($key, $value = NULL){
 		if($value === NULL){
-			return $this->settings[$key];
+			return (isset($this->settings[$key]) ? $this->settings[$key] : NULL);
 		}elseif(strtoupper($value) == "DELETE"){
 			return $this->settings_delete($key);
 		}
@@ -114,8 +114,9 @@ class Chat extends TelegramApp\Chat {
 		return ($ret == FALSE ? $id : $data);
 	}
 
-	public function load(){
+	public function load($force = FALSE){
 		// load variables and set them here.
+		if($this->loaded && !$force){ return TRUE; }
 		$query = $this->db
 			->where('id', $this->id)
 		->getOne('chats');
@@ -157,15 +158,17 @@ class Chat extends TelegramApp\Chat {
 
 	private function load_settings(){
 		$this->settings = array();
+		$settings = array();
 		$query = $this->db
 			->where('uid', $this->id)
 		->get('settings');
 		if(count($query) > 0){
-			$this->settings = array_column($query, 'value', 'type');
-			foreach($this->settings as $k => $v){
-				if($v == 1){ $this->settings[$k] = TRUE; }
-				elseif($v == 0){ $this->settings[$k] = FALSE; }
+			$settings = array_column($query, 'value', 'type');
+			foreach($settings as $k => $v){
+				if($v == 1){ $settings[$k] = TRUE; }
+				elseif($v == 0){ $settings[$k] = FALSE; }
 			}
+			$this->settings = $settings;
 		}
 		return $this->settings;
 	}
@@ -175,7 +178,7 @@ class Chat extends TelegramApp\Chat {
 		$admins = array();
 		$query = $this->db
 			->where('gid', $this->id)
-			->where('expires >=', date("Y-m-d H:i:s"))
+			->where('expires', date("Y-m-d H:i:s"), ">=")
 		->get('user_admins');
 		if(count($query) == 0){
 			// Load and insert
