@@ -45,7 +45,7 @@ if($telegram->is_chat_group()){
 	}
 }
 
-if($telegram->text_has("mi experiencia")){
+if($telegram->text_has("mi experiencia") && $telegram->words() <= 5){
 	$points = $pokemon->settings($telegram->user->id, 'expchat_points');
 	if(empty($points)){ $points = 0; }
 	$level = expchat_level($points);
