@@ -595,9 +595,12 @@ elseif($telegram->text_command("mode")){
 }
 
 // Conversación grupal
-elseif($telegram->text_command("speak") && $telegram->words() == 2 && !$telegram->is_chat_group()){
+elseif($telegram->text_command("speak") && !$telegram->is_chat_group()){
     $chattalk = $telegram->last_word();
-    if(in_array(strtolower($chattalk), ["stop", "off", "false"])){
+    if(
+		in_array(strtolower($chattalk), ["stop", "off", "false"]) or
+		($telegram->words() == 1 && !$telegram->has_reply) // Si no hay palabra, detener.
+	){
         $chattalk = $pokemon->settings($telegram->user->id, 'speak');
         if(!$chattalk){ return; }
         $pokemon->settings($chattalk, 'forward_interactive', "DELETE");
@@ -609,7 +612,8 @@ elseif($telegram->text_command("speak") && $telegram->words() == 2 && !$telegram
         return -1;
     }
     $isuser = FALSE;
-    if($chattalk[0] != "-"){
+    if($chattalk[0] != "-" or $telegram->has_reply){
+		if($telegram->has_reply){ $chattalk = $telegram->reply_target('forward')->id; }
         $pkuser = $pokemon->user($chattalk);
         if(!$pkuser){
             $new = $pokemon->group_find($chattalk);
