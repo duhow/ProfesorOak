@@ -104,8 +104,9 @@ class User extends TelegramApp\User {
 		return $this->db->insert('user', $data);
 	}
 
-	public function load(){
+	public function load($force = FALSE){
 		// load variables and set them here.
+		if($this->loaded && !$force){ return TRUE; }
 		$query = $this->db
 			->where('telegramid', $this->id)
 		->getOne('user');
