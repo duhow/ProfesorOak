@@ -28,6 +28,7 @@ elseif(
     ($telegram->text_has(["Soy", "Equipo", "Team"]) && color_parse($telegram->text()) ) or
     (color_parse($telegram->text()) && $telegram->words() == 1)
 ){
+	if($telegram->text_command()){ return -1; }
     if(!$pokemon->user_exists($telegram->user->id)){
 		$color = color_parse($telegram->text());
 
