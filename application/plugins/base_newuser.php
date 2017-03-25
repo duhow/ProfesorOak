@@ -50,10 +50,14 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
                 ->text("*¡SE CUELA UN TOPO!* @$pknew->username $pknew->team", TRUE)
             ->send();
 			if($adminchat){
+				$str = ":times: Topo detectado!\n"
+						.":id: " .$new->id ."\n"
+						.":abc: " .$new->first_name ." - @" .$pknew->username;
+				$str = $telegram->emoji($str);
 				$telegram->send
 					->notification(TRUE)
 					->chat($adminchat)
-					->text($new->id ." " .$new->first_name ." " .$pknew->username ." es topo.")
+					->text($str)
 				->send();
 			}
 
@@ -79,10 +83,14 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
                     $pokemon->user_delgroup($new->id, $telegram->chat->id);
 
 					if($adminchat){
+						$str = ":times: Usuario en blacklist - $b\n"
+								.":id: " .$new->id ."\n"
+								.":abc: " .$new->first_name ." - @" .$pknew->username;
+						$str = $telegram->emoji($str);
 						$telegram->send
 							->notification(TRUE)
 							->chat($adminchat)
-							->text($new->id ." " .$new->first_name ." " .$pknew->username ." está en blacklist.")
+							->text($str)
 						->send();
 					}
                     return -1;
@@ -119,10 +127,14 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 			->send();
 
 			if($adminchat){
+				$str = ":warning: Usuario no validado.\n"
+						.":id: " .$new->id ."\n"
+						.":abc: " .$new->first_name ." - @" .$pknew->username;
+				$str = $telegram->emoji($str);
 				$telegram->send
 					->notification(TRUE)
 					->chat($adminchat)
-					->text($new->id ." " .$new->first_name ." " .$pknew->username ." no está validado.")
+					->text($str)
 				->send();
 			}
             return -1;
@@ -209,10 +221,14 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
         ->send();
 
 		if($adminchat){
+			$str = ":new: Entra al grupo\n"
+					.":id: " .$new->id ."\n"
+					.":abc: " .$new->first_name ." - @" .($pknew->username ?: $new->username);
+			$str = $telegram->emoji($str);
 			$telegram->send
 				->notification(TRUE)
 				->chat($adminchat)
-				->text($new->id ." " .$new->first_name ." " .$pknew->username ." entra al grupo.")
+				->text($str)
 			->send();
 		}
 
