@@ -31,26 +31,22 @@ class Admin extends TelegramApp\Module {
 				'BQADBAADqAADl4mhCVMHew7buZpwAg',
 		    ];
 			if(in_array($this->telegram->sticker(), $palmeras)){
-				if($this->user->is_admin() or $this->user->id == CREATOR){ return; }
-				if(!$this->chat->is_admin($this->telegram->bot->id)){ return; }
-		        // $admins = array();
-		        /* if(function_exists('telegram_admins')){
-		            $admins = telegram_admins(TRUE);
-		            if(in_array($this->config->item('telegram_bot_id'), $admins)){
-		                if(in_array($telegram->user->id, $admins)){ return; }
-		                $telegram->send->text("¡¡PALMERAS NO!!")->send();
-		                $telegram->send->kick($telegram->user->id, $telegram->chat->id);
-		            }
-		        } */
-		        return TRUE;
+				if($this->chat->is_admin($this->user) or $this->user->id == CREATOR){ return NULL; }
+				if(!$this->chat->is_admin($this->telegram->bot->id)){ return NULL; }
+				$this->telegram->send
+					->text("¡¡PALMERAS NO!!")
+				->send();
+				return $this->kick($this->user);
 		    }
 		}
 		return FALSE;
 	}
 
 	public function antiflood(){
-		if($this->chat->is_admin($this->user->id)){ return; }
+		if($this->chat->is_admin($this->user)){ return; }
 		$amount = NULL;
+
+		// Valoración de daños
 		if($this->telegram->text_command()){ $amount = 1; }
 		elseif($this->telegram->photo()){ $amount = 0.8; }
 		elseif($this->telegram->sticker()){
@@ -79,7 +75,6 @@ class Admin extends TelegramApp\Module {
 
 			if($this->chat->settings('antiflood_ban') == TRUE){
 				$res = $this->ban($this->user->id, $this->chat->id);
-
 				if($this->chat->settings('antiflood_ban_hidebutton') != TRUE){
 					$this->telegram->send
 					->inline_keyboard()
@@ -92,10 +87,10 @@ class Admin extends TelegramApp\Module {
 
 			if($res){
 				// $pokemon->group_spamcount($this->telegram->chat->id, -1.1); // Avoid another kick.
-				// $pokemon->user_delgroup($this->telegram->user->id, $this->telegram->chat->id);
 				$this->telegram->send
 					->text("Usuario expulsado por flood. [" .$this->user->id .(isset($this->telegram->user->username) ? " @" .$this->telegram->user->username : "") ."]")
 				->send();
+				// Si tiene grupo admin asociado, avisar.
 				$adminchat = $this->chat->settings('admin_chat');
 				if($adminchat){
 					// TODO forward del mensaje afectado
@@ -106,43 +101,43 @@ class Admin extends TelegramApp\Module {
 				}
 				$this->end(); // No realizar la acción ya que se ha explusado.
 			}
-			// Si tiene grupo admin asociado, avisar.
 		}
 	}
 
 	public function antispam(){
-	    if($this->user->messages <= 5 && $this->chat->settings('antispam') != FALSE){
-	        if(
-				!$this->telegram->text_contains(["http", "www", ".com", ".es", ".net"]) &&
-	            !$this->telegram->text_contains("telegram.me") or
-	            $this->telegram->text_contains(["PokéTrack", "PokeTrack"]) or
-	            $this->telegram->text_contains(["maps.google", "google.com/maps"])
-	        ){ return FALSE; } // HACK Falsos positivos.
+	    if($this->user->messages > 5 or $this->chat->settings('antispam') == FALSE){ return FALSE; }
 
-	        // TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
-	        $this->telegram->send
-	            ->message(TRUE)
-	            ->chat(TRUE)
-	            ->forward_to(CREATOR)
-	        ->send();
+        if(
+			!$this->telegram->text_contains(["http", "www", ".com", ".es", ".net"]) &&
+            !$this->telegram->text_contains("telegram.me") or
+            $this->telegram->text_contains(["PokéTrack", "PokeTrack"]) or
+            $this->telegram->text_contains(["maps.google", "google.com/maps"])
+        ){ return FALSE; } // HACK Falsos positivos.
 
-	        $this->telegram->send
-	            ->chat(CREATOR)
-	            ->text("*SPAM* del grupo " .$this->chat->id .".", TRUE)
-	            ->inline_keyboard()
-	                ->row_button("No es spam", "/nospam " .$this->user->id ." " .$this->chat->id, "TEXT")
-	            ->show()
-	        ->send();
+        // TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
+        $this->telegram->send
+            ->message(TRUE)
+            ->chat(TRUE)
+            ->forward_to(CREATOR)
+        ->send();
 
-			$this->user->flags[] = 'spam';
-			$this->user->update();
+        $this->telegram->send
+            ->chat(CREATOR)
+            ->text("*SPAM* del grupo " .$this->chat->id .".", TRUE)
+            ->inline_keyboard()
+                ->row_button("No es spam", "/nospam " .$this->user->id ." " .$this->chat->id, "TEXT")
+            ->show()
+        ->send();
 
-	        $this->telegram->send
-	            ->text("¡*SPAM* detectado!", TRUE)
-	        ->send();
+		$this->user->flags[] = 'spam';
+		$this->user->update();
 
-	        $this->ban($this->user->id, $this->chat->id);
-	    }
+        $this->telegram->send
+            ->text("¡*SPAM* detectado!", TRUE)
+        ->send();
+
+        $this->ban($this->user);
+		$this->end();
 	}
 
 	public function kick($user, $chat = NULL){
@@ -151,10 +146,7 @@ class Admin extends TelegramApp\Module {
 			$c = 0;
 			foreach($user as $u){
 				$q = $this->kick($u, $chat);
-				if($q !== FALSE){
-					// TODO limpiar de DB para decir que el usuario no está ya en el grupo.
-					$c++;
-				}
+				if($q !== FALSE){ $c++; }
 			}
 			return $c;
 		}
@@ -165,7 +157,15 @@ class Admin extends TelegramApp\Module {
 
 	public function ban($user, $chat = NULL){
 		if(empty($chat)){ $chat = $this->chat->id; }
-		return $this->telegram->send->ban($user, $chat);
+		// Evitar autoban del bot. Usar leave si es necesario.
+		if($user == $this->telegram->bot->id){ return FALSE; }
+		$q = $this->telegram->send->ban($user, $chat);
+
+		// TODO limpiar de DB para decir que el usuario no está ya en el grupo.
+		if($q !== FALSE){
+
+		}
+		return $q;
 	}
 
 	public function unban($user, $chat = NULL){
@@ -174,7 +174,6 @@ class Admin extends TelegramApp\Module {
 	}
 
 	public function multikick($users){
-		// TODO Quitar al Oak de la lista
 		$c = $this->kick($users, $chat);
 		$str = "No puedo echar a nadie :(";
 		if($c > 0){ $str = "Vale, " .$c ." fuera!"; }

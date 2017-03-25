@@ -5,7 +5,7 @@ class GameDubs extends TelegramApp\Module {
 
 	public function run(){
 		if(
-			isset($this->chat->settings['dubs']) && $this->chat->settings['dubs'] == TRUE &&
+			$this->chat->settings('dubs') &&
 			$this->telegram->key == "message"
 		){
 			$nums = array_merge(
@@ -18,7 +18,6 @@ class GameDubs extends TelegramApp\Module {
 			$id = $this->telegram->message;
 			foreach($nums as $n){
 				if(@strpos(strval($id), strval($n), strlen($id) - strlen($n)) !== FALSE){
-					// $telegram->send->text("hecho en $id con $n")->send();
 					$lon = strlen($n);
 					break;
 				}

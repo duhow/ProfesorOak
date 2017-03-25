@@ -10,24 +10,35 @@ class Main extends TelegramApp\Module {
 		// if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ $this->end(); }
 		// $this->_update_chat();
 
+		if($this->chat->load()){
+			$this->chat->active_member($this->user->id);
+		}
+
 		if($this->chat->settings('forward_interactive')){
 			$this->forward_creator();
 		}
 
 		if($this->telegram->is_chat_group()){
 			$this->core->load('Admin');
-			global $Admin;
-
-			if($this->chat->settings('forwarding_to')){ $Admin->forward_to_groups(); }
-			if($this->chat->settings('antiflood')){ $Admin->antiflood(); }
-			if($this->telegram->text_url() && $this->chat->settings('antispam') != FALSE){ $Admin->antispam(); }
-			if($this->chat->settings('die') && $this->user->id != CREATOR){ $this->end(); }
+			$this->core->load('Group');
+			global $Admin, $Group;
 
 			if($this->telegram->data_received("migrate_to_chat_id")){
 				$Admin->migrate_settings($this->telegram->migrate_chat, $this->chat->id);
 				$this->chat->disable();
 				$this->end();
 			}
+
+			if($this->chat->settings('forwarding_to')){ $Admin->forward_to_groups(); }
+			if($this->chat->settings('antiflood')){ $Admin->antiflood(); }
+			if($this->chat->settings('antispam') != FALSE && $this->telegram->text_url()){ $Admin->antispam(); }
+			if($this->chat->settings('die') && $this->user->id != CREATOR){ $this->end(); }
+			if($this->chat->settings('abandon')){ $Group->abandon(); }
+			if($this->chat->settings('custom_commands')){ $Group->custom_commands(); }
+			if($this->chat->settings('admin_chat')){
+				// if($this->chat->settings('blackwords')){ $Admin->blackwords(); }
+			}
+			if($this->chat->settings('dubs')){ $this->core->load('GameDubs', TRUE); }
 		}
 
 		if($this->user->load() !== TRUE){
@@ -161,8 +172,6 @@ class Main extends TelegramApp\Module {
 	}
 
 	public function new_member(){
-		// $this->chat->settings('announce_welcome');
-
 		// $new = El que entra
 		// $this->user = El que le invita (puede ser el mismo)
 
@@ -171,8 +180,6 @@ class Main extends TelegramApp\Module {
 		global $Admin;
 
 		$new = new User($this->telegram->new_user, $this->db);
-
-		// TODO Mantener User (el que invita) y New User (el que entra)
 
 		if($new->id == $this->telegram->bot->id){
 			// A excepción de que lo agregue el creador
@@ -441,6 +448,7 @@ class Main extends TelegramApp\Module {
 
 	public function left_member(){
 		// $pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
+
 		$this->end();
 	}
 

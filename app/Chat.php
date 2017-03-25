@@ -229,4 +229,57 @@ class Chat extends TelegramApp\Chat {
 		return $this->update('active', FALSE);
 	}
 
+	public function active_member($user){
+		// Chats
+		$data = [
+			'id' => $this->id,
+			'type' => $this->telegram->chat->type,
+			'title' => $this->telegram->chat->title,
+			'register_date' => $this->db->now(),
+			'last_date' => $this->db->now(),
+			'active' => TRUE,
+			'messages' => 0,
+			'users' => 0,
+			'spam' => 0.00
+		];
+
+		$update = [
+			'title' => $this->telegram->chat->title,
+			'last_date' => $this->db->now(),
+			'active' => TRUE,
+			'messages' => 'messages + 1'
+		];
+
+		$this->db->onDuplicate($update);
+		$this->db->insert('chats', $data);
+
+		// -------------------
+		// User InChat
+		$user = $this->get_userid($user);
+		$query = $this->db
+			->where('uid', $user)
+			->where('cid', $this->id)
+		->get('user_inchat');
+
+		if($this->db->count == 1){
+			// UPDATE
+			$data = [
+				'messages' => 'messages + 1',
+				'last_date' => $this->db->now()
+			];
+			$this->db
+				->where('uid', $user)
+				->where('cid', $this->id)
+			->update('user_inchat', $data);
+		}else{
+			$data = [
+				'uid' => $user,
+				'cid' => $this->id,
+				'messages' => 0,
+				'last_date' => $this->db->now(),
+				'register_date' => $this->db->now(),
+			];
+			$this->db->insert('user_inchat', $data);
+		}
+	}
 }

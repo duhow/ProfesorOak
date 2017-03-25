@@ -177,6 +177,20 @@ class Group extends TelegramApp\Module {
 		}
 	}
 
+	public function abandon(){
+		$abandon = $this->chat->settings('abandon');
+		if($abandon){
+		    if(json_decode($abandon) != NULL){ $abandon = json_decode($abandon); }
+		    $str = ($abandon == TRUE ? "Este chat ha sido abandonado." : $abandon);
+
+		    $this->telegram->send
+		        ->text($str)
+		    ->send();
+
+			$this->end();
+		}
+	}
+
 	public function userlist_verified($chat = NULL){
 
 	}
@@ -208,5 +222,30 @@ class Group extends TelegramApp\Module {
 
 	public function offtopic(){
 
+	}
+
+	public function custom_commands(){
+		if(
+			$this->user->blocked or
+			in_array($this->user->flags, ['ratkid', 'troll', 'rager', 'spamkid'])
+		){ $this->end(); }
+
+		$commands = $this->chat->settings('custom_commands');
+		if(!$commands or !empty($this->user->step)){ return FALSE; }
+	    $commands = unserialize($commands);
+	    if(is_array($commands)){
+	        foreach($commands as $word => $action){
+	            if($telegram->text_has($word, TRUE)){
+	                $content = current($action);
+	                $action = key($action);
+	                if($action == "text"){
+	                    $this->telegram->send->text(json_decode($content))->send();
+	                }else{
+	                    $this->telegram->send->file($action, $content);
+	                }
+	                $this->end();
+	            }
+	        }
+	    }
 	}
 }
