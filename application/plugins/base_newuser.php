@@ -3,6 +3,7 @@
 // Oak o otro usuario es añadido a una conversación
 if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_participant"){
     $set = $pokemon->settings($telegram->chat->id, 'announce_welcome');
+	$adminchat = $pokemon->settings($telegram->chat->id, 'admin_chat');
     $new = $telegram->new_user;
     $user = $telegram->user;
     $chat = $telegram->chat;
@@ -48,6 +49,13 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
                 ->reply_to(TRUE)
                 ->text("*¡SE CUELA UN TOPO!* @$pknew->username $pknew->team", TRUE)
             ->send();
+			if($adminchat){
+				$telegram->send
+					->notification(TRUE)
+					->chat($adminchat)
+					->text($new->id ." " .$new->first_name ." " .$pknew->username ." es topo.")
+				->send();
+			}
 
             // Kickear (por defecto TRUE)
             $kick = $pokemon->settings($telegram->chat->id, 'team_exclusive_kick');
@@ -69,6 +77,14 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
                     $this->analytics->event('Telegram', 'Join blacklist user', $b);
                     $telegram->send->kick($new->id, $telegram->chat->id);
                     $pokemon->user_delgroup($new->id, $telegram->chat->id);
+
+					if($adminchat){
+						$telegram->send
+							->notification(TRUE)
+							->chat($adminchat)
+							->text($new->id ." " .$new->first_name ." " .$pknew->username ." está en blacklist.")
+						->send();
+					}
                     return -1;
                 }
             }
@@ -101,6 +117,14 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 			$telegram->send
 				->text($str)
 			->send();
+
+			if($adminchat){
+				$telegram->send
+					->notification(TRUE)
+					->chat($adminchat)
+					->text($new->id ." " .$new->first_name ." " .$pknew->username ." no está validado.")
+				->send();
+			}
             return -1;
         }
     }
@@ -183,6 +207,14 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
             ->reply_to(TRUE)
             ->text( $text , TRUE)
         ->send();
+
+		if($adminchat){
+			$telegram->send
+				->notification(TRUE)
+				->chat($adminchat)
+				->text($new->id ." " .$new->first_name ." " .$pknew->username ." entra al grupo.")
+			->send();
+		}
 
         if(!empty($pknew)){
             $team = $pknew->team;
