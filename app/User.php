@@ -186,7 +186,7 @@ class User extends TelegramApp\User {
 			->where('uid', $this->id)
 			->where('gid', $chat)
 		->getOne('user_admins');
-		return !empty($query);
+		return ($this->db->count == 1);
 	}
 
 	function log($key, $value){

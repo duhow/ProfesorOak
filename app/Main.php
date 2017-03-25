@@ -207,10 +207,10 @@ class Main extends TelegramApp\Module {
 
 			// Avisar al creador de que hay un grupo nuevo
 			$text = ":new: ¡Grupo nuevo!\n"
-					."\ud83d\udd24 " .$this->chat->title ."\n"
+					.":abc: " .$this->chat->title ."\n"
 					.":id: " .$this->chat->id ."\n"
 					."\ud83d\udec2 " .$count ."\n" // del principio de ejecución.
-					."\ud83d\udeb9 " .$this->user->id ." - " .$this->user->first_name;
+					.":male: " .$this->user->id ." - " .$this->user->first_name;
 
 			$this->telegram->send
 				->chat(CREATOR)
@@ -314,13 +314,19 @@ class Main extends TelegramApp\Module {
 			!$new->verified
 		){
 			// $this->analytics->event('Telegram', 'Kick unverified user');
-			$q = $Admin->kick($new->id);
-			$str = "Usuario " . $this->telegram->new_user->first_name ." / " .$new->id ." no está verificado.";
-			if($q !== FALSE){
-				// $pokemon->user_delgroup($new->id, $telegram->chat->id);
-				$str = "Usuario " .$this->telegram->new_user->first_name ." / " .$new->id ." kickeado por no estar verificado.";
-				$Admin->admin_chat_message($new->id ." kickeado por no estar verificado.");
+			$str = "Usuario " . $this->telegram->new_user->first_name ." / " .$new->id ." ";
+
+			if(!$this->chat->is_admin($this->user)){
+				$q = $Admin->kick($new->id);
+				if($q !== FALSE){
+					// $pokemon->user_delgroup($new->id, $telegram->chat->id);
+					$str .= "kickeado por no estar verificado.";
+					$Admin->admin_chat_message($str);
+				}
+			}else{
+				$str .= "no está verificado.";
 			}
+
 			$this->telegram->send
 				->text($str)
 			->send();
