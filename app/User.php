@@ -154,15 +154,17 @@ class User extends TelegramApp\User {
 
 	private function load_settings(){
 		$this->settings = array();
+		$settings = array();
 		$query = $this->db
 			->where('uid', $this->id)
 		->get('settings');
 		if(count($query) > 0){
-			$this->settings = array_column($query, 'value', 'type');
-			foreach($this->settings as $k => $v){
-				if($v == 1){ $this->settings[$k] = TRUE; }
-				elseif($v == 0){ $this->settings[$k] = FALSE; }
+			$settings = array_column($query, 'value', 'type');
+			foreach($settings as $k => $v){
+				if($v == 1){ $settings[$k] = TRUE; }
+				elseif($v == 0){ $settings[$k] = FALSE; }
 			}
+			$this->settings = $settings;
 		}
 		return $this->settings;
 	}

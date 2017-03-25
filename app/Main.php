@@ -169,7 +169,7 @@ class Main extends TelegramApp\Module {
 		$this->core->load('Admin');
 		global $Admin;
 
-		$new = new User($this->telegram->new_user);
+		$new = new User($this->telegram->new_user, $this->db);
 
 		// TODO Mantener User (el que invita) y New User (el que entra)
 
@@ -334,7 +334,6 @@ class Main extends TelegramApp\Module {
 			if(empty($new->team)){
 				$text .= "Oye, ¿podrías decirme el color de tu equipo?\n*Di: *_Soy ..._";
 			}else{
-				$emoji = ["Y" => "yellow", "B" => "blue", "R" => "red"];
 				$text .= '$pokemon $nivel $equipo $valido $ingress';
 
 				if(!$new->verified && $this->chat->settings('require_verified')){
@@ -354,15 +353,16 @@ class Main extends TelegramApp\Module {
 			if(in_array('resistance', $this->user->flags)){ $ingress = ":key:"; }
 			elseif(in_array('resistance', $this->user->flags)){ $ingress = ":frog:"; }
 
+			$emoji = ["Y" => "yellow", "B" => "blue", "R" => "red"];
 			$repl = [
-				'$nombre' => $new->first_name,
-				'$apellidos' => $new->last_name,
-				'$equipo' => ':heart-' .$emoji[$pknew->team] .':',
-				'$team' => ':heart-' .$emoji[$pknew->team] .':',
-				'$usuario' => "@" .$new->username,
-				'$pokemon' => "@" .$pknew->username,
-				'$nivel' => "L" .$pknew->lvl,
-				'$valido' => $pknew->verified ? ':green-check:' : ':warning:',
+				'$nombre' => $this->telegram->new_user->first_name,
+				'$apellidos' => $this->telegram->new_user->last_name,
+				'$equipo' => ':heart-' .$emoji[$new->team] .':',
+				'$team' => ':heart-' .$emoji[$new->team] .':',
+				'$usuario' => "@" .$this->telegram->new_user->username,
+				'$pokemon' => "@" .$new->username,
+				'$nivel' => "L" .$new->lvl,
+				'$valido' => $new->verified ? ':green-check:' : ':warning:',
 				'$ingress' => $ingress
 			];
 			$text = str_replace(array_keys($repl), array_values($repl), $text);
