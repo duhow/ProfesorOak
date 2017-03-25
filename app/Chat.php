@@ -21,7 +21,7 @@ class Chat extends TelegramApp\Chat {
 
 	public function get_userid($user){
 		if(is_numeric($user)){ return $user; }
-		elseif($user instanceof \Telegram\User){ return $user->id; }
+		elseif($user instanceof \Telegram\User or $user instanceof User){ return $user->id; }
 	}
 
 	public function ban($user){
@@ -217,7 +217,7 @@ class Chat extends TelegramApp\Chat {
 			->where('gid', $this->id)
 			->where('uid', $user)
 		->getOne('user_admins');
-		return !empty($query);
+		return ($this->db->count == 1);
 	}
 
 	function log($key, $value){
