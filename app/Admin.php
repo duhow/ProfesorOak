@@ -145,24 +145,31 @@ class Admin extends TelegramApp\Module {
 	    }
 	}
 
-	public function kick($user, $chat){
+	public function kick($user, $chat = NULL){
+		if(empty($chat)){ $chat = $this->chat->id; }
 		if(is_array($user)){
 			$c = 0;
 			foreach($user as $u){
 				$q = $this->kick($u, $chat);
-				if($q !== FALSE){ $c++; }
+				if($q !== FALSE){
+					// TODO limpiar de DB para decir que el usuario no está ya en el grupo.
+					$c++;
+				}
 			}
 			return $c;
 		}
+		if($user instanceof User or $user instanceof \Telegram\User){ $user = $user->id; }
 		$this->ban($user, $chat);
 		return $this->unban($user, $chat);
 	}
 
-	public function ban($user, $chat){
+	public function ban($user, $chat = NULL){
+		if(empty($chat)){ $chat = $this->chat->id; }
 		return $this->telegram->send->ban($user, $chat);
 	}
 
-	public function unban($user, $chat){
+	public function unban($user, $chat = NULL){
+		if(empty($chat)){ $chat = $this->chat->id; }
 		return $this->telegram->send->unban($user, $chat);
 	}
 
@@ -222,5 +229,17 @@ class Admin extends TelegramApp\Module {
 	// Forward the current message to the groups set.
 	public function forward_to_groups(){
 
+	}
+
+	public function admin_chat_message($message, $notify = TRUE){
+		$adminchat = $this->chat->settings('admin_chat');
+		if(!empty($adminchat)){
+			return $this->telegram->send
+				->chat($adminchat)
+				->notification($notify)
+				->text($message)
+			->send();
+		}
+		return FALSE;
 	}
 }
