@@ -166,6 +166,7 @@ class Main extends TelegramApp\Module {
 		// $new = El que entra
 		// $this->user = El que le invita (puede ser el mismo)
 
+		$this->chat->load();
 		$this->core->load('Admin');
 		global $Admin;
 
@@ -314,10 +315,10 @@ class Main extends TelegramApp\Module {
 		){
 			// $this->analytics->event('Telegram', 'Kick unverified user');
 			$q = $Admin->kick($new->id);
-			$str = "Usuario " . $new->first_name ." / " .$new->id ." no está verificado.";
+			$str = "Usuario " . $this->telegram->new_user->first_name ." / " .$new->id ." no está verificado.";
 			if($q !== FALSE){
 				// $pokemon->user_delgroup($new->id, $telegram->chat->id);
-				$str = "Usuario " .$new->first_name ." / " .$new->id ." kickeado por no estar verificado.";
+				$str = "Usuario " .$this->telegram->new_user->first_name ." / " .$new->id ." kickeado por no estar verificado.";
 				$Admin->admin_chat_message($new->id ." kickeado por no estar verificado.");
 			}
 			$this->telegram->send
@@ -331,7 +332,7 @@ class Main extends TelegramApp\Module {
 			$custom = $this->chat->settings('welcome');
 			$text = 'Bienvenido al grupo, $nombre!' ."\n";
 			if(!empty($custom)){ $text = json_decode($custom) ."\n"; }
-			if(empty($new->team)){
+			if(!empty($new->team)){
 				$text .= "Oye, ¿podrías decirme el color de tu equipo?\n*Di: *_Soy ..._";
 			}else{
 				$text .= '$pokemon $nivel $equipo $valido $ingress';
@@ -350,8 +351,8 @@ class Main extends TelegramApp\Module {
 			// $this->analytics->event('Telegram', 'Join user');
 
 			$ingress = NULL;
-			if(in_array('resistance', $this->user->flags)){ $ingress = ":key:"; }
-			elseif(in_array('resistance', $this->user->flags)){ $ingress = ":frog:"; }
+			if(in_array('resistance', $new->flags)){ $ingress = ":key:"; }
+			elseif(in_array('resistance', $new->flags)){ $ingress = ":frog:"; }
 
 			$emoji = ["Y" => "yellow", "B" => "blue", "R" => "red"];
 			$repl = [
