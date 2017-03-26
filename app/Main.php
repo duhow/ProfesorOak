@@ -185,6 +185,10 @@ class Main extends TelegramApp\Module {
 			// A excepción de que lo agregue el creador
 			$count = 0;
 			if($this->user->id != CREATOR){
+				// PROVISIONAL TEMP
+				$this->telegram->send->leave_chat();
+				$this->end();
+
 				// Si el grupo está muerto, salir.
 				if($this->chat->settings('die')){
 					$this->telegram->send->leave_chat();
