@@ -93,7 +93,8 @@ if($telegram->text_has(["/kick", "/ban"], TRUE)){
 					$str .= "\n";
 					// Motivo
 					if($telegram->words() > 2){
-						$str .= ":abc: " .$telegram->words(2, 10);
+						$i = ($telegram->has_reply ? 1 : 2);
+						$str .= ":abc: " .ucfirst(strtolower($telegram->words($i, 10)));
 					}
 
 					$str = $this->telegram->emoji($str);
