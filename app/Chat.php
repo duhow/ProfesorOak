@@ -103,8 +103,8 @@ class Chat extends TelegramApp\Chat {
 			'id' => $this->id,
 			'type' => $this->type,
 			'title' => $this->title,
-			'register_date' => date("Y-m-d H:i:s"),
-			'last_date' => date("Y-m-d H:i:s"),
+			'register_date' => $this->db->now(),
+			'last_date' => $this->db->now(),
 			'active' => TRUE,
 			'messages' => 0,
 			'users' => $this->telegram->send->get_members_count($this->id),
@@ -120,7 +120,7 @@ class Chat extends TelegramApp\Chat {
 		$query = $this->db
 			->where('id', $this->id)
 		->getOne('chats');
-		if(empty($query)){ $query = $this->register(TRUE); }
+		if($this->db->count == 0){ $query = $this->register(TRUE); }
 		foreach($query as $k => $v){
 			$this->$k = $v;
 		}
@@ -247,7 +247,7 @@ class Chat extends TelegramApp\Chat {
 			'title' => $this->telegram->chat->title,
 			'last_date' => $this->db->now(),
 			'active' => TRUE,
-			'messages' => 'messages + 1'
+			'messages' => $this->db->inc(1)
 		];
 
 		$this->db->onDuplicate($update);
@@ -264,7 +264,7 @@ class Chat extends TelegramApp\Chat {
 		if($this->db->count == 1){
 			// UPDATE
 			$data = [
-				'messages' => 'messages + 1',
+				'messages' =>  $this->db->inc(1),
 				'last_date' => $this->db->now()
 			];
 			$this->db
