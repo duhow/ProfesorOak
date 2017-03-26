@@ -1,7 +1,7 @@
 <?php
 
 if($telegram->text_has(["busca", "buscar"], "pokeparada", TRUE) && $telegram->words() >= 3){
-	$text = $telegram->words(2, 10);
+	$text = $telegram->words(2, 10, TRUE);
 	$loc = NULL;
 
 	if($telegram->text_has("cerca", "de")){
