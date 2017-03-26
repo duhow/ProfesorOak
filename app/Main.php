@@ -6,10 +6,8 @@ class Main extends TelegramApp\Module {
 	public function run(){
 		$this->core->load('Tools');
 		$this->core->load('Pokemon');
-		// comprobar IP del host
-		// if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ $this->end(); }
-		// $this->_update_chat();
 
+		$this->chat->setVar('telegram', $this->telegram);
 		if($this->chat->load()){
 			$this->chat->active_member($this->user->id);
 		}
@@ -34,6 +32,9 @@ class Main extends TelegramApp\Module {
 			if($this->chat->settings('antispam') != FALSE && $this->telegram->text_url()){ $Admin->antispam(); }
 			if($this->chat->settings('die') && $this->user->id != CREATOR){ $this->end(); }
 			if($this->chat->settings('abandon')){ $Group->abandon(); }
+
+			if($this->user->blocked){ $this->end(); }
+
 			if($this->chat->settings('custom_commands')){ $Group->custom_commands(); }
 			if($this->chat->settings('admin_chat')){
 				// if($this->chat->settings('blackwords')){ $Admin->blackwords(); }
