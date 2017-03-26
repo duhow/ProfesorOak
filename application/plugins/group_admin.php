@@ -67,15 +67,45 @@ if($telegram->text_has(["/kick", "/ban"], TRUE)){
         }
 		if($kick == $this->config->item('telegram_bot_id')){ return -1; }
         if(($telegram->user->id == $this->config->item('creator')) or !in_array($kick, $admins)){ // Si es creador o no hay target a admins
+			$q = FALSE;
             if($telegram->text_contains("kick")){
                 $this->analytics->event('Telegram', 'Kick');
-                $telegram->send->kick($kick, $telegram->chat->id);
-                $pokemon->user_delgroup($kick, $telegram->chat->id);
+                $q = $telegram->send->kick($kick, $telegram->chat->id);
             }elseif($telegram->text_contains("ban")){
                 $this->analytics->event('Telegram', 'Ban');
-                $telegram->send->ban($kick, $telegram->chat->id);
-                $pokemon->user_delgroup($kick, $telegram->chat->id);
+                $q = $telegram->send->ban($kick, $telegram->chat->id);
             }
+			if($q !== FALSE){
+				$pokemon->user_delgroup($kick, $telegram->chat->id);
+				$adminchat = $this->pokemon->settings($this->telegram->chat->id, 'admin_chat');
+				if($adminchat){
+					if($telegram->text_contains("kick")){
+						$str = ":forbid: Usuario kickeado\n";
+					}else{
+						$str = ":banned: Usuario baneado\n";
+					}
+							// Autor
+					$str .= "\ud83d\udec2 " .$telegram->user->id ." - " .$telegram->user->first_name . " @" .@$telegram->user->username ."\n";
+					$str .= ":id: " .$kick;
+					if($telegram->has_reply){
+						$str .= " - " .$telegram->reply_user->first_name ." @" .@$telegram->reply_user->username;
+					}
+					$str .= "\n";
+					// Motivo
+					if($telegram->words() > 2){
+						$str .= ":abc: " .$telegram->words(2, 10);
+					}
+
+					$str = $this->telegram->emoji($str);
+
+					$this->telegram->send
+						->notification(TRUE)
+						->chat($adminchat)
+						->text($str)
+					->send();
+				}
+			}
+			return -1; // HACK
         }
     }
 }
