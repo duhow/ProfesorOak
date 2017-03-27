@@ -43,6 +43,8 @@ class Admin extends TelegramApp\Module {
 	}
 
 	public function antiflood(){
+		if(empty($this->chat->settings('antiflood'))){ return; }
+
 		if($this->chat->is_admin($this->user)){ return; }
 		$amount = NULL;
 
@@ -69,16 +71,17 @@ class Admin extends TelegramApp\Module {
 		// TODO Si se repite la última palabra.
 
 		$countflood = 0;
-		if($amount !== NULL){ $countflood = (float) $this->chat->settings('spam'); }
+		if($amount !== NULL){
+			$countflood = (float) $this->chat->settings('antiflood_count') + $amount;
+		}
 
-		if($countflood >= $flood){
-
+		if($countflood >= $this->chat->settings('antiflood')){
 			if($this->chat->settings('antiflood_ban') == TRUE){
 				$res = $this->ban($this->user->id, $this->chat->id);
 				if($this->chat->settings('antiflood_ban_hidebutton') != TRUE){
 					$this->telegram->send
 					->inline_keyboard()
-						->row_button("Desbanear", "desbanear " .$this->telegram->user->id, "TEXT")
+						->row_button("Desbanear", "desbanear " .$this->user->id, "TEXT")
 					->show();
 				}
 			}else{
@@ -86,22 +89,23 @@ class Admin extends TelegramApp\Module {
 			}
 
 			if($res){
-				// $pokemon->group_spamcount($this->telegram->chat->id, -1.1); // Avoid another kick.
+				$countflood = ($countflood - 1.1); // Avoid another kick.
+				$this->chat->settings('antiflood_count', $countflood); // Save
+
 				$this->telegram->send
 					->text("Usuario expulsado por flood. [" .$this->user->id .(isset($this->telegram->user->username) ? " @" .$this->telegram->user->username : "") ."]")
 				->send();
-				// Si tiene grupo admin asociado, avisar.
-				$adminchat = $this->chat->settings('admin_chat');
-				if($adminchat){
-					// TODO forward del mensaje afectado
-					$this->telegram->send
-						->chat($adminchat)
-						->text("Usuario " .$this->telegram->user->id .(isset($this->telegram->user->username) ? " @" .$this->telegram->user->username : "") ." expulsado del grupo por flood.")
-					->send();
-				}
+
+				// TODO forward del mensaje afectado
+				$str = ":forbid: Expulsión por flood.\n"
+						.":id: " .$this->user->id ."\n"
+						.":abc: " .$this->telegram->user->first_name ." - @" .$this->user->username;
+				$this->admin_chat_message($str);
 				$this->end(); // No realizar la acción ya que se ha explusado.
 			}
 		}
+
+		$this->chat->settings('antiflood_count', $countflood);
 	}
 
 	public function antispam(){
