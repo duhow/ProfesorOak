@@ -411,7 +411,7 @@ class Main extends TelegramApp\Module {
 		// Avisar al grupo administrativo
 		$str = ":new: Entra al grupo\n"
 				.":id: " .$new->id ."\n"
-				.":abc: " .$this->telegram->new_user->first_name ." - @" $new->username;
+				.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 		$str = $this->telegram->emoji($str);
 		$Admin->admin_chat_message($str);
 
