@@ -20,8 +20,8 @@ class Chat extends TelegramApp\Chat {
 	}
 
 	public function get_userid($user){
-		if(is_numeric($user)){ return $user; }
-		elseif($user instanceof \Telegram\User or $user instanceof User){ return $user->id; }
+		if($user instanceof \Telegram\User or $user instanceof User){ return $user->id; }
+		return $user;
 	}
 
 	public function ban($user){
@@ -63,7 +63,10 @@ class Chat extends TelegramApp\Chat {
 		}
 
 		if(isset($this->settings[$key])){
-			$this->update($key, $value, 'settings', 'uid');
+			$this->db
+				->where('type', $key)
+				->where('uid', $this->id)
+			->update('settings', ['value' => $value]);
 		}else{
 			$data = [
 				'uid' => $this->id,
@@ -86,7 +89,7 @@ class Chat extends TelegramApp\Chat {
 	}
 
 	protected function insert($data, $table){
-		return $this->db($table, $data);
+		return $this->db->insert($table, $data);
 	}
 
 	protected function delete($table, $where, $value, $usercol = FALSE){
