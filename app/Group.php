@@ -232,7 +232,7 @@ class Group extends TelegramApp\Module {
 
 		$commands = $this->chat->settings('custom_commands');
 		if(!$commands or !empty($this->user->step)){ return FALSE; }
-	    $commands = unserialize($commands);
+	    // $commands = unserialize($commands);
 	    if(is_array($commands)){
 	        foreach($commands as $word => $action){
 	            if($telegram->text_has($word, TRUE)){
