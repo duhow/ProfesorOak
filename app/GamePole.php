@@ -94,8 +94,8 @@ class GamePole extends TelegramApp\Module {
 	        $ut = $this->telegram->emoji(":question-red:");
 	        $points = NULL;
 	        if(!empty($u)){
-	            $ut = (!empty($user->username) ? $user->username : $user->telegramuser);
-	            $points = $user->pole;
+	            $ut = (!empty($u->username) ? $u->username : $u->telegramuser);
+	            $points = $u->pole;
 	        }
 
 	        $str .= $this->telegram->emoji(":" .($n + 1) .": ") .$ut .($points ? " (*$points*)" : "") ."\n";
@@ -114,14 +114,22 @@ class GamePole extends TelegramApp\Module {
 		$query = $this->db
 			->where('telegramid', $users, 'IN')
 			->orderBy('pole', 'desc')
-		->get('user', ['telegramid', 'telegramuser', 'username', 'pole']);
+		->get('user', NULL, ['telegramid', 'telegramuser', 'username', 'pole']);
 		if($this->db->count > 0){
 			if($onlypoints){
 				if(!is_array($user)){ return $query[0]['pole']; }
 				return array_column($query, 'pole', 'telegramid');
 			}
 			$final = array();
-			foreach($query as $u){ $final[$u['telegramid']] = (object) $u; }
+			// foreach($query as $u){ $final[$u['telegramid']] = (object) $u; }
+			foreach($query as $u){
+				$final[] = (object) [
+					'id' => $u['telegramid'],
+					'pole' => $u['pole'],
+					'username' => $u['username'],
+					'telegramuser' => $u['telegramuser']
+				];
+			}
 			return $final;
 		}
 		// Return empty if not found.
