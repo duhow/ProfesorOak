@@ -220,6 +220,8 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
             ->text( $text , TRUE)
         ->send();
 
+		if($new->id == $this->config->item('telegram_bot_id')){ return -1; } // HACK Stop processing.
+
 		if($adminchat){
 			$str = ":new: Entra al grupo\n"
 					.":id: " .$new->id ."\n"
