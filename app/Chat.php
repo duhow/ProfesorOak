@@ -40,6 +40,7 @@ class Chat extends TelegramApp\Chat {
 	}
 
 	public function update($key, $value, $table = 'chats', $idcol = 'id'){
+		if(in_array($key, ['settings'])){ return NULL; }
 		// get set variables and set them to DB-table
 		$query = $this->db
 			->where($idcol, $this->id)

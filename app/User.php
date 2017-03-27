@@ -31,6 +31,7 @@ class User extends TelegramApp\User {
 	}
 
 	public function update($key, $value, $table = 'user', $idcol = 'telegramid'){
+		if(in_array($key, ['settings'])){ return NULL; }
 		// get set variables and set them to DB-table
 		$query = $this->db
 			->where($idcol, $this->id)
