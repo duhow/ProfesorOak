@@ -295,7 +295,11 @@ class Main extends TelegramApp\Module {
 				){
 					$q = $Admin->kick($new->id);
 					if($q !== FALSE){
-						$Admin->admin_chat_message($new->id ." kickeado por topo.");
+						$str = ":times: Topo detectado!\n"
+								.":id: " .$new->id ."\n"
+								.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
+						$str = $this->telegram->emoji($str);
+						$Admin->admin_chat_message($str);
 					}
 				}
 				$this->end();
@@ -311,8 +315,14 @@ class Main extends TelegramApp\Module {
 			foreach($blacklist as $b){
 				if(in_array($b, $new->flags)){
 					// $this->analytics->event('Telegram', 'Join blacklist user', $b);
-					$Admin->kick($new->id);
-					$Admin->admin_chat_message($new->id ." kickeado por blacklist $b.");
+					$q = $Admin->kick($new->id);
+
+					$str = ":times: Usuario en blacklist - $b\n"
+					.":id: " .$new->id ."\n"
+					.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
+					$str = $this->telegram->emoji($str);
+
+					$Admin->admin_chat_message($str);
 					// $pokemon->user_delgroup($new->id, $telegram->chat->id);
 					$this->end();
 				}
@@ -333,7 +343,12 @@ class Main extends TelegramApp\Module {
 				if($q !== FALSE){
 					// $pokemon->user_delgroup($new->id, $telegram->chat->id);
 					$str .= "kickeado por no estar verificado.";
-					$Admin->admin_chat_message($str);
+
+					$str2 = ":warning: Usuario no validado.\n"
+							.":id: " .$new->id ."\n"
+							.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
+					$str2 = $this->telegram->emoji($str2);
+					$Admin->admin_chat_message($str2);
 				}
 			}else{
 				$str .= "no está verificado.";
@@ -392,6 +407,13 @@ class Main extends TelegramApp\Module {
 				->text( $text , TRUE)
 			->send();
 		}
+
+		// Avisar al grupo administrativo
+		$str = ":new: Entra al grupo\n"
+				.":id: " .$new->id ."\n"
+				.":abc: " .$this->telegram->new_user->first_name ." - @" $new->username;
+		$str = $this->telegram->emoji($str);
+		$Admin->admin_chat_message($str);
 
 		/*
 		if(!empty($new->team)){
