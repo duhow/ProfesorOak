@@ -45,6 +45,7 @@ class User extends TelegramApp\User {
 		if($value === NULL){
 			return (isset($this->settings[$key]) ? $this->settings[$key] : NULL);
 		}elseif(strtoupper($value) == "DELETE"){
+			unset($this->settings[$key]);
 			return $this->settings_delete($key);
 		}
 
@@ -54,11 +55,13 @@ class User extends TelegramApp\User {
 		}
 
 		if(isset($this->settings[$key])){
+			$this->settings[$key] = $value;
 			$this->db
 				->where('type', $key)
 				->where('uid', $this->id)
 			->update('settings', ['value' => $value]);
 		}else{
+			$this->settings[$key] = $value;
 			$data = [
 				'uid' => $this->id,
 				'type' => $key,

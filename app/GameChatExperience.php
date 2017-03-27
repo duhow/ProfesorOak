@@ -20,7 +20,7 @@ class GameChatExperience extends TelegramApp\Module {
 		if($this->telegram->is_chat_group()){
 			$amount = $this->telegram->words();
 			if($amount == mt_rand(2, 9)){
-				$timeout = $this->user->settings['expchat_timeout'];
+				$timeout = $this->user->settings('expchat_timeout');
 				if(empty($timeout) or time() >= $timeout){
 					$points = $this->get_experience($this->user);
 
@@ -55,14 +55,14 @@ class GameChatExperience extends TelegramApp\Module {
 
 	public function add_experience($amount, $user = NULL){
 		if(empty($user)){ $user = $this->user; }
-		$user->settings['expchat_points'] += $amount;
-		$user->settings['expchat_timeout'] = (time() + 60);
-		return $user->settings['expchat_points'];
+		$user->settings('expchat_points', $user->settings('expchat_points') + $amount);
+		$user->settings('expchat_timeout', (time() + 60));
+		return $user->settings('expchat_points');
 	}
 
 	public function get_experience($user = NULL){
 		if(empty($user)){ $user = $this->user; }
-		return $user->settings['expchat_points'];
+		return $user->settings('expchat_points');
 	}
 
 	public function get_level($points){
