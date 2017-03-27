@@ -474,8 +474,21 @@ class Main extends TelegramApp\Module {
 	}
 
 	public function left_member(){
-		// $pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
+		$this->chat->load();
+		if($this->telegram->left_member->id == $this->telegram->bot->id){
+			$str = ":door: Me han echado :(\n"
+					.":id: " .$this->chat->id ."\n"
+					.":abc: " .$this->telegram->chat->title ."\n"
+					.":male: " .$this->user->id . " - " . $this->telegram->user->first_name;
+			$str = $this->telegram->emoji($str);
 
+			$this->telegram->send
+				->notification(TRUE)
+				->chat(CREATOR)
+				->text($str)
+			->send();
+			$this->chat->disable();
+		}
 		$this->end();
 	}
 
