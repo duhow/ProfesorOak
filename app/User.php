@@ -176,8 +176,9 @@ class User extends TelegramApp\User {
 		if(count($query) > 0){
 			$settings = array_column($query, 'value', 'type');
 			foreach($settings as $k => $v){
-				if($v == 1){ $settings[$k] = TRUE; }
-				elseif($v == 0){ $settings[$k] = FALSE; }
+				if(@unserialize($v) !== FALSE){ $settings[$k] = unserialize($v); }
+				elseif(is_numeric($v) && $v == 1){ $settings[$k] = TRUE; }
+				elseif(is_numeric($v) && $v == 0){ $settings[$k] = FALSE; }
 			}
 			$this->settings = $settings;
 		}
