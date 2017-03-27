@@ -54,7 +54,10 @@ class User extends TelegramApp\User {
 		}
 
 		if(isset($this->settings[$key])){
-			$this->update($key, $value, 'settings', 'uid');
+			$this->db
+				->where('type', $key)
+				->where('uid', $this->id)
+			->update('settings', ['value' => $value]);
 		}else{
 			$data = [
 				'uid' => $this->id,
@@ -77,7 +80,7 @@ class User extends TelegramApp\User {
 	}
 
 	protected function insert($data, $table){
-		return $this->db($table, $data);
+		return $this->db->insert($table, $data);
 	}
 
 	protected function delete($table, $where, $value, $usercol = FALSE){
