@@ -27,9 +27,9 @@ class GamePole extends TelegramApp\Module {
 
 		// Si está el Modo HARDCORE, la pole es cada hora. Si no, cada día.
 		$timer = ($this->chat->settings('pole_hardcore') ? "H" : "d");
-
+		$pole = $this->chat->settings('pole');
 		if(!empty($pole)){
-	        $pole = unserialize($pole);
+	        // $pole = unserialize($pole);
 	        if(
 	            ( $position == 1 && is_numeric($pole[0]) && date($timer) == date($timer, $pole[0]) ) or
 	            ( $position == 2 && is_numeric($pole[1]) && date($timer) == date($timer, $pole[1]) ) or
@@ -38,7 +38,7 @@ class GamePole extends TelegramApp\Module {
 	            return;  // Mismo dia? nope.
 	        }
 	    }
-		$pole_user = unserialize($this->chat->settings('pole_user'));
+		$pole_user = $this->chat->settings('pole_user');
         $timeuser = $this->user->settings('lastpole');
         if(empty($timeuser)){ $timeuser = 0; }
 
@@ -65,8 +65,8 @@ class GamePole extends TelegramApp\Module {
 			}
 		}
 
-		$this->chat->settings('pole', serialize($pole));
-		$this->chat->settings('pole_user', serialize($pole_user));
+		$this->chat->settings('pole', $pole);
+		$this->chat->settings('pole_user', $pole_user);
 	    $this->telegram->send->text($this->telegram->user->first_name ." ha hecho $action!", TRUE)->send();
 		$this->end(); // ?
 	}
@@ -83,8 +83,8 @@ class GamePole extends TelegramApp\Module {
 	        $this->end();
 	    }
 
-	    $pole = unserialize($pole);
-	    $poleuser = unserialize($poleuser);
+	    // $pole = unserialize($pole);
+	    // $poleuser = unserialize($poleuser);
 
 	    $str = $this->telegram->emoji(":warning:") ." *Pole ";
 	    $str .= ($this->chat->settings('pole_hardcore') ? "de las " .date("H", $pole[0]) ."h" : "del " .date("d", $pole[0])) ."*:\n\n";
