@@ -45,7 +45,10 @@ class User extends TelegramApp\User {
 		if($value === NULL){
 			return (isset($this->settings[$key]) ? $this->settings[$key] : NULL);
 		}elseif(strtoupper($value) == "DELETE"){
-			unset($this->settings[$key]);
+			$settings = $this->settings;
+			unset($settings[$key]);
+			$this->settings = $settings;
+			// ---------
 			return $this->settings_delete($key);
 		}
 
@@ -55,13 +58,11 @@ class User extends TelegramApp\User {
 		}
 
 		if(isset($this->settings[$key])){
-			$this->settings[$key] = $value;
-			$this->db
+			$ret = $this->db
 				->where('type', $key)
 				->where('uid', $this->id)
 			->update('settings', ['value' => $value]);
 		}else{
-			$this->settings[$key] = $value;
 			$data = [
 				'uid' => $this->id,
 				'type' => $key,
@@ -70,8 +71,15 @@ class User extends TelegramApp\User {
 				'displaylist' => TRUE,
 				'lastupdate' => date("Y-m-d H:i:s")
 			];
-			return $this->insert($data, 'settings');
+			$ret = $this->db->insert('settings', $data);
 		}
+		// ---------
+		$settings = $this->settings;
+		$settings[$key] = $value;
+		$this->settings = $settings;
+		// ---------
+
+		return $ret;
 	}
 
 	public function settings_delete($key){
