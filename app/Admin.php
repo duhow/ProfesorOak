@@ -72,7 +72,7 @@ class Admin extends TelegramApp\Module {
 
 		$countflood = 0;
 		if($amount !== NULL){
-			$countflood = (float) max($this->chat->settings('antiflood_count') + $amount, 0);
+			$countflood = (float) round(max($this->chat->settings('antiflood_count') + $amount, 0), 2);
 		}
 
 		if($countflood >= $this->chat->settings('antiflood')){
