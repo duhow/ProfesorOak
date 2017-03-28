@@ -331,11 +331,14 @@ elseif($telegram->text_command("kickuv")){
 	}
 
 	$query = $this->db
-		->select('telegramid')
-		->from('user')
-		->join('user_inchat', 'user.telegramid = user_inchat.uid')
+		->select('uid')
+		->from('user_inchat')
+		->join('user', 'user.telegramid = user_inchat.uid', 'LEFT')
 		->where('cid', $telegram->chat->id)
-		->where('verified', FALSE)
+		->group_start()
+			->where('verified', FALSE)
+			->or_where('verified IS NULL', NULL, FALSE)
+		->group_end()
 	->get();
 
 	$telegram->send
@@ -344,10 +347,10 @@ elseif($telegram->text_command("kickuv")){
 
 	$c = 0;
 	foreach($query->result_array() as $u){
-		if($u['telegramid'] == $this->config->item('telegram_bot_id')){ continue; }
-		$q = $telegram->send->kick($u['telegramid'], $telegram->chat->id);
+		if($u['uid'] == $this->config->item('telegram_bot_id')){ continue; }
+		$q = $telegram->send->kick($u['uid'], $telegram->chat->id);
 		if($q !== FALSE){
-			$pokemon->user_delgroup($u['telegramid'], $telegram->chat->id);
+			$pokemon->user_delgroup($u['uid'], $telegram->chat->id);
 			$c++;
 		}
 	}
