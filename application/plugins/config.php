@@ -15,9 +15,14 @@ if(
     $this->analytics->event('Telegram', 'Set config', $key);
     $set = $pokemon->settings($telegram->chat->id, $key, $value);
     $announce = $pokemon->settings($telegram->chat->id, 'announce_settings');
+	$str = "\ud83d\udcbe Config\n"
+			.":id: " .$this->telegram->user->id ." - @" .$this->telegram->user->username . " " .$this->telegram->user->first_name ."\n"
+			.":multiuser: " .$this->telegram->chat->id ." - " .(@$this->telegram->chat->title ?: @$this->telegram->chat->first_name) ."\n"
+			.":ok: $key - " .json_encode($value);
+	$str = $this->telegram->emoji($str);
     $telegram->send
         ->chat( $this->config->item('creator') )
-        ->text("CONFIG: $key " .json_encode($set) ." -> " .json_encode($value))
+        ->text($str)
     ->send();
 
     if( ($set !== FALSE or $set > 0) && ($announce == TRUE) ){
