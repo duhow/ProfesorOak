@@ -18,8 +18,9 @@ if(
 	$str = "\ud83d\udcbe Config\n"
 			.":id: " .$this->telegram->user->id ." - @" .$this->telegram->user->username . " " .$this->telegram->user->first_name ."\n"
 			.":multiuser: " .$this->telegram->chat->id ." - " .(@$this->telegram->chat->title ?: @$this->telegram->chat->first_name) ."\n"
-			.":ok: $key - " .json_encode($value);
+			.":ok: $key -";
 	$str = $this->telegram->emoji($str);
+	$str .= " " .json_encode($value);
     $telegram->send
         ->chat( $this->config->item('creator') )
         ->text($str)
