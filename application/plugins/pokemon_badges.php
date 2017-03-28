@@ -209,8 +209,10 @@ function badge_points($badge, $user, $update = FALSE){
 
 function badge_register($badge, $amount, $user){
 	$CI =& get_instance();
-	$badge = pokemon_badges($badge);
-	if(empty($badge)){ return FALSE; }
+	if(is_string($badge)){
+		$badge = pokemon_badges($badge);
+		if(empty($badge)){ return FALSE; }
+	}
 
 	$data = [
 		'uid' => $user,
