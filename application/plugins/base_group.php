@@ -75,11 +75,20 @@ if($flood && !in_array($telegram->user->id, $pokemon->telegram_admins(TRUE))){
             ->send();
             $adminchat = $pokemon->settings($telegram->chat->id, 'admin_chat');
             if($adminchat){
-                // TODO forward del mensaje afectado
-                $telegram->send
-                    ->chat($adminchat)
-                    ->text("Usuario " .$telegram->user->id .(isset($telegram->user->username) ? " @" .$telegram->user->username : "") ." expulsado del grupo por flood.")
-                ->send();
+				$str = ":forbid: Antiflood\n"
+						.":id: " .$telegram->user->id ."\n"
+						.":male: " .(isset($telegram->user->username) ? " @" .$telegram->user->username : "");
+				$str = $this->telegram->emoji($str);
+				$this->telegram->send
+					->chat($adminchat)
+					->text($str)
+				->send();
+				// Forward del mensaje afectado
+				$this->telegram->send
+					->chat(TRUE)
+					->message(TRUE)
+					->forward_to($adminchat)
+				->send();
             }
             return -1; // No realizar la acción ya que se ha explusado.
         }
