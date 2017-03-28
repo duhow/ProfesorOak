@@ -276,22 +276,25 @@ if(
 	}
 
 	return -1;
-}elseif($telegram->text_comand("badges")){
+}elseif($telegram->text_command("badges")){
 	$badges = pokemon_badges();
 	$user_bagdes = badges_list($this->telegram->user->id);
 
 	$str = "No tienes medallas.";
 	if(!empty($user_badges)){
 		$str = "";
-		foreach($user_bagdes as $type => $value){
-			$k = array_search($type, array_column($badges, 'type'));
+		foreach($badges as $badge){
 			$n = 0;
+			$value = $user_badges[$badge['type']];
+			if(empty($value)){ continue; }
 
-			foreach($badges[$k]['targets'] as $min){
+			$icons = ['\u2796', '\ud83e\udd49', '\ud83e\udd48', '\ud83e\udd47'];
+
+			foreach($badge['targets'] as $min){
 				if($value >= $min){ $n++; }
 			}
 
-			$str .= $this->telegram->emoji("- :$n: ") .$badges[$k]['name'] .": " .$value ."\n";
+			$str .= $this->telegram->emoji($icons[$n]) ." " .$badge['name'] .": " .$value ."\n";
 		}
 	}
 
