@@ -369,6 +369,61 @@ function pokegame_delay_can_continue($chat, $amount = 2) {
 	return TRUE;
 }
 
+function pokegame_event(){
+	$events = [
+		[
+			'name' => 'halloween',
+			'title' => 'Halloween',
+			'date' => [strtotime('2017-10-26 21:00:00'), strtotime('2017-11-01 21:00:00')],
+			'pokemon' => [
+				92, // Gastly
+				93, // Haunter
+				94, // Gengar
+				96, // Drowzee
+				97, // Hypno
+				41, // Zubat
+				42, // Golbat
+			]
+		],
+		[
+			'name' => 'valentine',
+			'title' => 'San Valentín',
+			'date' => [strtotime('2017-02-08 21:00:00'), strtotime('2017-02-15 21:00:00')],
+			'pokemon' => [
+				113, // Chansey
+				35, // Clefairy
+				36, // Clefable
+				39, // Jigglypuff
+				40, // Wigglytuff
+				173, // Cleffa
+				174, // Igglybuff
+				238, // Smoochum
+			]
+		],
+		[
+			'name' => 'water',
+			'title' => 'Festival Acuático',
+			'date' => [strtotime('2017-03-21 21:00:00'), strtotime('2017-03-29 21:00:00')],
+			'pokemon' => [
+				129, // Magikarp
+				131, // Lapras
+				211, // Qwilfish
+				226, // Mantine
+				224, // Octillery
+				79, // Slowpoke
+				60, // Poliwag
+				// --------
+				7, // Squirtle
+				8, // Wartortle
+				9, // Blastoise
+				158, // Totodile
+				159, // Croconaw
+				160, // Feraligatr
+			]
+		]
+	];
+}
+
 function pokegame_is_legendary($number){
     return in_array($number, [144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251]);
 }
