@@ -233,15 +233,23 @@ if(
 
 	if(empty($badge)){
 		$this->telegram->send
-			->text($this->telegram->emoji(":times: Esa medalla no existe."))
+			->text($this->telegram->emoji(":warning: Esa medalla no existe."))
 		->send();
 
 		return -1;
 	}
 
-	if($amount < badge_points($badge['type'], $telegram->user->id)){
+	$points = badge_points($badge['type'], $telegram->user->id);
+
+	if($amount < $points){
 		$this->telegram->send
 			->text($this->telegram->emoji(":times: ¡No puedes poner menos puntos de los que ya tienes!"))
+		->send();
+
+		return -1;
+	}elseif($amount == $points){
+		$this->telegram->send
+			->text($this->telegram->emoji(":ok: Ya estaba agregado."))
 		->send();
 
 		return -1;
