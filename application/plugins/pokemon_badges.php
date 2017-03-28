@@ -223,6 +223,19 @@ function badge_register($badge, $amount, $user){
 	return $CI->db->insert('user_badges', $data);
 }
 
+function badges_list($user){
+	$CI =& get_instance();
+	$user = (int) $user;
+
+	$query = $CI->db
+		->where_in('id', 'SELECT MAX(id) FROM user_badges WHERE uid = ' .$user .' GROUP BY type', FALSE)
+		->order_by('date', 'DESC')
+	->get('user_badges');
+
+	if($query->num_rows() == 0){ return array(); }
+	return array_column($query->result_array(), 'value', 'type');
+}
+
 if(
 	($telegram->text_command("badge") or
 	$telegram->text_command("medalla")) and
@@ -261,6 +274,30 @@ if(
 			->text($this->telegram->emoji(":ok: Registrada!"))
 		->send();
 	}
+
+	return -1;
+}elseif($telegram->text_comand("badges")){
+	$badges = pokemon_badges();
+	$user_bagdes = badges_list($this->telegram->user->id);
+
+	$str = "No tienes medallas.";
+	if(!empty($user_badges)){
+		$str = "";
+		foreach($user_bagdes as $type => $value){
+			$k = array_search($type, array_column($badges, 'type'));
+			$n = 0;
+
+			foreach($badges[$k]['targets'] as $min){
+				if($value >= $min){ $n++; }
+			}
+
+			$str .= $this->telegram->emoji("- :$n: ") .$badges[$k]['name'] .": " .$value ."\n";
+		}
+	}
+
+	$this->telegram->send
+		->text($str)
+	->send();
 
 	return -1;
 }
