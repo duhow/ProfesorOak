@@ -278,7 +278,7 @@ if(
 	return -1;
 }elseif($telegram->text_command("badges")){
 	$badges = pokemon_badges();
-	$user_bagdes = badges_list($this->telegram->user->id);
+	$user_badges = badges_list($this->telegram->user->id);
 
 	$str = "No tienes medallas.";
 	if(!empty($user_badges)){
