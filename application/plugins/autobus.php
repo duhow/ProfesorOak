@@ -1,7 +1,7 @@
 <?php
 
 // AMBTempsBus
-function autobus_barcelona($codigo){
+function autobus_barcelona($codigo, $last = FALSE){
     $url = "http://www.ambmobilitat.cat/AMBtempsbus";
     $data = ['codi' => str_pad($codigo, 6, '0', STR_PAD_LEFT)];
 
@@ -25,6 +25,8 @@ function autobus_barcelona($codigo){
             if(strpos($linea, "no disponible")){ return array(); } // HACK
             $lineas[] = $linea;
         }
+		// FIX La primera consulta devuelve valor nulo. Hacer segunda.
+		if(empty($lineas) && !$last){ return autobus_barcelona($codigo, TRUE); }
         return $lineas;
     }
     return array();
