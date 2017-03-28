@@ -66,8 +66,8 @@ if(!empty($blackwords)){
         $this->telegram->send
             ->text("Eh, te calmas.")
         ->send();
+		return -1;
     }
-    return -1;
 }
 
 ?>
