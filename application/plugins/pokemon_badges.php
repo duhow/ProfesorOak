@@ -183,6 +183,30 @@ function pokemon_badges($search = NULL){
 	return NULL;
 }
 
+function badge_points($badge, $user, $update = FALSE){
+	if(substr($badge, 6) != "BADGE_"){
+		$badge = pokemon_badges($badge);
+		if(empty($badge)){ return FALSE; }
+		$badge = $badge['type'];
+	}
+
+	$CI =& get_instance();
+
+	$query = $CI->db
+		->where('uid', $user)
+		->where('type', $badge)
+		->order_by('date', 'DESC')
+		->limit(1)
+	->get('user_badges');
+
+	if($query->num_rows() == 0){ return 0; }
+	if(!$update){ return (int) $query->row()->value; }
+
+	$data = [$query->row()->value, $query->row()->data];
+	$data[1] = date("Y-m-d H:i:s", strtotime($data[1]));
+	return $data;
+}
+
 function badge_register($badge, $amount, $user){
 	$CI =& get_instance();
 	$badge = pokemon_badges($badge);
@@ -203,7 +227,23 @@ if(
 	$telegram->words() == 3
 ){
 	$amount = (int) $telegram->last_word(TRUE);
-	$badge = $telegram->words(1);
+	$badge = pokemon_badges($telegram->words(1));
+
+	if(empty($badge)){
+		$this->telegram->send
+			->text($this->telegram->emoji(":times: Esa medalla no existe."))
+		->send();
+
+		return -1;
+	}
+
+	if($amount < badge_points($badge['type'], $telegram->user->id)){
+		$this->telegram->send
+			->text($this->telegram->emoji(":times: ¡No puedes poner menos puntos de los que ya tienes!"))
+		->send();
+
+		return -1;
+	}
 
 	$q = badge_register($badge, $amount, $telegram->user->id);
 	if($q){
