@@ -208,7 +208,7 @@ if(
 	$q = badge_register($badge, $amount, $telegram->user->id);
 	if($q){
 		$this->telegram->send
-			->text($this->telegram->emoji(":ok: Registrada!")
+			->text($this->telegram->emoji(":ok: Registrada!"))
 		->send();
 	}
 
