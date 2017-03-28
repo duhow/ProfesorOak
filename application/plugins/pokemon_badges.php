@@ -288,18 +288,21 @@ if(
 			$value = $user_badges[$badge['type']];
 			if(empty($value)){ continue; }
 
+			$max = max(array_values($user_badges));
+			$max = strlen($max);
+
 			$icons = ['\u2796', '\ud83e\udd49', '\ud83e\udd48', '\ud83e\udd47'];
 
 			foreach($badge['targets'] as $min){
 				if($value >= $min){ $n++; }
 			}
 
-			$str .= $this->telegram->emoji($icons[$n]) ." " .$badge['name'] .": " .$value ."\n";
+			$str .= $this->telegram->emoji($icons[$n]) ." <code>" .str_pad($value, $max, ' ', STR_PAD_LEFT) ." </code> " .$badge['name'] ."\n";
 		}
 	}
 
 	$this->telegram->send
-		->text($str)
+		->text($str, 'HTML')
 	->send();
 
 	return -1;
