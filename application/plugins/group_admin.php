@@ -1,5 +1,17 @@
 <?php
 
+function user_warns($user, $chat = NULL){
+	$CI =& get_instance();
+	if(!empty($chat)){ $CI->db->where('chat', $chat); }
+
+	$query =$CI->db
+		->where('user', $user)
+	->get('user_warns');
+
+	if($query->num_rows() == 0){ return array(); }
+	return $query->result_array();
+}
+
 if(!$telegram->is_chat_group()){ return; }
 if(!in_array($telegram->user->id, telegram_admins(TRUE))){ return; }
 
@@ -619,6 +631,71 @@ elseif($this->telegram->text_has("lista de comandos") && $this->telegram->words(
 		->notification(FALSE)
 		->text($str)
 	->send();
+	return -1;
+}
+
+elseif(
+	(
+		$this->telegram->text_command("warn") or
+		$this->telegram->text_has(["primer", "último", "quedas"], ["aviso", "avisado"])
+	) and $this->telegram->has_reply
+	and $this->telegram->words() < 6
+){
+	$adminchat = $pokemon->settings($this->telegram->chat->id, 'admin_chat');
+
+	$reasons = [
+		'rager' => ['insulto', 'insultar', 'insultos', 'rager', 'rage', 'ragear'],
+		'discuss' => ['discutir', 'movidas', 'discusion', 'discusiones', 'salseo', 'salsa'],
+		'troll' => ['trol', 'trolear', 'troll'],
+	];
+
+	$reason = NULL;
+	if($telegram->text_contains("por")){
+		foreach($reasons as $r => $v){
+			if($this->telegram->text_has("por", $v)){
+				$reason = $r; break;
+			}
+		}
+	}
+
+	$data = [
+		'user' => $this->telegram->reply_user->id,
+		'chat' => $this->telegram->chat->id,
+		'admin' => $this->telegram->user->id,
+		'reason' => $reason
+	];
+
+	$this->db->insert('user_warns', $data);
+
+	$frases = [
+		"Compórtate o es posible que no dures mucho aquí...",
+		"Vigila para la próxima vez.",
+		"Procura no volver a repetirlo.",
+		"Todos tenemos malos días, pero no tienes porqué pagarlo aquí.",
+		"Va, demuestra que eres un adulto de verdad."
+	];
+	$n = mt_rand(0, count($frases) - 1);
+
+	$warns = user_warn($this->telegram->reply_user->id);
+	$str = $this->telegram->emoji(":warning:") ." Llevas ya <b>" .count($warns) ."</b> avisos.\n" .$frases[$n];
+
+	$this->telegram->send
+		->text($str, 'HTML')
+	->send();
+
+	if($adminchat){
+		$str = ":warning: Usuario warneado\n"
+				.":id: " .$this->telegram->reply_user->id ." - " .$this->telegram->reply_user->first_name ."\n"
+				.":male: " .$this->telegram->user->id ." - " .$this->telegram->user->first_name ."\n"
+				.":abc: " .($reason ?: "---");
+		$str = $this->telegram->emoji($str);
+		$this->telegram->send
+			->notification(TRUE)
+			->chat($adminchat)
+			->text($str)
+		->send();
+	}
+
 	return -1;
 }
 
