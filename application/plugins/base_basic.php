@@ -42,4 +42,20 @@ elseif($telegram->text_command("help")){
     return -1;
 }
 
+if(
+	strpos(strtolower($this->telegram->user->first_name), "oak") !== FALSE or
+	strpos(strtolower($this->telegram->user->last_name), "oak") !== FALSE
+){
+	if($pokemon->user_flags($this->telegram->user->id, 'impersonate')){ return -1; }
+	$str = ":warning: Suplantación de nombre\n"
+				.":id: " .$this->telegram->user->id ." - " .$this->telegram->user->username ."\n"
+				.":multiuser: " .$this->telegram->chat->id;
+	$str = $this->telegram->emoji($str);
+	$this->telegram->send
+		->chat($this->config->item('creator'))
+		->notification(TRUE)
+		->text($str)
+	->send();
+}
+
 ?>
