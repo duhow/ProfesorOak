@@ -312,6 +312,7 @@ if(
 	$badge = NULL;
 	foreach(explode("\n", $text) as $t){
 		$t = trim($t);
+		if(empty($t)){ continue; }
 		if(($badge = pokemon_badges($t)) !== NULL){ break; }
 	}
 
