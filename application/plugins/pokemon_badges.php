@@ -317,8 +317,32 @@ if(
 	}
 
 	$str = $this->telegram->emoji(":times:") ." Foto no reconocida.";
-	if(!empty($badge)){
-		$str = $badge['type'];
+
+	if(!empty($badge) && $this->telegram->words() == 2){
+		$utarget = $this->telegram->reply_target('forward')->id;
+		$amount = (int) $this->telegram->last_word();
+
+		$points = badge_points($badge['type'], $utarget);
+
+		if($amount < $points){
+			$this->telegram->send
+				->text($this->telegram->emoji(":times: ¡No puedes poner menos puntos de los que ya tienes!"))
+			->send();
+
+			return -1;
+		}elseif($amount == $points){
+			$this->telegram->send
+				->text($this->telegram->emoji(":ok: Ya estaba agregado."))
+			->send();
+
+			return -1;
+		}
+
+		$str = $this->telegram->emoji(":warning: Error al agregar " .$badge['name']. ".");
+		$q = badge_register($badge, $amount, $utarget);
+		if($q){
+			$str = $this->telegram->emoji(":ok: Registro " .$badge['name'] ." a ");
+		}
 	}
 
 	$this->telegram->send
