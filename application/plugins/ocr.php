@@ -12,6 +12,10 @@ if($this->telegram->text_command("ocr") && $this->telegram->has_reply && $this->
 
 	$ocr = new TesseractOCR($temp);
 
+	if(is_numeric($this->telegram->last_word())){
+		$ocr->psm( intval($this->telegram->last_word()) );
+	}
+
 	$this->telegram->send
 		->text( $ocr->lang('spa', 'eng')->run() )
 	->send();
