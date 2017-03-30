@@ -403,7 +403,7 @@ if(
 	unlink("$temp.2");
 
 	if(!empty($num)){
-		$num = str_replace([",", " "], "", $num);
+		$num = str_replace([".", ",", " "], "", $num); // HACK Revisar si es válido.
 		$num = (float) trim($num);
 		$num = round($num);
 	}
