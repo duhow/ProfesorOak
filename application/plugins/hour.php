@@ -1,11 +1,12 @@
 <?php
 
-if($this->telegram->text_has("Hora", TRUE) && in_array($telegram->words(), [2,3])){
+if($this->telegram->text_has("Hora", TRUE) && in_array($telegram->words(), [2,3]) && $this->telegram->key == "message"){
     $zonas = ['PDT' => -7, 'PST' => -8, 'CET' => 1, 'UTC' => 0, 'GMT' => 0];
     $sel = NULL;
     foreach($zonas as $z => $t){
         if($this->telegram->text_contains($z)){ $sel = $z; break; }
     }
+    if($this->telegram->text_has("Pokémon")){ $sel = 'PST'; }
 
     if(empty($sel)){
         $this->telegram->send
@@ -33,7 +34,7 @@ if($this->telegram->text_has("Hora", TRUE) && in_array($telegram->words(), [2,3]
             if(!empty($timefrom) && isset($timefrom['hour'])){
 
                 $time = strtotime($timefrom['hour']);
-                $local = $time - (3600 * $zonas[$sel]) - (3600*$sum); // TODO Check
+                $local = $time - (3600 * $zonas[$sel]) - (3600*$sum) + 3600 ; // TODO Check
             }
         }
     }else{
