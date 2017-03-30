@@ -57,6 +57,13 @@ function pokemon_badges($search = NULL){
 			'targets' => [3, 50, 300]
 		],
 		[
+			'name' => 'Brillante',
+			'type' => 'BADGE_SHINY',
+			'custom' => TRUE,
+			'desc' => 'Pokémon Shiny capturados',
+			'targets' => [1, 5, 25]
+		],
+		[
 			'name' => 'Entre. Guay',
 			'type' => 'BADGE_BATTLE_TRAINING_WON',
 			'desc' => 'Número de entrenamientos',
