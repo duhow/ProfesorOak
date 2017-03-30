@@ -4,12 +4,14 @@ function pokemon_badges($search = NULL){
 	$badges = [
 		[
 			'name' => 'Kanto',
+			'name_en' => 'Kanto',
 			'type' => 'BADGE_POKEDEX_ENTRIES',
 			'desc' => 'Pokémon registrados en la Pokédex',
 			'targets' => [5, 50, 100]
 		],
 		[
 			'name' => 'Johto',
+			'name_en' => 'Johto',
 			'type' => 'BADGE_POKEDEX_JOHTO',
 			'desc' => 'Registra x Pokémon originalmente de la región de Johto en la Pokédex.',
 			'targets' => [5, 30, 70]
@@ -257,7 +259,7 @@ function pokemon_badges($search = NULL){
 	foreach($badges as $badge){
 		if(
 			strtolower($search) == strtolower($badge['name']) or
-			strtolower($search) == strtolower($badge['name_en']) or
+			strtolower($search) == strtolower(@$badge['name_en']) or
 			strtoupper($search) == $badge['type'] or
 			strtoupper("BADGE_TYPE_" .$search) == $badge['type'] or
 			strtoupper("BADGE_" .$search) == $badge['type']
