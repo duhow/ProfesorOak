@@ -381,7 +381,6 @@ if(
 
 	$ocr = new TesseractOCR($temp);
 	$text = $ocr->lang('spa', 'eng')->run();
-	unlink($temp);
 
 	$badge = NULL;
 	foreach(explode("\n", $text) as $t){
@@ -390,12 +389,32 @@ if(
 		if(($badge = pokemon_badges($t)) !== NULL){ break; }
 	}
 
+	exec("convert $temp -gravity Center -crop 16x4%+0+50 -scale 300% -posterize 2 $temp.2");
+	$ocr = new TesseractOCR("$temp.2");
+	$num = $ocr
+		->lang('lato')
+		->whitelist('1234567890,.')
+		->psm(9)
+	->run();
+
+	unlink($temp);
+	unlink("$temp.2");
+
+	if(!empty($num)){
+		$num = str_replace([",", " "], "", $num);
+		$num = (float) trim($num);
+		$num = round($num);
+	}
+
+	$amount = NULL;
+
+	if($num > 0){ $amount = $num; }
+	elseif($this->telegram->words() == 2){ $amount = (int) $this->telegram->last_word(); }
+
 	$str = $this->telegram->emoji(":times:") ." Foto no reconocida.";
 
-	if(!empty($badge) && $this->telegram->words() == 2){
+	if(!empty($badge)){
 		$utarget = $this->telegram->reply_target('forward')->id;
-		$amount = (int) $this->telegram->last_word();
-
 		$points = badge_points($badge['type'], $utarget);
 
 		if($amount < $points){
