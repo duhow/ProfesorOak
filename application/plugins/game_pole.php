@@ -11,6 +11,7 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
     // Si está el Modo HARDCORE, la pole es cada hora. Si no, cada día.
     $timer = ($pokemon->settings($telegram->chat->id, 'pole_hardcore') ? "H" : "d");
 
+	$pole = $pokemon->settings($telegram->chat->id, 'pole_points');
     if(!empty($pole)){
         $pole = unserialize($pole);
         if(
@@ -64,7 +65,7 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
         return;
     }
 
-    $pokemon->settings($telegram->chat->id, 'pole', serialize($pole));
+    $pokemon->settings($telegram->chat->id, 'pole_points', serialize($pole));
     $pokemon->settings($telegram->chat->id, 'pole_user', serialize($pole_user));
     $telegram->send->text($telegram->user->first_name ." ha hecho $action!", TRUE)->send();
     // $telegram->send->text("Lo siento " .$telegram->user->first_name .", pero hoy la *pole* es mía! :D", TRUE)->send();
