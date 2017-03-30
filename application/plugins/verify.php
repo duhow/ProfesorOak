@@ -159,10 +159,9 @@ elseif($telegram->text_command("ocrv") && $this->telegram->user->id == $this->co
 	$temp = tempnam("/tmp", "tgphoto");
 	file_put_contents($temp, file_get_contents($url));
 
-	exec("convert $temp +dither -colors 1 $temp.2");
-	$out = shell_exec("identify -verbose $temp.2");
+	$out = shell_exec("convert $temp +dither -posterize 2 -crop 20x20%+600+50 -define histogram:unique-colors=true -format %c histogram:info:-");
 
-	$colors = ['Y' => '#CFC9A7', 'R' => '#E9C1C1', 'B' => '#B1D6DF'];
+	$colors = ['Y' => 'yellow', 'R' => 'red', 'B' => 'cyan'];
 	$csel = NULL;
 	foreach($colors as $team => $color){
 		if(strpos($out, $color) !== FALSE){
@@ -182,7 +181,6 @@ elseif($telegram->text_command("ocrv") && $this->telegram->user->id == $this->co
 	->send();
 
 	unlink($temp);
-	unlink("$temp.2");
 
 	return -1;
 }
