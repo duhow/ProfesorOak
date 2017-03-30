@@ -75,6 +75,12 @@ function pokemon_badges($search = NULL){
 			'targets' => [3, 50, 300]
 		],
 		[
+			'name' => 'Unown',
+			'type' => 'BADGE_UNOWN',
+			'desc' => 'Unown atrapados',
+			'targets' => [3, 10, 26]
+		],
+		[
 			'name' => 'Escolar',
 			'type' => 'BADGE_TYPE_NORMAL',
 			'desc' => 'Pokémon de tipo Normal capturados.',
