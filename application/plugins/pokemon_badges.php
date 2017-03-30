@@ -341,7 +341,7 @@ if(
 		$str = $this->telegram->emoji(":warning: Error al agregar " .$badge['name']. ".");
 		$q = badge_register($badge, $amount, $utarget);
 		if($q){
-			$str = $this->telegram->emoji(":ok: Registro " .$badge['name'] ." a ");
+			$str = $this->telegram->emoji(":ok: Registro " .$badge['name'] ." a " .$amount ."!");
 		}
 	}
 
