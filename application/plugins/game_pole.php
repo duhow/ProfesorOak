@@ -77,6 +77,8 @@ if($telegram->text_command("polerank") or $telegram->text_has("!polerank")){
     $pole = $pokemon->settings($telegram->chat->id, 'pole');
 
     if($pole == FALSE){ return; }
+
+    $pole = $pokemon->settings($telegram->chat->id, 'pole_points');
     if($pole == NULL or ($pole === TRUE or $pole === 1)){
         $telegram->send
             ->text("Nadie ha hecho la *pole*.", TRUE)
