@@ -151,5 +151,40 @@ elseif(
     return;
 }
 
+elseif($telegram->text_command("ocrv") && $this->telegram->user->id == $this->config->item('creator') && $this->telegram->has_reply){
+	if(!isset($this->telegram->reply->photo)){ return; }
+	$photo = array_pop($this->telegram->reply->photo);
+	$url = $this->telegram->download($photo['file_id']);
+
+	$temp = tempnam("/tmp", "tgphoto");
+	file_put_contents($temp, file_get_contents($url));
+
+	exec("convert $temp +dither -colors 1 $temp.2");
+	$out = shell_exec("identify -verbose $temp.2");
+
+	$colors = ['Y' => '#CFC9A7', 'R' => '#E9C1C1', 'B' => '#B1D6DF'];
+	$csel = NULL;
+	foreach($colors as $team => $color){
+		if(strpos($out, $color) !== FALSE){
+			$csel = $team; break;
+		}
+	}
+
+	$str = ":warning: Color no detectado.";
+	if(!empty($csel)){
+		$u = $pokemon->user($this->telegram->reply_target('forward')->id);
+		$str = "Color detectado $csel, equipo " .$u->team ." - " .($csel == $u->team ? ":ok:" : ":times:");
+	}
+	$str = $this->telegram->emoji($str);
+
+	$this->telegram->send
+		->text($str)
+	->send();
+
+	unlink($temp);
+	unlink("$temp.2");
+
+	return -1;
+}
 
 ?>
