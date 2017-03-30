@@ -300,7 +300,10 @@ if(
 	}
 
 	return -1;
-}elseif($telegram->text_command("badgeocr") && $this->telegram->user->id == $this->config->item('creator') && $this->telegram->has_reply){
+}elseif(
+	($telegram->text_command("badgeocr") or $this->telegram->text_command("bocr") or $this->telegram->text_command("ocrb")) &&
+	$this->telegram->user->id == $this->config->item('creator') && $this->telegram->has_reply
+){
 
 	if(!isset($this->telegram->reply->photo)){ return; }
 	$photo = array_pop($this->telegram->reply->photo);
