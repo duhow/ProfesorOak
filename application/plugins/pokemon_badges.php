@@ -419,7 +419,7 @@ if(
 
 		if($amount < $points){
 			$this->telegram->send
-				->text($this->telegram->emoji(":times: ¡No puedes poner menos puntos de los que ya tienes!"))
+				->text($this->telegram->emoji(":times: ¡No puedes poner menos puntos de los que ya tienes! ($amount -> $points)"))
 			->send();
 
 			return -1;
