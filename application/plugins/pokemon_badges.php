@@ -252,7 +252,13 @@ if(
 		return -1;
 	}
 
-	$points = badge_points($badge['type'], $telegram->user->id);
+	$utarget = $this->telegram->user->id;
+
+	if($this->telegram->user->id == $this->config->item('creator') && $this->telegram->has_reply){
+		$utarget = $this->telegram->reply_target('forward')->id;
+	}
+
+	$points = badge_points($badge['type'], $utarget);
 
 	if($amount < $points){
 		$this->telegram->send
@@ -268,7 +274,7 @@ if(
 		return -1;
 	}
 
-	$q = badge_register($badge, $amount, $telegram->user->id);
+	$q = badge_register($badge, $amount, $utarget);
 	if($q){
 		$this->telegram->send
 			->text($this->telegram->emoji(":ok: Registrada!"))
@@ -278,7 +284,12 @@ if(
 	return -1;
 }elseif($telegram->text_command("badges")){
 	$badges = pokemon_badges();
-	$user_badges = badges_list($this->telegram->user->id);
+	$utarget = $this->telegram->user->id;
+	if($this->telegram->user->id == $this->config->item('creator') && $this->telegram->has_reply){
+		$utarget = $this->telegram->reply_target('forward')->id;
+	}
+
+	$user_badges = badges_list($utarget);
 
 	$str = "No tienes medallas.";
 	if(!empty($user_badges)){
