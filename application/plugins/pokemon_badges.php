@@ -117,8 +117,8 @@ function pokemon_badges($search = NULL){
 			'targets' => [10, 50, 200]
 		],
 		[
-			'name' => 'Ornitólogo'
-			'name_en' => 'Bird Keeper',,
+			'name' => 'Ornitólogo',
+			'name_en' => 'Bird Keeper',
 			'type' => 'BADGE_TYPE_FLY',
 			'desc' => 'Pokémon de tipo Volador capturados.',
 			'desc_en' => 'Catch Flying-type Pokémon.',
