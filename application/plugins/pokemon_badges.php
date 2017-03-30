@@ -159,6 +159,18 @@ function pokemon_badges($search = NULL){
 			'targets' => [10, 50, 200]
 		],
 		[
+			'name' => 'Ferroviario',
+			'type' => 'BADGE_TYPE_STEEL',
+			'desc' => 'Pokémon de tipo Acero capturados.',
+			'targets' => [10, 50, 200]
+		],
+		[
+			'name' => 'Esquiador',
+			'type' => 'BADGE_TYPE_ICE',
+			'desc' => 'Pokémon de tipo Hielo capturados.',
+			'targets' => [10, 50, 200]
+		],
+		[
 			'name' => 'Domadragón',
 			'type' => 'BADGE_TYPE_DRAGON',
 			'desc' => 'Pokémon de tipo Dragón capturados.',
