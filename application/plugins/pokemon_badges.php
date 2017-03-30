@@ -294,6 +294,37 @@ if(
 	}
 
 	return -1;
+}elseif($telegram->text_commmand("badgeocr") && $this->telegram->user->id == $this->config->item('creator') && $this->telegram->has_reply){
+
+	if(!isset($this->telegram->reply->photo)){ return; }
+	$photo = array_pop($this->telegram->reply->photo);
+	$url = $this->telegram->download($photo['file_id']);
+
+	$temp = tempnam("/tmp", "tgphoto");
+	file_put_contents($temp, file_get_contents($url));
+
+	require_once APPPATH .'third_party/tesseract-ocr-for-php/src/TesseractOCR.php';
+
+	$ocr = new TesseractOCR($temp);
+	$text = $ocr->lang('spa', 'eng')->run();
+	unlink($temp);
+
+	$badge = NULL;
+	foreach(explode("\n", $text) as $t){
+		$t = trim($t);
+		if(($badge = pokemon_badges($t)) !== NULL){ break; }
+	}
+
+	$str = $this->telegram->emoji(":times:") ." Foto no reconocida.";
+	if(!empty($badge)){
+		$str = $badge['type'];
+	}
+
+	$this->telegram->send
+		->text($str)
+	->send();
+
+	return -1;
 }elseif($telegram->text_command("badges")){
 	$badges = pokemon_badges();
 	$utarget = $this->telegram->user->id;
