@@ -321,6 +321,142 @@ function badges_list($user){
 	return array_column($query->result_array(), 'value', 'type');
 }
 
+if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_group()){
+	if($this->telegram->text_has("Listo", TRUE)){
+		$this->telegram->send
+			->text("Guay! Puedes ver todas las medallas con /badges .")
+		->send();
+		$this->pokemon->step($telegram->user->id, NULL);
+	}elseif($this->telegram->photo() && !$telegram->has_forward){
+		// Hacer OCR
+
+		// HACK FIXME Arreglar método de acceso a última foto
+		$photos = $this->telegram->dump()['message']['photo'];
+		$photo = array_pop($photos);
+		$photo = $photo['file_id'];
+
+		$url = $this->telegram->download($photo);
+
+		$temp = tempnam("/tmp", "tgphoto");
+		file_put_contents($temp, file_get_contents($url));
+
+		require_once APPPATH .'third_party/tesseract-ocr-for-php/src/TesseractOCR.php';
+
+		$ocr = new TesseractOCR($temp);
+		$text = $ocr->lang('spa', 'eng')->run();
+		unlink($temp);
+
+		$badge = NULL;
+		foreach(explode("\n", $text) as $t){
+			$t = trim($t);
+			if(empty($t)){ continue; }
+			$badge = pokemon_badges($t);
+			if(!empty($badge)){ break; }
+		}
+
+		// Hide previous Keyboard
+		$this->telegram->send->keyboard()->hide(TRUE);
+
+		if(empty($badge)){
+			$this->telegram->send
+				->text($this->telegram->emoji(":warning: ") ."No he reconocido la medalla. Asegúrate de no recortar ni mover la pantalla.")
+			->send();
+			return -1;
+		}
+
+		// Set badge to settings.
+		$this->pokemon->settings($telegram->user->id, 'badge_type', $badge['type']);
+		$this->telegram->send
+			->reply_to(TRUE)
+			->force_reply(TRUE)
+			->text($this->telegram->emoji(":ok: ") ."Detecto la medalla " .$badge['name'] .". ¿Cuántos puntos tienes?")
+		->send();
+
+	}elseif(
+		$this->telegram->text() &&
+		$this->telegram->has_reply &&
+		$this->telegram->reply_user->id == $this->config->item('telegram_bot_id') &&
+		$this->telegram->words() == 1
+	){
+		$tx = $this->telegram->text_message();
+		if(strpos($tx, "Detecto la medalla") === FALSE){ return -1; } // HACK
+
+		$amount = (int) $this->telegram->last_word();
+		if($amount < 1){ return -1; }
+
+		$badgetype = $pokemon->settings($telegram->user->id, 'badge_type');
+		if(empty($badgetype)){
+			$this->pokemon->step($telegram->user->id, NULL);
+			return -1;
+		}
+		$badge = pokemon_badges($badgetype);
+
+		$utarget = $this->telegram->user->id;
+		$points = badge_points($badge['type'], $utarget);
+
+		$str = ":ok: No ha cambiado nada desde la última vez que la pusiste.";
+
+		if($amount < $points){
+			$this->telegram->send
+				->text($this->telegram->emoji(":times: ¡No puedes poner menos puntos de los que ya tienes!"))
+			->send();
+
+			return -1;
+		}elseif($amount != $points){
+			$badgetype = $pokemon->settings($telegram->user->id, 'badge_type', "DELETE");
+			$q = badge_register($badge, $amount, $utarget);
+			$str = ":warning: Error al guardar.";
+			if($q){
+				$str = ":ok: Guardada! Ahora tienes <b>" .$amount ."</b> en <b>" .$badge['name'] ."</b>!";
+
+				$bt = str_replace("BADGE_", "", $badge['type']);
+				$this->telegram->send
+					->notification(FALSE)
+					->chat(-184149677) // Grupo Medallas
+					->text("BADGE: " .$telegram->user->id . " - $bt: $amount")
+				->send();
+			}
+		}
+
+		$str .= "\n" ."Puedes enviar otra medalla si tienes la captura.";
+
+		$this->telegram->send
+			->keyboard()
+				->row_button("Listo")
+			->show(TRUE, TRUE)
+			->text($this->telegram->emoji($str), 'HTML')
+		->send();
+	}
+	return -1;
+}
+
+if(
+	$this->telegram->text_has(["registrar", "registro"], ["medalla", "medallas", "badge", "badges"]) &&
+	$this->telegram->words() <= 5
+){
+	if($this->telegram->is_chat_group()){
+		$str = $this->telegram->emoji(":times:") ." Dímelo por privado, por favor.";
+		$this->telegram->send->keyboard()->hide(TRUE);
+	}else{
+		$this->telegram->send
+		->keyboard()
+			->row_button("Cancelar")
+		->show(TRUE, TRUE);
+
+		$str = "Puedes registrar tus medallas aquí para poder enseñarselas a tus amigos. En un futuro, hasta podrás competir con ellas!\n\n"
+				."Tienes que subir (no reenviar) una captura de pantalla donde se vea el nombre de la medalla y los puntos que has conseguido.\n\n"
+				."Procura no falsificar los puntos, o podrías acabar bloqueado.";
+
+		$this->pokemon->step($telegram->user->id, 'BADGE');
+	}
+
+	$this->telegram->send
+		->text($str)
+	->send();
+
+	return -1;
+}
+
 if(
 	($telegram->text_command("badge") or
 	$telegram->text_command("medalla")) and
