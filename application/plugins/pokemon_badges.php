@@ -549,7 +549,7 @@ if(
 	$amount = NULL;
 
 	if($num > 0){ $amount = $num; }
-	elseif($this->telegram->words() == 2){ $amount = (int) $this->telegram->last_word(); }
+	if($this->telegram->words() == 2){ $amount = (int) $this->telegram->last_word(); }
 
 	$str = $this->telegram->emoji(":times:") ." Foto no reconocida.";
 
