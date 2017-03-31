@@ -807,49 +807,7 @@ class Main extends CI_Controller {
 
 				break;
 			case 'SCREENSHOT_VERIFY':
-				if(!$telegram->is_chat_group() && $telegram->photo()){
-					if(empty($pokeuser->username) or $pokeuser->lvl == 1){
-						$text = "Antes de validarte, necesito saber tu *nombre o nivel actual*.\n"
-								.":triangle-right: *Me llamo ...*\n"
-								.":triangle-right: *Soy nivel ...*";
-						$telegram->send
-							->notification(TRUE)
-							->chat($telegram->user->id)
-							->text($telegram->emoji($text), TRUE)
-							->keyboard()->hide(TRUE)
-						->send();
-						$pokemon->step($telegram->user->id, NULL);
-						exit();
-					}
 
-					$telegram->send
-						->message(TRUE)
-						->chat(TRUE)
-						->forward_to($this->config->item('creator'))
-					->send();
-
-					$telegram->send
-						->notification(TRUE)
-						->chat($this->config->item('creator'))
-						->text("Validar " .$user->id ." @" .$pokeuser->username ." L" .$pokeuser->lvl ." " .$pokeuser->team)
-						->inline_keyboard()
-							->row()
-								->button($telegram->emoji(":ok:"), "te valido " .$pokeuser->telegramid, "TEXT")
-								->button($telegram->emoji(":times:"), "no te valido")
-							->end_row()
-						->show()
-					->send();
-
-					$telegram->send
-						->notification(TRUE)
-						->chat($user->id)
-						->keyboard()->hide(TRUE)
-						->text("¡Enviado correctamente! El proceso de validar puede tardar un tiempo.")
-					->send();
-
-					$pokemon->step($user->id, NULL);
-					exit();
-				}
 				break;
 			case 'SPEAK':
 				// DEBUG - FIXME

@@ -1,5 +1,58 @@
 <?php
 
+if($step == 'SCREENSHOT_VERIFY'){
+	if(!$telegram->is_chat_group() && $telegram->photo()){
+		if(empty($pokeuser->username) or $pokeuser->lvl == 1){
+			$text = "Antes de validarte, necesito saber tu *";
+			$add = array();
+			if(empty($pokeuser->username)){ $add[] = "nombre"; }
+			if($pokeuser->username == 1){ $add[] = "nivel actual"; }
+			$text .= implode(" y ", $add) ."*.\n";
+
+			if(empty($pokeuser->username)){ $text .= ":triangle-right: *Me llamo ...*\n"; }
+			if($pokeuser->username == 1){ $text .= ":triangle-right: *Soy nivel ...*\n"; }
+
+			$text .= "Cuando lo hayas dicho, *vuelve a enviarme la captura.*";
+			$telegram->send
+				->notification(TRUE)
+				->chat($telegram->user->id)
+				->text($telegram->emoji($text), TRUE)
+				->keyboard()->hide(TRUE)
+			->send();
+			$pokemon->step($telegram->user->id, NULL);
+			return -1;
+		}
+
+		$telegram->send
+			->message(TRUE)
+			->chat(TRUE)
+			->forward_to($this->config->item('creator'))
+		->send();
+
+		$telegram->send
+			->notification(TRUE)
+			->chat($this->config->item('creator'))
+			->text("Validar " .$telegram->user->id ." @" .$pokeuser->username ." L" .$pokeuser->lvl ." " .$pokeuser->team)
+			->inline_keyboard()
+				->row()
+					->button($telegram->emoji(":ok:"), "te valido " .$telegram->user->id, "TEXT")
+					->button($telegram->emoji(":times:"), "no te valido " .$telegram->user->id, "TEXT")
+				->end_row()
+			->show()
+		->send();
+
+		$telegram->send
+			->notification(TRUE)
+			->chat($telegram->user->id)
+			->keyboard()->hide(TRUE)
+			->text("¡Enviado correctamente! El proceso de validar puede tardar un tiempo.")
+		->send();
+
+		$pokemon->step($telegram->user->id, NULL);
+		return -1;
+	}
+}
+
 if($telegram->text_command("register")){
 	if($pokemon->command_limit("register", $telegram->chat->id, $telegram->message, 10)){ return -1; }
 
@@ -133,10 +186,17 @@ elseif(
     ->send();
 
     if(empty($pokeuser->username) or $pokeuser->lvl == 1){
-        $text = "Antes de validarte, necesito saber tu *nombre y/o nivel actual* según lo que me falta por saber. Dime línea por línea (*no lo escribas todo junto, son DOS mensajes separados*):\n"
-                .":triangle-right: *Me llamo ...*\n"
-                .":triangle-right: *Soy nivel ...*\n"
-                ."Una vez hecho, vuelve a preguntarme para validarte el perfil.";
+		$text = "Antes de validarte, necesito saber tu *";
+		$add = array();
+		if(empty($pokeuser->username)){ $add[] = "nombre"; }
+		if($pokeuser->username == 1){ $add[] = "nivel actual"; }
+		$text .= implode(" y ", $add) ."*.\n";
+
+		if(empty($pokeuser->username)){ $text .= ":triangle-right: *Me llamo ...*\n"; }
+		if($pokeuser->username == 1){ $text .= ":triangle-right: *Soy nivel ...*\n"; }
+
+		$text .= "Cuando lo hayas dicho, *vuelve a enviarme la captura.*";
+
         $telegram->send
             ->notification(TRUE)
             ->chat($telegram->user->id)
@@ -144,7 +204,7 @@ elseif(
             ->keyboard()->hide(TRUE)
         ->send();
 		$pokemon->step($telegram->user->id, NULL);
-        exit(); // Kill process for STEP
+        return -1; // Kill process for STEP
     }
 
     $pokemon->step($telegram->user->id, 'SCREENSHOT_VERIFY');
