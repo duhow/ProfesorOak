@@ -330,6 +330,8 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 	}elseif($this->telegram->photo() && !$telegram->has_forward){
 		// Hacer OCR
 
+		if($this->pokemon->settings($telegram->user->id, 'badge_type')){ return -1; }
+
 		// HACK FIXME Arreglar método de acceso a última foto
 		$photos = $this->telegram->dump()['message']['photo'];
 		$photo = array_pop($photos);
@@ -444,14 +446,14 @@ if(
 		->show(TRUE, TRUE);
 
 		$str = "Puedes registrar tus medallas aquí para poder enseñarselas a tus amigos. En un futuro, hasta podrás competir con ellas!\n\n"
-				."Tienes que subir (no reenviar) una captura de pantalla donde se vea el nombre de la medalla y los puntos que has conseguido.\n\n"
+				."Tienes que subir (no reenviar) <b>DE UNA EN UNA</b> una captura de pantalla donde se vea el nombre de la medalla y los puntos que has conseguido.\n\n"
 				."Procura no falsificar los puntos, o podrías acabar bloqueado.";
 
 		$this->pokemon->step($telegram->user->id, 'BADGE');
 	}
 
 	$this->telegram->send
-		->text($str)
+		->text($str, 'HTML')
 	->send();
 
 	return -1;
