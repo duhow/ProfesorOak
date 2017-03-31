@@ -1,12 +1,16 @@
 <?php
 
+// HACK para acelerar el procesamiento.
+if($this->telegram->text_contains(["pole", "bronce"]) && !$this->telegram->is_chat_group()){ return -1; }
+
 if(!$telegram->is_chat_group()){ return; }
 
 if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_command("pole") or $telegram->text_command("subpole")){
     $this->analytics->event("Telegram", "Pole");
     $pole = $pokemon->settings($telegram->chat->id, 'pole');
-    if($pole != NULL && $pole == FALSE){ return; }
-    if($pokemon->settings($telegram->user->id, 'no_pole') == TRUE){ return; }
+    if($pole != NULL && $pole == FALSE){ return -1; }
+    if($pokemon->settings($telegram->user->id, 'no_pole') == TRUE){ return -1; }
+	if($pokemon->group_users_active($telegram->chat->id, TRUE) < 6){ return -1; }
 
     // Si está el Modo HARDCORE, la pole es cada hora. Si no, cada día.
     $timer = ($pokemon->settings($telegram->chat->id, 'pole_hardcore') ? "H" : "d");

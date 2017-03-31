@@ -331,6 +331,24 @@ class Pokemon extends CI_Model{
 		return $this->group_spamcount($gid);
 	}
 
+	function group_users_active($gid, $hours = 24, $count = FALSE){
+		if(is_bool($hours)){
+			$count = $hours;
+			$hours = 24;
+		}
+		if(intval($hours) <= 0){ $hours = 24; }
+		$query = $this->db
+			->where('cid', $gid)
+			->where('last_date >=', 'NOW() - INTERVAL ' .$hours .' HOUR', FALSE)
+		->get('user_inchat');
+
+		if($count){ return $query->num_rows(); }
+		if($query->num_rows() == 0){ return array(); }
+
+		// TODO Exportar toda la info?
+		return array_column($query->result_array(), 'uid');
+	}
+
 	function group_admins($gid, $useradd = NULL, $time = 3600){
 		if($useradd === NULL){
 			// GET
