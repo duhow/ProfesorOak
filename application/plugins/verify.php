@@ -1,7 +1,8 @@
 <?php
 
-if($step == 'SCREENSHOT_VERIFY'){
+if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 	if(!$telegram->is_chat_group() && $telegram->photo()){
+		$pokeuser = $pokemon->user($telegram->user->id);
 		if(empty($pokeuser->username) or $pokeuser->lvl == 1){
 			$text = "Antes de validarte, necesito saber tu *";
 			$add = array();
