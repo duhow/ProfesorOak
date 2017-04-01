@@ -218,7 +218,7 @@ elseif(
         $telegram->text_has(['dime', 'ver'], ["las reglas", "las normas", "reglas", "normas"], TRUE) or
         $telegram->text_has(["/rules", "/normas"], TRUE)
     ) and
-    !$telegram->text_has(["poner", "actualizar", "redactar", "escribir", "cambiar"]) and
+    !$telegram->text_has(["poner", "actualizar", "redactar", "escribir", "editar", "cambiar"]) and
     $telegram->is_chat_group()
 ){
     $this->analytics->event('Telegram', 'Rules', 'display');

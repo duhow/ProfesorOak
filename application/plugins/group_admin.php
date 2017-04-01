@@ -564,7 +564,7 @@ elseif($telegram->text_has(["emparejamiento", "crear unión"], ["de grupo", "del
 // Escribir las normas del grupo.
 elseif(
     $telegram->words() <= 6 &&
-    $telegram->text_has(["poner", "actualizar", "redactar", "escribir", "cambiar"], ["las normas", "las reglas"])
+    $telegram->text_has(["poner", "actualizar", "redactar", "escribir", "editar", "cambiar"], ["las normas", "las reglas"])
 ){
     $admins = $pokemon->telegram_admins(TRUE);
     if(in_array($telegram->user->id, $admins)){
@@ -580,7 +580,7 @@ elseif(
 // Escribir el mensaje de bienvenida
 elseif(
     $telegram->words() <= 8 &&
-    $telegram->text_has(["poner", "actualizar", "redactar", "escribir", "cambiar"]) &&
+    $telegram->text_has(["poner", "actualizar", "redactar", "escribir", "editar", "cambiar"]) &&
     $telegram->text_has(["mensaje", "anuncio"]) &&
     $telegram->text_has(["bienvenida", "entrada"])
 ){
