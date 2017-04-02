@@ -24,6 +24,13 @@ if($step == "CUSTOM_COMMAND"){
 		if($telegram->text()){
 			$rm = ["^", "$", "'", "\"", "*"];
 			$command = str_replace($rm, "", strtolower($telegram->text()));
+			if($command == "crear comando"){
+				$this->telegram->send
+			        ->reply_to(TRUE)
+			        ->text("Dime el comando / frase a crear.")
+			    ->send();
+			    return -1;
+			}
 			$pokemon->settings($telegram->user->id, 'command_name', $command);
 			$telegram->send
 				->text("¡De acuerdo! Ahora envíame la respuesta que quieres enviar.")
