@@ -690,7 +690,18 @@ if(
         return -1;
     }
 
-    if(!empty($poke->owner)){ return -1; } // FIX para escapes
+	// FIX para escapes
+    if(!empty($poke->owner)){
+		// Esconder el botón
+		if($telegram->callback){
+			$telegram->send
+	            ->message(TRUE)
+	            ->chat(TRUE)
+	            ->text($telegram->text_message())
+	        ->edit('text');
+		}
+		return -1;
+	}
 
     $items = pokegame_items($telegram->user->id);
 
