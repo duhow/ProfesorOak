@@ -81,6 +81,9 @@ if($flood && !in_array($telegram->user->id, $pokemon->telegram_admins(TRUE))){
 				$str = $this->telegram->emoji($str);
 				$this->telegram->send
 					->chat($adminchat)
+					->inline_keyboard()
+						->row_button("Desbanear", "desbanear " .$telegram->user->id, "TEXT")
+					->show()
 					->text($str)
 				->send();
 				// Forward del mensaje afectado

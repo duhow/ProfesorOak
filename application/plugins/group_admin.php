@@ -145,8 +145,20 @@ elseif(($telegram->text_contains("desbanea", TRUE) or $telegram->text_command("u
 		if(!empty($user)){ $target = $user->telegramid; }
     }
 
+	$chat = $telegram->chat->id;
+
+	$query = $this->db
+		->select('uid')
+		->where('type', 'admin_chat')
+		->where('value', $telegram->chat->id)
+		->limit(1)
+	->get('settings');
+	if($query->num_rows() == 1){
+		$chat = $query->row()->uid;
+	}
+
     if($target != NULL){
-        $q = $telegram->send->unban($target, $telegram->chat->id);
+        $q = $telegram->send->unban($target, $chat);
 		if($q !== FALSE){
 			$telegram->send
 				->text("Usuario $target desbaneado.")
