@@ -29,6 +29,18 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
     // Bot agregado al grupo. Yo no saludo bots :(
     }elseif($new->id != $this->config->item('telegram_bot_id') && $telegram->is_bot($new->username)){ return -1; }
 
+	if($pokemon->settings($new->id, 'follow_join')){
+		$str = ":warning: Join detectado\n"
+				.":id: " .$new->id ." - " .$new->first_name ."\n"
+				.":multiuser: " .$this->telegram->chat->id ." - " .$this->telegram->chat->title;
+		$str = $telegram->emoji($str);
+		$this->telegram->send
+			->notification(TRUE)
+			->chat($this->config->item('creator'))
+			->text($str)
+		->send();
+	}
+
     $pknew = $pokemon->user($new->id);
     // El usuario nuevo es creador
     if($new->id == $this->config->item('creator')){
