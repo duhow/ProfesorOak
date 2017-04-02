@@ -1,6 +1,7 @@
 <?php
 
-if($this->telegram->text_has(["I found a", "Encontré un"], TRUE) && $this->telegram->text_contains("PokéTrack")){
+if($this->telegram->text_has(["I found a", "Encontré un"], TRUE)){
+	//  && $this->telegram->text_contains("PokéTrack")
 	$loc = array();
 	preg_match("/([+-]?)(\d+.\d+)[,;]\s?([+-]?)(\d+.\d+)/", $telegram->text(), $loc);
 	if(empty($loc)){ return -1; }
