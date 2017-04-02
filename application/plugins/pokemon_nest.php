@@ -219,7 +219,7 @@ elseif(
 }
 
 elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && $telegram->words() <= 8){
-    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam'])){ return; }
+    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return; }
 	if(!$telegram->callback && !$telegram->is_chat_group()){
 		$telegram->send
 			->text("Pídemelos por el grupo. Si no, no sé qué nidos quieres.")
@@ -227,16 +227,17 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
 		return -1;
 	}
 	$uinfo = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
+	$utime = strtotime($uinfo->register_date);
 
-	if($uinfo->messages <= 7){
+	if($uinfo->messages <= 7 or strtotime("+4 days", $utime) > time() && $this->telegram->user->id != $this->config->item('creator')){
 		$str = "¿Acabas de llegar y ya estás pidiendo nidos? Te calmas.";
 		if($telegram->callback){
 			$telegram->answer_if_callback($str, TRUE);
-			return -1;
+		}else{
+			$telegram->send
+				->text($str)
+			->send();
 		}
-		$telegram->send
-			->text($str)
-		->send();
 		return -1;
 	}
 
@@ -269,37 +270,62 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
 
     $pokedex = $pokemon->pokedex();
 
-    // $str = "Lista de nidos:\n";
-	$str = "Hay <b>" .$query->num_rows() ."</b> nidos de:\n";
-	$pokenames = array();
-    foreach($query->result_array() as $nest){
-        // $str .= "- " .$pokedex[$nest['pokemon']]->name ." " .(empty($nest['location_string']) ? "en ubicación." : "en " .$nest['location_string'])  ."\n";
-		$pokenames[] = $pokedex[$nest['pokemon']]->name;
-    }
-	$pokenames = array_unique($pokenames);
-	$str .= implode(", ", $pokenames) .".";
+	if($this->telegram->text_has(["completa", "entera", "full"])){
+		if(strtotime("+14 days", $utime) > time() && $this->telegram->user->id != $this->config->item('creator')){
+			$frases = [
+				'Lo siento granujilla, pero esto es para los que llevan tiempo.',
+				'Aún no te conocen por aquí. Avaricioso.',
+				'Lo siento. No confío en los nuevos.',
+				'Esperate unos días que me lo piense.'
+			];
+			$str = $frases[mt_rand(0, count($frases) - 1)];
+			if($telegram->callback){
+				$telegram->answer_if_callback($str, TRUE);
+			}else{
+				$telegram->send
+					->text($str)
+				->send();
+			}
+			return -1;
+		}
 
-    // Si hay más de 12, mandarlo por privado.
-    /* if($query->num_rows() > 12 or $telegram->callback){
-        $telegram->send->chat($telegram->user->id);
-    } */
+		$str = "Lista de nidos:\n";
+	    foreach($query->result_array() as $nest){
+	        $str .= "- " .$pokedex[$nest['pokemon']]->name ." " .(empty($nest['location_string']) ? "en ubicación." : "en " .$nest['location_string'])  ."\n";
+	    }
 
-    $q = $telegram->send->text($str, 'HTML')->send();
+		// Si hay más de 12, mandarlo por privado.
+	    if($query->num_rows() > 12 or $telegram->callback){
+	        $telegram->send->chat($telegram->user->id);
+	    }
 
-	// $str = ($q === FALSE ? "Ábreme por privado primero." : "");
-    // $telegram->answer_if_callback($str, TRUE);
+		$q = $telegram->send->text($str, 'HTML')->send();
 
-    // Avisar por grupo.
-    /* if($query->num_rows() > 12 && !$telegram->callback){
-        $str = "He contado <b>" .$query->num_rows() ."</b> nidos. Te los mando por privado!\n"
-                ."¿Alguien más los quiere ver?";
-        $telegram->send
-            ->inline_keyboard()
-                ->row_button("Yo!", "lista de nidos", "TEXT")
-            ->show()
-            ->text($str, 'HTML')
-        ->send();
-    } */
+		$str = ($q === FALSE ? "Ábreme por privado primero." : "");
+	    $telegram->answer_if_callback($str, TRUE);
+
+	    // Avisar por grupo.
+	    if($query->num_rows() > 12 && !$telegram->callback){
+	        $str = "He contado <b>" .$query->num_rows() ."</b> nidos. Te los mando por privado!\n"
+	                ."¿Alguien más los quiere ver?";
+	        $telegram->send
+	            ->inline_keyboard()
+	                ->row_button("Yo!", "lista de nidos", "TEXT")
+	            ->show()
+	            ->text($str, 'HTML')
+	        ->send();
+	    }
+	}else{
+		$str = "Hay <b>" .$query->num_rows() ."</b> nidos de:\n";
+		$pokenames = array();
+	    foreach($query->result_array() as $nest){
+			$pokenames[] = $pokedex[$nest['pokemon']]->name;
+	    }
+		$pokenames = array_unique($pokenames);
+		$str .= implode(", ", $pokenames) .".";
+
+		$q = $telegram->send->text($str, 'HTML')->send();
+	}
     return -1;
 }
 

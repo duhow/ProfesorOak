@@ -397,6 +397,18 @@ class Pokemon extends CI_Model{
 		return $admins;
 	}
 
+	function user_time_in_group($uid, $gid, $timestamp = FALSE){
+		$query = $this->db
+			->select('register_date')
+			->where('uid', $uid)
+			->where('cid', $gid)
+		->get('user_inchat');
+
+		if($query->num_rows() == 0){ return FALSE; }
+		$time = strtotime($query->row()->register_date);
+		return ($timestamp ? $time : date("Y-m-d H:i:s", $time));
+	}
+
 	function group_get_members($cid, $full = FALSE){
 		$query = $this->db
 			->where('cid', $cid)
