@@ -166,10 +166,12 @@ elseif(($telegram->text_contains("desbanea", TRUE) or $telegram->text_command("u
 		}
 
         if($telegram->callback){
+			$str = ":male: Desbaneado por " .$telegram->user->id ." - " .$telegram->user->first_name;
+			$str = $telegram->emoji($str);
             $telegram->send
                 ->message(TRUE)
                 ->chat(TRUE)
-                ->text($telegram->text_message() ."\n" ."Desbaneado.")
+                ->text($telegram->text_message() ."\n" .$str)
             ->edit('text');
         }
     }
