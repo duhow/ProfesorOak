@@ -691,7 +691,7 @@ if(
     }
 
 	// FIX para escapes
-    if(!empty($poke->owner)){
+    if(!empty($poke->owner) or $poke->tries >= 0){
 		// Esconder el botón
 		if($telegram->callback){
 			$telegram->send
