@@ -226,6 +226,13 @@ if(
 	}
 	$pokemon->settings($telegram->user->id, 'last_command', 'WHOIS');
 
+	if(!empty($pokeuser->username)){
+		$this->telegram->send
+		->inline_keyboard()
+			->row_button($telegram->emoji("\ud83d\udcdd Ver perfil"), "http://oak.duhowpi.net/user/" .$pokeuser->username)
+		->show();
+	}
+
 	$q = $telegram->send
 		// ->chat($chat)
 		// ->reply_to( ($chat == $telegram->chat->id) )
@@ -331,6 +338,13 @@ elseif(
 	];
 
 	$str = str_replace(array_keys($repl), array_values($repl), $str);
+
+	if(!empty($info->username)){
+		$this->telegram->send
+		->inline_keyboard()
+			->row_button($telegram->emoji("\ud83d\udcdd Ver perfil"), "http://oak.duhowpi.net/user/" .$info->username)
+		->show();
+	}
 	// $this->last_command('WHOIS');
 	// $pokemon->settings($user->id, 'last_command', 'WHOIS');
 
