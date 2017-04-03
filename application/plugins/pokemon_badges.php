@@ -22,7 +22,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_CAPTURE_TOTAL',
 			'desc' => 'Pokémon capturados',
 			'desc_en' => 'Capture Pokemon',
-			'targets' => [30, 500, 2000]
+			'targets' => [30, 500, 2000, 25000, 100000]
 		],
 		[
 			'name' => 'Mochilero',
@@ -30,7 +30,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_POKESTOPS_VISITED',
 			'desc' => 'Visitas a Poképaradas',
 			'desc_en' => 'Visit PokéStops',
-			'targets' => [100, 1000, 2000]
+			'targets' => [100, 1000, 2000, 25000, 100000]
 		],
 		[
 			'name' => 'Corredor',
@@ -38,7 +38,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TRAVEL_KM',
 			'desc' => 'Km recorridos',
 			'desc_en' => 'Walk km',
-			'targets' => [10, 100, 1000]
+			'targets' => [10, 100, 1000, 3000, 12742]
 		],
 		[
 			'name' => 'Cientifico',
@@ -46,7 +46,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_EVOLVED_TOTAL',
 			'desc' => 'Pokémon evolucionados',
 			'desc_en' => 'Evolve Pokémon',
-			'targets' => [3, 20, 200]
+			'targets' => [3, 20, 200, 2000, 20000]
 		],
 		[
 			'name' => 'Luchadora',
@@ -54,7 +54,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_BATTLE_ATTACK_WON',
 			'desc' => 'Combates de Gimnasio ganados',
 			'desc_en' => 'Win Gym battles',
-			'targets' => [10, 100, 1000]
+			'targets' => [10, 100, 1000, 10000, 100000]
 		],
 		[
 			'name' => 'Criapokemon',
@@ -62,7 +62,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_HATCHED_TOTAL',
 			'desc' => 'Huevos eclosionados',
 			'desc_en' => 'Hatch Eggs',
-			'targets' => [10, 100, 500]
+			'targets' => [10, 100, 500, 3000, 25000]
 		],
 		[
 			'name' => 'Pescador',
@@ -70,7 +70,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_BIG_MAGIKARP',
 			'desc' => 'Magikarp grandes conseguidos',
 			'desc_en' => 'Catch big Magikarp',
-			'targets' => [3, 50, 300]
+			'targets' => [3, 50, 300, 2500, 7500]
 		],
 		[
 			'name' => 'Brillante',
@@ -86,7 +86,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_BATTLE_TRAINING_WON',
 			'desc' => 'Número de entrenamientos',
 			'name_en' => 'Train times',
-			'targets' => [10, 100, 1000]
+			'targets' => [10, 100, 1000, 10000, 100000]
 		],
 		[
 			'name' => 'Joven',
@@ -94,7 +94,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_SMALL_RATTATA',
 			'desc' => 'Rattata pequeños conseguidos',
 			'desc_en' => 'Catch tiny Rattata',
-			'targets' => [3, 50, 300]
+			'targets' => [3, 50, 300, 2500, 7500]
 		],
 		[
 			'name' => 'Fan de Pikachu',
@@ -102,7 +102,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_PIKACHU',
 			'desc' => 'Pikachu conseguidos',
 			'desc_en' => 'Catch Pikachu',
-			'targets' => [3, 50, 300]
+			'targets' => [3, 50, 300, 2500, 7500]
 		],
 		[
 			'name' => 'Unown',
@@ -116,7 +116,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_NORMAL',
 			'desc' => 'Pokémon de tipo Normal capturados.',
 			'desc_en' => 'Catch Normal-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Ornitologo',
@@ -124,7 +124,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_FLY',
 			'desc' => 'Pokémon de tipo Volador capturados.',
 			'desc_en' => 'Catch Flying-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Chica Mala',
@@ -132,7 +132,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_POISON',
 			'desc' => 'Pokémon de tipo Veneno capturados.',
 			'desc_en' => 'Catch Poison-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Cazabichos',
@@ -140,7 +140,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_BUG',
 			'desc' => 'Pokémon de tipo Bicho capturados.',
 			'desc_en' => 'Catch Bug-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Nadador',
@@ -148,7 +148,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_WATER',
 			'desc' => 'Pokémon de tipo Agua capturados.',
 			'desc_en' => 'Catch Water-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Jardinero',
@@ -156,7 +156,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_GRASS',
 			'desc' => 'Pokémon de tipo Planta capturados.',
 			'desc_en' => 'Catch Grass-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Ruinamaniaco',
@@ -164,7 +164,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_GROUND',
 			'desc' => 'Pokémon de tipo Tierra capturados.',
 			'desc_en' => 'Catch Ground-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Medium',
@@ -172,7 +172,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_PSYCHIC',
 			'desc' => 'Pokémon de tipo Psíquico capturados.',
 			'desc_en' => 'Catch Psychic-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Niña Soñadora',
@@ -180,7 +180,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_FAIRY',
 			'desc' => 'Pokémon de tipo Hada capturados.',
 			'desc_en' => 'Catch Fairy-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Karateka',
@@ -188,7 +188,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_FIGHTING',
 			'desc' => 'Pokémon de tipo Lucha capturados.',
 			'desc_en' => 'Catch Fighting-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Montañero',
@@ -196,7 +196,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_ROCK',
 			'desc' => 'Pokémon de tipo Roca capturados.',
 			'desc_en' => 'Catch Rock-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Bruja',
@@ -204,7 +204,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_GHOST',
 			'desc' => 'Pokémon de tipo Fantasma capturados.',
 			'desc_en' => 'Catch Ghost-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Prendefuegos',
@@ -212,7 +212,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_FIRE',
 			'desc' => 'Pokémon de tipo Fuego capturados.',
 			'desc_en' => 'Catch Fire-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Rockero',
@@ -220,7 +220,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_ELECTRIC',
 			'desc' => 'Pokémon de tipo Eléctrico capturados.',
 			'desc_en' => 'Catch Electric-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Ferroviario',
@@ -228,7 +228,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_STEEL',
 			'desc' => 'Pokémon de tipo Acero capturados.',
 			'desc_en' => 'Catch Steel-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Esquiador',
@@ -236,7 +236,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_ICE',
 			'desc' => 'Pokémon de tipo Hielo capturados.',
 			'desc_en' => 'Catch Ice-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Domadragon',
@@ -244,7 +244,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_DRAGON',
 			'desc' => 'Pokémon de tipo Dragón capturados.',
 			'desc_en' => 'Catch Dragon-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 		[
 			'name' => 'Macarra',
@@ -252,7 +252,7 @@ function pokemon_badges($search = NULL){
 			'type' => 'BADGE_TYPE_DARK',
 			'desc' => 'Pokémon de tipo Siniestro capturados.',
 			'desc_en' => 'Catch Dark-type Pokémon.',
-			'targets' => [10, 50, 200]
+			'targets' => [10, 50, 200, 5000, 25000]
 		],
 	];
 	if(empty($search)){ return $badges; }
@@ -604,7 +604,7 @@ if(
 			$max = max(array_values($user_badges));
 			$max = strlen($max);
 
-			$icons = ['\u2796', '\ud83e\udd49', '\ud83e\udd48', '\ud83e\udd47'];
+			$icons = ['\u2796', '\ud83e\udd49', '\ud83e\udd48', '\ud83e\udd47', '\ud83c\udf96', '\ud83d\udc8e'];
 
 			foreach($badge['targets'] as $min){
 				if($value >= $min){ $n++; }
