@@ -766,8 +766,9 @@ elseif($telegram->text_command("register") && $telegram->has_reply){
         $w = trim($w);
         if($w[0] == "/"){ continue; }
         if(is_numeric($w) && $w >= 5 && $w <= 40){ $data['lvl'] = $w; }
+		if(is_numeric($w) && $w > 40){ $data['exp'] = (int) $w; }
         if(in_array(strtoupper($w), ['R','B','Y'])){ $data['team'] = strtoupper($w); }
-        if($w[0] == "@" or strlen($w) >= 4){ $data['username'] = $w; }
+        if($w[0] == "@" or strlen($w) >= 4 && !is_numeric($w)){ $data['username'] = $w; }
         if(strtoupper($w) == "V"){ $data['verified'] = TRUE; }
     }
     $register = FALSE;
@@ -804,6 +805,7 @@ elseif($telegram->text_command("register") && $telegram->has_reply){
     if($register === FALSE){
         $changes = array();
         if(isset($data['lvl']) && $pkuser->lvl != $data['lvl'] ){ $changes[] = "nivel"; }
+		if(isset($data['exp']) && $pkuser->exp != $data['exp']){ $changes[] = "experiencia"; }
         if(isset($data['team']) && $pkuser->team != $data['team'] ){ $changes[] = "equipo"; }
         if(isset($data['username']) && $pkuser->username != $data['username']){ $changes[] = "nombre"; }
         $str = ":ok: Cambio *" .implode(", ", $changes) .(isset($data['verified']) ? "* y *valido*!" : "*!");

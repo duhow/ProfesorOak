@@ -127,6 +127,7 @@ if(
         if($level >= 5 && $level <= 35){
             if($level <= $pokeuser->lvl){ return; }
             $pokemon->update_user_data($telegram->user->id, 'lvl', $level);
+			$pokemon->update_user_data($telegram->user->id, 'exp', 0);
             $pokemon->log($telegram->user->id, 'levelup', $level);
             if($telegram->is_chat_group()){ // $command == "WHOIS" &&
 				$editwho = $pokemon->settings($telegram->chat->id, 'whois_last');
@@ -192,7 +193,7 @@ if(
 	if(empty($pokeuser->username)){ $str .= "No sé como te llamas, sólo sé que "; }
 	else{ $str .= '$pokemon, '; }
 
-	$str .= 'eres *$team* $nivel. $valido';
+	$str .= 'eres *$team* $nivel ($exp EXP). $valido';
 	if($pokeuser->authorized){ $str .= $telegram->emoji(" :star: "); }
 
 	// si el bot no conoce el nick del usuario
@@ -208,6 +209,7 @@ if(
 		'$usuario' => "@" .$telegram->user->username,
 		'$pokemon' => "@" .$pokeuser->username,
 		'$nivel' => "L" .$pokeuser->lvl,
+		'$exp' => $pokeuser->exp,
 		'$valido' => ($pokeuser->verified ? ':green-check:' : ':warning:')
 	];
 
