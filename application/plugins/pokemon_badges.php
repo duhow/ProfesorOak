@@ -17,7 +17,7 @@ function pokemon_badges($search = NULL){
 			'targets' => [5, 30, 70]
 		],
 		[
-			'name' => 'Pokécolector',
+			'name' => 'Pokecolector',
 			'name_en' => 'Collector',
 			'type' => 'BADGE_CAPTURE_TOTAL',
 			'desc' => 'Pokémon capturados',
@@ -41,7 +41,7 @@ function pokemon_badges($search = NULL){
 			'targets' => [10, 100, 1000]
 		],
 		[
-			'name' => 'Científico',
+			'name' => 'Cientifico',
 			'name_en' => 'Scientist',
 			'type' => 'BADGE_EVOLVED_TOTAL',
 			'desc' => 'Pokémon evolucionados',
@@ -57,7 +57,7 @@ function pokemon_badges($search = NULL){
 			'targets' => [10, 100, 1000]
 		],
 		[
-			'name' => 'Criapokémon',
+			'name' => 'Criapokemon',
 			'name_en' => 'Breeder',
 			'type' => 'BADGE_HATCHED_TOTAL',
 			'desc' => 'Huevos eclosionados',
@@ -119,7 +119,7 @@ function pokemon_badges($search = NULL){
 			'targets' => [10, 50, 200]
 		],
 		[
-			'name' => 'Ornitólogo',
+			'name' => 'Ornitologo',
 			'name_en' => 'Bird Keeper',
 			'type' => 'BADGE_TYPE_FLY',
 			'desc' => 'Pokémon de tipo Volador capturados.',
@@ -159,7 +159,7 @@ function pokemon_badges($search = NULL){
 			'targets' => [10, 50, 200]
 		],
 		[
-			'name' => 'Ruinamaníaco',
+			'name' => 'Ruinamaniaco',
 			'name_en' => 'Ruin Maniac',
 			'type' => 'BADGE_TYPE_GROUND',
 			'desc' => 'Pokémon de tipo Tierra capturados.',
@@ -167,7 +167,7 @@ function pokemon_badges($search = NULL){
 			'targets' => [10, 50, 200]
 		],
 		[
-			'name' => 'Médium',
+			'name' => 'Medium',
 			'name_en' => 'Psychic',
 			'type' => 'BADGE_TYPE_PSYCHIC',
 			'desc' => 'Pokémon de tipo Psíquico capturados.',
@@ -239,7 +239,7 @@ function pokemon_badges($search = NULL){
 			'targets' => [10, 50, 200]
 		],
 		[
-			'name' => 'Domadragón',
+			'name' => 'Domadragon',
 			'name_en' => 'Dragon Tamer',
 			'type' => 'BADGE_TYPE_DRAGON',
 			'desc' => 'Pokémon de tipo Dragón capturados.',
@@ -256,6 +256,7 @@ function pokemon_badges($search = NULL){
 		],
 	];
 	if(empty($search)){ return $badges; }
+	$search = str_replace(["é", "í", "ó"], ["e", "i", "o"], $search);
 	foreach($badges as $badge){
 		if(
 			strtolower($search) == strtolower($badge['name']) or
