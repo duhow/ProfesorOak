@@ -417,7 +417,7 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 				$this->telegram->send
 					->notification(FALSE)
 					->chat(-184149677) // Grupo Medallas
-					->text("BADGE: " .$telegram->user->id . " - $bt: $points -> $amount (" .(abs($amount - $points)) .")")
+					->text("BADGE: " .$telegram->user->id . " - $bt: " .($points == 0 ? $amount : "$points -> $amount (" .(abs($amount - $points)) .")" ) )
 				->send();
 			}
 		}
