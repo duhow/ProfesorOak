@@ -327,6 +327,7 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 		$this->telegram->send
 			->text("Guay! Puedes ver todas las medallas con /badges .")
 		->send();
+		$this->pokemon->settings($telegram->user->id, 'badge_type', "DELETE");
 		$this->pokemon->step($telegram->user->id, NULL);
 	}elseif($this->telegram->photo() && !$telegram->has_forward){
 		// Hacer OCR
@@ -450,6 +451,7 @@ if(
 				."Tienes que subir (no reenviar) <b>DE UNA EN UNA</b> una captura de pantalla donde se vea el nombre de la medalla y los puntos que has conseguido.\n\n"
 				."Procura no falsificar los puntos, o podrías acabar bloqueado.";
 
+		$this->pokemon->settings($telegram->user->id, 'badge_type', "DELETE");
 		$this->pokemon->step($telegram->user->id, 'BADGE');
 	}
 
