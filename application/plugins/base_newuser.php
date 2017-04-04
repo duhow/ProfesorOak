@@ -77,7 +77,7 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
             $kick = $pokemon->settings($telegram->chat->id, 'team_exclusive_kick');
             // TODO excepto si el que lo agrega es admin.
             if($kick != FALSE){
-                $telegram->send->kick($new->id, $telegram->chat->id);
+                $telegram->send->ban($new->id, $telegram->chat->id);
                 $pokemon->user_delgroup($new->id, $telegram->chat->id);
             }
             return -1;
@@ -91,7 +91,7 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
             foreach($blacklist as $b){
                 if(in_array($b, $pknew_flags)){
                     $this->analytics->event('Telegram', 'Join blacklist user', $b);
-                    $telegram->send->kick($new->id, $telegram->chat->id);
+                    $telegram->send->ban($new->id, $telegram->chat->id);
                     $pokemon->user_delgroup($new->id, $telegram->chat->id);
 
 					if($adminchat){
