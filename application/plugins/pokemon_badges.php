@@ -493,16 +493,16 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 					// Calcular los puntos necesarios para hacer el logro.
 
 					$achs = [
-						// 'BADGE_CAPTURE_TOTAL' => 300,
-						'BADGE_POKESTOPS_VISITED' => 300,
-						'BADGE_BATTLE_ATTACK_WON' => 50,
-						'BADGE_BATTLE_TRAINING_WON' => 50,
-						'BADGE_TRAVEL_KM' => 15,
-						'BADGE_HATCHED_TOTAL' => 5,
-						'BADGE_PIKACHU' => 10,
-						'BADGE_BIG_MAGIKARP' => 5,
-						'BADGE_SMALL_RATTATA' => 5,
-						'BADGE_EVOLVED_TOTAL' => 50,
+						// 'CAPTURE_TOTAL' => 300,
+						'POKESTOPS_VISITED' => 300,
+						'BATTLE_ATTACK_WON' => 50,
+						'BATTLE_TRAINING_WON' => 50,
+						'TRAVEL_KM' => 15,
+						'HATCHED_TOTAL' => 5,
+						'PIKACHU' => 10,
+						'BIG_MAGIKARP' => 5,
+						'SMALL_RATTATA' => 5,
+						'EVOLVED_TOTAL' => 50,
 					];
 
 					if(isset($achs[$last->type]) && ($last->value + $achs[$last->type]) >= $amount){
