@@ -322,6 +322,78 @@ function badges_list($user){
 	return array_column($query->result_array(), 'value', 'type');
 }
 
+function badges_last($user, $type, $full = FALSE){
+	$CI =& get_instance();
+
+	$query = $CI->db
+		->select(['type', 'date'])
+		->where('uid', $user)
+		->where('type', $type)
+		->where('date >=', 'NOW() - INTERVAL 26 HOUR', FALSE)
+		->order_by('date', 'ASC')
+		->limit(1)
+	->get('user_badges');
+
+	if($query->num_rows() == 0){ return NULL; }
+	if($full){ return $query->row(); }
+	return $query->row()->date;
+}
+
+// ---------------------------------------------
+
+function achievements_last($user, $type){
+	$CI =& get_instance();
+
+	$query = $CI->db
+		->where('uid', $user)
+		->where('type', $type)
+		->where('date >=', 'NOW() - INTERVAL 26 HOUR', FALSE)
+		->order_by('date', 'ASC')
+		->limit(1)
+	->get('user_achievements');
+
+	if($query->num_rows() == 0){ return FALSE; }
+	return $query->row()->date;
+}
+
+function achievements_can_make_new($user, $type){
+	$date = achievements_last($user, $type);
+	if($date === FALSE){ return TRUE; }
+	$date = strtotime("+26 hours", strtotime($date));
+	return (time() >= $date);
+}
+
+function achievement_add($user, $type, $amount = NULL){
+	$CI =& get_instance();
+
+	$data = [
+		'uid' => $user,
+		'type' => $type,
+		'amount' => $amount
+	];
+
+	$CI->db->insert('user_achievements', $data);
+	return $CI->db->insert_id();
+}
+
+function achievements_get($user, $type = NULL){
+	$CI =& get_instance();
+
+	if(!empty($type)){ $CI->db->where('type', $type); }
+	$query = $CI->db
+		->select(['type', 'count(*) AS count'])
+		->where('uid', $user)
+		->group_by('type')
+	->get('user_achievements');
+
+	if($query->num_rows() == 0){
+		return (!empty($type) ? 0 : array());
+	}
+	return (!empty($type) ? $query->row()->count : array_column($query->result_array(), 'count', 'type') );
+}
+
+// ---------------------------------------------
+
 if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_group()){
 	if($this->telegram->text_has("Listo", TRUE)){
 		$this->telegram->send
@@ -358,15 +430,15 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 			if(!empty($badge)){ break; }
 		}
 
-		// Hide previous Keyboard
-		$this->telegram->send->keyboard()->hide(TRUE);
-
 		if(empty($badge)){
 			$this->telegram->send
 				->text($this->telegram->emoji(":warning: ") ."No he reconocido la medalla. Asegúrate de no recortar ni mover la pantalla.")
 			->send();
 			return -1;
 		}
+
+		// Hide previous Keyboard
+		$this->telegram->send->keyboard()->hide(TRUE);
 
 		// Set badge to settings.
 		$this->pokemon->settings($telegram->user->id, 'badge_type', $badge['type']);
@@ -408,10 +480,52 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 			return -1;
 		}elseif($amount != $points){
 			$badgetype = $pokemon->settings($telegram->user->id, 'badge_type', "DELETE");
+
+			// TODO algo falta en la función. Comprobar si se hacen varios envíos a lo largo del día, coger la última fecha.
+			// Hay que diferenciar los puntos para llegar hasta ellos.
+
+			$achievement = FALSE;
+
+			// Cargar datos anteriores.
+			$last = badges_last($telegram->user->id, $badge, TRUE);
+			if($last && $points > 0){ // && time() < strtotime("+26 hours", strtotime($last->date))
+				if(achievements_can_make_new($telegram->user->id, $badge)){
+					// Calcular los puntos necesarios para hacer el logro.
+
+					$achs = [
+						// 'BADGE_CAPTURE_TOTAL' => 300,
+						'BADGE_POKESTOPS_VISITED' => 300,
+						'BADGE_BATTLE_ATTACK_WON' => 50,
+						'BADGE_BATTLE_TRAINING_WON' => 50,
+						'BADGE_TRAVEL_KM' => 15,
+						'BADGE_HATCHED_TOTAL' => 5,
+						'BADGE_PIKACHU' => 10,
+						'BADGE_BIG_MAGIKARP' => 5,
+						'BADGE_SMALL_RATTATA' => 5,
+						'BADGE_EVOLVED_TOTAL' => 50,
+					];
+
+					if(isset($achs[$last->type]) && ($last->value + $achs[$last->type]) >= $amount){
+						achievement_add($telegram->user->id, $badge);
+						$achievement = TRUE;
+
+						$this->telegram->send
+							->notification(TRUE)
+							->text(-184149677) // Grupo Medallas
+							->text("LOGRO: " .$telegram->user->id . " - $bt: " .(abs($amount - $points)) )
+						->send();
+					}
+				}
+			}
+
+
 			$q = badge_register($badge, $amount, $utarget);
 			$str = ":warning: Error al guardar.";
 			if($q){
-				$str = ":ok: Guardada! Ahora tienes <b>" .$amount ."</b> en <b>" .$badge['name'] ."</b>!";
+				$str = ":ok: ¡Guardada! Ahora tienes <b>" .$amount ."</b> en <b>" .$badge['name'] ."</b>!";
+				if($achievement){
+					$str .= "\n" .":star: ¡Has conseguido un logro!";
+				}
 
 				$bt = str_replace("BADGE_", "", $badge['type']);
 				$this->telegram->send
