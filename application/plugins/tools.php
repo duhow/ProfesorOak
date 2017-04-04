@@ -337,6 +337,30 @@ if(preg_match("/([+-]?)(\d+.\d+)[,;]\s?([+-]?)(\d+.\d+)/", $telegram->text(), $l
     }
 }
 
+if(
+	$telegram->text_has("radio", TRUE) &&
+	$telegram->has_reply &&
+	$telegram->words() == 2 &&
+	is_numeric($telegram->last_word()) &&
+	isset($telegram->reply->location)
+){
+	$loc = [$telegram->reply->location['latitude'], $telegram->reply->location['longitude']];
+	$amount = (int) $telegram->last_word();
+	if($amount <= 0){ return -1; }
+	$locSW = $pokemon->location_add($loc, $amount, "SW");
+	$locNE = $pokemon->location_add($loc, $amount, "NE");
+
+	$str = ":search-left: " .implode(",", $loc) ."\n"
+			.":arrow-up-left: " .implode(",", $locNE) ."\n"
+			.":arrow-down-right: " .implode(",", $locSW);
+	$str = $telegram->emoji($str);
+
+	$this->telegram->send
+		->text($str)
+	->send();
+	return -1;
+}
+
 // Buscar ubicación en mapa
 if(
     $telegram->text_has(["ubicación", "mapa de"], TRUE) or
