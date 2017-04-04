@@ -487,9 +487,9 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 			$achievement = FALSE;
 
 			// Cargar datos anteriores.
-			$last = badges_last($telegram->user->id, $badge, TRUE);
+			$last = badges_last($telegram->user->id, $badgetype, TRUE);
 			if($last && $points > 0){ // && time() < strtotime("+26 hours", strtotime($last->date))
-				if(achievements_can_make_new($telegram->user->id, $badge)){
+				if(achievements_can_make_new($telegram->user->id, $badgetype)){
 					// Calcular los puntos necesarios para hacer el logro.
 
 					$achs = [
@@ -506,7 +506,7 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 					];
 
 					if(isset($achs[$last->type]) && ($last->value + $achs[$last->type]) >= $amount){
-						achievement_add($telegram->user->id, $badge);
+						achievement_add($telegram->user->id, $badgetype);
 						$achievement = TRUE;
 
 						$this->telegram->send
