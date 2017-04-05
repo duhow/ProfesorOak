@@ -1,6 +1,7 @@
 <?php
 class Pokemon extends CI_Model{
 
+	private $settings_loaded = array();
 	// --------------------------------
 	//   Funciones de usuario
 	// --------------------------------
@@ -219,13 +220,26 @@ class Pokemon extends CI_Model{
 		}
 	}
 
+	function load_settings($uids){
+		if(!is_array($uids)){ $uids = [$uids]; }
+		$query = $this->db
+			->where_in('uid', $uids)
+		->get('settings');
+		if($query->num_rows() > 0){
+			foreach($query->result_array() as $r){
+				$this->settings_loaded[$r['uid']][$r['type']] = $r['value'];
+			}
+		}
+	}
+
 	function settings($user, $key, $value = NULL){
 		$full = FALSE;
-		if(in_array(strtolower($value), ["true", "on", "yes"])){ $value = TRUE; }
-		if(in_array(strtolower($value), ["false", "off", "no"])){ $value = FALSE; }
-		if(in_array(strtolower($value), ["null", "none"])){ $value = NULL; }
 		if(strtolower($value) == "fullinfo"){ $value = NULL; $full = TRUE; }
 		if($value === NULL){
+			if(!is_array($key) && isset($this->settings_loaded[$user][$key]) && !empty($this->settings_loaded[$user][$key])){
+				return $this->settings_loaded[$user][$key];
+			}
+
 			if(is_array($key)){
                 $this->db->where_in('type', $key);
             }elseif(in_array($key, ["all", "*"])){
@@ -242,9 +256,18 @@ class Pokemon extends CI_Model{
 				if($full){ return $query->result_array(); }
                 return array_column($query->result_array(), 'value', 'type');
             }
-			elseif($query->num_rows() == 1){ return ($full ? $query->row() : $query->row()->value); }
+			elseif($query->num_rows() == 1){
+				$this->settings_loaded[$user][$key] = $query->row()->value;
+				return ($full ? $query->row() : $query->row()->value);
+			}
 			return NULL;
 		}else{
+			if(in_array(strtolower($value), ["true", "on", "yes"])){ $value = TRUE; }
+			elseif(in_array(strtolower($value), ["false", "off", "no"])){ $value = FALSE; }
+			elseif(in_array(strtolower($value), ["null", "none"])){ $value = NULL; }
+
+			@unset($this->settings_loaded[$user][$key]);
+
 			if($this->settings($user, $key) === NULL && strtoupper($value) !== "DELETE"){
 				// INSERT
 				$data = [
