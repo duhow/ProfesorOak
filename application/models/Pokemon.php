@@ -266,7 +266,7 @@ class Pokemon extends CI_Model{
 			elseif(in_array(strtolower($value), ["false", "off", "no"])){ $value = FALSE; }
 			elseif(in_array(strtolower($value), ["null", "none"])){ $value = NULL; }
 
-			@unset($this->settings_loaded[$user][$key]);
+			unset($this->settings_loaded[$user][$key]);
 
 			if($this->settings($user, $key) === NULL && strtoupper($value) !== "DELETE"){
 				// INSERT
