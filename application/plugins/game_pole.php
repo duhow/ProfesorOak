@@ -9,7 +9,7 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
     $this->analytics->event("Telegram", "Pole");
     $pole = $pokemon->settings($telegram->chat->id, 'pole');
     if($pole != NULL && $pole == FALSE){ return -1; }
-    if($pokemon->settings($telegram->user->id, 'no_pole') == TRUE){ return -1; }
+    if($pokemon->settings($telegram->user->id, 'no_pole')){ return -1; }
 	if($pokemon->group_users_active($telegram->chat->id, TRUE) < 6){ return -1; }
 
     // Si está el Modo HARDCORE, la pole es cada hora. Si no, cada día.
@@ -23,6 +23,38 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
             ( $telegram->text_has("subpole", TRUE) && is_numeric($pole[1]) && date($timer) == date($timer, $pole[1]) ) or
             ( $telegram->text_has("bronce", TRUE) &&  is_numeric($pole[2]) && date($timer) == date($timer, $pole[2]) )
         ){
+            if(date("G") == 23){
+                $lim = $pokemon->settings($telegram->user->id, 'pole_adelantado');
+                if(empty($lim)){ $lim = 0; }
+                $lim++; // +1
+
+                if($lim == 1){
+                    $str = 'La impaciencia con las poles te costará tu futuro. Ten cuidado.';
+                }elseif($lim == 2){
+                    $str = 'El que avisa no es traidor, a la próxima te quedas sin poles.';
+                }elseif($lim >= 3){
+                    $str = "Pues nada. Te quedas sin poles.";
+                    $pokemon->settings($telegram->user->id, 'no_pole', TRUE);
+                    // $pokemon->update_user_data($telegram->user->id, 'pole', 0);
+
+                    // Avisar en el grupo.
+                    $telegram->send
+                        ->reply_to(TRUE)
+                        ->notification(FALSE)
+                        ->text($telegram->user->first_name ." se queda sin poles por adelantarse.")
+                    ->send();
+                }
+
+                // Guardar
+                $pokemon->settings($telegram->user->id, 'pole_adelantado', $lim);
+
+                // Avisar por privado
+                $telegram->send
+                    ->notification(TRUE)
+                    ->chat($telegram->user->id)
+                    ->text($str)
+                ->send();
+            }
             return -1;  // Mismo dia? nope.
         }
     }
