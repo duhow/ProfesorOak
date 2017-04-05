@@ -442,10 +442,15 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 
 		// Set badge to settings.
 		$this->pokemon->settings($telegram->user->id, 'badge_type', $badge['type']);
+		$str = $this->telegram->emoji(":ok: ") ."Detecto la medalla <b>" .$badge['name'] ."</b>. ¿Cuántos puntos tienes?";
+		if($badge['type'] == "BADGE_TRAVEL_KM"){
+		    $str .= "\n" .$this->telegram->emoji(":red-exclamation:") ." <b>NOTA:</b> En esta medalla <b>no pongas decimales, y redondea hacia abajo</b>."
+		            ."\n" ."<i>Si tienes 745.75 KM, pon 745.</i>";
+		}
 		$this->telegram->send
-			->reply_to(TRUE)
-			->force_reply(TRUE)
-			->text($this->telegram->emoji(":ok: ") ."Detecto la medalla " .$badge['name'] .". ¿Cuántos puntos tienes?")
+		    ->reply_to(TRUE)
+		    ->force_reply(TRUE)
+		    ->text($str, 'HTML')
 		->send();
 
 	}elseif(
