@@ -630,7 +630,9 @@ elseif($telegram->text_command("mode")){
         if(empty($step)){ $step = NULL; }
         $telegram->send->text("*" .json_encode($step) ."*", TRUE)->send();
     }elseif($telegram->words() == 2){
-        $step = $pokemon->step($user, $telegram->last_word());
+		$word = strtoupper($telegram->last_word());
+		if(in_array($word, ["NULL", "DELETE", "OFF"])){ $word = NULL;}
+        $pokemon->step($user, $word);
         $telegram->send->text("set!")->send();
     }
     return -1;
