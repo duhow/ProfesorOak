@@ -261,7 +261,7 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
                 }
                 // Tengo chat, comprobar blacklist
                 $black = explode(",", $pokemon->settings($teamchat, 'blacklist'));
-                if($pokemon->user_flags($telegram->new_user->id, $black)){ return -1; }
+                if($pokemon->user_flags($new->id, $black)){ return -1; }
 
                 $link = $pokemon->settings($teamchat, 'link_chat');
                 if(empty($link)){
@@ -283,10 +283,10 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
                             .$telegram->grouplink($link);
                 }
 
-                if(!$telegram->user_in_chat($telegram->user->id, $teamchat)){
+                if(!$telegram->user_in_chat($new->id, $teamchat)){
                     $telegram->send
                         ->notification(TRUE)
-                        ->chat($telegram->user->id)
+                        ->chat($new->id)
                         ->text($text, NULL) // TODO NO Markdown.
                     ->send();
 
