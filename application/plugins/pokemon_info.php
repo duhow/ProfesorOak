@@ -684,7 +684,7 @@ elseif($telegram->text_has("counter de") && $telegram->words() >= 3){
 		$pokedex = $pokemon->pokedex($find);
 
 		$str = "El counter de <b>" .$pokedex[$pk['pokemon']]->name ."</b> es ";
-		if(count($counter) > 1){ $str = str_replace(["El", " es"], ["Los", " son "], $str); } // HACK Plural
+		if(count($counter) > 1){ $str = str_replace(["El", " es"], ["Los", " son"], $str); } // HACK Plural
 		$strpk = array();
 
 		foreach($counter as $p){ $strpk[] = $pokedex[$p]->name; }
