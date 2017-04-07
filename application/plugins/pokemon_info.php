@@ -298,6 +298,16 @@ function pokemon_seen($user, $poke, $loc, $cooldown = 60){
 	return TRUE;
 }
 
+function pokemon_counter($target){
+	$CI =& get_instance();
+	$query = $CI->db
+		->where('target', $target)
+	->get('pokemon_counter');
+
+	if($query->num_rows() == 0){ return array(); }
+	return array_column($query->result_array(), 'counter');
+}
+
 // ---------------
 
 $help = NULL;
@@ -659,6 +669,31 @@ elseif($telegram->text_has(["debilidad", "debilidades", "fortaleza", "fortalezas
 			->text($str, TRUE)
 		->send();
 	}
+
+	return -1;
+}
+
+elseif($telegram->text_has("counter de") && $telegram->words() >= 3){
+	$pk = pokemon_parse($telegram->text());
+	if(!empty($pk['pokemon'])){ return -1; }
+	$counter = pokemon_counter($pk['pokemon']);
+
+	$str = "Pues aún no lo sé. :(";
+	if(!empty($counter)){
+		$find = array_merge($pk['pokemon'], $counter);
+		$pokedex = $pokemon->pokedex($find);
+
+		$str = "El counter de <b>" .$pokedex[$pk['pokemon']]->name ."</b> es ";
+		if(count($counter) > 1){ $str = str_replace(["El", " es"], ["Los", " son "], $str); } // HACK Plural
+		$strpk = array();
+
+		foreach($counter as $p){ $strpk[] = $pokedex[$p]->name; }
+		$str .= implode(", ", $strpk) .".";
+	}
+
+	$telegram->send
+		->text($str, 'HTML')
+	->send();
 
 	return -1;
 }
