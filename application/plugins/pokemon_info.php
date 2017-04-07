@@ -675,7 +675,7 @@ elseif($telegram->text_has(["debilidad", "debilidades", "fortaleza", "fortalezas
 
 elseif($telegram->text_has("counter de") && $telegram->words() >= 3){
 	$pk = pokemon_parse($telegram->text());
-	if(!empty($pk['pokemon'])){ return -1; }
+	if(empty($pk['pokemon'])){ return -1; }
 	$counter = pokemon_counter($pk['pokemon']);
 
 	$str = "Pues aún no lo sé. :(";
