@@ -188,7 +188,7 @@ if(
 
 	if(empty($num)){
 		$this->telegram->send
-			->text("/" .$telegram->text_command() ." [Parada]")
+			->text("<b>Uso: </b>" .$telegram->text_command() ." [Parada]")
 		->send();
 		return -1;
 	}
