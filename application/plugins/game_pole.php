@@ -58,7 +58,7 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
             return -1;  // Mismo dia? nope.
         }
     }
-	$this->db->query('LOCK TABLE settings WRITE, user WRITE');
+	$this->db->query('LOCK TABLE settings WRITE, user WRITE, user_flags WRITE');
     $pole_user = unserialize($pokemon->settings($telegram->chat->id, 'pole_user'));
     $pkuser = $pokemon->user($telegram->user->id);
     if($pkuser){
