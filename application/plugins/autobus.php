@@ -172,16 +172,27 @@ function autobus_valencia($codigo, $rec = FALSE){
 }
 
 if(
-	$this->telegram->words() == 2 &&
-	(
-		$this->telegram->text_command("amb") or
-		$this->telegram->text_command("aucorsa") or
-		$this->telegram->text_command("titsa") or
-		$this->telegram->text_command("emtmal") or
-		$this->telegram->text_command("emtval")
-	)
+	$this->telegram->text_command("amb") or
+	$this->telegram->text_command("aucorsa") or
+	$this->telegram->text_command("titsa") or
+	$this->telegram->text_command("emtmal") or
+	$this->telegram->text_command("emtval")
 ){
-    $num = $this->telegram->last_word(TRUE);
+	$num = NULL;
+
+	if($telegram->words() == 2){
+		$num = $this->telegram->last_word(TRUE);
+	}else{
+		$num = $pokemon->settings($telegram->user->id, 'last_bus');
+	}
+
+	if(empty($num)){
+		$this->telegram->send
+			->text("/" .$telegram->text_command() ." [Parada]")
+		->send();
+		return -1;
+	}
+
     if(!is_numeric($num)){
         $this->telegram->send
             ->text($this->telegram->emoji(":times: ") ."No has puesto el código de parada correcto!")
@@ -209,6 +220,7 @@ if(
     if(!empty($paradas)){
         $str = "";
         foreach($paradas as $parada){ $str .= $parada ."\n"; }
+		$pokemon->settings($telegram->user->id, 'last_bus', $num);
     }
     $this->telegram->send
         ->message($q['message_id'])
