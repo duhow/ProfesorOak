@@ -24,6 +24,8 @@ function renfe_numero($num){
 function renfe_consulta($origen, $destino, $nucleo = 50, $hora = NULL){
 	if(empty($hora)){ $hora = max(date("H") - 1, 0); }
 
+	$url = "http://horarios.renfe.com/cer/hjcer310.jsp?";
+
 	$data = [
 		'nucleo' => $nucleo, // BARCELONA
 		'o' => $origen,
@@ -99,7 +101,7 @@ if(
 		/* if(strtolower($telegram->last_word()) == "casa"){
 			if()
 		} */
-	}elseif($telegram->word() == 3){
+	}elseif($telegram->words() == 3){
 		$origen = renfe_numero($telegram->words(1));
 		$destino = renfe_numero($telegram->words(2));
 
@@ -119,9 +121,9 @@ if(
 
 	if($res){
 		$fecha = strtotime($res);
-		$minutos = floor(($fecha - time()) / 60);
+		$minutos = ceil(($fecha - time()) / 60);
 
-		$str .= "En $minutos minutos, a las $hora.";
+		$str .= "En $minutos minutos, a las $res.";
 	}else{
 		$str .= "No hay trenes.";
 	}
