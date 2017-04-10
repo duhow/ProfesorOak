@@ -164,7 +164,7 @@ elseif(
 
 elseif(
     $telegram->text_has(["confirmo", "confirmar", "confirmado", "hay"], ["nido", "un nido", "el nido"], TRUE) &&
-    $telegram->text_has("en") &&
+    $telegram->text_has(["en", "entre", "delante", "enfrente", "frente"]) &&
     $telegram->is_chat_group()
 ){
     $pkuser = $pokemon->user($telegram->user->id);
