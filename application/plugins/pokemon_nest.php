@@ -168,13 +168,21 @@ elseif(
     $telegram->is_chat_group()
 ){
     $pkuser = $pokemon->user($telegram->user->id);
+
+	$uinfo = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
+	$utime = strtotime($uinfo->register_date);
     if(
-		// El usuario debe estar validado,
-		!$pkuser->verified or
-		// tiempo mínimo de registro 1 semana,
-		(strtotime("+7 days", strtotime($pkuser->register_date)) > time()) or
-		// y no hacer trampas.
-		$pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'troll_nest', 'spam'])
+		// Si no es admin
+		(!in_array($telegram->user->id, telegram_admins(TRUE)) ) and (
+			// El usuario debe estar validado,
+			!$pkuser->verified or
+			// tiempo mínimo de registro 1 semana,
+			(strtotime("+7 days", strtotime($pkuser->register_date)) > time()) or
+			// tiempo mínimo de grupo 7 mensajes y 4 días,
+			($uinfo->messages <= 7 or strtotime("+4 days", $utime) > time()) or
+			// y no hacer trampas.
+			$pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'troll_nest', 'spam'])
+		)
 	){ return -1; }
 
     $text = $telegram->text();
