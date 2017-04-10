@@ -151,10 +151,15 @@ if(
 		}
 	}
 
+	$str = "\ud83d\ude88 " .$origen->nombre ."\n"
+		  ."\ud83c\udfc1 " .$destino->nombre ."\n\n";
+
+	$q = $telegram->send
+		->text($telegram->emoji($str ."\ud83d\udd51 ") . "Ejecutando...")
+	->send();
+
 	$res = renfe_consulta($origen->id, $destino->id);
 
-	$str = "\ud83d\ude88 " .$origen->nombre ."\n"
-			."\ud83c\udfc1 " .$destino->nombre ."\n\n";
 
 	if($res){
 		$fecha = strtotime($res);
@@ -173,8 +178,9 @@ if(
 	$str = $telegram->emoji($str);
 
 	$telegram->send
+		->message($q['message_id'])
 		->text($str)
-	->send();
+	->edit('text');
 
 	return -1;
 }
