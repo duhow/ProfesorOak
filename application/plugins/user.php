@@ -346,7 +346,7 @@ elseif(
 		->show();
 	}
 	// $this->last_command('WHOIS');
-	// $pokemon->settings($user->id, 'last_command', 'WHOIS');
+	$pokemon->settings($telegram->user->id, 'last_command', 'WHOIS');
 
 	// $telegram->send->chat($this->config->item('creator'))->text($text->emoji($str))->send();
 
@@ -371,7 +371,7 @@ if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
         else{ $touch = substr($touch, 1); }
     }else{
         $touch = $telegram->last_word(TRUE);
-        if(strlen($touch) < 4 or $telegram->words() < 2){ return; }
+        if(strlen($touch) < 4 or $telegram->words() < 2){ return -1; }
     }
     $name = (isset($telegram->user->username) ? "@" .$telegram->user->username : $telegram->user->first_name);
 
@@ -396,7 +396,7 @@ if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
         ->notification(!$req)
         ->text($text)
     ->send();
-    exit();
+    return -1;
 }
 
 // Responder el nivel de un entrenador.
@@ -407,7 +407,7 @@ elseif(
 ){
     $user = $telegram->user->id;
     if($telegram->text_has(["eres", "es", "tiene", "tienes"])){
-        if(!$telegram->has_reply){ return; }
+        if(!$telegram->has_reply){ return -1; }
         $user = $telegram->reply_user->id;
     }
 
@@ -429,7 +429,7 @@ elseif(
 		$pokemon->step($u->telegramid, 'CHANGE_LEVEL');
 	}
 
-    return;
+    return -1;
 }
 
 // Ver estadísticas de los entrenadores registrados

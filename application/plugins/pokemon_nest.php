@@ -25,9 +25,16 @@ function get_paired_groups($groups){
 // if(!$this->telegram->text_contains("nido")){ return; } // HACK TODO Cambiar frases para la gente?
 
 if(
-    $telegram->text_has(["donde", "conocéis", "sabéis", "sabe", "cual"]) &&
-    $telegram->text_contains(["visto", "encontra", "encuentro", "está", "aparece", "hay", "salen", "sale", "nido"]) && $telegram->text_contains("?") &&
-    $telegram->words() <= 10
+    (
+		$telegram->text_has(["donde", "conocéis", "sabéis", "sabe", "cual"]) &&
+	    $telegram->text_contains(["visto", "encontra", "encuentro", "está", "aparece", "hay", "salen", "sale", "nido"]) && $telegram->text_contains("?") &&
+	    $telegram->words() <= 10
+	) or (
+		$telegram->text_has("Y", TRUE) and
+		$telegram->text_contains("?") and
+		$telegram->words() <= 3 and
+		$pokemon->settings($telegram->user->id, 'last_command') == "POKEMON_FIND_LOCATION"
+	)
 ){
 	if(!$telegram->is_chat_group()){
 		$this->telegram->send
@@ -36,7 +43,7 @@ if(
 		return -1;
 	}
 
-    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return; }
+    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return -1; }
     $text = str_replace("?", "", $telegram->text());
     $pk = pokemon_parse($text);
     if(empty($pk['pokemon'])){ return; }
@@ -62,6 +69,9 @@ if(
         return -1;
     }
 
+	// Registrar el último comando, independientemente de su resultado.
+	$pokemon->settings($telegram->user->id, 'last_command', 'POKEMON_FIND_LOCATION');
+
     $query = $this->db
         ->where_in('chat', $target)
         ->where('pokemon', $pk['pokemon'])
@@ -77,6 +87,17 @@ if(
 			'Sinceramente, ni lo sé, ni me preocupa.',
 			'Ese Pokémon? Aún no lo sé.'
 		];
+
+		if($telegram->text_has("Y", TRUE)){
+			$frases = [
+				'Tampoco lo sé.',
+				'Nope.',
+				'Ni idea.',
+				'Meh.',
+				'No estoy seguro.'
+			];
+		}
+
 		$n = mt_rand(0, count($frases) - 1);
         $telegram->send->text($frases[$n])->send();
         return -1;
