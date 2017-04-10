@@ -21,6 +21,43 @@ function renfe_numero($num){
 	return NULL;
 }
 
+function renfe_texto($txt){
+	$CI =& get_instance();
+	$query = $CI->db
+		->where('nombre', $txt)
+		->or_where('corto', $txt)
+	->get('renfe');
+
+	if($query->num_rows() == 1){ return $query->row(); }
+	return NULL;
+}
+
+function renfe_buscar($search){
+	$CI =& get_instance();
+	$query = $CI->db
+		->where('nombre', $search)
+		->or_where('corto', $search)
+		->or_where('cp', $search)
+		->or_where('id', $search)
+	->get('renfe');
+
+	if($query->num_rows() == 1){ return $query->row(); }
+	return NULL;
+}
+
+function renfe_motes($texto, $retval = TRUE){
+	$CI =& get_instance();
+	$query = $CI->db
+		->where('nombre', $texto)
+	->get('renfe_motes');
+
+	if($query->num_rows() == 1){
+		if($retval){ return renfe_numero($query->row()->parada); }
+		return $query->row();
+	}
+	return NULL;
+}
+
 function renfe_consulta($origen, $destino, $nucleo = 50, $hora = NULL){
 	if(empty($hora)){ $hora = max(date("H") - 1, 0); }
 
@@ -102,12 +139,12 @@ if(
 			if()
 		} */
 	}elseif($telegram->words() == 3){
-		$origen = renfe_numero($telegram->words(1));
-		$destino = renfe_numero($telegram->words(2));
+		$origen = renfe_buscar($telegram->words(1));
+		$destino = renfe_buscar($telegram->words(2));
 
 		if(empty($origen) or empty($destino)){
 			$telegram->send
-				->text("Parada no reconocida.")
+				->text($telegram->emoji(":warning: ") ."Parada no reconocida.")
 			->send();
 
 			return -1;
@@ -116,17 +153,24 @@ if(
 
 	$res = renfe_consulta($origen->id, $destino->id);
 
-	$str = $origen->nombre ."\n"
-			.$destino->nombre ."\n\n";
+	$str = "\ud83d\ude88 " .$origen->nombre ."\n"
+			"\ud83c\udfc1 " .$destino->nombre ."\n\n";
 
 	if($res){
 		$fecha = strtotime($res);
 		$minutos = ceil(($fecha - time()) / 60);
 
-		$str .= "En $minutos minutos, a las $res.";
+		if($minutos <= 1){
+			$str .= ":red-exclamation: inminente.";
+		}else{
+			$str .= "\u25b6\ufe0f En $minutos min. - $res";
+		}
+
 	}else{
-		$str .= "No hay trenes.";
+		$str .= ":times: No hay trenes.";
 	}
+
+	$str = $telegram->emoji($str);
 
 	$telegram->send
 		->text($str)
