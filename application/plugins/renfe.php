@@ -92,6 +92,7 @@ function renfe_consulta($origen, $destino, $nucleo = 50, $hora = NULL){
 	$las = strpos($data, "</table>") + strlen("</table>");
 	$las = $las - $pos;
 
+	// Corta la web y centrate en la tabla
 	$data = substr($data, $pos, $las);
 
 	$fixes = [
@@ -100,24 +101,20 @@ function renfe_consulta($origen, $destino, $nucleo = 50, $hora = NULL){
 		'alt="Tren accesible" >' => 'alt="Tren accesible" />'
 	];
 
+	// Arregla el HTML de Renfe para parse correcto.
 	$data = str_replace(array_keys($fixes), array_values($fixes), $data);
 
 	$data = '<?xml version="1.0" encoding="iso-8859-1"?>' ."\n" .$data;
 	$xml = simplexml_load_string($data);
-	header("Content-Type: text/plain");
 
 	foreach($xml->tbody->tr as $fila){
 		$hora = strval($fila->td[2]);
-		if(strpos($hora, "Hora") !== FALSE){ continue; }
+		if(strpos($hora, "Hora") !== FALSE){ continue; } // Omite la cabecera de la tabla
 		$hora = str_replace(".", ":", $hora);
 
-		$fecha = strtotime($hora);
-		if($fecha < time()){ continue; }
-
-		$minutos = floor(($fecha - time()) / 60);
+		if(strtotime($hora) < time()){ continue; } // Si el tren ha pasado, coge el siguiente
 
 		return $hora;
-		// die("En $minutos minutos, a las $hora.");
 	}
 
 	return NULL;
