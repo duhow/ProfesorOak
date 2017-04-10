@@ -155,8 +155,7 @@ if(
 		->text($telegram->emoji($str ."\ud83d\udd51 ") . "Ejecutando...")
 	->send();
 
-	$res = renfe_consulta($origen->id, $destino->id);
-
+	$res = renfe_consulta($origen->id, $destino->id, $origen->nucleo);
 
 	if($res){
 		$fecha = strtotime($res);
