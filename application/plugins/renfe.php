@@ -154,7 +154,7 @@ if(
 	$res = renfe_consulta($origen->id, $destino->id);
 
 	$str = "\ud83d\ude88 " .$origen->nombre ."\n"
-			"\ud83c\udfc1 " .$destino->nombre ."\n\n";
+			."\ud83c\udfc1 " .$destino->nombre ."\n\n";
 
 	if($res){
 		$fecha = strtotime($res);
