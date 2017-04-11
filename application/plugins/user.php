@@ -193,7 +193,12 @@ if(
 	if(empty($pokeuser->username)){ $str .= "No sé como te llamas, sólo sé que "; }
 	else{ $str .= '$pokemon, '; }
 
-	$str .= 'eres *$team* $nivel ($exp EXP). $valido';
+	$str .= 'eres *$team* $nivel';
+	if($pokeuser->lvl < 40){
+		$str .= ' ($exp EXP)';
+	}
+	$str .= '. $valido';
+
 	if($pokeuser->authorized){ $str .= $telegram->emoji(" :star: "); }
 
 	// si el bot no conoce el nick del usuario
