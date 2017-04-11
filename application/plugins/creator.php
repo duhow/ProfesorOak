@@ -503,25 +503,27 @@ elseif($telegram->text_command("uinfo") or $telegram->text_command("ui")){
     $str = "Desconocido.";
     if($find !== FALSE){
         $str = $find['user']['id'] . " - " .$find['user']['first_name'] ." " .$find['user']['last_name'] ." ";
-        if(in_array($find['status'], ["administrator", "creator"])){ $str .= $telegram->emoji(":star:"); }
-        elseif(in_array($find['status'], ["left"])){ $str .= $telegram->emoji(":door:"); }
-        elseif(in_array($find['status'], ["kicked"])){ $str .= $telegram->emoji(":forbid:"); }
-        else{ $str .= $telegram->emoji(":multiuser:"); }
+        if(in_array($find['status'], ["administrator", "creator"])){ $str .= ":star:"; }
+        elseif(in_array($find['status'], ["left"])){ $str .= ":door:"; }
+        elseif(in_array($find['status'], ["kicked"])){ $str .= ":forbid:"; }
+        else{ $str .= ":multiuser:"; }
 
-        if(!$pk){ $str .= $telegram->emoji(" :question-red:"); }
+        if(!$pk){ $str .= " :question-red:"; }
         else{
             $colors = ["Y" => "yellow", "R" => "red", "B" => "blue"];
-            $str .= $telegram->emoji(" :heart-" .$colors[$pk->team] .":");
+            $str .= " :heart-" .$colors[$pk->team] .":";
         }
 
         $info = $pokemon->user_in_group($u, $chat);
         if($info){
-            $str .= "\n";
-            $str .= "$info->messages msj, último el " .date("d/m/Y H:i", strtotime($info->last_date));
+            $str .= "\n\ud83d\udcc5 " .date("d/m/Y H:i", strtotime($info->register_date))
+					."\n\ud83d\udcc6 " .date("d/m/Y H:i", strtotime($info->last_date))
+					."\n\ud83d\udcac " .$info->messages;
         }elseif($telegram->user_in_chat($find['user']['id'])){
             $pokemon->user_addgroup($find['user']['id'], $telegram->chat->id);
         }
 
+		$str = $telegram->emoji($str);
     }
 
 
