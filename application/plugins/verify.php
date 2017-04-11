@@ -7,11 +7,11 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 			$text = "Antes de validarte, necesito saber tu *";
 			$add = array();
 			if(empty($pokeuser->username)){ $add[] = "nombre"; }
-			if($pokeuser->username == 1){ $add[] = "nivel actual"; }
+			if($pokeuser->lvl == 1){ $add[] = "nivel actual"; }
 			$text .= implode(" y ", $add) ."*.\n";
 
 			if(empty($pokeuser->username)){ $text .= ":triangle-right: *Me llamo ...*\n"; }
-			if($pokeuser->username == 1){ $text .= ":triangle-right: *Soy nivel ...*\n"; }
+			if($pokeuser->lvl == 1){ $text .= ":triangle-right: *Soy nivel ...*\n"; }
 
 			$text .= "Cuando lo hayas dicho, *vuelve a enviarme la captura.*";
 			$telegram->send
@@ -190,11 +190,11 @@ elseif(
 		$text = "Antes de validarte, necesito saber tu *";
 		$add = array();
 		if(empty($pokeuser->username)){ $add[] = "nombre"; }
-		if($pokeuser->username == 1){ $add[] = "nivel actual"; }
+		if($pokeuser->lvl == 1){ $add[] = "nivel actual"; }
 		$text .= implode(" y ", $add) ."*.\n";
 
 		if(empty($pokeuser->username)){ $text .= ":triangle-right: *Me llamo ...*\n"; }
-		if($pokeuser->username == 1){ $text .= ":triangle-right: *Soy nivel ...*\n"; }
+		if($pokeuser->lvl == 1){ $text .= ":triangle-right: *Soy nivel ...*\n"; }
 
 		$text .= "Cuando lo hayas dicho, *vuelve a enviarme la captura.*";
 
