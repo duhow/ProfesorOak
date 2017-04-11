@@ -58,7 +58,7 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
             return -1;  // Mismo dia? nope.
         }
     }
-	$this->db->query('LOCK TABLE settings WRITE, user WRITE, user_flags WRITE');
+	// $this->db->query('LOCK TABLE settings WRITE, user WRITE, user_flags WRITE, user_inchat WRITE');
     $pole_user = unserialize($pokemon->settings($telegram->chat->id, 'pole_user'));
     $pkuser = $pokemon->user($telegram->user->id);
     if($pkuser){
@@ -104,7 +104,7 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
 
     $pokemon->settings($telegram->chat->id, 'pole_points', serialize($pole));
     $pokemon->settings($telegram->chat->id, 'pole_user', serialize($pole_user));
-	$this->db->query('UNLOCK TABLES');
+	// $this->db->query('UNLOCK TABLES');
     $telegram->send->text($telegram->user->first_name ." ha hecho $action!", TRUE)->send();
     // $telegram->send->text("Lo siento " .$telegram->user->first_name .", pero hoy la *pole* es mía! :D", TRUE)->send();
     return -1;

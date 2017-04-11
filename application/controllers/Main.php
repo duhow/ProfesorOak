@@ -47,7 +47,7 @@ class Main extends CI_Controller {
 		$pokeuser = $pokemon->user($telegram->user->id);
 		$step = $pokemon->step($telegram->user->id);
 
-		if(date("G") == "0" && intval(date("i")) <= 3 && $telegram->words() == 1){
+		if(date("G") == "0" && intval(date("i")) <= 7 && $telegram->words() == 1){
 			$this->plugin->load('game_pole');
 		}
 
