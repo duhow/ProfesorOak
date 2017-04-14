@@ -438,6 +438,9 @@ function pokegame_duel($user, $target, $tg){
 
 }
 
+// Para evitar sobrecarga de callbacks durante la pole - por si aparece un Pokemon.
+if(date("G") == "0" && intval(date("i")) <= 5){ return; }
+
 // Anti cheats
 if($pokemon->user_flags($telegram->user->id, ['summonear', 'poketelegram_cheat'])){ return; }
 
