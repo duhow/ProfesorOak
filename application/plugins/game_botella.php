@@ -27,7 +27,7 @@ if(
 		];
 		$n = mt_rand(0, count($frases) - 1);
 
-		$nombre = $u['user']['first_name'] .' ' .$u['user']['last_name'];
+		$nombre = trim($u['user']['first_name'] .' ' .$u['user']['last_name']);
 		$str = str_replace("%s", $nombre, $frases[$n]);
 
 		$this->telegram->send
