@@ -114,6 +114,8 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
 }
 
 if($telegram->text_command("polerank") or $telegram->text_has("!polerank")){
+	if($pokemon->command_limit("polerank", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+
     $poleuser = $pokemon->settings($telegram->chat->id, 'pole_user');
     $pole = $pokemon->settings($telegram->chat->id, 'pole');
 
