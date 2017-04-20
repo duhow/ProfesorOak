@@ -42,6 +42,19 @@ function renfe_buscar($search){
 	->get('renfe');
 
 	if($query->num_rows() == 1){ return $query->row(); }
+	return renfe_buscar_alias($search);
+}
+
+function renfe_buscar_alias($search){
+	$CI =& get_instance();
+	$query = $CI->db
+		->select("*")
+		->from('renfe')
+		->join('renfe_alias', 'renfe.id = renfe_alias.parada')
+		->where('renfe_alias.nombre', $search)
+	->get();
+
+	if($query->num_rows() == 1){ return $query->row(); }
 	return NULL;
 }
 
@@ -58,7 +71,7 @@ function renfe_motes($texto, $retval = TRUE){
 	return NULL;
 }
 
-function renfe_consulta($origen, $destino, $nucleo = 50, $hora = NULL){
+function renfe_datos($origen, $destino, $nucleo = 50, $hora = NULL){
 	if(empty($hora)){ $hora = max(date("H") - 1, 0); }
 
 	$url = "http://horarios.renfe.com/cer/hjcer310.jsp?";
@@ -105,7 +118,11 @@ function renfe_consulta($origen, $destino, $nucleo = 50, $hora = NULL){
 	$data = str_replace(array_keys($fixes), array_values($fixes), $data);
 
 	$data = '<?xml version="1.0" encoding="iso-8859-1"?>' ."\n" .$data;
-	$xml = simplexml_load_string($data);
+	return $data;
+}
+
+function renfe_consulta_siguiente($origen, $destino, $nucleo = 50, $hora = NULL){
+	$xml = simplexml_load_string(renfe_datos($origen, $destino, $nucleo, $hora));
 
 	foreach($xml->tbody->tr as $fila){
 		$hora = strval($fila->td[2]);
@@ -166,7 +183,7 @@ if(
 		$q = $telegram->send->send();
 	}
 
-	$res = renfe_consulta($origen->id, $destino->id, $origen->nucleo);
+	$res = renfe_consulta_siguiente($origen->id, $destino->id, $origen->nucleo);
 
 	if($res){
 		$fecha = strtotime($res);
@@ -175,7 +192,7 @@ if(
 		if($minutos <= 1){
 			$str .= ":exclamation-red: inminente.";
 		}else{
-			$str .= "\u25b6\ufe0f En $minutos min. - $res";
+			$str .= "|> En $minutos min. - $res";
 		}
 
 	}else{
@@ -187,7 +204,10 @@ if(
 	if(!$telegram->is_chat_group()){
 		$telegram->send
 			->inline_keyboard()
-				->row_button($this->telegram->emoji("\ud83d\udd01 Invertir"), "renfe " .$destino->id ." " .$origen->id, "TEXT")
+				->row()
+					->button($this->telegram->emoji("\ud83d\udd00 Invertir"), "renfe " .$destino->id ." " .$origen->id, "TEXT")
+					->button($this->telegram->emoji("\ud83d\udd04 Actual."),  "renfe " .$origen->id ." " .$destino->id, "TEXT")
+				->end_row()
 			->show();
 	}
 
