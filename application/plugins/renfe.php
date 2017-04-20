@@ -121,7 +121,10 @@ function renfe_consulta($origen, $destino, $nucleo = 50, $hora = NULL){
 }
 
 if(
-	$telegram->text_command("renfe") and
+	(
+		$telegram->text_command("renfe") or
+		$telegram->text_has("renfe", TRUE)
+	) and
 	in_array($telegram->words(), [2, 3])
 ){
 	$origen = NULL;
@@ -151,9 +154,17 @@ if(
 	$str = "\ud83d\ude88 " .$origen->nombre ."\n"
 		  ."\ud83c\udfc1 " .$destino->nombre ."\n\n";
 
-	$q = $telegram->send
-		->text($telegram->emoji($str .":clock: ") . "Ejecutando...")
-	->send();
+	$this->telegram->send
+		->text($telegram->emoji($str .":clock: ") . "Ejecutando...");
+
+	if($this->telegram->callback){
+		$q = $this->telegram->send
+			->message(TRUE)
+			->chat(TRUE)
+		->edit('text');
+	}else{
+		$q = $telegram->send->send();
+	}
 
 	$res = renfe_consulta($origen->id, $destino->id, $origen->nucleo);
 
@@ -172,6 +183,13 @@ if(
 	}
 
 	$str = $telegram->emoji($str);
+
+	if(!$telegram->is_chat_group()){
+		$telegram->send
+			->inline_keyboard()
+				->row_button($this->telegram->emoji("\ud83d\udd01 Invertir"), "renfe " .$destino->id ." " .$origen->id, "TEXT")
+			->show();
+	}
 
 	$telegram->send
 		->message($q['message_id'])
