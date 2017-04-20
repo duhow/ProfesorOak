@@ -62,6 +62,7 @@ if($step == "SETNAME"){
 				->send();
 			}elseif($level > 35 && $level <= 40){
 				$pokemon->step($pokeuser->telegramid, "LEVEL_SCREENSHOT");
+				$pokemon->settings($pokeuser->telegramid, "levelup_new", $level);
 				$telegram->send
 					->text("En serio? Pues... Mándame captura para demostrarlo.")
 				->send();
@@ -71,14 +72,26 @@ if($step == "SETNAME"){
 	return -1;
 }elseif($step == "LEVEL_SCREENSHOT"){
 	if($telegram->photo()){
-		$telegram->send
-			->reply_to(TRUE)
-			->text($telegram->emoji(":ok: Voy a ver..."))
-		->send();
+		$pokeuser = $pokemon->user($telegram->user->id);
+		$level = $pokemon->settings($telegram->user->id, "levelup_new");
+		$pokemon->settings($telegram->user->id, "levelup_new", "DELETE");
+
+		$str = ":ok: ¡Guay! La miro en un rato.";
+		if(date("G") <= 1 or date("G") >= 23){
+			$str = ":ok: ¡Guay! Te la miro cuando me despierte mañana...";
+		}elseif(date("G") > 1 && date("G") <= 8){
+			$str = ":ok: ¡Guay! Te la miro cuando esté despierto...";
+		}
 
 		$telegram->send
+			->reply_to(TRUE)
+			->text($telegram->emoji($str))
+		->send();
+
+		$str = "LEVELUP " .$telegram->emoji("|>") ." $level: @" .$pokeuser->username " - " .$telegram->user->id;
+		$telegram->send
 			->chat($this->config->item('creator'))
-			->text($telegram->user->first_name ." " .$telegram->user->id ." dice que ha subido de nivel.")
+			->text($str)
 		->send();
 
 		$telegram->send
