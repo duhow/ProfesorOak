@@ -106,7 +106,7 @@ if($telegram->text_has(["/kick", "/ban"], TRUE)){
 						$str = ":banned: Usuario baneado\n";
 					}
 							// Autor
-					$str .= "\ud83d\udec2 " .$telegram->user->id ." - " .$telegram->user->first_name . " @" .@$telegram->user->username ."\n";
+					$str .= ":guard: " .$telegram->user->id ." - " .$telegram->user->first_name . " @" .@$telegram->user->username ."\n";
 					$str .= ":id: " .$kick;
 					if($telegram->has_reply){
 						$str .= " - " .$telegram->reply_user->first_name ." @" .@$telegram->reply_user->username;

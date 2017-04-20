@@ -152,7 +152,7 @@ if(
 		  ."\ud83c\udfc1 " .$destino->nombre ."\n\n";
 
 	$q = $telegram->send
-		->text($telegram->emoji($str ."\ud83d\udd51 ") . "Ejecutando...")
+		->text($telegram->emoji($str .":clock: ") . "Ejecutando...")
 	->send();
 
 	$res = renfe_consulta($origen->id, $destino->id, $origen->nucleo);
@@ -162,7 +162,7 @@ if(
 		$minutos = ceil(($fecha - time()) / 60);
 
 		if($minutos <= 1){
-			$str .= ":red-exclamation: inminente.";
+			$str .= ":exclamation-red: inminente.";
 		}else{
 			$str .= "\u25b6\ufe0f En $minutos min. - $res";
 		}

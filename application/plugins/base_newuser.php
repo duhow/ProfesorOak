@@ -175,11 +175,11 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
         }
 
         if($new->id == $this->config->item("telegram_bot_id")){
-			$text = "\ud83c\udd95 ¡Grupo nuevo!\n"
-					."\ud83d\udd24 " .$telegram->chat->title ."\n"
-					."\ud83c\udd94 " .$telegram->chat->id ."\n"
-					."\ud83d\udec2 " .$count ."\n" // del principio de ejecución.
-					."\ud83d\udeb9 " .$telegram->user->id ." - " .$telegram->user->first_name;
+			$text = ":new: ¡Grupo nuevo!\n"
+					.":abc: " .$telegram->chat->title ."\n"
+					.":id: " .$telegram->chat->id ."\n"
+					.":guard: " .$count ."\n" // del principio de ejecución.
+					.":man: " .$telegram->user->id ." - " .$telegram->user->first_name;
 			$telegram->send
 				->chat($this->config->item('creator'))
 				->text($telegram->emoji($text))
@@ -303,7 +303,20 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
     }
     return -1;
 }elseif($telegram->is_chat_group() && $telegram->data_received("left_chat_participant")){
-    $pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
+	$left = $telegram->new_user; // HACK nombre confunde.
+    $pokemon->user_delgroup($left->id, $telegram->chat->id);
+	if($left->id == $this->config->item('telegram_bot_id')){
+		$str = ":door: Me echan :(\n"
+				.":id: " .$telegram->chat->id ."\n"
+				.":abc: " .$telegram->chat->title ."\n"
+				.":guard: " .$telegram->user->id ." - " .$telegram->user->first_name;
+
+		$this->telegram->send
+			->notification(TRUE)
+			->chat($this->config->item('creator'))
+			->text($telegram->emoji($str))
+		->send();
+	}
     return -1;
 }
 
