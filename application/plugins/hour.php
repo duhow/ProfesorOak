@@ -42,9 +42,10 @@ if($this->telegram->text_has("Hora", TRUE) && in_array($telegram->words(), [2,3]
         $local = time(); // Current
     }
 
-
+	$icon_world = ":world:";
+	if(in_array($sel, ['PST', 'PDT'])){ $icon_world = ":world-usa:"; }
     $str = ":clock: " .date("H:i:s", $local) ."\n"
-            .":world: " .date("H:i:s", $time);
+            ."$icon_world " .date("H:i:s", $time);
 
     $str = $this->telegram->emoji($str);
     $this->telegram->send
