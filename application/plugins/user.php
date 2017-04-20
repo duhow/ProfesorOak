@@ -88,7 +88,7 @@ if($step == "SETNAME"){
 			->text($telegram->emoji($str))
 		->send();
 
-		$str = "LEVELUP " .$telegram->emoji("|>") ." $level: @" .$pokeuser->username " - " .$telegram->user->id;
+		$str = "LEVELUP " .$telegram->emoji("|>") ." $level: @" .$pokeuser->username ." - " .$telegram->user->id;
 		$telegram->send
 			->chat($this->config->item('creator'))
 			->text($str)
