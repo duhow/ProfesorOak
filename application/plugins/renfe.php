@@ -48,7 +48,7 @@ function renfe_buscar($search){
 function renfe_buscar_alias($search){
 	$CI =& get_instance();
 	$query = $CI->db
-		->select("*")
+		->select("renfe.*")
 		->from('renfe')
 		->join('renfe_alias', 'renfe.id = renfe_alias.parada')
 		->where('renfe_alias.nombre', $search)
