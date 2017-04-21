@@ -11,7 +11,7 @@ function report_user($source, $target, $reason = NULL, $type = NULL){
 		'date' => date("Y-m-d H:i:s"),
 	];
 	$res = $CI->db->insert('reports', $data);
-	if($res !== FALSE){ return $CI->db->insert_id; }
+	if($res !== FALSE){ return $CI->db->insert_id(); }
 	return FALSE;
 }
 
