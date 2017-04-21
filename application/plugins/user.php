@@ -283,6 +283,7 @@ elseif(
 	$telegram->words() <= 5
 ){
 	$str = "";
+	$offline = FALSE;
 	$teams = ['Y' => "Amarillo", "B" => "Azul", "R" => "Rojo"];
 	$user_search = NULL;
 	// pregunta usando respuesta
@@ -320,6 +321,7 @@ elseif(
 		// User offline
 		$info = $pokemon->user_offline($user_search);
 		if(!empty($info)){
+			$offline = TRUE;
 			$str = 'Es *$team* $nivel. :question-red:';
 			$reps = user_reports($user_search, TRUE);
 			if(!empty($reps)){
@@ -342,7 +344,7 @@ elseif(
 			if(!empty($reps)){
 				$reptype = array_column($reps, 'type');
 				$reptype = array_unique($reptype);
-				$str .= "\nTiene *" .count($reps) ."* reportes por " .implode(", ", $reptype) .".";
+				$str .= "Tiene *" .count($reps) ."* reportes por " .implode(", ", $reptype) .".\n";
 			}
 		}
 	}
@@ -386,7 +388,7 @@ elseif(
 
 	$str = str_replace(array_keys($repl), array_values($repl), $str);
 
-	if(!empty($info->username)){
+	if(!empty($info->username) && !$offline){
 		$this->telegram->send
 		->inline_keyboard()
 			->row_button($telegram->emoji("\ud83d\udcdd Ver perfil"), "http://oak.duhowpi.net/user/" .$info->username)
