@@ -44,10 +44,10 @@ if(
 	if($telegram->text_mention()){
 		$target = $telegram->text_mention();
 		if(is_array($target)){ $target = key($target); }
-	}elseif($telegram->has_reply){
-		$target = $telegram->reply_target('forward');
-	}elseif($telegram->words() >= 2){
+	}elseif($telegram->words() >= 2 && strtolower($telegram->words(1)) != "por"){
 		$target = $telegram->words(1);
+	}elseif($telegram->has_reply){
+		$target = $telegram->reply_target('forward')->id;
 	}else{
 		$str = $telegram->text_command() ." <usuario>";
 		if($telegram->text_command("report")){ $str .= " <motivo>"; }
