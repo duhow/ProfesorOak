@@ -902,7 +902,7 @@ elseif($telegram->text_command("uchk")){
 
 	foreach($users as $uid){
 		if(!$this->telegram->user_in_chat($uid, $this->telegram->chat->id)){
-			$this->pokemon->user_delchat($uid, $this->telegram->chat->id);
+			$this->pokemon->user_delgroup($uid, $this->telegram->chat->id);
 			$c++;
 		}
 	}
