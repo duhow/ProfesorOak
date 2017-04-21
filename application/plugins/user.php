@@ -38,6 +38,17 @@ function user_set_name($user, $name, $force = FALSE){
 	return TRUE;
 }
 
+function user_reports($name, $retall = FALSE){
+	$CI =& get_instacne();
+	$query = $CI->db
+		->where('reported', $name)
+	->get('reports');
+
+	if($query->num_rows() == 0){ return NULL; }
+	if(!$retall){ return $query->num_rows(); }
+	return $query->result_array();
+}
+
 $step = $pokemon->step($telegram->user->id);
 if($step == "SETNAME"){
 	if($telegram->words() == 1 && !$telegram->text_command()){ user_set_name($telegram->user->id, $telegram->last_word(TRUE), TRUE); }
@@ -308,7 +319,16 @@ elseif(
 		$str = "No sé quien es $user_search.";
 		// User offline
 		$info = $pokemon->user_offline($user_search);
-		if(!empty($info)){ $str = 'Es *$team* $nivel. :question-red:'; }
+		if(!empty($info)){
+			$str = 'Es *$team* $nivel. :question-red:';
+			$reps = user_reports($user_search);
+			if(!empty($reps)){
+				$reptype = array_column($reps, 'type');
+				$reptype = array_unique($reptype);
+				$str .= "\nTiene *" .count($reps) ."* reportes por " .implode(", ", $reptype) ."."; }
+			}
+		}
+
 	}else{
 		if(empty($info->username)){
 			$str = "No sé como se llama, sólo sé que ";
@@ -316,6 +336,15 @@ elseif(
 			$str = '$pokemon, ';
 		}
 		$str .= 'es *$team* $nivel. $valido' ."\n";
+
+		if(empty($info->username)){
+			$reps = user_reports($info->username);
+			if(!empty($reps)){
+				$reptype = array_column($reps, 'type');
+				$reptype = array_unique($reptype);
+				$str .= "\nTiene *" .count($reps) ."* reportes por " .implode(", ", $reptype) ."."; }
+			}
+		}
 	}
 
 	if(!empty($info)){

@@ -1,7 +1,7 @@
 <?php
 
 // Puede ser una descripción, un forward de mensaje o bien una foto.
-function report_user($source, $target, $reason, $type = 'text'){
+function report_user($source, $target, $reason = NULL, $type = NULL){
 	$CI =& get_instance();
 	$data = [
 		'user' => $source,
@@ -37,11 +37,15 @@ if(
 	$telegram->text_command("reportv")
 ){
 	$target = NULL;
-	if($telegram->has_reply){
-		$target = $telegram->reply_target('forward');
-	}elseif($telegram->text_mention()){
+	$type = NULL;
+	$extra = NULL;
+
+	// Mención primero por si se hace autoreply de una foto.
+	if($telegram->text_mention()){
 		$target = $telegram->text_mention();
 		if(is_array($target)){ $target = key($target); }
+	}elseif($telegram->has_reply){
+		$target = $telegram->reply_target('forward');
 	}elseif($telegram->words() >= 2){
 		$target = $telegram->words(1);
 	}else{
@@ -55,7 +59,7 @@ if(
 		return -1;
 	}
 
-	$pkuser = $pokemon->find($target);
+	$pkuser = $pokemon->find($target, TRUE);
 	if($pkuser){
 		if(!empty($pkuser->username)){
 			$target = $pkuser->username;
@@ -76,10 +80,49 @@ if(
 		// spam, troll, ratkid, gps/fly/hacks, etc.
 		$flags = [
 			'fly' => ["volar", "volador", "fly", "gps", "fakegps", "fake gps"],
-			'spam' => ["spam", "publi", "publicidad", ""]
+			'hacks' => ["hack", "hacks", "trampa", "trampas"],
+			'bot' => ["bot", "bots"],
+			'multiaccount' => ["multi", "multiple", "multicuenta", "multicuentas"],
+			'spam' => ["spam", "publi", "publicidad"],
+			'troll' => ["liante", "liarla", "trol", "troll", "acusar"]
 		];
-	}
-}
 
+		foreach($flags as $k => $v){
+			if($telegram->text_has($v)){
+				$type = $k; break;
+			}
+		}
+	}
+
+	$reason = $telegram->words(2, 100);
+	if($telegram->has_reply){
+		if(isset($telegram->reply->photo)){
+			$phts = $telegram->reply->photo;
+			$photo = array_pop($phts);
+			$extra = ['photo' => $photo['file_id']];
+		}elseif(isset($telegram->reply->text)){
+			$extra = ['text' => $telegram->reply->text];
+		}
+	}
+
+	// TODO REWRITE
+
+	$report = $extra;
+	$report['reason'] = $reason;
+	$report = serialize($report);
+
+	if($target && ($type or $reason or $extra)){
+		$res = report_user($this->telegram->user->id, $target, $report, $type);
+		$str = ":times: Error al generar report.";
+		if($res){
+			$str = ":ok: Report enviado!";
+		}
+
+		$this->telegram->send
+			->text($this->telegram->emoji($str))
+		->send();
+	}
+	return -1;
+}
 
 ?>
