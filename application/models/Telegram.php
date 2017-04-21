@@ -1019,7 +1019,7 @@ class Telegram extends CI_Model{
 
 	function download($file_id, $path = NULL){
 		$data = $this->send->get_file($file_id);
-		$url = "https://api.telegram.org/file/bot" .$this->bot->id .":" .$this->bot->key ."/";
+		$url = "https://api.telegram.org/file/bot" .$this->config->item('telegram_bot_id') .":" .$this->config->item('telegram_bot_key') ."/";
 		$file = $url .$data['file_path'];
 		if(!empty($path)){
 			return file_put_contents($path, file_get_contents($file));
