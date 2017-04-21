@@ -878,14 +878,60 @@ elseif($telegram->text_command("udif")){
 	->send();
 }
 
+elseif($telegram->text_command("uchk")){
+	$query = $this->db
+		->select('uid')
+		->where('cid', $this->telegram->chat->id)
+	->get('user_inchat');
+
+	$users = array_column($query->result_array(), 'uid');
+
+	$ctg = $this->telegram->send->get_members_count($this->telegram->chat->id);
+	$cpk = count($users);
+	$min = max(round(($cpk * 0.50) / 60), 1);
+
+
+	$str = ":clock: Hay $ctg y conozco a $cpk. Tardaré aprox $min min.";
+	$q = $this->telegram->send
+		->notification(FALSE)
+		->text($this->telegram->emoji($str))
+	->send();
+
+	$time = time();
+	$c = 0;
+
+	foreach($users as $uid){
+		if(!$this->telegram->user_in_chat($uid, $this->telegram->chat->id)){
+			$this->pokemon->user_delchat($uid, $this->telegram->chat->id);
+			$c++;
+		}
+	}
+
+	$time = (time() - $time);
+	$str .= "\n" .":ok: Listo! He quitado a $c en {$time}s.";
+
+	$this->telegram->send
+		->notification(TRUE)
+		->message($q['message_id'])
+		->chat(TRUE)
+		->text($this->telegram->emoji($str))
+	->edit('text');
+
+	return -1;
+}
+
 $step = $pokemon->step($telegram->user->id);
 if($telegram->document() && in_array($step, ["USERREC_LIST", "USERDIF_LIST"])){
 	set_time_limit(2700);
-    $run = $pokemon->settings($telegram->chat->id, 'investigation');
-    if($run !== NULL){
-        if(time() <= ($run + 3600)){ return -1; }
-    }
-    $run = $pokemon->settings($telegram->chat->id, 'investigation', time());
+
+	// Para generar la USERDIF no me hace falta tiempo, pero encontrar a los usuarios si.
+	if($step == "USERREC_LIST"){
+		$run = $pokemon->settings($telegram->chat->id, 'investigation');
+		if($run !== NULL){
+			if(time() <= ($run + 120)){ return -1; }
+		}
+		$run = $pokemon->settings($telegram->chat->id, 'investigation', time());
+	}
 
 	$q = $this->telegram->send
 		->text($this->telegram->emoji(":clock: ") ."Descargando...")
@@ -917,7 +963,7 @@ if($telegram->document() && in_array($step, ["USERREC_LIST", "USERDIF_LIST"])){
 	unlink($jsonf); // Borrar archivo JSON temp.
 
 	if($step == "USERREC_LIST"){
-		$min = round(($count * 0.75) / 60);
+		$min = max(round(($count * 0.50) / 60), 1);
 		$this->telegram->send
 			->message($q['message_id'])
 			->chat(TRUE)
