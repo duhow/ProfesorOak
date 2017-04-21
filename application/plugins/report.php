@@ -50,6 +50,13 @@ if(
 	$telegram->text_command("reportv")
 ){
 	if($pokemon->user_flags($telegram->user->id, ['troll', 'ratkid', 'rager', 'spam', 'bot', 'hacks', 'gps', 'fly', 'multiaccount', 'report'])){ return -1; }
+	$pokeuser = $pokemon->user($this->telegram->user->id);
+	if(!$pokeuser->verified or strtotime("+1 month", strtotime($pokeuser->register_date)) > time() ){
+		$this->telegram->send
+			->text($this->telegram->emoji(":warning: ") ."Sólo pueden reportar los usuarios validados de hace tiempo.")
+		->send();
+		return -1;
+	}
 
 	$target = NULL;
 	$type = NULL;
