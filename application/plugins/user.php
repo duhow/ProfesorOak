@@ -327,7 +327,7 @@ elseif(
 			if(!empty($reps)){
 				$reptype = array_column($reps, 'type');
 				$reptype = array_unique($reptype);
-				$str .= "\nTiene *" .count($reps) ."* reportes por " .implode(", ", $reptype) .".";
+				$str .= "\n" .$this->telegram->emoji("\ud83d\udcdb ") ."*" .count($reps) ."* reportes por " .implode(", ", $reptype) .".";
 			}
 		}
 
@@ -344,7 +344,7 @@ elseif(
 			if(!empty($reps)){
 				$reptype = array_column($reps, 'type');
 				$reptype = array_unique($reptype);
-				$str .= "Tiene *" .count($reps) ."* reportes por " .implode(", ", $reptype) .".\n";
+				$str .= $this->telegram->emoji("\ud83d\udcdb ") ."*" .count($reps) ."* reportes por " .implode(", ", $reptype) .".\n";
 			}
 		}
 	}
@@ -363,6 +363,7 @@ elseif(
 			if(in_array("multiaccount", $flags)){ $str .= $telegram->emoji(":multiuser: "); }
 			if(in_array("gps", $flags)){ $str .= $telegram->emoji(":antenna: "); }
 			if(in_array("bot", $flags)){ $str .= $telegram->emoji(":robot: "); }
+			if(in_array("fly", $flags)){ $str .= $telegram->emoji("\ud83d\udd79 "); }
 			if(in_array("rager", $flags)){ $str .= $telegram->emoji(":fire: "); }
 			if(in_array("troll", $flags)){ $str .= $telegram->emoji(":joker: "); }
 			if(in_array("spam", $flags)){ $str .= $telegram->emoji(":spam: "); }
