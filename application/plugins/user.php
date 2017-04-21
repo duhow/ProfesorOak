@@ -325,7 +325,7 @@ elseif(
 			if(!empty($reps)){
 				$reptype = array_column($reps, 'type');
 				$reptype = array_unique($reptype);
-				$str .= "\nTiene *" .count($reps) ."* reportes por " .implode(", ", $reptype) ."."; }
+				$str .= "\nTiene *" .count($reps) ."* reportes por " .implode(", ", $reptype) .".";
 			}
 		}
 
@@ -337,12 +337,12 @@ elseif(
 		}
 		$str .= 'es *$team* $nivel. $valido' ."\n";
 
-		if(empty($info->username)){
+		if(!empty($info->username)){
 			$reps = user_reports($info->username);
 			if(!empty($reps)){
 				$reptype = array_column($reps, 'type');
 				$reptype = array_unique($reptype);
-				$str .= "\nTiene *" .count($reps) ."* reportes por " .implode(", ", $reptype) ."."; }
+				$str .= "\nTiene *" .count($reps) ."* reportes por " .implode(", ", $reptype) .".";
 			}
 		}
 	}
