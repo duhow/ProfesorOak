@@ -10,7 +10,20 @@ function report_user($source, $target, $reason = NULL, $type = NULL){
 		'type' => $type,
 		'date' => date("Y-m-d H:i:s"),
 	];
-	return $CI->db->insert('reports', $data);
+	$res = $CI->db->insert('reports', $data);
+	if($res !== FALSE){ return $CI->db->insert_id; }
+	return FALSE;
+}
+
+function report_exists($user, $target, $type = NULL){
+	$CI =& get_instance();
+	if(!empty($type)){ $CI->db->where('type', $type); }
+	$query = $CI->db
+		->where('user', $user)
+		->where('reported', $target)
+	->get('reports');
+	if($query->num_rows() == 0){ return FALSE; }
+	return $query->row_array();
 }
 
 function report_user_get($user, $target = TRUE){
@@ -114,9 +127,16 @@ if(
 	$report = serialize($report);
 
 	if($target && ($type or $reason or $extra)){
-		$res = report_user($this->telegram->user->id, $target, $report, $type);
 		$str = ":times: Error al generar report.";
+		if(report_exists($this->telegram->user->id, $target, $type)){
+			$res = FALSE;
+			$str = ":times: Report duplicado.";
+		}else{
+			$res = report_user($this->telegram->user->id, $target, $report, $type);
+		}
+
 		if($res){
+			report_user_chat($res, $this->telegram->chat->id);
 			$str = ":ok: Report enviado!";
 		}
 
