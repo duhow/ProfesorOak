@@ -894,10 +894,10 @@ elseif($telegram->text_command("uchk")){
 
 	$ctg = $this->telegram->send->get_members_count($this->telegram->chat->id);
 	$cpk = count($users);
-	$min = max(round(($cpk * 0.50) / 60), 1);
+	$min = max(round($cpk * 0.20), 1);
 
 
-	$str = ":clock: Hay $ctg y conozco a $cpk. Tardaré aprox $min min.";
+	$str = ":clock: Hay $ctg y conozco a $cpk. Tardaré aprox $min sec.";
 	$q = $this->telegram->send
 		->notification(FALSE)
 		->text($this->telegram->emoji($str))
