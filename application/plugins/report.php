@@ -77,7 +77,7 @@ if(
 		$flags = [
 			'fly' => ["volar", "volador", "fly", "gps", "fakegps", "fake gps"],
 			'spam' => ["spam", "publi", "publicidad", ""]
-		]
+		];
 	}
 }
 
