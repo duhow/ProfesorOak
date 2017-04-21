@@ -36,6 +36,8 @@ if(
 	$telegram->text_command("report") or
 	$telegram->text_command("reportv")
 ){
+	if($pokemon->user_flags($telegram->user->id, ['troll', 'ratkid', 'rager', 'spam', 'bot', 'hacks', 'gps', 'fly', 'multiaccount', 'report'])){ return -1; }
+
 	$target = NULL;
 	$type = NULL;
 	$extra = NULL;
