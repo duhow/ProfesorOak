@@ -864,4 +864,79 @@ elseif($telegram->text_command("c")){
 	return -1;
 }
 
+elseif($telegram->text_command("urec")){
+	$pokemon->step($telegram->user->id, "USERREC_LIST");
+	$this->telegram->send
+		->text("Claro que si, guapi! Pásame la lista. :3")
+	->send();
+}
+
+$step = $pokemon->step($telegram->user->id);
+if($telegram->document() && $step == "USERREC_LIST"){
+	set_time_limit(2700);
+    $run = $pokemon->settings($telegram->chat->id, 'investigation');
+    if($run !== NULL){
+        if(time() <= ($run + 3600)){ return -1; }
+    }
+    $run = $pokemon->settings($telegram->chat->id, 'investigation', time());
+
+	$q = $this->telegram->send
+		->text($this->telegram->emoji(":clock: ") ."Descargando...")
+	->send();
+
+	$jsonf = tempnam("/tmp", "tgusr");
+	$file = $this->telegram->download($telegram->document()->file_id, $jsonf);
+
+	if(!$file){
+		$this->telegram->send
+			->message($q['message_id'])
+			->chat(TRUE)
+			->text($this->telegram->emoji(":times: ") ."Error al descargar.")
+		->edit("text");
+		return -1;
+	}
+
+	$pokemon->step($telegram->user->id, NULL);
+
+	$json = json_decode(file_get_contents($jsonf), TRUE);
+	$count = count($json);
+	$min = round(($count * 0.75) / 60);
+
+	$this->telegram->send
+		->message($q['message_id'])
+		->chat(TRUE)
+		->text($this->telegram->emoji(":clock: ") ."Encontrados $count, tardaré aprox $min min.")
+	->edit('text');
+
+	$ca = 0;
+	$cr = 0;
+	foreach($json as $u){
+		$uid = $u['peer_id'];
+
+		$istg = $this->telegram->user_in_chat($uid, $this->telegram->chat->id);
+		$ispk = $this->pokemon->user_in_group($uid, $this->telegram->chat->id);
+
+		if($istg && $ispk){ continue; }
+		elseif($ispk && !$istg){
+			$this->pokemon->user_delgroup($uid, $this->telegram->chat->id);
+			$cr++;
+		}elseif($istg && !$ispk){
+			$this->pokemon->user_addgroup($uid, $this->telegram->chat->id);
+			$ca++;
+		}
+	}
+
+	$log = array();
+	if($ca > 0){ $log[] = "$ca añadidos"; }
+	if($cr > 0){ $log[] = "$cr quitados"; }
+	if($ca == 0 && $cr == 0){ $log[] = "Ningún usuario nuevo"; }
+
+	$str = ":ok: Listo! " .implode(" y ", $log) .".";
+	$this->telegram->send
+		->text($this->telegram->emoji($str))
+	->send();
+
+	return -1;
+}
+
 ?>
