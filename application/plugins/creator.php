@@ -871,8 +871,15 @@ elseif($telegram->text_command("urec")){
 	->send();
 }
 
+elseif($telegram->text_command("udif")){
+	$pokemon->step($telegram->user->id, "USERDIF_LIST");
+	$this->telegram->send
+		->text("Claro que si, guapi! Pásame la lista. :3")
+	->send();
+}
+
 $step = $pokemon->step($telegram->user->id);
-if($telegram->document() && $step == "USERREC_LIST"){
+if($telegram->document() && in_array($step, ["USERREC_LIST", "USERDIF_LIST"]){
 	set_time_limit(2700);
     $run = $pokemon->settings($telegram->chat->id, 'investigation');
     if($run !== NULL){
@@ -896,45 +903,102 @@ if($telegram->document() && $step == "USERREC_LIST"){
 		return -1;
 	}
 
-	$pokemon->step($telegram->user->id, NULL);
-
 	$json = json_decode(file_get_contents($jsonf), TRUE);
+	if(!$json){
+		$this->telegram->send
+			->text($this->telegram->emoji(":times: ") ."¡Archivo de tipo incorrecto!")
+		->send();
+		unlink($jsonf);
+		return -1;
+	}
 	$count = count($json);
-	$min = round(($count * 0.75) / 60);
 
-	$this->telegram->send
-		->message($q['message_id'])
-		->chat(TRUE)
-		->text($this->telegram->emoji(":clock: ") ."Encontrados $count, tardaré aprox $min min.")
-	->edit('text');
+	$pokemon->step($telegram->user->id, NULL);
+	unlink($jsonf); // Borrar archivo JSON temp.
 
-	$ca = 0;
-	$cr = 0;
-	foreach($json as $u){
-		$uid = $u['peer_id'];
+	if($step == "USERREC_LIST"){
+		$min = round(($count * 0.75) / 60);
+		$this->telegram->send
+			->message($q['message_id'])
+			->chat(TRUE)
+			->text($this->telegram->emoji(":clock: ") ."Encontrados $count, tardaré aprox $min min.")
+		->edit('text');
 
-		$istg = $this->telegram->user_in_chat($uid, $this->telegram->chat->id);
-		$ispk = $this->pokemon->user_in_group($uid, $this->telegram->chat->id);
+		$ca = 0;
+		$cr = 0;
+		foreach($json as $u){
+			$uid = $u['peer_id'];
 
-		if($istg && $ispk){ continue; }
-		elseif($ispk && !$istg){
-			$this->pokemon->user_delgroup($uid, $this->telegram->chat->id);
-			$cr++;
-		}elseif($istg && !$ispk){
-			$this->pokemon->user_addgroup($uid, $this->telegram->chat->id);
-			$ca++;
+			$istg = $this->telegram->user_in_chat($uid, $this->telegram->chat->id);
+			$ispk = $this->pokemon->user_in_group($uid, $this->telegram->chat->id);
+
+			if($istg && $ispk){ continue; }
+			elseif($ispk && !$istg){
+				$this->pokemon->user_delgroup($uid, $this->telegram->chat->id);
+				$cr++;
+			}elseif($istg && !$ispk){
+				$this->pokemon->user_addgroup($uid, $this->telegram->chat->id);
+				$ca++;
+			}
+		}
+
+		$log = array();
+		if($ca > 0){ $log[] = "$ca añadidos"; }
+		if($cr > 0){ $log[] = "$cr quitados"; }
+		if($ca == 0 && $cr == 0){ $log[] = "Ningún usuario nuevo"; }
+
+		$str = ":ok: Listo! " .implode(" y ", $log) .".";
+		$this->telegram->send
+			->text($this->telegram->emoji($str))
+		->send();
+	}elseif($step == "USERDIF_LIST"){
+		$this->telegram->send
+			->message($q['message_id'])
+			->chat(TRUE)
+			->text($this->telegram->emoji(":clock: ") ."Encontrados $count. Procesando lista diferencial...")
+		->edit('text');
+
+		$users = array_column($json, 'peer_id');
+		$query = $this->db
+			->select('uid')
+			->where_in('uid', $users)
+			->where('cid', $this->telegram->chat->id)
+		->get('user_inchat');
+
+		$res = array();
+		if($query->num_rows() > 0){
+			$res = array_column($query->result_array(), 'uid');
+		}
+
+		$diff = array_diff($users, $res);
+
+		$str = ":ok: Están todos los de la lista.";
+		if(count($diff) > 0 && count($diff) <= 5){
+			$str = implode("\n", $diff);
+		}elseif(count($diff) > 5){
+			$str = ":ok: Hay " .count($diff) ." que no tengo. ¡Te los paso por privado!";
+		}
+
+		$this->telegram->send
+			->notification(FALSE)
+			->text($this->telegram->emoji($str))
+		->send();
+
+		if(count($diff) > 5){
+			$name = date("Ymd.His") .".txt";
+			$path = "/tmp/$name";
+			file_put_contents($path, implode("\n", $diff));
+
+			$this->telegram->send
+				->notification(TRUE)
+				->chat($this->telegram->user->id)
+			->file('document', $path);
+
+			unlink($path);
 		}
 	}
 
-	$log = array();
-	if($ca > 0){ $log[] = "$ca añadidos"; }
-	if($cr > 0){ $log[] = "$cr quitados"; }
-	if($ca == 0 && $cr == 0){ $log[] = "Ningún usuario nuevo"; }
 
-	$str = ":ok: Listo! " .implode(" y ", $log) .".";
-	$this->telegram->send
-		->text($this->telegram->emoji($str))
-	->send();
 
 	return -1;
 }
