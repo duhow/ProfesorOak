@@ -879,7 +879,7 @@ elseif($telegram->text_command("udif")){
 }
 
 $step = $pokemon->step($telegram->user->id);
-if($telegram->document() && in_array($step, ["USERREC_LIST", "USERDIF_LIST"]){
+if($telegram->document() && in_array($step, ["USERREC_LIST", "USERDIF_LIST"])){
 	set_time_limit(2700);
     $run = $pokemon->settings($telegram->chat->id, 'investigation');
     if($run !== NULL){
