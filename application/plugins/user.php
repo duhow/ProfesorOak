@@ -39,7 +39,7 @@ function user_set_name($user, $name, $force = FALSE){
 }
 
 function user_reports($name, $retall = FALSE){
-	$CI =& get_instacne();
+	$CI =& get_instance();
 	$query = $CI->db
 		->where('reported', $name)
 	->get('reports');
