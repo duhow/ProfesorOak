@@ -879,6 +879,12 @@ elseif($telegram->text_command("udif")){
 }
 
 elseif($telegram->text_command("uchk")){
+	$run = $pokemon->settings($telegram->chat->id, 'investigation');
+	if($run !== NULL){
+		if(time() <= ($run + 120)){ return -1; }
+	}
+	$run = $pokemon->settings($telegram->chat->id, 'investigation', time());
+
 	$query = $this->db
 		->select('uid')
 		->where('cid', $this->telegram->chat->id)
