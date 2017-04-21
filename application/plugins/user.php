@@ -321,7 +321,7 @@ elseif(
 		$info = $pokemon->user_offline($user_search);
 		if(!empty($info)){
 			$str = 'Es *$team* $nivel. :question-red:';
-			$reps = user_reports($user_search);
+			$reps = user_reports($user_search, TRUE);
 			if(!empty($reps)){
 				$reptype = array_column($reps, 'type');
 				$reptype = array_unique($reptype);
@@ -338,7 +338,7 @@ elseif(
 		$str .= 'es *$team* $nivel. $valido' ."\n";
 
 		if(!empty($info->username)){
-			$reps = user_reports($info->username);
+			$reps = user_reports($info->username, TRUE);
 			if(!empty($reps)){
 				$reptype = array_column($reps, 'type');
 				$reptype = array_unique($reptype);
