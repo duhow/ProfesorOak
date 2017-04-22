@@ -135,11 +135,11 @@ if($telegram->text_url() && $telegram->is_chat_group()){
         $telegram->send
             ->message(TRUE)
             ->chat(TRUE)
-            ->forward_to($this->config->item('creator'))
+            ->forward_to("-211573726")
         ->send();
 
         $telegram->send
-            ->chat($this->config->item('creator'))
+            ->chat("-211573726")
             ->text("*SPAM* del grupo " .$telegram->chat->id .".", TRUE)
             ->inline_keyboard()
                 ->row_button("No es spam", "/nospam " .$telegram->user->id ." " .$telegram->chat->id, "TEXT")

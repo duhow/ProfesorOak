@@ -27,12 +27,12 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 		$telegram->send
 			->message(TRUE)
 			->chat(TRUE)
-			->forward_to($this->config->item('creator'))
+			->forward_to("-197822813")
 		->send();
 
 		$telegram->send
 			->notification(TRUE)
-			->chat($this->config->item('creator'))
+			->chat("-197822813")
 			->text("Validar " .$telegram->user->id ." @" .$pokeuser->username ." L" .$pokeuser->lvl ." " .$pokeuser->team)
 			->inline_keyboard()
 				->row()
