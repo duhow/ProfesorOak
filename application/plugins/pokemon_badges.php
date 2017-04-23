@@ -790,7 +790,7 @@ elseif($telegram->text_has("ranking") && $telegram->text_has(["medallas", "badge
 		}
 
 		$str .= $this->telegram->emoji($icons[$n])
-			." <code>" .str_pad($value, $max, ' ', STR_PAD_LEFT) ." </code> "
+			." <code>" .str_pad($b['value'], $maxlen, ' ', STR_PAD_LEFT) ." </code> "
 			.$badge['name'] ." - "
 			.$b['username']
 			."\n";
