@@ -342,6 +342,19 @@ function badges_last($user, $type, $full = FALSE){
 function badges_max_ranking($badges = NULL){
 	$CI =& get_instance();
 
+	$users = NULL;
+	// Ranking del grupo
+	if(is_numeric($badges)){
+		$query = $CI->db
+			->select('uid')
+			->where('cid', $badges)
+		->get('user_inchat');
+
+		if($query->num_rows() == 0){ return array(); }
+		$users = array_column($query->result_array(), 'uid');
+		$badges = NULL;
+	}
+
 	if(empty($badges)){
 		$badges = array_column(pokemon_badges(), 'type');
 	}elseif(!is_array($badges)){
@@ -351,9 +364,15 @@ function badges_max_ranking($badges = NULL){
 	$CI->db
 		->select(['user_badges.*', 'user.username'])
 		->from('user_badges')
-		->join('user', 'user_badges.uid = user.telegramid');
+		->join('user', 'user_badges.uid = user.telegramid')
+		->group_start();
 	foreach($badges as $b){
 		$CI->db->or_where('id', '(SELECT id FROM user_badges WHERE type = "'. $b .'" ORDER BY value DESC, date ASC LIMIT 1)', FALSE);
+	}
+
+	$CI->db->group_end();
+	if(is_array($users)){
+		$CI->db->where_in('uid', $users);
 	}
 
 	$query = $CI->db
@@ -773,7 +792,11 @@ if(
 }
 
 elseif($telegram->text_has("ranking") && $telegram->text_has(["medallas", "badges"]) && $telegram->words() <= 7){
-	$ranking = badges_max_ranking();
+	if($telegram->text_has(["grupo", "aqui", "canal"]) && $telegram->is_chat_group()){
+		$ranking = badges_max_ranking($this->telegram->chat->id);
+	}else{
+		$ranking = badges_max_ranking();
+	}
 	$icons = ['\u2796', '\ud83e\udd49', '\ud83e\udd48', '\ud83e\udd47', '\ud83c\udf96', '\ud83d\udc8e'];
 	$str = "";
 
