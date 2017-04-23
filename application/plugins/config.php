@@ -9,6 +9,7 @@ if(
         ( !$telegram->is_chat_group() )
     )
 ){
+	if($pokemon->user_flags($telegram->user->id, 'set_abuse')){ return -1; }
     $key = $telegram->words(1);
     $value = $telegram->words(2);
 
@@ -40,6 +41,7 @@ elseif(
     $telegram->text_command("get") &&
     in_array($telegram->words(), [2,3])
 ){
+	if($pokemon->user_flags($telegram->user->id, 'set_abuse')){ return -1; }
     $get = $telegram->chat->id;
     if($telegram->is_chat_group()){
         $admins = $pokemon->telegram_admins(TRUE);
