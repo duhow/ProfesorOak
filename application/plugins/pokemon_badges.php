@@ -342,16 +342,10 @@ function badges_last($user, $type, $full = FALSE){
 function badges_max_ranking($badges = NULL){
 	$CI =& get_instance();
 
-	$users = NULL;
+	$inchat = NULL;
 	// Ranking del grupo
 	if(is_numeric($badges)){
-		$query = $CI->db
-			->select('uid')
-			->where('cid', $badges)
-		->get('user_inchat');
-
-		if($query->num_rows() == 0){ return array(); }
-		$users = array_column($query->result_array(), 'uid');
+		$inchat = $badges;
 		$badges = NULL;
 	}
 
@@ -367,17 +361,22 @@ function badges_max_ranking($badges = NULL){
 		->join('user', 'user_badges.uid = user.telegramid')
 		->group_start();
 	foreach($badges as $b){
-		$CI->db->or_where('id', '(SELECT id FROM user_badges WHERE type = "'. $b .'" ORDER BY value DESC, date ASC LIMIT 1)', FALSE);
+		$sql = 'SELECT id FROM user_badges WHERE type = "'. $b .'" ';
+		if($inchat){
+			$sql .= 'AND uid IN (SELECT uid FROM user_inchat WHERE cid = "'. $inchat .'") ';
+		}
+		$sql .= 'ORDER BY value DESC, date ASC LIMIT 1';
+
+		$CI->db->or_where('id', "($sql)", FALSE);
 	}
 
 	$CI->db->group_end();
-	if(is_array($users)){
-		$CI->db->where_in('uid', $users);
-	}
 
 	$query = $CI->db
 		->order_by('type')
 	->get();
+
+	echo $CI->db->last_query();
 
 	if($query->num_rows() == 0){ return array(); }
 	$list = array();
