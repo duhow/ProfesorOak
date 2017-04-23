@@ -753,7 +753,7 @@ if(
 	->send();
 
 	return -1;
-}elseif($telegram->text_command("badges")){
+}elseif($telegram->text_command("badges") or $telegram->text_has("mis medallas")){
 	$badges = pokemon_badges();
 	$utarget = $this->telegram->user->id;
 	if($this->telegram->user->id == $this->config->item('creator') && $this->telegram->has_reply){
