@@ -339,6 +339,36 @@ function badges_last($user, $type, $full = FALSE){
 	return $query->row()->date;
 }
 
+function badges_max_ranking($badges = NULL){
+	$CI =& get_instance();
+
+	if(empty($badges)){
+		$badges = array_column(pokemon_badges(), 'type');
+	}elseif(!is_array($badges)){
+		$badges = [$badges];
+	}
+
+	$CI->db
+		->select(['user_badges.*', 'user.username'])
+		->from('user_badges')
+		->join('user', 'user_badges.uid = user.telegramid');
+	foreach($badges as $b){
+		$CI->db->or_where('id', '(SELECT id FROM user_badges WHERE type = "'. $b .'" ORDER BY value DESC, date ASC LIMIT 1)', FALSE);
+	}
+
+	$query = $CI->db
+		->order_by('type')
+	->get();
+
+	if($query->num_rows() == 0){ return array(); }
+	$list = array();
+	foreach($query->result_array() as $r){
+		$list[$r['type']] = $r;
+	}
+
+	return $list;
+}
+
 // ---------------------------------------------
 
 function achievements_last($user, $type){
@@ -717,15 +747,15 @@ if(
 	$str = "No tienes medallas.";
 	if(!empty($user_badges)){
 		$str = "";
+
+		$icons = ['\u2796', '\ud83e\udd49', '\ud83e\udd48', '\ud83e\udd47', '\ud83c\udf96', '\ud83d\udc8e'];
+		$max = max(array_values($user_badges));
+		$max = strlen($max);
+
 		foreach($badges as $badge){
 			$n = 0;
 			$value = $user_badges[$badge['type']];
 			if(empty($value)){ continue; }
-
-			$max = max(array_values($user_badges));
-			$max = strlen($max);
-
-			$icons = ['\u2796', '\ud83e\udd49', '\ud83e\udd48', '\ud83e\udd47', '\ud83c\udf96', '\ud83d\udc8e'];
 
 			foreach($badge['targets'] as $min){
 				if($value >= $min){ $n++; }
@@ -733,6 +763,37 @@ if(
 
 			$str .= $this->telegram->emoji($icons[$n]) ." <code>" .str_pad($value, $max, ' ', STR_PAD_LEFT) ." </code> " .$badge['name'] ."\n";
 		}
+	}
+
+	$this->telegram->send
+		->text($str, 'HTML')
+	->send();
+
+	return -1;
+}
+
+elseif($telegram->text_has("ranking") && $telegram->text_has(["medallas", "badges"]) && $telegram->words() <= 7){
+	$ranking = badges_max_ranking();
+	$icons = ['\u2796', '\ud83e\udd49', '\ud83e\udd48', '\ud83e\udd47', '\ud83c\udf96', '\ud83d\udc8e'];
+	$str = "";
+
+	$maxlen = strlen(max(array_column($ranking, 'value')));
+
+	foreach($ranking as $b){
+		$n = 0;
+		if(empty($b['value'])){ continue; }
+
+		$badge = pokemon_badges($b['type']);
+
+		foreach($badge['targets'] as $min){
+			if($b['value'] >= $min){ $n++; }
+		}
+
+		$str .= $this->telegram->emoji($icons[$n])
+			." <code>" .str_pad($value, $max, ' ', STR_PAD_LEFT) ." </code> "
+			.$badge['name'] ." - "
+			.$b['username']
+			."\n";
 	}
 
 	$this->telegram->send
