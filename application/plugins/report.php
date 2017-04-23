@@ -26,10 +26,11 @@ function report_exists($user, $target, $type = NULL){
 	return $query->row_array();
 }
 
-function report_user_get($user, $target = TRUE){
+function report_user_get($user, $target = TRUE, $valid = TRUE){
 	$CI =& get_instance();
 
 	$target = ($target === TRUE ? 'reported' : 'user');
+	if($valid){ $CI->db->where('valid', TRUE); }
 	$query = $CI->db
 		->where($target, $user)
 	->get('reports');

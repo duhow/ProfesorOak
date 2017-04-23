@@ -38,8 +38,9 @@ function user_set_name($user, $name, $force = FALSE){
 	return TRUE;
 }
 
-function user_reports($name, $retall = FALSE){
+function user_reports($name, $retall = FALSE, $valid = TRUE){
 	$CI =& get_instance();
+	if($valid){ $CI->db->where('valid', TRUE); }
 	$query = $CI->db
 		->where('reported', $name)
 	->get('reports');
