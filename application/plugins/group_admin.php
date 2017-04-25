@@ -234,6 +234,9 @@ elseif(
     $config = strtolower($telegram->words(2, 2));
     $configs = [
         'actual' => [],
+		'activa' => [],
+		'actual?' => [],
+		'activa?' => [],
         'inicial' => [
             'announce_welcome' => TRUE,
             'blacklist' => 'troll,spam,rager',
@@ -241,6 +244,7 @@ elseif(
             'jokes' => FALSE,
             'pole' => TRUE,
             'play_games' => FALSE,
+			'pokegram' => TRUE,
         ],
         'divertida' => [
             'announce_welcome' => TRUE,
@@ -254,6 +258,17 @@ elseif(
         'silenciosa' => [
             'announce_welcome' => FALSE,
             'blacklist' => 'troll,spam,rager',
+            'shutup' => TRUE,
+            'jokes' => FALSE,
+            'pole' => FALSE,
+            'play_games' => FALSE,
+			'pokegram' => FALSE,
+        ],
+		'exclusiva' => [
+            'announce_welcome' => TRUE,
+			'require_verified' => TRUE,
+			'team_exclusive_kick' => TRUE,
+            'blacklist' => 'troll,spam,rager,gps,hacks,fly,bot',
             'shutup' => TRUE,
             'jokes' => FALSE,
             'pole' => FALSE,
