@@ -639,7 +639,7 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 	$str .= "\n"
 		.$this->telegram->emoji(":new: ") .$cok ." nuevos." ."\n"
 		.$this->telegram->emoji(":male: ") .$cup ." actualizados." ."\n"
-		.$this->telegram->emoji(":id: ") .$cup ." ya registrados." ."\n";
+		.$this->telegram->emoji(":id: ") .$car ." ya registrados." ."\n";
 
 	$this->telegram->send
 		->message($q['message_id'])
