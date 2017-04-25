@@ -602,6 +602,7 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 
 	$csv = file_get_contents($tmp);
 	$csv = str_replace([",", ";", "\t"], " ", $csv);
+	$csv = str_replace("\r", "", $csv);
 	$csv = explode("\n", $csv);
 	unset($tmp);
 
@@ -614,7 +615,7 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 	$cok = 0;
 	$cup = 0; // Updated users
 	foreach($csv as $r){
-		$data = user_parser($r);
+		$data = user_parser(explode(" ", $r));
 		if(!$data){ continue; }
 	    if($pokemon->user($data['username'], FALSE)){ // Online
 			$car++; continue;
