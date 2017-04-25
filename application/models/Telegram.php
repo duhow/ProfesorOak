@@ -760,6 +760,7 @@ class Telegram extends CI_Model{
 		// STR -> comando definido.
 		// $begin = si es comando inicial
 		if(!isset($this->data['message']['entities'])){ return FALSE; }
+		if($cmd === FALSE){ $begin = FALSE; $cmd = NULL; }
 		$cmds = array();
 		$text = $this->text(FALSE); // No UTF-8 clean
 		$initbegin = FALSE;
@@ -767,17 +768,29 @@ class Telegram extends CI_Model{
 			if($e['type'] == 'bot_command'){ $cmds[] = strtolower(substr($text, $e['offset'], $e['length'])); }
 			if($initbegin == FALSE && $e['offset'] == 0){ $initbegin = TRUE; }
 		}
-		if($cmd == NULL){ return (count($cmds) > 0 ? $cmds[0] : FALSE); }
-		if($cmd === TRUE){ return $cmds; }
-		if(is_string($cmd)){
-			if($cmd[0] != "/"){ $cmd = "/" .$cmd; }
-			if(in_array(strtolower($cmd), $cmds) && strpos($cmd, "@") === FALSE){ return TRUE; }
-			$name = $this->config->item('telegram_bot_name');
-			if($name){
-				if($name[0] != "@"){ $name = "@" .$name; }
-				$cmd = $cmd.$name;
+		if($cmd == NULL){
+			if(count($cmds) > 0){
+				if($begin && !$initbegin){ return FALSE; }
+				return $cmds[0];
 			}
-			return in_array(strtolower($cmd), $cmds);
+			return FALSE;
+		}
+		if($cmd === TRUE){ return $cmds; }
+		if(is_string($cmd)){ $cmd = [$cmd]; }
+		if(is_array($cmd)){
+			foreach($cmd as $csel){
+				if($csel[0] != "/"){ $csel = "/" .$csel; }
+				if(in_array(strtolower($csel), $cmds) && strpos($csel, "@") === FALSE){ return TRUE; }
+				$name = $this->config->item('telegram_bot_name');
+				if($name){
+					if($name[0] != "@"){ $name = "@" .$name; }
+					$csel = $csel.$name;
+				}
+				if(in_array($csel, $cmds)){
+					if($begin && !$initbegin){ return FALSE; }
+					return TRUE;
+				}
+			}
 		}
 		return FALSE;
 	}

@@ -82,7 +82,7 @@ if(
 		return -1;
 	}
 
-	$pkuser = $pokemon->find($target, TRUE);
+	$pkuser = $pokemon->user($target, TRUE);
 	if($pkuser){
 		if(!empty($pkuser->username)){
 			$target = $pkuser->username;
@@ -91,8 +91,34 @@ if(
 		}
 	}
 
+	// Evitar falsos resultados.
+	if(strlen($target) <= 3){ return -1; }
+
 	if($telegram->text_command("reportv")){
 		// Información de sobre qué está reportado.
+		return -1;
+	}
+
+	$pkuser = $pokemon->user($target);
+	if($pkuser && strtolower($pkuser->username) == strtolower($target)){
+		$this->telegram->send
+			->notification(FALSE)
+			->text($this->telegram->emoji(":warning: ") ."¿Porqué ibas a reportarte a ti mismo?")
+		->send();
+
+		$this->telegram->send
+			->notification(FALSE)
+			->chat(TRUE)
+			->message(TRUE)
+			->reply_to($this->config->item('creator'))
+		->send();
+
+		$this->telegram->send
+			->notification(TRUE)
+			->chat($this->config->item('creator'))
+			->text("Autoreporte del usuario " .$telegram->user->id .".")
+		->send();
+
 		return -1;
 	}
 
@@ -104,7 +130,7 @@ if(
 		$flags = [
 			'fly' => ["volar", "volador", "fly", "gps", "fakegps", "fake gps"],
 			'hacks' => ["hack", "hacks", "trampa", "trampas"],
-			'bot' => ["bot", "bots"],
+			'bot' => ["bot", "bots", "botter"],
 			'multiaccount' => ["multi", "multiple", "multicuenta", "multicuentas"],
 			'spam' => ["spam", "publi", "publicidad"],
 			'troll' => ["liante", "liarla", "trol", "troll", "acusar"]
