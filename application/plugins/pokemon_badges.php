@@ -791,7 +791,7 @@ if(
 }
 
 elseif($telegram->text_has("ranking") && $telegram->text_has(["medallas", "badges"]) && $telegram->words() <= 7){
-	if($telegram->text_has(["grupo", "aqui", "canal"]) && $telegram->is_chat_group()){
+	if($telegram->text_has(["grupo", "grupal", "aqui", "canal"]) && $telegram->is_chat_group()){
 		$ranking = badges_max_ranking($this->telegram->chat->id);
 	}else{
 		$ranking = badges_max_ranking();
