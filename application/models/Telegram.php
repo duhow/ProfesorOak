@@ -776,17 +776,20 @@ class Telegram extends CI_Model{
 			return FALSE;
 		}
 		if($cmd === TRUE){ return $cmds; }
-		if(is_string($cmd)){
-			if($cmd[0] != "/"){ $cmd = "/" .$cmd; }
-			if(in_array(strtolower($cmd), $cmds) && strpos($cmd, "@") === FALSE){ return TRUE; }
-			$name = $this->config->item('telegram_bot_name');
-			if($name){
-				if($name[0] != "@"){ $name = "@" .$name; }
-				$cmd = $cmd.$name;
-			}
-			if(in_array($csel, $cmds)){
-				if($begin && !$initbegin){ return FALSE; }
-				return TRUE;
+		if(is_string($cmd)){ $cmd = [$cmd]; }
+		if(is_array($cmd)){
+			foreach($cmd as $csel){
+				if($cmd[0] != "/"){ $cmd = "/" .$cmd; }
+				if(in_array(strtolower($cmd), $cmds) && strpos($cmd, "@") === FALSE){ return TRUE; }
+				$name = $this->config->item('telegram_bot_name');
+				if($name){
+					if($name[0] != "@"){ $name = "@" .$name; }
+					$cmd = $cmd.$name;
+				}
+				if(in_array($csel, $cmds)){
+					if($begin && !$initbegin){ return FALSE; }
+					return TRUE;
+				}
 			}
 		}
 		return FALSE;
