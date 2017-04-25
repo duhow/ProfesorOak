@@ -636,10 +636,10 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 	    }
 	}
 
-	$str .= "\n"
-		.$this->telegram->emoji(":new: ") .$cok ." nuevos." ."\n"
-		.$this->telegram->emoji(":male: ") .$cup ." actualizados." ."\n"
-		.$this->telegram->emoji(":id: ") .$car ." ya registrados." ."\n";
+	$str .= "\n";
+	if($cok > 0){ $this->telegram->emoji(":new: ") .$cok ." nuevos." ."\n"; }
+	if($cup > 0){ $this->telegram->emoji(":male: ") .$cup ." actualizados." ."\n"; }
+	if($car > 0){ $this->telegram->emoji(":ok: ") .$car ." ya registrados." ."\n"; }
 
 	$this->telegram->send
 		->message($q['message_id'])
