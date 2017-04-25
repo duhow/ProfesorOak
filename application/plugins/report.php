@@ -118,6 +118,8 @@ if(
 			->chat($this->config->item('creator'))
 			->text("Autoreporte del usuario " .$telegram->user->id .".")
 		->send();
+
+		return -1;
 	}
 
 	if($telegram->words() >= 2){
