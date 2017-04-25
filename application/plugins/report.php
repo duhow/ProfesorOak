@@ -82,7 +82,7 @@ if(
 		return -1;
 	}
 
-	$pkuser = $pokemon->find($target, TRUE);
+	$pkuser = $pokemon->user($target, TRUE);
 	if($pkuser){
 		if(!empty($pkuser->username)){
 			$target = $pkuser->username;
@@ -99,7 +99,7 @@ if(
 		return -1;
 	}
 
-	$pkuser = $pokemon->find($target);
+	$pkuser = $pokemon->user($target);
 	if($pkuser && strtolower($pkuser->username) == strtolower($target)){
 		$this->telegram->send
 			->notification(FALSE)
