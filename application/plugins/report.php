@@ -91,6 +91,8 @@ if(
 		}
 	}
 
+	if(strlen($target) <= 3){ return -1; }
+
 	if($telegram->text_command("reportv")){
 		// Información de sobre qué está reportado.
 		return -1;
