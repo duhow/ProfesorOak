@@ -179,29 +179,45 @@ if(
             }
         }elseif($level > 35 && $level <= 40){
 			if($level <= $pokeuser->lvl){ return; }
-			if($pokeuser->lvl < 35){
+			if($pokeuser->lvl == 1){
+				$telegram->send
+					->text("Bueno... No sé si creermelo, pero...")
+				->send();
+				$pokemon->update_user_data($telegram->user->id, 'lvl', $level);
+				$pokemon->update_user_data($telegram->user->id, 'exp', 0);
+			}elseif($pokeuser->lvl < 35){
 				// Control de que el usuario sea un nivel inferior al que dice ser para poder controlarlo.
 				$telegram->send
 					->text("Si, ya. Claro.")
 				->send();
-				return -1;
 			// TODO Control de tiempo según log para validar esto.
 			}elseif($pokeuser->lvl != $level - 1){
 				$telegram->send
 					->text("¿Tan rápido has subido? No me lo creo.")
 				->send();
-				return -1;
+			}else{
+				$pokemon->step($telegram->user->id, 'LEVEL_SCREENSHOT');
+				$telegram->send
+					->text("¡Guau! Pues... Mándame captura para confirmarlo, anda.")
+				->send();
 			}
+		}
 
-			$pokemon->step($telegram->user->id, 'LEVEL_SCREENSHOT');
+		if(
+			$pokeuser->lvl == 1 &&
+			!empty($pokeuser->username) &&
+			!$pokeuser->verified
+		){
+			$pokemon->step($telegram->user->id, 'SCREENSHOT_VERIFY');
+
+			$str = "¡Genial! Ahora mándame una captura de pantalla de tu <b>perfil Pokémon GO</b> para validarte.\n"
+					."¡Recuerda que tiene que ser <b>de ahora<b>, no una antigua!";
 			$telegram->send
-				->text("¡Guau! Pues... Mándame captura para confirmarlo, anda.")
+				->text($str, 'HTML')
 			->send();
-
-			return -1;
 		}
     }
-    return;
+    return -1;
 }
 
 // pedir info sobre uno mismo
