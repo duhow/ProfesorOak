@@ -50,6 +50,22 @@ function user_reports($name, $retall = FALSE, $valid = TRUE){
 	return $query->result_array();
 }
 
+function user_parser($text){
+	$data = array();
+	foreach($text as $w){
+        $w = trim($w);
+        if($w[0] == "/"){ continue; }
+        if(is_numeric($w) && $w >= 5 && $w <= 40){ $data['lvl'] = $w; }
+        if(in_array(strtoupper($w), ['R','B','Y'])){ $data['team'] = strtoupper($w); }
+        if($w[0] == "@" or strlen($w) >= 4){ $data['username'] = $w; }
+        if(strtolower($w) == "loc"){ $data['location'] = TRUE; }
+    }
+    if(!isset($data['username']) or !isset($data['team'])){ return FALSE; }
+    if(!isset($data['lvl'])){ $data['lvl'] = 1; }
+    $data['username'] = str_replace("@", "", $data['username']);
+	return $data;
+}
+
 $step = $pokemon->step($telegram->user->id);
 if($step == "SETNAME"){
 	if($telegram->words() == 1 && !$telegram->text_command()){ user_set_name($telegram->user->id, $telegram->last_word(TRUE), TRUE); }
@@ -519,18 +535,8 @@ elseif($telegram->text_command("stats")){
 // Registro offline de users
 elseif($telegram->text_command("regoff")){
     // $chat = ($telegram->is_chat_group() && $this->is_shutup(TRUE)) ? $telegram->user->id : $telegram->chat->id);
-    $data = array();
-    foreach($telegram->words(TRUE) as $w){
-        $w = trim($w);
-        if($w[0] == "/"){ continue; }
-        if(is_numeric($w) && $w >= 5 && $w <= 40){ $data['lvl'] = $w; }
-        if(in_array(strtoupper($w), ['R','B','Y'])){ $data['team'] = strtoupper($w); }
-        if($w[0] == "@" or strlen($w) >= 4){ $data['username'] = $w; }
-        if(strtolower($w) == "loc"){ $data['location'] = TRUE; }
-    }
-    if(!isset($data['username']) or !isset($data['team'])){ return; }
-    if(!isset($data['lvl'])){ $data['lvl'] = 1; }
-    $data['username'] = str_replace("@", "", $data['username']);
+    $data = user_parser($telegram->words(TRUE));
+	if(!$data){ return -1; }
     if($pokemon->user($data['username'], FALSE)){ // Online
         $telegram->send
             ->notification(FALSE)
@@ -563,6 +569,83 @@ elseif($telegram->text_command("regoff")){
         ->text($telegram->emoji($text), TRUE)
     ->send();
     return;
+}
+
+elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->document)){
+	$doc = (object) $this->telegram->reply->document;
+	if($doc->mime_type != "text/csv"){
+		$this->telegram->send
+			->notification(FALSE)
+			->text($this->telegram->emoji(":times: ") ."Archivo no reconocido. Quiero un CSV.")
+		->send();
+
+		return -1;
+	}elseif($doc->file_size > (50 * 1024)){
+		$this->telegram->send
+			->notification(FALSE)
+			->text($this->telegram->emoji(":times: ") ."Esto pesa mucho.")
+		->send();
+
+		return -1;
+	}
+
+	$tmp = tempnam("/tmp", "ucsv");
+	$r = $this->telegram->download($doc->file_id, $tmp);
+	if(!$r){
+		$this->telegram->send
+			->notification(TRUE)
+			->text($this->telegram->emoji(":warning: ") ."Error al descargar.")
+		->send();
+
+		return -1;
+	}
+
+	$csv = file_get_contents($tmp);
+	$csv = str_replace([",", ";", "\t"], " ", $csv);
+	$csv = explode("\n", $csv);
+	unset($tmp);
+
+	$str = $this->telegram->emoji(":clock: ") ."Cuento " .count($csv) ." usuarios.";
+	$q = $this->telegram->send
+		->text($str)
+	->send();
+
+	$car = 0; // Real user
+	$cok = 0;
+	$cup = 0; // Updated users
+	foreach($csv as $r){
+		$data = user_parser($r);
+		if(!$data){ continue; }
+	    if($pokemon->user($data['username'], FALSE)){ // Online
+			$car++; continue;
+	    }
+	    $register = $pokemon->register_offline($data['username'], $data['team'], $telegram->user->id, $data['lvl']);
+	    if($register){
+			$cok++;
+	        $pokemon->log($telegram->user->id, 'register_offline', $register);
+	    }else{
+	        $uoff = $pokemon->user_offline($data['username']);
+	        if($uoff){
+	            if($data['lvl'] > $uoff->lvl){
+	                $pokemon->update_user_offline_data($uoff->id, 'lvl', $data['lvl']);
+	                $pokemon->log($telegram->user->id, 'lvl_offline', $register);
+					$cup++;
+	            }
+	        }
+	    }
+	}
+
+	$str .= "\n"
+		.$this->telegram->emoji(":new: ") .$cok ." nuevos." ."\n"
+		.$this->telegram->emoji(":male: ") .$cup ." actualizados." ."\n"
+		.$this->telegram->emoji(":id: ") .$cup ." ya registrados." ."\n";
+
+	$this->telegram->send
+		->message($q['message_id'])
+		->chat(TRUE)
+		->text($str)
+	->edit('text');
+	return -1;
 }
 
 ?>
