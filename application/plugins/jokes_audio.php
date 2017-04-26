@@ -1,5 +1,11 @@
 <?php
 
+if($telegram->is_chat_group()){
+	if($pokemon->settings($telegram->chat->id, 'shutup')){ return; }
+	$jokes = $pokemon->settings($telegram->chat->id, 'jokes');
+	if($jokes != NULL && $jokes == FALSE){ return; }
+}
+
 $joke = NULL;
 
 if($telegram->text_has("Team Rocket despega")){
