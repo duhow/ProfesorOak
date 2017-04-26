@@ -38,7 +38,6 @@ function time_parse($string){
     $s = explode(" ", $string);
     $data = array();
     $number = NULL;
-    $hashtag = FALSE;
     // ---------
     $days = [
         'lunes' => 'monday', 'martes' => 'tuesday',
@@ -61,9 +60,8 @@ function time_parse($string){
     $this_week_day = FALSE;
     foreach($s as $w){
         if($w == "de" && (!isset($data['date']) or empty($data['date']) )){ $waiting_month = TRUE; } // FIXME not working?
-        if($w == "la" && !isset($data['hour'])){ $waiting_time = TRUE; }
-        if($w == "las" && !isset($data['hour'])){ $waiting_time = TRUE; }
-        if($w == "en" && !isset($data['hour'])){ $waiting_time_add = TRUE; }
+        if(!isset($data['hour']) and in_array($w, ["la", "las"]){ $waiting_time = TRUE; }
+        if(!isset($data['hour']) and $w == "en"){ $waiting_time_add = TRUE; }
 
         if(is_numeric($w) or (in_array(strlen($w), [2,3]) && substr($w, -1) == "h")){
             $number = (int) $w;
@@ -184,8 +182,7 @@ function time_parse($string){
     }
 
     if(isset($data['date'])){
-        $strdate = $data['date'] ." ";
-        $strdate .= (isset($data['hour']) ? $data['hour'] : "00:00");
+        $strdate = $data['date'] ." " .(isset($data['hour']) ? $data['hour'] : "00:00");
         $strdate = strtotime($strdate);
         $data['left_hours'] = floor(($strdate - time()) / 3600);
         $data['left_minutes'] = floor(($strdate - time()) / 60);
@@ -209,7 +206,11 @@ function pokemon_parse($string){
         // $w = $telegram->clean('alphanumeric', $w);
         $w = strtolower($w);
 
-        if($data['pokemon'] === NULL){
+		if($hashtag and is_numeric(substr($w, 1))){
+			$w = substr($w, 1);
+		}
+
+        if($data['pokemon'] === NULL and !is_numeric($w)){
             foreach($pokes as $pk){
                 if(
                     ($w == strtolower($pk->name)) or
@@ -217,16 +218,17 @@ function pokemon_parse($string){
                     (substr($w, -1) == "s" && substr($w, 0, -1) == strtolower($pk->name))
                 ){ $data['pokemon'] = $pk->id; break; }
             }
+			if($data['pokemon'] !== NULL){ continue; } // Si hay resultado, pasa a la siguiente acción
         }
 
         if(is_numeric($w)){
             // tengo un número pero no se de qué. se supone que la siguiente palabra me lo dirá.
             // a no ser que la palabra sea un "DE", en cuyo caso paso a la siguiente.
-            if($hashtag == TRUE and $data['pokemon'] === NULL){
-                $data['pokemon'] = (int) $w;
-            }else{
-                $number = (int) $w;
-            }
+            if($hashtag and $data['pokemon'] === NULL){
+				$data['pokemon'] = (int) $w;
+				continue; // HACK
+			}
+            $number = (int) $w;
         }
 
         // Buscar distancia
@@ -238,6 +240,7 @@ function pokemon_parse($string){
             }
             if(is_numeric($n)){
                 $data['distance'] = $n;
+				continue;
             }
         }
 
@@ -376,23 +379,13 @@ function location_add($locA, $locB, $amount = NULL, $direction = NULL){
 	];
 	foreach($steps as $s => $k){ if(in_array($direction, $k)){ $direction = $s; break; } } // Buscar y asociar dirección
 	$earth = (40075 / 360 * 1000);
+	$cal = ($amount / $earth);
 
-	if($direction == 'N'){ $locA[0] = $locA[0] + ($amount / $earth); }
-	elseif($direction == 'S'){ $locA[0] = $locA[0] - ($amount / $earth); }
-	elseif($direction == 'W'){ $locA[1] = $locA[1] - ($amount / $earth); }
-	elseif($direction == 'E'){ $locA[1] = $locA[1] + ($amount / $earth); }
-	elseif($direction == 'NW'){
-		$locA[0] = $locA[0] + ($amount / $earth); // N
-		$locA[1] = $locA[1] - ($amount / $earth); // W
-	}elseif($direction == 'NE'){
-		$locA[0] = $locA[0] + ($amount / $earth); // N
-		$locA[1] = $locA[1] + ($amount / $earth); // E
-	}elseif($direction == 'SW'){
-		$locA[0] = $locA[0] - ($amount / $earth); // S
-		$locA[1] = $locA[1] - ($amount / $earth); // W
-	}elseif($direction == 'SE'){
-		$locA[0] = $locA[0] - ($amount / $earth); // S
-		$locA[1] = $locA[1] + ($amount / $earth); // E
+	foreach(str_split($direction as $dir)){
+		if($dir == 'N'){ $locA[0] = $locA[0] + $cal; }
+		elseif($dir == 'S'){ $locA[0] = $locA[0] - $cal; }
+		elseif($dir == 'W'){ $locA[1] = $locA[1] - $cal; }
+		elseif($dir == 'E'){ $locA[1] = $locA[1] + $cal; }
 	}
 
 	return $locA;

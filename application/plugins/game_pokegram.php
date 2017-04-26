@@ -108,7 +108,7 @@ function pokegame_pokemon_view($id){
 
 function pokegame_pokemon_setowner($id, $user){
     $CI =& get_instance();
-    return $query = $CI->db
+    return $CI->db
         ->set('owner', $user)
         ->set('tries', 0)
         ->where('id', $id)
@@ -401,6 +401,14 @@ function pokegame_event(){
 			]
 		],
 		[
+			'name' => 'pokemonday',
+			'title' => 'Día de Pokémon',
+			'date' => [strtotime('2017-02-26 21:00:00'), strtotime('2017-03-06 21:00:00')],
+			'pokemon' => [
+				25 // Pikachu
+			]
+		],
+		[
 			'name' => 'water',
 			'title' => 'Festival Acuático',
 			'date' => [strtotime('2017-03-21 21:00:00'), strtotime('2017-03-29 21:00:00')],
@@ -420,8 +428,31 @@ function pokegame_event(){
 				159, // Croconaw
 				160, // Feraligatr
 			]
+		],
+		[
+			'name' => 'eggstravaganza',
+			'title' => 'Festival de Primavera',
+			'date' => [strtotime('2017-04-13 21:00:00'), strtotime('2017-04-20 21:00:00')],
+			'pokemon' => [
+				175, // Togepi
+				88, // Grimer
+				236, // Tyrogue
+				131, // Lapras
+				4, // Charmander
+				95, // Onix
+				240, // Magby
+				142, // Aerodactyl
+				173, // Cleffa
+				63, // Abra
+				147, // Dratini
+				1, // Bulbasaur
+				172, // Pichu
+				152, // Chikorita
+			]
 		]
 	];
+
+	return $events;
 }
 
 function pokegame_is_legendary($number){

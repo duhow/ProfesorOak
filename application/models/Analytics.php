@@ -171,7 +171,7 @@ class Analytics extends CI_Model{
 		$result = curl_exec($ch);
 		curl_close($ch);
 		$this->_reset();
-		return $data; // Pixel
+		return $result; // Pixel
 	}
 
 }

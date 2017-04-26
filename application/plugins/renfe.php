@@ -90,13 +90,13 @@ function renfe_datos($origen, $destino, $nucleo = 50, $hora = NULL){
 		'TXTInfo' => ''
 	];
 
-	$tipodia = [
+	/* Tipo dia: [
 		"L" => "Laborable (Martes a Jueves)",
 		"D" => "Lunes y Despues de Festivo",
 		"V" => "Viernes",
 		"S" => "Sábados",
 		"F" => "Domingos y Festivos",
-	];
+	]; */
 
 	$url .= http_build_query($data);
 

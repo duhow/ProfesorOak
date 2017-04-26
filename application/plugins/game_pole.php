@@ -5,7 +5,7 @@ if($this->telegram->text_contains(["pole", "bronce"]) && !$this->telegram->is_ch
 
 if(!$telegram->is_chat_group()){ return; }
 
-if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_command("pole") or $telegram->text_command("subpole")){
+if($telegram->text_has(["pole", "subpole", "bronce"], TRUE)){
     $this->analytics->event("Telegram", "Pole");
     $pole = $pokemon->settings($telegram->chat->id, 'pole');
     if(
@@ -26,7 +26,7 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
             ( $telegram->text_has("subpole", TRUE) && is_numeric($pole[1]) && date($timer) == date($timer, $pole[1]) ) or
             ( $telegram->text_has("bronce", TRUE) &&  is_numeric($pole[2]) && date($timer) == date($timer, $pole[2]) )
         ){
-            if(date("G") == 23){
+            if(date("G") == 23 and $timer == "d"){
                 $lim = $pokemon->settings($telegram->user->id, 'pole_adelantado');
                 if(empty($lim)){ $lim = 0; }
                 $lim++; // +1
@@ -113,7 +113,7 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
     return -1;
 }
 
-if($telegram->text_command("polerank") or $telegram->text_has("!polerank")){
+if($telegram->text_command("polerank") or $telegram->text_has("!polerank", TRUE)){
 	if($pokemon->command_limit("polerank", $telegram->chat->id, $telegram->message, 7)){ return -1; }
 
     $poleuser = $pokemon->settings($telegram->chat->id, 'pole_user');
