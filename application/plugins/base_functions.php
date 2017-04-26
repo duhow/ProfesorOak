@@ -197,6 +197,12 @@ function pokemon_parse($string){
     $pokes = $pokemon->pokedex();
     $s = explode(" ", $pokemon->misspell($string));
     $data = array();
+	$pokespecial = [
+		122 => ["mr.mime", "mime", "mrmime"],
+		29 => ["nidoran♀", "nidoranf", "nidoranhembra"],
+		32 => ["nidoran♂", "nidoranm", "nidoranmacho"]
+	];
+
     $number = NULL;
     $hashtag = FALSE;
     // ---------
@@ -218,6 +224,15 @@ function pokemon_parse($string){
                     (substr($w, -1) == "s" && substr($w, 0, -1) == strtolower($pk->name))
                 ){ $data['pokemon'] = $pk->id; break; }
             }
+			// Si no lo ha encontrado, busco especiales.
+			if($data['pokemon'] === NULL){
+				foreach($pokespecial as $num => $list){
+					if(in_array($w, $list)){
+						$data['pokemon'] => $num;
+						break;
+					}
+				}
+			}
 			if($data['pokemon'] !== NULL){ continue; } // Si hay resultado, pasa a la siguiente acción
         }
 
