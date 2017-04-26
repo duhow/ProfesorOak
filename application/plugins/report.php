@@ -92,7 +92,7 @@ if(
 	}
 
 	// Evitar falsos resultados.
-	if(strlen($target) <= 3){ return -1; }
+	if(strlen($target) <= 3 or strpos($target, " ") !== FALSE){ return -1; }
 
 	if($telegram->text_command("reportv")){
 		// Información de sobre qué está reportado.
