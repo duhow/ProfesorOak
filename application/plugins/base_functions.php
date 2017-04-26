@@ -228,7 +228,7 @@ function pokemon_parse($string){
 			if($data['pokemon'] === NULL){
 				foreach($pokespecial as $num => $list){
 					if(in_array($w, $list)){
-						$data['pokemon'] => $num;
+						$data['pokemon'] = $num;
 						break;
 					}
 				}
