@@ -262,7 +262,7 @@ elseif(
 }
 
 elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && $telegram->words() <= 8){
-    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return -1; }
+    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'no_nest', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return -1; }
 	if(!$telegram->callback && !$telegram->is_chat_group()){
 		$telegram->send
 			->text("Pídemelos por el grupo. Si no, no sé qué nidos quieres.")
