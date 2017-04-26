@@ -198,7 +198,7 @@ class Main extends CI_Controller {
 						];
 
 						if(count($table) == 0){
-							$text = "Los cálculos no me salen...\n¿Seguro que me has dicho bien los datos?";
+							$text = "Los cálculos no me salen...\n¿Seguro que me has dicho bien los datos? (¿Lo has *mejorado*?)";
 						}elseif(count($table) == 1){
 							if($low == $high){ $sum = round($high, 1); }
 							reset($table); // HACK Reiniciar posicion
@@ -307,14 +307,6 @@ class Main extends CI_Controller {
 				->send();
 				return;
 			}
-		}elseif($telegram->text_has(["pokédex", "pokémon"], TRUE) or $telegram->text_command("pokedex")){
-			// $text = $telegram->text();
-			// $chat = ($telegram->text_has("aqui") && !$this->is_shutup() ? $telegram->chat->id : $telegram->user->id);
-			/* if($telegram->text_has("aquí")){
-				$word = $telegram->words( $telegram->words() - 2 );
-			} */
-			$this->_pokedex($telegram->text(), $telegram->chat->id);
-
 		// ---------------------
 		// Utilidades varias
 		// ---------------------
@@ -891,58 +883,6 @@ class Main extends CI_Controller {
 		}
 	}
 
-	// function _pokedex($chat = NULL){
-	function _pokedex($text = NULL, $chat = NULL){
-		$telegram = $this->telegram;
-		$pokemon = $this->pokemon;
-
-		$this->last_command("POKEDEX");
-
-		$types = $pokemon->attack_types();
-
-		if($chat === NULL){ $chat = $telegram->chat->id; }
-		if(!is_numeric($text)){
-			$exp = explode(" ", $text);
-			if(in_array(count($exp), [2, 3])){ // el aquí también cuenta
-				$num = filter_var($exp[1], FILTER_SANITIZE_NUMBER_INT);
-				if(is_numeric($num) && $num > 0 && $num < 251){ $text = $num; }
-			}
-			if(!is_numeric($text)){
-				$poke = $this->parse_pokemon();
-				$text = (!empty($poke['pokemon']) ? $poke['pokemon'] : NULL);
-			}
-		}
-
-		if(empty($text)){ return; }
-		$pokedex = $pokemon->pokedex($text);
-		$str = "";
-		if(!empty($pokedex)){
-			$skills = $pokemon->skill_learn($pokedex->id);
-
-			$str = "*#" .$pokedex->id ."* - " .$pokedex->name ."\n"
-					.$types[$pokedex->type] .($pokedex->type2 ? " / " .$types[$pokedex->type2] : "") ."\n"
-					."ATK " .$pokedex->attack ." - DEF " .$pokedex->defense ." - STA " .$pokedex->stamina ."\n\n";
-
-			foreach($skills as $sk){
-				$str .= "[" .$sk->attack ."/" .$sk->bars ."] - " .$sk->name_es  ."\n";
-			}
-		}
-
-		if($pokedex->sticker && ($chat == $telegram->user->id)){
-			$telegram->send
-				->chat($chat)
-				// ->notification(FALSE)
-				->file('sticker', $pokedex->sticker);
-		}
-		if(!empty($str)){
-			$telegram->send
-				->chat($chat)
-				// ->notification(FALSE)
-				->text($str, TRUE)
-			->send();
-		}
-	}
-
 	function _locate_pokemon(){
 		$telegram = $this->telegram;
 		$pokemon = $this->pokemon;
@@ -1066,14 +1006,6 @@ class Main extends CI_Controller {
 			foreach($custom as $c){ $admins[] = $c; }
 		}
 		return $admins;
-	}
-
-	function _blocked(){
-		exit();
-	}
-
-	function _help(){
-
 	}
 
 	function log($texto){

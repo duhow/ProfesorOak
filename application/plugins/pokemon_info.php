@@ -254,7 +254,64 @@ function pokemon_level($data, $powered = FALSE, $full = FALSE){
 }
 
 function pokemon_iv($pokeobj, $cp, $hp, $stardust, $extra = NULL){
+	$pokemon = new Pokemon();
+	$table = array();
 
+	// $pokeobj includes Pokedex object.
+	// $this->analytics->event("Telegram", "Calculate IV", $pokedex->name);
+	$powered = (isset($extra['powered']) ? $extra['powered'] : FALSE);
+	// TODO CHANGE with internal functions.
+
+	$levels = $pokemon->stardust($stardust, $powered);
+	// De los niveles que tiene...
+	$low = 100;
+	$high = 0; // HACK invertidas
+	foreach($levels as $lvl){
+		$lvlmp = $pokemon->level($lvl)->multiplier;
+		$pow = pow($lvlmp, 2) * 0.1;
+		for($IV_STA = 0; $IV_STA < 16; $IV_STA++){
+			$hp = max(floor(($pokedex->stamina + $IV_STA) * $lvlmp), 10);
+			// Si tenemos el IV de HP y coincide con su vida...
+			if($hp == $pk['hp']){
+				$lvl_STA = sqrt($pokedex->stamina + $IV_STA) * $pow;
+				$cps = array(); // DEBUG
+				for($IV_DEF = 0; $IV_DEF < 16; $IV_DEF++){
+					for($IV_ATK = 0; $IV_ATK < 16; $IV_ATK++){
+						$cp = floor( ($pokedex->attack + $IV_ATK) * sqrt($pokedex->defense + $IV_DEF) * $lvl_STA);
+						// Si el CP calculado coincide con el nuestro, agregar posibilidad.
+						if($cp == $pk['cp']){
+							$sum = (($IV_ATK + $IV_DEF + $IV_STA) / 45) * 100;
+							if($sum > $high){ $high = $sum; }
+							if($sum < $low){ $low = $sum; }
+							$table[] = ['level' => $lvl, 'atk' => $IV_ATK, 'def' => $IV_DEF, 'sta' => $IV_STA];
+						}
+						$cps[] = $cp; // DEBUG
+					}
+				}
+			}
+		}
+	}
+	if(count($table) > 1 and ($extra['attack'] or $extra['defense'] or $extra['stamina'])){
+		// si tiene ATK, DEF O STA, los resultados
+		// que lo superen, quedan descartados.
+		foreach($table as $i => $r){
+			if($extra['attack'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['atk'] )){ unset($table[$i]); continue; }
+			if($extra['defense'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['def'] )){ unset($table[$i]); continue; }
+			if($extra['stamina'] and ( max($r['atk'], $r['def'], $r['sta']) != $r['sta'] )){ unset($table[$i]); continue; }
+			if($extra['attack'] and isset($extra['ivcalc']) and !in_array($r['atk'], $extra['ivcalc'])){ unset($table[$i]); continue; }
+			if($extra['defense'] and isset($extra['ivcalc']) and !in_array($r['def'], $extra['ivcalc'])){ unset($table[$i]); continue; }
+			if($extra['stamina'] and isset($extra['ivcalc']) and !in_array($r['sta'], $extra['ivcalc'])){ unset($table[$i]); continue; }
+			if((!$extra['attack'] or !$extra['defense'] or !$extra['stamina']) and ($r['atk'] + $r['def'] + $r['sta'] == 45)){ unset($table[$i]); continue; }
+		}
+		$low = 100;
+		$high = 0;
+		foreach($table as $r){
+			$sum = (($r['atk'] + $r['def'] + $r['sta']) / 45) * 100;
+			if($sum > $high){ $high = $sum; }
+			if($sum < $low){ $low = $sum; }
+		}
+	}
+	return $table;
 }
 
 function pokemon_seen($user, $poke, $loc, $cooldown = 60){
@@ -746,6 +803,42 @@ elseif($telegram->text_has("mejor", ["ataque", "habilidad", "skill"])){
 		->send();
 	}
 	return -1;
+}
+
+elseif($telegram->text_has(["pokédex", "pokémon"], TRUE) or $telegram->text_command("pokedex") && $telegram->words() >= 2){
+	$types = $pokemon->attack_types();
+	$chat = $telegram->chat->id;
+
+	$poke = pokemon_parse($telegram->text());
+
+	if(empty($poke['pokemon'])){ return -1; }
+	$pokedex = $pokemon->pokedex($poke['pokemon']);
+	$str = "";
+	if(!empty($pokedex)){
+		$skills = $pokemon->skill_learn($pokedex->id);
+
+		$str = "*#" .$pokedex->id ."* - " .$pokedex->name ."\n"
+				.$types[$pokedex->type] .($pokedex->type2 ? " / " .$types[$pokedex->type2] : "") ."\n"
+				."ATK " .$pokedex->attack ." - DEF " .$pokedex->defense ." - STA " .$pokedex->stamina ."\n\n";
+
+		foreach($skills as $sk){
+			$str .= "[" .$sk->attack ."/" .$sk->bars ."] - " .$sk->name_es  ."\n";
+		}
+	}
+
+	if($pokedex->sticker && ($chat == $telegram->user->id)){
+		$telegram->send
+			->chat($chat)
+			// ->notification(FALSE)
+			->file('sticker', $pokedex->sticker);
+	}
+	if(!empty($str)){
+		$telegram->send
+			->chat($chat)
+			// ->notification(FALSE)
+			->text($str, TRUE)
+		->send();
+	}
 }
 
 
