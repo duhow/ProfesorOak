@@ -60,7 +60,7 @@ function time_parse($string){
     $this_week_day = FALSE;
     foreach($s as $w){
         if($w == "de" && (!isset($data['date']) or empty($data['date']) )){ $waiting_month = TRUE; } // FIXME not working?
-        if(!isset($data['hour']) and in_array($w, ["la", "las"]){ $waiting_time = TRUE; }
+        if(!isset($data['hour']) and in_array($w, ["la", "las"])){ $waiting_time = TRUE; }
         if(!isset($data['hour']) and $w == "en"){ $waiting_time_add = TRUE; }
 
         if(is_numeric($w) or (in_array(strlen($w), [2,3]) && substr($w, -1) == "h")){
@@ -381,7 +381,7 @@ function location_add($locA, $locB, $amount = NULL, $direction = NULL){
 	$earth = (40075 / 360 * 1000);
 	$cal = ($amount / $earth);
 
-	foreach(str_split($direction as $dir)){
+	foreach(str_split($direction) as $dir){
 		if($dir == 'N'){ $locA[0] = $locA[0] + $cal; }
 		elseif($dir == 'S'){ $locA[0] = $locA[0] - $cal; }
 		elseif($dir == 'W'){ $locA[1] = $locA[1] - $cal; }
