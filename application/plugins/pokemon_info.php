@@ -514,16 +514,19 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
             ."Recomiendo las que son de marca *Anker* o *RAVPower*, puedes echarle un vistazo a ésta si te interesa: http://www.amazon.es/dp/B019X8EXJI";
 }elseif(
     $telegram->text_has(["evolución", "evolucionar", "evoluciones"]) &&
-    $telegram->text_contains(["evee", "eevee", "jolteon", "flareon", "vaporeon"]) &&
+    $telegram->text_contains(["evee", "eevee", "jolteon", "flareon", "vaporeon", "espeon", "umbreon"]) &&
     $telegram->text_contains(["?", "¿"]) &&
     !$telegram->text_contains(["mejor"])
 ){
     $help = "Tan sólo hay que *cambiar el nombre de Eevee antes de evolucionarlo* en función del que quieras conseguir.\n\n"
-            ."*El truco*\n"
+            ."*El truco:*\n"
             ."- Si quieres a *Vaporeon* (Agua), llámalo *Rainer*.\n"
             ."- Si quieres a *Jolteon* (Eléctrico), llámalo *Sparky*.\n"
-            ."- Si quieres a *Flareon* (Fuego), llámalo *Pyro*.\n\n"
-            ."Pero ten en cuenta que este truco *sólo funciona una vez* por cada nombre, así que elige sabiamente...";
+            ."- Si quieres a *Flareon* (Fuego), llámalo *Pyro*.\n"
+			."- Si quieres a *Espeon* (Psíquico), llámalo *Sakura*.\n"
+			."- Si quieres a *Umbreon* (Siniestro), llámalo *Tamao*.\n\n"
+            ."Pero ten en cuenta que este truco *sólo funciona una vez* por cada nombre, así que elige sabiamente..."
+			."\nTambién dicen que si evolucionas por el día o por la noche, el Pokémon puede cambiar.";
             // ."Estos nombres tienen una historia detrás, aunque hay que remontarse a la serie original. "
             // ."En uno de los capítulos, Ash y sus compañeros de viaje se topaban con los hermanos Eeeve, "
             // ."y cada uno de ellos tenía una de las tres evoluciones.\n_¿A que no adivinas como se llamaban los hermanos?_\n";
