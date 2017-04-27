@@ -22,7 +22,7 @@ if($telegram->text_command("ingress") && $telegram->is_chat_group()){
 
     $telegram->send->text($telegram->emoji($str))->send();
     return;
-}elseif($telegram->text_command("/recingress")){
+}elseif($telegram->text_command("recingress")){
     $telegram->send
         ->inline_keyboard()
             ->row()
@@ -49,6 +49,23 @@ if($telegram->text_command("ingress") && $telegram->is_chat_group()){
         ->text($text)
     ->send();
     return;
+}elseif($telegram->text_command("checkpoint")){
+	// https://septicycl.es
+	$epoch = 1389150000;
+	$cycle = 5 * 3600;
+
+	$q = $epoch;
+
+	while(time() > $q){ $q = $q + $cycle; }
+	$r = $q - ($q % $cycle);
+
+	$str = date("d/M H:i", $r) .", quedan " .abs(time() - $r) ."s.";
+
+	$this->telegram->send
+		->text($str)
+	->send();
+
+	return -1;
 }
 
  ?>
