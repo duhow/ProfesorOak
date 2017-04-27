@@ -22,6 +22,33 @@ function get_paired_groups($groups){
     return $target;
 }
 
+function check_reset_nest(){
+	$CI =& get_instance();
+	$query = $CI->db
+		->select('register_date')
+		->where('register_date IS NOT NULL')
+		->order_by('register_date', 'ASC')
+		->limit(1)
+	->get('pokemon_nests');
+	if($query->num_rows() == 0){ return FALSE; }
+	$date = date("Y-m-d", strtotime($query->row()->register_date));
+	$date = strtotime($date); // Sacar las 00:00 del día.
+
+	$ret = (
+		date("N") == 4 and // Jueves
+		time() >= strtotime("+9 days", $date)
+	);
+
+	if($ret){
+		$CI->db
+			->set('active', FALSE)
+			->where('active', TRUE)
+		->update('pokemon_nests');
+	}
+
+	return $ret;
+}
+
 // if(!$this->telegram->text_contains("nido")){ return; } // HACK TODO Cambiar frases para la gente?
 
 if(
@@ -58,6 +85,7 @@ if(
 
     $query = $this->db
         ->where_in('chat', $target)
+		->where('active', TRUE)
     ->get('pokemon_nests');
 
     if($query->num_rows() == 0){
@@ -75,6 +103,7 @@ if(
     $query = $this->db
         ->where_in('chat', $target)
         ->where('pokemon', $pk['pokemon'])
+		->where('active', TRUE)
     ->get('pokemon_nests');
 
     if($query->num_rows() == 0){
@@ -156,6 +185,7 @@ elseif(
 	$query = $this->db
 		->where_in('chat', $target)
 		->like('location_string', $txt)
+		->where('active', TRUE)
 	->get('pokemon_nests');
 
 	$frases = [
@@ -221,6 +251,7 @@ elseif(
         ->set('pokemon', $pk['pokemon'])
         ->set('location_string', $loc)
         ->set('register_date', date("Y-m-d H:i:s"))
+		->set('active', TRUE)
     ->insert('pokemon_nests');
 
     $telegram->send->text($telegram->emoji(":ok:") . " ¡Registrado!")->send();
@@ -255,6 +286,7 @@ elseif(
         ->set('lat', $loc['latitude'])
         ->set('lng', $loc['longitude'])
         ->set('register_date', date("Y-m-d H:i:s"))
+		->set('active', TRUE)
     ->insert('pokemon_nests');
 
     $telegram->send->text($telegram->emoji(":ok:") . " ¡Registrado!")->send();
@@ -299,6 +331,7 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
 
     $query = $this->db
         ->where_in('chat', $target)
+		->where('active', TRUE)
         ->order_by('pokemon', 'ASC')
     ->get('pokemon_nests');
 
@@ -370,6 +403,16 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
 
 		$q = $telegram->send->text($str, 'HTML')->send();
 	}
+
+	if(check_reset_nest()){
+		$str = ":ok: ¡Lista de nidos reiniciada!\n¡A por todos!";
+		$this->telegram->send
+			->notification(TRUE)
+			->chat("-1001089222378") // Canal @ProfesorOakNews
+			->text($this->telegram->emoji($str))
+		->send();
+	}
+
     return -1;
 }
 
