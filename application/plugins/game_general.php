@@ -56,7 +56,10 @@ if($telegram->text_has(["tira", "lanza", "tirar", "roll"], ["el dado", "los dado
         ->text($text, TRUE)
     ->send();
     return;
-}elseif($telegram->text_has(["Dispara", "Bang", "Disparo", "/dispara"], TRUE) && $telegram->words() <= 3){
+}elseif(
+	($telegram->text_has(["Dispara", "Bang", "Disparo", "/dispara"], TRUE) && $telegram->words() <= 3) or
+	$telegram->sticker() == "BQADBAAD0g0AAs31wAT_XqnScuH6xwI"	
+){
     if($telegram->text_contains(["oak", "te"])){ return -1; }
     if($telegram->text_contains(" a ")){
         $telegram->send
