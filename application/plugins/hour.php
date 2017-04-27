@@ -25,7 +25,8 @@ if($this->telegram->text_has("Hora", TRUE) && in_array($telegram->words(), [2,3]
         }
     }
 
-    $time = time() - 3600; // Madrid - Rome
+	// TODO Daylight. Debería cambiar automáticamente.
+    $time = time() - 7200; // Madrid - Rome
 
     if($this->telegram->words() == 3){
         $timefrom = NULL;
