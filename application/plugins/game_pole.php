@@ -63,10 +63,12 @@ function pole_group_clean($group){
     // TRUE = ALL
     if($group !== TRUE){
         if(!is_array($group)){ $group = [$group]; }
-        $CI->db->where_in('chat', $group);
+        return $CI->db
+            ->where_in('chat', $group)
+        ->delete('poleauth');
     }
 
-    return $CI->db->delete('poleauth');
+    return $CI->db->query("TRUNCATE TABLE poleauth");
 }
 
 function pole_add($user, $group, $pole_type){
@@ -193,7 +195,7 @@ elseif($telegram->text_command("poleauth") and $telegram->user->id == $this->con
 
     $q = $this->telegram->send
         ->notification(TRUE)
-        ->text("Hay " .count($chats) ." grupos.\n" .$this->telegram->emoji(":clock ") ."Procesando...")
+        ->text("Hay " .count($chats) ." grupos.\n" .$this->telegram->emoji(":clock: ") ."Procesando...")
     ->send();
 
     pole_group_clean(TRUE);
