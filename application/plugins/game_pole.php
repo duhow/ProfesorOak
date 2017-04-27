@@ -95,7 +95,8 @@ function pole_lock($action = TRUE){
 function pole_ranking($group, $day = "today"){
 	$CI =& get_instance();
 
-	if($day !== TRUE or $day === FALSE){
+	if($day !== TRUE){
+		if($day === FALSE){ $day = "today"; }
 		$day = date("Y-m-d", strtotime($day));
 		$CI->db
 			->where('date', $day)
