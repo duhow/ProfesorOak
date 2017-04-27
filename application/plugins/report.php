@@ -99,8 +99,8 @@ if(
 		return -1;
 	}
 
-	$pkuser = $pokemon->user($target);
-	if($pkuser && strtolower($pkuser->username) == strtolower($target)){
+	$pkuser = $pokemon->user($telegram->user->id);
+	if(strtolower($pkuser->username) == strtolower($target)){
 		$this->telegram->send
 			->notification(FALSE)
 			->text($this->telegram->emoji(":warning: ") ."¿Porqué ibas a reportarte a ti mismo?")
@@ -110,7 +110,7 @@ if(
 			->notification(FALSE)
 			->chat(TRUE)
 			->message(TRUE)
-			->reply_to($this->config->item('creator'))
+			->forward_to($this->config->item('creator'))
 		->send();
 
 		$this->telegram->send
