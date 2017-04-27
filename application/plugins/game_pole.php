@@ -4,7 +4,7 @@ function pole_can_type($user, $group, $pole_type = 1){
     $CI =& get_instance();
 
     $query = $CI->db
-        ->select('type', 'uid')
+        ->select(['type', 'uid'])
         ->where('cid', $group)
         ->where('date', date("Y-m-d"))
     ->get('pole');
@@ -37,7 +37,7 @@ function pole_can_type($user, $group, $pole_type = 1){
 
     // Si el usuario ya ha hecho algo,
     // No puede volver a hacer otra cosa.
-    if($can and in_array($user, $users)){ $can = FALSE; }
+    if(in_array($user, $users)){ $can = FALSE; }
     return $can;
 }
 
@@ -129,11 +129,12 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
 
     pole_lock(FALSE);
 
-    $timeuser = $pokemon->settings($pkuser->telegramid, 'lastpole');
+    $timeuser = $pokemon->settings($telegram->user->id, 'lastpole');
     if(empty($timeuser)){ $timeuser = 0; }
 
     if(date("d") != $timeuser){
         $points = (4 - $pole);
+		$pkuser = $pokemon->user($telegram->user->id);
         $pokemon->update_user_data($telegram->user->id, 'pole', ($pkuser->pole + $points));
         $pokemon->settings($telegram->user->id, 'lastpole', date("d"));
     }
