@@ -43,7 +43,7 @@ elseif($telegram->text_command("help")){
 }
 
 if(
-	strpos(strtolower($this->telegram->user->first_name), " oak") !== FALSE or
+	strpos(strtolower(@$this->telegram->user->first_name), " oak") !== FALSE or
 	strpos(strtolower(@$this->telegram->user->last_name), " oak") !== FALSE
 ){
 	if($pokemon->user_flags($this->telegram->user->id, 'impersonate')){ return -1; }
