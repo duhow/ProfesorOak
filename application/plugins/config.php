@@ -9,7 +9,10 @@ if(
         ( !$telegram->is_chat_group() )
     )
 ){
-	if($pokemon->user_flags($telegram->user->id, 'set_abuse')){ return -1; }
+	if(
+		$pokemon->user_flags($telegram->user->id, 'set_abuse') or
+		($telegram->user->id != $this->config->item('creator') and $pokemon->settings($telegram->chat->id, 'noset') )
+	){ return -1; }
     $key = $telegram->words(1);
     $value = $telegram->words(2);
 
