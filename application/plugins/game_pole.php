@@ -85,6 +85,20 @@ function pole_add($user, $group, $pole_type, $first = FALSE){
 }
 
 function pole_lock($action = TRUE){
+	/* $file = "/tmp/pole";
+	if($action === FALSE){
+		if(file_exists($file)){ unlink($file); }
+		return TRUE;
+	}
+
+	if(file_exists($file)){
+		while(file_exists($file)){
+			usleep(100 * mt_rand(10, 50));
+		}
+	}
+
+	return file_put_contents($file, "pole"); */
+
     $CI =& get_instance();
     if($action){
         return $CI->db->query("LOCK TABLES pole WRITE;");
@@ -154,7 +168,10 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
 
     pole_lock(TRUE);
 
-    if(!pole_can_type($telegram->user->id, $telegram->chat->id, $pole)){ return -1; }
+    if(!pole_can_type($telegram->user->id, $telegram->chat->id, $pole)){
+		pole_lock(FALSE); // Unlock antes de matar el proceso.
+		return -1;
+	}
     pole_add($telegram->user->id, $telegram->chat->id, $pole, $firstpole);
 
     pole_lock(FALSE);
