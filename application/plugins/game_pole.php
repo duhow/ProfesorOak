@@ -92,6 +92,29 @@ function pole_lock($action = TRUE){
     return $CI->db->query("UNLOCK TABLES");
 }
 
+function pole_ranking($group, $day = "today"){
+	$CI =& get_instance();
+
+	if($day !== TRUE){
+		$day = date("Y-m-d", strtotime($day));
+		$CI->db
+			->where('date', $day)
+			->order_by('type ASC');
+	}
+
+	$query = $CI->db
+		->select(['uid', 'SUM(4 - type) AS points', 'user.username'], FALSE)
+		->from('pole')
+		->join('user', 'pole.uid = user.telegramid')
+		->where('cid', $group)
+		->group_by('uid')
+		->order_by('points DESC')
+	->get();
+
+	if($query->num_rows() == 0){ return array(); }
+	return $query->result_array();
+}
+
 
 // HACK para acelerar el procesamiento.
 if($this->telegram->text_contains(["pole", "bronce"]) && !$this->telegram->is_chat_group()){ return -1; }
@@ -150,42 +173,30 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
 if($telegram->text_command("polerank") or $telegram->text_has("!polerank")){
 	if($pokemon->command_limit("polerank", $telegram->chat->id, $telegram->message, 7)){ return -1; }
 
-    $poleuser = $pokemon->settings($telegram->chat->id, 'pole_user');
     $pole = $pokemon->settings($telegram->chat->id, 'pole');
 
-    if($pole == FALSE){ return; }
+    if($pole == FALSE){ return -1; }
 
-    $pole = $pokemon->settings($telegram->chat->id, 'pole_points');
-    if($pole == NULL or ($pole === TRUE or $pole === 1)){
-        $telegram->send
-            ->text("Nadie ha hecho la *pole*.", TRUE)
-        ->send();
-        return;
+	$full = ($telegram->text_has("full"));
+    $pole = pole_ranking($telegram->chat->id, $full);
+
+	$str = "Nadie ha hecho la *pole*.";
+    if(!empty($pole)){
+		// $hardcore = $pokemon->settings($telegram->chat->id, 'pole_hardcore');
+
+	    $str = $telegram->emoji(":warning:") ." *Pole ";
+	    // $str .= ($hardcore ? "de las " .date("H", $pole[0]) ."h" : "del " .date("d", $pole[0])) ."*:\n\n";
+		$str .= ($full ? "general" : "de hoy") ."*:\n\n";
+
+		for($i = 0; $i < min(count($pole), 9); $i++){
+			$str .= $telegram->emoji(":" .($i + 1) .": ") ." " .$pole[$i]['username'] ." (*" .$pole[$i]['points'] ."*)\n";
+		}
     }
 
-    $pole = unserialize($pole);
-    $poleuser = unserialize($poleuser);
-    $hardcore = $pokemon->settings($telegram->chat->id, 'pole_hardcore');
-
-    $str = $telegram->emoji(":warning:") ." *Pole ";
-    $str .= ($hardcore ? "de las " .date("H", $pole[0]) ."h" : "del " .date("d", $pole[0])) ."*:\n\n";
-
-    foreach($poleuser as $n => $u){
-        $ut = $telegram->emoji(":question-red:");
-        $points = NULL;
-        if(!empty($u)){
-            $user = $pokemon->user($u);
-            $ut = (!empty($user->username) ? $user->username : $user->telegramuser);
-            $points = $user->pole;
-        }
-
-        $str .= $telegram->emoji(":" .($n + 1) .": ") .$ut .($points ? " (*$points*)" : "") ."\n";
-    }
-
-    $telegram->send
+    $this->telegram->send
         ->text($str, TRUE)
     ->send();
-    return;
+    return -1;
 }
 
 elseif($telegram->text_command("poleauth") and $telegram->user->id == $this->config->item('creator')){
