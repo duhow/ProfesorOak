@@ -95,8 +95,8 @@ function pole_lock($action = TRUE){
 function pole_ranking($group, $day = "today"){
 	$CI =& get_instance();
 
-	if($day !== TRUE){
-		if($day === FALSE){ $day = "today"; }
+	if($day != TRUE){
+		if($day <= 1){ $day = "now"; }
 		$day = date("Y-m-d", strtotime($day));
 		$CI->db
 			->where('date', $day)
@@ -190,7 +190,7 @@ if($telegram->text_command("polerank") or $telegram->text_has("!polerank")){
 		$str .= ($full ? "general" : "de hoy") ."*:\n\n";
 
 		for($i = 0; $i < min(count($pole), 9); $i++){
-			$str .= $telegram->emoji(":" .($i + 1) .": ") ." " .$pole[$i]['username'] ." (*" .$pole[$i]['points'] ."*)\n";
+			$str .= $telegram->emoji(":" .($i + 1 <= 3 ? "medal-" : "") .($i + 1) .": ") ." " .$pole[$i]['username'] ." (*" .$pole[$i]['points'] ."*)\n";
 		}
     }
 
