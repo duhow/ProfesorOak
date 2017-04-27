@@ -71,12 +71,13 @@ function pole_group_clean($group){
     return $CI->db->query("TRUNCATE TABLE poleauth");
 }
 
-function pole_add($user, $group, $pole_type){
+function pole_add($user, $group, $pole_type, $first = FALSE){
     $CI =& get_instance();
     $data = [
         'cid' => $group,
         'uid' => $user,
         'type' => $pole_type,
+		'first' => $first,
         'date' => date("Y-m-d"),
     ];
 
@@ -107,7 +108,7 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
 
     // Si está el Modo HARDCORE, la pole es cada hora. Si no, cada día.
     // $timer = ($pokemon->settings($telegram->chat->id, 'pole_hardcore') ? "H" : "d");
-    $timer = "d"; // DEBUG TEMP
+    $timer = "d"; // FIXME TEMP
 
     if($telegram->text_has("pole", TRUE)){
         $pole = 1;
@@ -122,25 +123,27 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
         $action = "el *bronce*";
     }
 
+	$timeuser = $pokemon->settings($telegram->user->id, 'lastpole');
+    if(empty($timeuser)){ $timeuser = 0; }
+
+	$firstpole = (date("d") != $timeuser);
+
     pole_lock(TRUE);
 
     if(!pole_can_type($telegram->user->id, $telegram->chat->id, $pole)){ return -1; }
-    pole_add($telegram->user->id, $telegram->chat->id, $pole);
+    pole_add($telegram->user->id, $telegram->chat->id, $pole, $firstpole);
 
     pole_lock(FALSE);
 
-    $timeuser = $pokemon->settings($telegram->user->id, 'lastpole');
-    if(empty($timeuser)){ $timeuser = 0; }
-
-    if(date("d") != $timeuser){
-        $points = (4 - $pole);
-		$pkuser = $pokemon->user($telegram->user->id);
-        $pokemon->update_user_data($telegram->user->id, 'pole', ($pkuser->pole + $points));
+    if($firstpole){
+        $pokemon->inc_user_data($telegram->user->id, 'pole', (4 - $pole)); // DEPRECATED
         $pokemon->settings($telegram->user->id, 'lastpole', date("d"));
     }
 
-    $telegram->send->text($telegram->user->first_name ." ha hecho $action!", TRUE)->send();
-    // $telegram->send->text("Lo siento " .$telegram->user->first_name .", pero hoy la *pole* es mía! :D", TRUE)->send();
+	// "Lo siento " .$telegram->user->first_name .", pero hoy la *pole* es mía! :D"
+    $telegram->send
+		->text($telegram->emoji(":medal-" .$pole .": ") .$telegram->user->first_name ." ha hecho $action!", TRUE)
+	->send();
     return -1;
 }
 

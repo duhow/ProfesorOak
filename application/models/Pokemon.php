@@ -305,6 +305,17 @@ class Pokemon extends CI_Model{
 		}
 	}
 
+	function inc_user_data($telegram, $key, $inc){
+		try {
+			return $this->db
+				->set($key, "$key + $inc", FALSE)
+				->where('telegramid', $telegram)
+			->update('user');
+		} catch (Exception $e) {
+			return FALSE;
+		}
+	}
+
 	function update_user_offline_data($id, $key, $value){
 		return $this->db
 			->set($key, $value)
