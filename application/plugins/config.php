@@ -168,24 +168,33 @@ elseif(
         $last = array_pop($cant);
         $str = "No se puede " .implode(", ", $cant) ." ni $last. Que sosos.";
     }elseif(empty($cant)){
-        $last = array_pop($cant);
-        $str = "Se puede " .implode(", ", $cant) ." hasta $last. ¡Mola!";
+        $last = array_pop($can);
+        $str = "Se puede " .implode(", ", $can) ." hasta $last. ¡Mola!";
     }else{
-        $str = "Se puede " .implode(", ", $can) ." pero no " .implode(", ", $cant) .".";
+        $last = NULL;
+        if(count($can) > 1){ $last = array_pop($can); }
+        $str = "Se puede " .implode(", ", $can) .($last ? " y $last, " : ", ");
+
+        $last = NULL;
+        if(count($cant) > 1){ $last = array_pop($cant); }
+        $str .= "pero no " .implode(", ", $cant) .($last ? " ni $last." : ".");
     }
 
 	$opts[] = $str;
     // ----------------
     $s = $pokemon->settings($chat, 'antispam');
-    $str = "El *antispam* está *" .($s ? "activado" : "desactivado") ."*";
+    if($s === NULL){ $s = TRUE; }
+    $str = "El antispam está " .($s ? "activado" : "desactivado");
 
     $s = $pokemon->settings($chat, 'antiflood');
     if($s > 0){
-        $str .= " y el *antiflood* está en $s.";
+        $str .= ", y el *antiflood* está en $s";
         if($pokemon->settings($chat, 'antiflood_ban') and $admin){
-            $str .= " Los que se pasen, serán baneados.";
+            $str .= ". Los que se pasen, serán baneados";
         }
     }
+
+    $str .= ".";
 
     $opts[] = $str;
     // ----------------
@@ -225,7 +234,7 @@ elseif(
         $members = $pokemon->group_users_active($chat, TRUE);
         $str = "No hay poles porque sois pocos. Dejad de darme la lata. PESAOS.";
         if($members > 6){
-            $str = "Hay poles. (Me va a doler esta noche T.T)";
+            $str = "Hay poles. (Me va a doler esta noche " .$telegram->emoji("T.T") .")";
         }
     }
     $opts[] = $str;
