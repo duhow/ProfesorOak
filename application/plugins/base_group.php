@@ -169,6 +169,8 @@ $antiafk = $pokemon->settings($telegram->chat->id, 'antiafk');
 if($antiafk and !$this->telegram->callback){
     // Si no habla, last_date = register_date y mensajes = 0
     if(!is_numeric($antiafk) or $antiafk <= 1){ $antiafk = 5; }
+    $except = [$this->config->item('telegram_bot_id'), $telegram->user->id];
+
     $query = $this->db
         ->select(['uid', 'register_date'])
         ->where('cid', $this->telegram->chat->id)
@@ -176,6 +178,7 @@ if($antiafk and !$this->telegram->callback){
         ->where('register_date = last_date')
         ->where('register_date IS NOT NULL')
         ->where("DATE_ADD(register_date, INTERVAL $antiafk MINUTE) < NOW()")
+        ->where_not_in('uid', $except)
         ->limit(1) // HACK
     ->get('user_inchat');
 
