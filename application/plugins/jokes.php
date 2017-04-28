@@ -52,6 +52,9 @@ if(
 }elseif($telegram->text_has(["profesor", "profe", "oak"]) and $telegram->text_has(["chico", "hombre"]) and $telegram->text_has(["chica", "mujer"]) and $telegram->text_contains("?") and $telegram->words() <= 8){
 	$this->analytics->event('Telegram', 'Jokes', 'Chico o chica');
 	$joke = "Pues no estoy muy seguro. A veces me siento Evax. :>";
+}elseif($telegram->text_has(["pokémon", "niantic"]) and $telegram->text_has(["mal", "mierda", "puto", "puta", "cagada", "cagadas", "cagando", "fatal"])){
+	$joke = "Oye, pues si tan mal va Pokémon GO, ¿porqué no echas el currículum y arreglas sus fallos?\n"
+			."Te dejo el link: https://www.nianticlabs.com/jobs/";
 }elseif($telegram->text_has("Gracias", ["profesor", "Oak", "profe"]) && !$telegram->text_has("pero", "no")){
 	// "el puto amo", "que maquina eres"
 	$this->analytics->event('Telegram', 'Jokes', 'Thank you');
