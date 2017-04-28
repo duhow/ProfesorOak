@@ -3,7 +3,9 @@
 if(!$telegram->is_chat_group()){ return; }
 
 // Agregar usuarios en el chat
-$pokemon->user_addgroup($telegram->user->id, $telegram->chat->id);
+if(!$telegram->callback){
+    $pokemon->user_addgroup($telegram->user->id, $telegram->chat->id);
+}
 
 /*
 #####################
@@ -154,6 +156,51 @@ if($telegram->text_url() && $telegram->is_chat_group()){
 
         $telegram->send->ban($telegram->user->id, $telegram->chat->id);
         return -1;
+    }
+}
+
+/*
+#####################
+#   AntiAFK Newbie  #
+#####################
+*/
+
+$antiafk = $pokemon->settings($telegram->chat->id, 'antiafk');
+if($antiafk and !$this->telegram->callback){
+    // Si no habla, last_date = register_date y mensajes = 0
+    if(!is_numeric($antiafk) or $antiafk <= 1){ $antiafk = 5; }
+    $query = $this->db
+        ->select(['uid', 'register_date'])
+        ->where('cid', $this->telegram->chat->id)
+        ->where('messages', 0)
+        ->where('register_date = last_date')
+        ->where('register_date IS NOT NULL')
+        ->where("DATE_ADD(register_date, INTERVAL $antiafk MINUTE) < NOW()")
+        ->limit(1) // HACK
+    ->get('user_inchat');
+
+    if($query->num_rows() == 1){
+        $afk = $query->row();
+
+        $q = $this->telegram->send->kick($afk->uid, $this->telegram->chat->id);
+        if($q !== FALSE){
+            $pokemon->user_delgroup($afk->uid, $this->telegram->chat->id);
+            $adminchat = $pokemon->settings($telegram->chat->id, 'admin_chat');
+
+            if($adminchat){
+                $str = ":warning: AntiAFK Newbie\n"
+                        .":id: " .$afk->uid ."\n"
+                        ."\ud83d\udcc5 " .$afk->register_date;
+
+                $str = $this->telegram->emoji($str);
+
+                $this->telegram->send
+                    ->notification(TRUE)
+                    ->chat($adminchat)
+                    ->text($str)
+                ->send();
+            }
+        }
     }
 }
 
