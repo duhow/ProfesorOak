@@ -91,7 +91,7 @@ elseif(
 
 elseif(
 	$telegram->text_has(["oak", "profe", "profesor"]) and
-	$telegram->text_has("qué", ["puedes hacer", "tienes activo", "tienes activado"]) and
+	$telegram->text_has("qué", ["puedes hacer", "se puede hacer", "tienes activo", "tienes activado"]) and
 	$telegram->text_contains("?") and
 	$telegram->words() <= 7 and
 	$telegram->is_chat_group() and
@@ -153,23 +153,132 @@ elseif(
 	$cant = array();
 
 	$s = $pokemon->settings($chat, 'jokes');
-	if($s != NULL and $s == FALSE){ $cant[] = 'bromas'; }
-	else{ $can[] = 'bromas'; }
+	if($s != NULL and $s == FALSE){ $cant[] = 'hacer bromas'; }
+	else{ $can[] = 'hacer bromas'; }
 
 	$s = $pokemon->settings($chat, 'play_games');
-	if($s != NULL and $s == FALSE){ $cant[] = 'juegos'; }
-	else{ $can[] = 'juegos'; }
+	if($s != NULL and $s == FALSE){ $cant[] = 'jugar a juegos'; }
+	else{ $can[] = 'jugar a juegos'; }
+
+    $s = $pokemon->settings($chat, 'pokegram');
+	if($s != NULL and $s == FALSE){ $cant[] = 'cazar Pokémon'; }
+	else{ $can[] = 'cazar Pokémon'; }
+
+    if(empty($can)){
+        $last = array_pop($cant);
+        $str = "No se puede " .implode(", ", $cant) ." ni $last. Que sosos.";
+    }elseif(empty($cant)){
+        $last = array_pop($cant);
+        $str = "Se puede " .implode(", ", $cant) ." hasta $last. ¡Mola!";
+    }else{
+        $str = "Se puede " .implode(", ", $can) ." pero no " .implode(", ", $cant) .".";
+    }
 
 	$opts[] = $str;
+    // ----------------
+    $s = $pokemon->settings($chat, 'antispam');
+    $str = "El *antispam* está *" .($s ? "activado" : "desactivado") ."*";
+
+    $s = $pokemon->settings($chat, 'antiflood');
+    if($s > 0){
+        $str .= " y el *antiflood* está en $s.";
+        if($pokemon->settings($chat, 'antiflood_ban') and $admin){
+            $str .= " Los que se pasen, serán baneados.";
+        }
+    }
+
+    $opts[] = $str;
+    // ----------------
+    $s = $pokemon->settings($chat, 'custom_commands');
+    $str = "No hay comandos personalizados.";
+
+    if($s){
+        $s = unserialize($s);
+        $str = "Hay " .count($s) ." comandos personalizados.";
+        if(count($s) > 9){
+            $str .= " Joder, como abusáis...";
+        }
+    }
+
+    $opts[] = $str;
+    // ----------------
+    $s = $pokemon->settings($chat, 'blackword');
+    $str = "No hay palabras prohibidas.";
+
+    if($s){
+        $s = explode(";", $s);
+        $str = "Hay " .count($s) ." palabras prohibidas. No las pienso decir, que para algo son prohibidas.";
+    }
+
+    $opts[] = $str;
 	// ----------------
+    $str = "";
+
+    if($pokemon->settings($chat, 'shutup')){
+        $str = "Estaré calladito, así que algunas respuestas os las diré por privado.";
+    }
+    $opts[] = $str;
+	// ----------------
+    $str = "No hay poles. (Menos mal...)";
+
+    if($pokemon->settings($chat, 'pole')){
+        $members = $pokemon->group_users_active($chat, TRUE);
+        $str = "No hay poles porque sois pocos. Dejad de darme la lata. PESAOS.";
+        if($members > 6){
+            $str = "Hay poles. (Me va a doler esta noche T.T)";
+        }
+    }
+    $opts[] = $str;
+    // ----------------
+    $str = "No veo ningún otro grupo relacionado a este.";
+    $can = array();
+
+    if($pokemon->settings($chat, 'admin_chat')){ $can[] = "administrativo"; }
+    if($pokemon->settings($chat, 'offtopic_chat')){ $can[] = "offtopic"; }
+    if($pokemon->settings($chat, 'pair_team_Y')){ $can[] = "amarillo"; }
+    if($pokemon->settings($chat, 'pair_team_R')){ $can[] = "rojo"; }
+    if($pokemon->settings($chat, 'pair_team_B')){ $can[] = "azul"; }
+
+    if(count($can) == 1){
+        $str = "Sólo conozco el grupo " .$can[0] .".";
+    }elseif(count($can) > 1){
+        $last = array_pop($can);
+        for($i = 0; $i < count($can); $i++){ $can[$i] = "el grupo " .$can[$i]; }
+
+        $str = "Conozco " .implode(", ", $can) ." y el grupo $last.";
+    }
+
+    $opts[] = $str;
+    // ----------------
+    $str = "No veo ningún otro grupo relacionado a este.";
+
+    $link = $pokemon->settings($chat, 'link_chat');
+    $loc = $pokemon->settings($chat, 'location');
+
+    if($link){
+        $str = "Conozco el link del grupo";
+    }else{
+        $str = "No conozco el link del grupo";
+    }
+
+    if($loc and $link){ $str .= " y"; }
+    elseif($loc and !$link){ $str .= ", pero sí"; }
+    elseif(!$loc and $link){ $str .= ", pero no"; }
+    else{ $str .= " ni"; }
+    $str .= " su ubicación.";
+
+    $opts[] = $str;
+	// ----------------
+
 
 	$str = "";
 	foreach($opts as $t){
-		$str .= "- $t\n";
+        if(empty(trim($t))){ continue; }
+		$str .= "$t\n";
 	}
 
 	$this->telegram->send
-		->text($str)
+		->text($str, TRUE)
 	->send();
 
 	return -1;
