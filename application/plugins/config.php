@@ -89,4 +89,90 @@ elseif(
     return -1;
 }
 
+elseif(
+	$telegram->text_has(["oak", "profe", "profesor"]) and
+	$telegram->text_has("qué", ["puedes hacer", "tienes activo", "tienes activado"]) and
+	$telegram->text_contains("?") and
+	$telegram->words() <= 7 and
+	$telegram->is_chat_group() and
+	in_array($telegram->user->id, telegram_admins(TRUE))
+){
+	if($pokemon->command_limit("settingsview", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+
+	$str = "";
+	$opts = array();
+	$chat = $telegram->chat->id;
+	$admin = (in_array($this->config->item('telegram_bot_id'), telegram_admins()));
+
+	// ----------------
+	$str = "";
+	$s = $pokemon->settings($chat, 'announce_welcome');
+	if($s != NULL and $s == FALSE){ $str = "*NO* "; }
+	$str .= "Saludaré a los nuevos usuarios";
+
+	if($pokemon->settings($chat, 'welcome')){
+		$str .= " con un mensaje personalizado";
+	}
+	$str .= ".";
+	$opts[] = $str;
+	// ----------------
+	$str = "";
+	$s = $pokemon->settings($chat, 'blacklist');
+	if($s){
+		$s = explode(",", $s);
+		$str = "Los que sean " .implode(", ", $s) ." no pueden entrar aquí";
+		if(!$admin){ $str .= ", pero no puedo echarlos"; }
+		$str .= ".";
+	}
+	$opts[] = $str;
+	// ----------------
+	$str = "";
+	$s = $pokemon->settings($chat, 'team_exclusive');
+	if(!empty($s)){
+		$col = ['R' => 'rojos', 'B' => 'azules', 'Y' => 'amarillos'];
+		$str = "Es un grupo exclusivo para *" .$col[$s] ."*.";
+		if($pokemon->settings($chat, 'team_exclusive_kick')){
+			if($admin){ $str .= " Echaré a los que no sean de ese color cuando intenten entrar."; }
+			else{ $str .= " Pero no puedo echarlos."; }
+		}
+	}
+	$opts[] = $str;
+	// ----------------
+	$str = "";
+	if($pokemon->settings($chat, 'require_verified')){
+		$str = "Es *obligatorio* estar validado para estar en este grupo.";
+		if($pokemon->settings($chat, 'require_verified_kick')){
+			if($admin){ $str .= " Si no, directamente no podrán ni entrar aquí."; }
+			else{ $str .= " Pero no podré echarlos si entran."; }
+		}
+	}
+	$opts[] = $str;
+	// ----------------
+	$str = "";
+	$can = array();
+	$cant = array();
+
+	$s = $pokemon->settings($chat, 'jokes');
+	if($s != NULL and $s == FALSE){ $cant[] = 'bromas'; }
+	else{ $can[] = 'bromas'; }
+
+	$s = $pokemon->settings($chat, 'play_games');
+	if($s != NULL and $s == FALSE){ $cant[] = 'juegos'; }
+	else{ $can[] = 'juegos'; }
+
+	$opts[] = $str;
+	// ----------------
+
+	$str = "";
+	foreach($opts as $t){
+		$str .= "- $t\n";
+	}
+
+	$this->telegram->send
+		->text($str)
+	->send();
+
+	return -1;
+}
+
 ?>
