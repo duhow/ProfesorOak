@@ -28,8 +28,12 @@ if($this->telegram->text_command("ocr") && $this->telegram->has_reply && $this->
 		$ocr->psm( intval($this->telegram->last_word()) );
 	}
 
+	$str = $ocr->lang('spa', 'eng')->run();
+	$str = trim($str);
+	if(empty($str)){ $str = "Nada."; }
+
 	$this->telegram->send
-		->text( $ocr->lang('spa', 'eng')->run() )
+		->text($str)
 	->send();
 
 	unlink($temp);
