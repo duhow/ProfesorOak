@@ -215,7 +215,7 @@ elseif(
     $str = "No hay palabras prohibidas.";
 
     if($s){
-        $s = explode(";", $s);
+        $s = explode(",", $s);
         $str = "Hay " .count($s) ." palabras prohibidas. No las pienso decir, que para algo son prohibidas.";
     }
 
