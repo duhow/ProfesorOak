@@ -589,6 +589,9 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 		return -1;
 	}
 
+	$timeout = $pokemon->settings($telegram->chat->id, 'investigation');
+	if($timeout > time()){ return -1; }
+
 	$tmp = tempnam("/tmp", "ucsv");
 	$r = $this->telegram->download($doc->file_id, $tmp);
 	if(!$r){
@@ -610,6 +613,8 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 	$q = $this->telegram->send
 		->text($str)
 	->send();
+
+	$pokemon->settings($telegram->chat->id, 'investigation', time() + 180);
 
 	$car = 0; // Real user
 	$cok = 0;
