@@ -580,7 +580,10 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 		->send();
 
 		return -1;
-	}elseif($doc->file_size > (50 * 1024)){
+	}elseif(
+		$doc->file_size > (5 * 1024) and
+		$telegram->user->id != $this->config->item('creator')
+	){
 		$this->telegram->send
 			->notification(FALSE)
 			->text($this->telegram->emoji(":times: ") ."Esto pesa mucho.")
