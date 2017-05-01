@@ -208,6 +208,64 @@ if($antiafk and !$this->telegram->callback){
 }
 
 /*
+#####################
+#   Require avatar  #
+#####################
+*/
+
+$avatar = $pokemon->settings($telegram->chat->id, 'require_avatar');
+if($avatar){
+	$query = $this->db
+		->select('messages')
+		->where('cid', $telegram->chat->id)
+		->where('uid', $telegram->chat->id)
+	->get('user_inchat');
+	if($query->num_rows() == 1 and $query->row()->messages == 5){
+		// TODO Get avatar
+		if(1 == 2){
+			$q = $this->telegram->send->kick($telegram->user->id, $telegram->chat->id);
+			$adminchat = $pokemon->settings($telegram->chat->id, 'admin_chat');
+
+			if($q === FALSE){
+				if($adminchat){
+					$str = ":warning: No foto de perfil\n"
+							.":id: " .$telegram->user->id ."\n"
+							.":male: " .$telegram->user->first_name;
+
+					$str = $this->telegram->emoji($str);
+
+					$this->telegram->send
+						->notification(TRUE)
+						->chat($adminchat)
+						->text($str)
+					->send();
+				}
+				return -1;
+			}
+
+			// Si está kick, quitar del grupo.
+			$pokemon->user_delgroup($telegram->user->id, $this->telegram->chat->id);
+
+			if($adminchat){
+				$str = ":forbid: Kick por no foto de perfil\n"
+						.":id: " .$telegram->user->id ."\n"
+						.":male: " .$telegram->user->first_name;
+
+				$str = $this->telegram->emoji($str);
+
+				$this->telegram->send
+					->notification(TRUE)
+					->chat($adminchat)
+					->text($str)
+				->send();
+			}
+
+			return -1;
+		}
+	}
+}
+
+/*
 ######################
 # Migrate supergroup #
 ######################

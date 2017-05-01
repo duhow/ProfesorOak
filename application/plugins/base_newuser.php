@@ -158,6 +158,10 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
         $custom = $pokemon->settings($telegram->chat->id, 'welcome');
         $text = 'Bienvenido al grupo, $nombre!' ."\n";
         if(!empty($custom)){ $text = json_decode($custom) ."\n"; }
+		if($pokemon->settings($telegram->chat->id, 'require_avatar')){
+			// TODO Get avatar
+			// $text .= "Por favor, antes de nada, ponte una foto de avatar. La gente quiere ver caras familiares, no letras. :*" ."\n";
+		}
         if(empty($pknew)){
             $text .= "Oye, ¿podrías decirme el color de tu equipo?\n*Di: *_Soy ..._";
         }else{
