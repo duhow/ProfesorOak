@@ -541,6 +541,37 @@ elseif($telegram->text_has("salte de", TRUE) && $telegram->words() == 3){
     return -1;
 }
 
+// Ascender a admin
+elseif(
+	$telegram->is_chat_group() and
+	(
+		$telegram->text_command("addadmin") or
+		$telegram->text_has(["te asciendo", "ascender"], ["a admin", "a administrador", "como admin"])
+	) and
+	$telegram->has_reply
+){
+	$admins = $pokemon->settings($telegram->chat->id, "admins");
+	if(!empty($admins)){
+		$admins = explode(",", $admins);
+	}
+	$orig = $admins;
+	$admins[] = $telegram->reply_user->id;
+	$admins = array_unique($admins);
+
+	if($admins != $orig){
+		$admins = implode(",", $admins);
+		$pokemon->settings($telegram->chat->id, "admins", $admins);
+
+		$telegram->send
+			->notification(TRUE)
+			->reply_to(FALSE)
+			->caption("¡Has sido ascendido a Administrador!")
+			->file('voice', "AwADBAADBQEAAsqrWFDJMI7qKiTnawI");
+	}
+
+	return -1;
+}
+
 // Buscar usuario por grupos
 elseif($telegram->text_has(["/whereis", "dónde está"], TRUE) && !$telegram->is_chat_group() && $telegram->words() <= 3){
 	if($telegram->has_reply && $telegram->reply_is_forward){

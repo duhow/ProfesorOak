@@ -23,11 +23,17 @@ function telegram_admins($add_creator = TRUE, $custom = NULL){
         $admins = $telegram->get_admins(); // Del grupo
         $pokemon->group_admins($telegram->chat->id, $admins);
     }
+	$setadmins = $pokemon->settings($telegram->chat->id, "admins");
+	if(!empty($setadmins)){
+		$setadmins = explode(",", $setadmins);
+		foreach($setadmins as $a){ $admins[] = $a; }
+	}
     if($add_creator){ $admins[] = $CI->config->item('creator'); }
     if($custom != NULL){
         if(!is_array($custom)){ $custom = [$custom]; }
         foreach($custom as $c){ $admins[] = $c; }
     }
+	$admins = array_unique($admins);
     return $admins;
 }
 
