@@ -118,17 +118,14 @@ elseif($telegram->text_contains(["/block", "/unblock"], TRUE)){
 }
 
 // Desbanear usuarios de un grupo
-elseif($telegram->text_command("unban")){
+elseif($telegram->text_command("unban") && !$telegram->has_reply){
     // si es group y
     // in_array($telegram->user->id, $this->admins(TRUE)
 
     $target = NULL;
     $target_chat = NULL;
 
-    if($telegram->has_reply){
-        $target = $telegram->reply_user->id;
-        if($telegram->is_chat_group()){ $target_chat = $telegram->chat->id; }
-    }elseif($telegram->words() == 3){
+    if($telegram->words() == 3){
         $target = $telegram->words(1);
         $target_chat = $telegram->words(2);
     }elseif($telegram->words() == 2 && $telegram->is_chat_group()){
@@ -468,13 +465,15 @@ elseif($telegram->text_command("cinfo")){
     $count = $telegram->send->get_members_count($id);
 	$str = "Nope.";
 	if($info != FALSE){
-		$str = "\ud83c\udd94 " .$info['id'] ."\n"
-				."\ud83d\udd24 " .($info['title'] ?: $info['first_name']) ."\n"
+		$str = ":id: " .$info['id'] ."\n"
+				.":abc: " .($info['title'] ?: $info['first_name']) ."\n"
 				."\ud83c\udf10 " .($info['username'] ? "@" .$info['username'] : "---") ."\n"
-				."\ud83d\udcf3 " .$info['type'] ."\n"
-				."\ud83d\udebb " .$count ."\n";
-		$info = $telegram->send->get_member_info($this->config->item('telegram_bot_id'), $id);
-		$str .= "\u2139\ufe0f " .$info['status'];
+				."\ud83d\udcf3 " .$info['type'] ."\n";
+		if($info['type'] != "private"){
+			$info = $telegram->send->get_member_info($this->config->item('telegram_bot_id'), $id);
+			$str .= ."\ud83d\udebb " .$count ."\n"
+					.":info: " .$info['status'];
+		}
 
 		$str = $telegram->emoji($str);
 	}
@@ -538,7 +537,8 @@ elseif($telegram->text_command("uinfo") or $telegram->text_command("ui")){
 elseif($telegram->text_has("salte de", TRUE) && $telegram->words() == 3){
     $id = $telegram->last_word();
     $telegram->send->leave_chat($id);
-    exit();
+	$pokemon->group_disable($id);
+    return -1;
 }
 
 // Buscar usuario por grupos
