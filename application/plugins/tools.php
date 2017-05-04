@@ -211,6 +211,12 @@ if(
             if(!empty($admins)){
                 foreach($admins as $a){	$users[] = $a['user']['id']; }
             }
+			$admins = $pokemon->settings($telegram->user->id, "admins");
+			if(!empty($admins)){
+				$admins = explode(",", $admins);
+				foreach($admins as $a){ $users[] = $a; }
+			}
+			$users = array_unique($users);
             $admins = TRUE;
         }
         $find = $pokemon->find_users($users);
