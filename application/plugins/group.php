@@ -32,6 +32,20 @@ elseif(
     $str = "";
 
     if(empty($admins)){ $str = $telegram->emoji("No hay admin... :die:"); }
+	$extra = $pokemon->settings($telegram->chat->id, "admins");
+	if(!empty($extra)){
+		$extra = explode(",", $extra);
+		foreach($extra as $a){
+			if(in_array($a, $admins)){ continue; }
+			$u['status'] = 'administrator';
+			$info = $telegram->send->get_member_info($a, $telegram->chat->id);
+			if($info !== FALSE){
+				$u['user'] = $info['user'];
+			}else{
+				$u['user']['id'] = $a;
+			}
+		}
+	}
 
     foreach($admins as $k => $a){
         if($a['status'] == 'creator'){
