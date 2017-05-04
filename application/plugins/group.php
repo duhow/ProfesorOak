@@ -44,6 +44,7 @@ elseif(
 			}else{
 				$u['user']['id'] = $a;
 			}
+			$admins[] = $u;
 		}
 	}
 
