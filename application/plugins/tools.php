@@ -211,7 +211,7 @@ if(
             if(!empty($admins)){
                 foreach($admins as $a){	$users[] = $a['user']['id']; }
             }
-			$admins = $pokemon->settings($telegram->user->id, "admins");
+			$admins = $pokemon->settings($telegram->chat->id, "admins");
 			if(!empty($admins)){
 				$admins = explode(",", $admins);
 				foreach($admins as $a){ $users[] = $a; }
