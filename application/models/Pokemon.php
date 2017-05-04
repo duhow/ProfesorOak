@@ -423,11 +423,17 @@ class Pokemon extends CI_Model{
 			$admins = $this->telegram->get_admins(); // Del grupo
 			$this->group_admins($this->telegram->chat->id, $admins);
 		}
+		$setadmins = $this->settings($this->telegram->chat->id, "admins");
+		if(!empty($setadmins)){
+			$setadmins = explode(",", $setadmins);
+			foreach($setadmins as $a){ $admins[] = $a; }
+		}
 		if($add_creator){ $admins[] = $this->config->item('creator'); }
 		if($custom != NULL){
 			if(!is_array($custom)){ $custom = [$custom]; }
 			foreach($custom as $c){ $admins[] = $c; }
 		}
+		$admins = array_unique($admins);
 		return $admins;
 	}
 
