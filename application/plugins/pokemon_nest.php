@@ -27,6 +27,7 @@ function check_reset_nest(){
 	$query = $CI->db
 		->select('register_date')
 		->where('register_date IS NOT NULL')
+		->where('active', TRUE)
 		->order_by('register_date', 'ASC')
 		->limit(1)
 	->get('pokemon_nests');
