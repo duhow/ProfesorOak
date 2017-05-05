@@ -537,7 +537,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
     $telegram->send
         ->notification(FALSE)
         ->file('photo', FCPATH .'files/attack_types.png');
-    exit();
+    return -1;
 }elseif($telegram->text_contains(["tabla", "lista"]) && $telegram->text_contains(["huevos"]) && $telegram->words() < 10){
     $this->analytics->event('Telegram', 'Egg Table');
     $telegram->send
@@ -545,6 +545,12 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
 	// AgADBAADl7MxG10JzgK-Vlne-9fNkaDZZRkABNpfQEaBRT960bsDAAEC
 	// FCPATH .'files/egg_list.png'
         ->file('photo', 'AgADBAADe6gxGyGj6VKKtyVP3QABpii_CGAZAAS92yrLUGZikU5lBAABAg');
+    return -1;
+}elseif($this->telegram->text_has(["Alfabeto", "Abedeario"], ["Pokémon", "Unown", "Uknown"]) && $telegram->words() <= 8){
+	$this->analytics->event('Telegram', 'Unown Alphabet');
+    $this->telegram->send
+        ->notification(FALSE)
+        ->file('photo', 'AgADBAADoKoxG5TIQVCqtIqDl37WsibKpxkABFeNFPr7VfJifR8BAAEC');
     return -1;
 }elseif(
     ( $telegram->text_has(["profe", "oak"]) && $telegram->text_has(["código fuente", "source"]) ) or
@@ -595,7 +601,7 @@ if(!empty($help)){
         ->notification(FALSE)
         ->text($help, TRUE)
     ->send();
-    return;
+    return -1;
 }
 
 // pregunta sobre Eevee
