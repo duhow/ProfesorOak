@@ -8,7 +8,7 @@ if(
 	($this->telegram->text_has(["usuario", "persona"], ["al azar", "aleatorio", "random"]) and $this->telegram->words() <= 8)
 ){
 	$can = $this->pokemon->settings($this->telegram->chat->id, 'play_games');
-	if($can != NULL && $can == FALSE){ return; }
+	if($can != NULL && $can == FALSE){ return -1; }
 
 	$query = $this->db
 		->where('cid', $this->telegram->chat->id)

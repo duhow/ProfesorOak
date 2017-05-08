@@ -45,6 +45,9 @@ if(
 	$telegram->text_has("yo nunca", TRUE) or
 	$telegram->text_has(["oak", "profe", "profesor"], "yo nunca")
 ){
+	$can = $this->pokemon->settings($this->telegram->chat->id, 'play_games');
+	if($can != NULL && $can == FALSE){ return -1; }
+
 	$str = "Yo nunca " .game_never_text() .".";
 
 	$telegram->send

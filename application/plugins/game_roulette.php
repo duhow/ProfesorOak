@@ -3,6 +3,9 @@
 $numbers = [2,4,6,8,10,11,13,15,17,20,22,24,26,28,29,31,33,35]; // black
 
 if($telegram->text_has(["ruleta", "apuesto", "apostar"], "al") && $telegram->words() == 3){
+	$can = $this->pokemon->settings($this->telegram->chat->id, 'play_games');
+	if($can != NULL && $can == FALSE){ return -1; }
+
 	$num = mt_rand(0, 36);
 	$word = strtolower($telegram->last_word(TRUE));
 	$win = FALSE;
