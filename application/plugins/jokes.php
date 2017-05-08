@@ -55,6 +55,24 @@ if(
 }elseif($telegram->text_has(["pokémon", "niantic"]) and $telegram->text_has(["mal", "mierda", "puto", "puta", "cagada", "cagadas", "cagando", "fatal"])){
 	$joke = "Oye, pues si tan mal va Pokémon GO, ¿porqué no echas el currículum y arreglas sus fallos?\n"
 			."Te dejo el link: https://www.nianticlabs.com/jobs/";
+}elseif(
+	$this->telegram->text_has(["glados", "gla2", "feliz cumple", "felicidades", "pastel", "cake", "lie"]) or
+	$this->telegram->sticker()
+){
+	$can = TRUE;
+	if($this->telegram->sticker()){
+		$stickers = [
+			"CAADBAAD6AADXOgKAAEYtNpmQ50VuAI",
+			"CAADAQADSQIAAqYkxgABFG0TeSWuBzcC",
+			"CAADAQADuQIAAqYkxgABLnSkBun5HrQC"
+		];
+		if(!in_array($this->telegram->sticker(), $stickers)){ $can = FALSE; }
+	}
+	if($can and mt_rand(1, 3) == 3){
+		$icon = ["\ud83d\ude08", "\ud83d\ude06", "\ud83e\udd10"];
+		$n = mt_rand(0, count($icon) - 1);
+		$joke = "The cake is a lie. " .$this->telegram->emoji($icon[$n]);
+	}
 }elseif($telegram->text_has("Gracias", ["profesor", "Oak", "profe"]) && !$telegram->text_has("pero", "no")){
 	// "el puto amo", "que maquina eres"
 	$this->analytics->event('Telegram', 'Jokes', 'Thank you');
