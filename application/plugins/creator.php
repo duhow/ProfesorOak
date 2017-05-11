@@ -983,7 +983,7 @@ elseif($telegram->text_command("upar")){
 		if(isset($info["user"]["username"])){
 			$str .= " - @" .$info["user"]["username"];
 		}
-		$str .= "\n"
+		$str .= "\n";
 	}
 
 	$str = $this->telegram->emoji($str);
