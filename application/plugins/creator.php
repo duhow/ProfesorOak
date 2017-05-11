@@ -957,6 +957,44 @@ elseif($telegram->text_command("uchk")){
 	return -1;
 }
 
+elseif($telegram->text_command("upar")){
+	if($telegram->has_reply and isset($telegram->reply->document)){
+		// TODO CSV o JSON
+	}elseif($telegram->words() > 1){
+		$users = $telegram->words(1, 100);
+		$users = str_replace([",", ";"], " ", $users);
+		$users = explode(" ", $users);
+	}else{
+		$this->telegram->send
+			->text("Especifica los IDs a procesar.")
+		->send();
+		return -1;
+	}
+
+	$str = "";
+	foreach($users as $u){
+		$info = $this->telegram->send->get_member_info($u, $this->telegram->chat->id);
+		$str .= "$u - ";
+		if($info === FALSE){
+			$str .= ":times:\n";
+			continue;
+		}
+		$str .= $info["user"]["first_name"] ." " .@$info["user"]["last_name"];
+		if(isset($info["user"]["username"])){
+			$str .= " - @" .$info["user"]["username"];
+		}
+		$str .= "\n"
+	}
+
+	$str = $this->telegram->emoji($str);
+
+	$this->telegram->send
+		->text($str)
+	->send();
+
+	return -1;
+}
+
 $step = $pokemon->step($telegram->user->id);
 if($telegram->document() && in_array($step, ["USERREC_LIST", "USERDIF_LIST"])){
 	set_time_limit(2700);
