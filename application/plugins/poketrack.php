@@ -28,6 +28,8 @@ if($this->telegram->text_has(["I found a", "Encontré un"], TRUE)){
 		->venue($title, $subtitle)
 	->send();
 
+	$this->telegram->send->delete(TRUE);
+
 	return -1;
 }
 

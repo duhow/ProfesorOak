@@ -895,6 +895,43 @@ elseif($telegram->text_command("c")){
 	return -1;
 }
 
+elseif($telegram->text_has("borralo") and $telegram->words() <= 3){
+	if($telegram->has_reply){
+		$this->telegram->send
+			->delete($this->telegram->reply->message_id);
+	}
+	$this->telegram->send->delete(TRUE);
+	return -1;
+}
+
+elseif($telegram->text_has("limpia", ["de", "desde"], TRUE) and $telegram->text_has("hasta") and $telegram->words() == 5){
+	$from = $telegram->words(2);
+	$to = $telegram->last_word();
+
+	if(!is_numeric($from) or !is_numeric($to)){
+		$this->telegram->send
+			->text("¿Eing? ¿Qué número dices?")
+		->send();
+
+		return -1;
+	}
+
+	$c = 0;
+	for($i = $from; $i < $to; $i++){
+		$q = $this->telegram->send->delete($i);
+		if($q !== FALSE){ $c++; }
+	}
+
+	$q = $this->telegram->send
+		->text("$c mensajes borrados.")
+	->send();
+	sleep(3);
+
+	$this->telegram->send->delete($q);
+
+	return -1;
+}
+
 elseif($telegram->text_command("urec")){
 	$pokemon->step($telegram->user->id, "USERREC_LIST");
 	$this->telegram->send

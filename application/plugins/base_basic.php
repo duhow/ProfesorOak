@@ -27,7 +27,12 @@ elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has(["ping"
 	if($pokemon->command_limit("ping", $telegram->chat->id, $telegram->message, 5)){ return -1; }
 
     $this->analytics->event('Telegram', 'Ping');
-    $telegram->send->text("Pong! :D")->send();
+    $q = $telegram->send->text("Pong! :D")->send();
+
+	sleep(4);
+	$r = $this->telegram->send->delete($q);
+	if($r !== FALSE){ $this->telegram->send->delete(TRUE); }
+
     return -1;
 }
 

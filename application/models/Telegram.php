@@ -379,18 +379,18 @@ class __Module_Telegram_Sender extends CI_Model{
 		return $this->send();
 	}
 
-	// TODO
-	/* function delete($message = NULL, $chat = NULL){
-		if(empty($chat) && !isset($this->context['chat_id'])){
-			$this->context['chat_id'] = $this->telegram->chat->id;
+	function delete($message = NULL, $chat = NULL){
+		if($message === TRUE or (empty($message) && !isset($this->context['message_id']))){
+			$this->message(TRUE);
+		}elseif(is_array($message) and isset($message["message_id"])){
+			$this->message($message["message_id"]);
 		}
-		if(empty($message) && !isset($this->context['message_id'])){
-			$this->context['message_id'] = $this->telegram->id;
+		if($message === TRUE or (empty($chat) && !isset($this->context['chat_id']))){
+			$this->chat(TRUE);
 		}
-
 		$this->method = "deleteMessage";
 		return $this->send();
-	} */
+	}
 
 	function _push($key, $val){
 		$this->content[$key] = $val;

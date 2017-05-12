@@ -154,6 +154,8 @@ if($telegram->text_url() && $telegram->is_chat_group()){
             ->text("¡*SPAM* detectado!", TRUE)
         ->send();
 
+		$telegram->send->delete(TRUE);
+
         $telegram->send->ban($telegram->user->id, $telegram->chat->id);
         return -1;
     }

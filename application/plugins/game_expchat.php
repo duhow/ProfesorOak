@@ -49,9 +49,15 @@ if($telegram->text_has("mi experiencia") && $telegram->words() <= 5){
 	$points = $pokemon->settings($telegram->user->id, 'expchat_points');
 	if(empty($points)){ $points = 0; }
 	$level = expchat_level($points);
-	$telegram->send
+	$q = $telegram->send
 		->text("*L" .$level ."* / $points EXP", TRUE)
 	->send();
+
+	if($telegram->is_chat_group()){
+		sleep(5);
+		$r = $this->telegram->send->delete(TRUE);
+		if($r !== FALSE){ $this->telegram->send->delete($q); }
+	}
 	return -1;
 }
 

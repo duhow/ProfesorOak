@@ -14,7 +14,11 @@ if($telegram->text_command("autokick") or $telegram->text_command("adios") or $t
             ->file('sticker', 'CAADBAADFQgAAjbFNAABxSRoqJmT9U8C');
         }
     }
-    if(!$res){ $telegram->send->text("No puedo :(")->send(); }
+    if(!$res){
+		$q = $telegram->send->text("No puedo :(")->send();
+		sleep(4);
+		$this->telegram->send->delete($q);
+	}
     return -1;
 }
 
@@ -317,7 +321,7 @@ elseif(
         ->send();
     }
 
-    return;
+    return -1;
 }
 
 ?>

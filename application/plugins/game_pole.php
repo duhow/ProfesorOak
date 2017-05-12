@@ -170,6 +170,7 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
 
     if(!pole_can_type($telegram->user->id, $telegram->chat->id, $pole)){
 		pole_lock(FALSE); // Unlock antes de matar el proceso.
+		$this->telegram->send->delete(TRUE); // Borrar el mensaje si se puede.
 		return -1;
 	}
     pole_add($telegram->user->id, $telegram->chat->id, $pole, $firstpole);

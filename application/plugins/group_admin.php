@@ -193,7 +193,7 @@ elseif($telegram->text_has(['/flood', '/antiflood'], TRUE)){
             ->notification(FALSE)
             ->text($group->spam)
         ->send();
-        return;
+        return -1;
     }
     $word = $telegram->last_word(TRUE);
     if(strtolower($word) == "clear"){
@@ -202,7 +202,7 @@ elseif($telegram->text_has(['/flood', '/antiflood'], TRUE)){
             ->text("Reiniciado [" .$group->spam ."].")
         ->send();
         $pokemon->group_spamcount($telegram->chat->id, FALSE);
-        return;
+        return -1;
     }
 }
 

@@ -158,6 +158,7 @@ if($telegram->text_command("avoice")){
 
     if(!empty($text)){
         $telegram->send->text($text)->send();
+		$this->telegram->send->delete(TRUE);
     }
     return -1;
 }elseif($telegram->text_has(["oak", "profe"], "dónde estoy") && $telegram->words() <= 4){
