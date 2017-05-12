@@ -146,6 +146,7 @@ class __Module_Telegram_InlineKeyboard_Row extends CI_Model{
 
 class __Module_Telegram_Sender extends CI_Model{
 	private $content = array();
+	private $broadcast = NULL;
 	private $method = NULL;
 	private $_keyboard;
 	private $_inline;
@@ -159,6 +160,13 @@ class __Module_Telegram_Sender extends CI_Model{
 	function chat($id = NULL){
 		if($id === TRUE){ $id = $this->telegram->chat->id; }
 		$this->content['chat_id'] = $id;
+		return $this;
+	}
+
+	function chats($ids){
+		if(empty($ids)){ return $this; } // HACK
+		$this->broadcast = $ids;
+		$this->content['chat_id'] = $ids[0]; // HACK
 		return $this;
 	}
 
@@ -193,7 +201,7 @@ class __Module_Telegram_Sender extends CI_Model{
 			$file = $tmp;
 		}
 
-		$this->method = "send" .ucfirst($type);
+		$this->method = "send" .ucfirst(strtolower($type));
 		if(file_exists(realpath($file))){
 			$this->content[$type] = new CURLFile(realpath($file));
 		}else{
@@ -203,6 +211,25 @@ class __Module_Telegram_Sender extends CI_Model{
 			$key = "caption";
 			if($type == "audio"){ $key = "title"; }
 			$this->content[$key] = $caption;
+		}
+
+		if(!empty($this->broadcast)){
+			$result = array();
+			foreach($this->broadcast as $chat){
+				$this->chat($chat);
+				$ch = curl_init();
+				curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+					"Content-Type:multipart/form-data"
+				));
+				curl_setopt($ch, CURLOPT_URL, $this->_url(TRUE));
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+				curl_setopt($ch, CURLOPT_POSTFIELDS, $this->content);
+				$result[] = curl_exec($ch);
+				curl_close($ch);
+			}
+			if($url === TRUE){ unlink($file); }
+			if($keep === FALSE){ $this->_reset(); }
+			return $result;
 		}
 
 		if(empty($this->content['chat_id'])){ $this->content['chat_id'] = $this->telegram->chat->id; }
@@ -215,6 +242,7 @@ class __Module_Telegram_Sender extends CI_Model{
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->content);
 		$output = curl_exec($ch);
+		curl_close($ch);
 
 		if($url === TRUE){ unlink($file); }
 		if($keep === FALSE){ $this->_reset(); }
@@ -414,7 +442,17 @@ class __Module_Telegram_Sender extends CI_Model{
 		return $url;
 	}
 
-	function send($keep = FALSE){
+	function send($keep = FALSE, $_broadcast = FALSE){
+		if(!empty($this->broadcast) and !$_broadcast){
+			$result = array();
+			foreach($this->broadcast as $chat){
+				$this->content['chat_id'] = $chat;
+				// Send and keep data
+				$result[] = $this->send(TRUE, TRUE);
+			}
+			return $result;
+		}
+
 		if(empty($this->method)){ return FALSE; }
 		if(empty($this->content['chat_id'])){ $this->content['chat_id'] = $this->telegram->chat->id; }
 
