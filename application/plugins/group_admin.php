@@ -737,4 +737,84 @@ elseif(
 	return -1;
 }
 
+elseif($telegram->text_has("mutear contenido") and $telegram->words() <= 6){
+	$settings = $this->pokemon->settings($telegram->chat->id, "mute_content");
+	if($settings){ $settings = explode(",", $settings); }
+
+	if($this->telegram->callback){
+		$this->telegram->answer_if_callback("");
+		$r = $this->telegram->last_word();
+		if($r == "listo"){
+			$this->telegram->send
+				->text($this->telegram->emoji(":ok: ¡Listo!"))
+				->message(TRUE)
+				->chat(TRUE)
+			->edit('text');
+
+			sleep(2);
+			$this->telegram->send->delete(TRUE);
+			return -1;
+		}
+
+		if(in_array($r, $settings)){
+			unset($settings[array_search($r, $settings)]);
+		}else{
+			$settings[] = $r;
+		}
+
+		$this->pokemon->settings($telegram->chat->id, "mute_content", implode(",", $settings));
+	}
+
+	$keys = [
+		"voice" => "\ud83d\udd0a",
+		"audio" => "\ud83c\udfb6",
+		"photo" => "\ud83c\udf05",
+		"video" => "\ud83c\udfa5",
+		"sticker" => "\ud83d\udcc3",
+		"url" => "\ud83c\udf0d",
+	];
+
+	$display = array();
+
+	foreach(array_keys($keys) as $key){
+		if(in_array($key, $settings)){ $display[$key] = ":ok:"; }
+		else{ $display[$key] = ":times:";  }
+	}
+
+	if(!$this->telegram->callback and !in_array($this->config->item('telegram_bot_id'), telegram_admins())){
+		$this->telegram->send
+			->text("No puedo controlar esto hasta que no sea administrador :(")
+		->send();
+
+		return -1;
+	}
+
+	$this->telegram->send
+		->inline_keyboard()
+			->row()
+				->button($this->telegram->emoji($keys["voice"] ." " .$display["voice"]), "mutear contenido voice", "TEXT")
+				->button($this->telegram->emoji($keys["audio"] ." " .$display["audio"]), "mutear contenido audio", "TEXT")
+				->button($this->telegram->emoji($keys["photo"] ." " .$display["photo"]), "mutear contenido photo", "TEXT")
+			->end_row()
+			->row()
+				->button($this->telegram->emoji($keys["video"] ." " .$display["video"]), "mutear contenido video", "TEXT")
+				->button($this->telegram->emoji($keys["sticker"] ." " .$display["sticker"]), "mutear contenido sticker", "TEXT")
+				->button($this->telegram->emoji($keys["url"] ." " .$display["url"]), "mutear contenido url", "TEXT")
+			->end_row()
+			->row_button($this->telegram->emoji(":ok: Listo"), "mutear contenido listo", "TEXT")
+		->show()
+		->text("Selecciona las opciones a modificar.");
+
+	if($this->telegram->callback){
+		$this->telegram->send
+			->message(TRUE)
+			->chat(TRUE)
+		->edit('text');
+	}else{
+		$this->telegram->send->send();
+	}
+
+	return -1;
+}
+
 ?>
