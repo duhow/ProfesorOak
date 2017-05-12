@@ -384,10 +384,16 @@ class __Module_Telegram_Sender extends CI_Model{
 			$this->message(TRUE);
 		}elseif(is_array($message) and isset($message["message_id"])){
 			$this->message($message["message_id"]);
+		}elseif(!empty($message)){
+			$this->message($message);
 		}
+
 		if($message === TRUE or (empty($chat) && !isset($this->context['chat_id']))){
 			$this->chat(TRUE);
+		}elseif(!empty($chat)){
+			$this->chat($chat);
 		}
+
 		$this->method = "deleteMessage";
 		return $this->send();
 	}
