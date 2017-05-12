@@ -163,6 +163,18 @@ if($telegram->text_url() && $telegram->is_chat_group()){
 
 /*
 #####################
+#     Mute user     #
+#####################
+*/
+
+$mute = $pokemon->settings($telegram->user->id, 'mute');
+if($mute and $mute > time()){
+	$this->telegram->send->delete(TRUE);
+	return -1;
+}
+
+/*
+#####################
 #   AntiAFK Newbie  #
 #####################
 */
