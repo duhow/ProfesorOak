@@ -1000,6 +1000,7 @@ class Telegram extends CI_Model{
 
 	function document($object = TRUE){ return $this->_generic_content('document', $object); }
 	function location($object = TRUE){ return $this->_generic_content('location', $object); }
+	function audio($object = NULL){ return $this->_generic_content('audio', $object); }
 	function voice($object = NULL){ return $this->_generic_content('voice', $object); }
  	function video($object = NULL){ return $this->_generic_content('video', $object); }
 	function sticker($object = NULL){ return $this->_generic_content('sticker', $object); }
