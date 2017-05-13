@@ -917,7 +917,7 @@ class Telegram extends CI_Model{
 	function is_chat_group(){ return isset($this->chat->type) && in_array($this->chat->type, ["group", "supergroup"]); }
 	function data_received($expect = NULL){
 		$data = ["migrate_to_chat_id", "migrate_from_chat_id", "new_chat_participant", "left_chat_participant", "new_chat_member", "left_chat_member", "reply_to_message",
-			"text", "audio", "document", "photo", "voice", "location", "contact"];
+			"text", "audio", "document", "photo", "voice", "location", "contact", "game"];
 		foreach($data as $t){
 			if(isset($this->data["message"][$t])){
 				if($expect == NULL or $expect == $t){ return $t; }
@@ -978,7 +978,7 @@ class Telegram extends CI_Model{
 	}
 
 	function data($type, $object = TRUE){
-		$accept = ["text", "audio", "video", "document", "photo", "voice", "location", "contact"];
+		$accept = ["text", "audio", "video", "document", "photo", "voice", "location", "contact", "game"];
 		$type = strtolower($type);
 		if(in_array($type, $accept) && isset($this->data['message'][$type])){
 			if($object){ return (object) $this->data['message'][$type]; }
@@ -994,7 +994,7 @@ class Telegram extends CI_Model{
 		if($object === TRUE){ return (object) $data; }
 		elseif($object === FALSE){ return array_values($data); }
 
-		if(in_array($key, ["document", "location"])){ return $data; }
+		if(in_array($key, ["document", "location", "game"])){ return $data; }
 		return $data[$rkey];
 	}
 
@@ -1003,6 +1003,7 @@ class Telegram extends CI_Model{
 	function voice($object = NULL){ return $this->_generic_content('voice', $object); }
  	function video($object = NULL){ return $this->_generic_content('video', $object); }
 	function sticker($object = NULL){ return $this->_generic_content('sticker', $object); }
+	function game($object = TRUE){ return $this->_generic_content('game', $object); }
 
 	function gif(){
 		$gif = $this->document(TRUE);

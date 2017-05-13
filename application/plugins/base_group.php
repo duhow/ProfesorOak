@@ -183,14 +183,15 @@ $mute = $pokemon->settings($telegram->chat->id, 'mute_content');
 if($mute){
 	$mute = explode(",", $mute);
 	if(
+		(in_array("url", $mute) and $telegram->text_url()) or
+		(in_array("gif", $mute) and $telegram->gif()) or
+		(in_array("photo", $mute) and $telegram->photo()) or
+		(in_array("sticker", $mute) and $telegram->sticker()) or
 		(in_array("voice", $mute) and $telegram->voice()) or
 		(in_array("audio", $mute) and $telegram->audio()) or
 		(in_array("video", $mute) and $telegram->video()) or
-		(in_array("photo", $mute) and $telegram->photo()) or
-		(in_array("sticker", $mute) and $telegram->sticker()) or
-		(in_array("document", $mute) and $telegram->document()) or
-		(in_array("gif", $mute) and $telegram->gif()) or
-		(in_array("url", $mute) and $telegram->text_url())
+		(in_array("game", $mute) and $telegram->game()) or
+		(in_array("document", $mute) and $telegram->document())
 	){
 		$q = $this->telegram->send->delete(TRUE);
 		if($q !== FALSE){ return -1; }

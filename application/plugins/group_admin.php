@@ -751,7 +751,7 @@ elseif($telegram->text_has("mutear contenido") and $telegram->words() <= 6){
 				->chat(TRUE)
 			->edit('text');
 
-			sleep(2);
+			sleep(1);
 			$this->telegram->send->delete(TRUE);
 			return -1;
 		}
@@ -768,17 +768,20 @@ elseif($telegram->text_has("mutear contenido") and $telegram->words() <= 6){
 	$keys = [
 		"voice" => "\ud83d\udd0a",
 		"audio" => "\ud83c\udfb6",
-		"photo" => "\ud83c\udf05",
+		"photo" => "\ud83d\udcf8",
 		"video" => "\ud83c\udfa5",
-		"sticker" => "\ud83d\udcc3",
+		"sticker" => "\ud83c\udf05",
 		"url" => "\ud83c\udf0d",
+		"gif" => "\ud83d\udd01",
+		"game" => "\ud83d\udd79",
+		"document" => "\ud83d\udcdd",
 	];
 
 	$display = array();
 
 	foreach(array_keys($keys) as $key){
-		if(in_array($key, $settings)){ $display[$key] = ":ok:"; }
-		else{ $display[$key] = ":times:";  }
+		if(in_array($key, $settings)){ $display[$key] = ":times:"; }
+		else{ $display[$key] = ":ok:";  }
 	}
 
 	if(!$this->telegram->callback and !in_array($this->config->item('telegram_bot_id'), telegram_admins())){
@@ -798,12 +801,17 @@ elseif($telegram->text_has("mutear contenido") and $telegram->words() <= 6){
 			->end_row()
 			->row()
 				->button($this->telegram->emoji($keys["video"] ." " .$display["video"]), "mutear contenido video", "TEXT")
+				->button($this->telegram->emoji($keys["document"] ." " .$display["document"]), "mutear contenido document", "TEXT")
 				->button($this->telegram->emoji($keys["sticker"] ." " .$display["sticker"]), "mutear contenido sticker", "TEXT")
-				->button($this->telegram->emoji($keys["url"] ." " .$display["url"]), "mutear contenido url", "TEXT")
 			->end_row()
-			->row_button($this->telegram->emoji(":ok: Listo"), "mutear contenido listo", "TEXT")
+			->row()
+				->button($this->telegram->emoji($keys["game"] ." " .$display["game"]), "mutear contenido game", "TEXT")
+				->button($this->telegram->emoji($keys["url"] ." " .$display["url"]), "mutear contenido url", "TEXT")
+				->button($this->telegram->emoji($keys["gif"] ." " .$display["gif"]), "mutear contenido gif", "TEXT")
+			->end_row()
+			->row_button($this->telegram->emoji("\ud83d\udcbe Guardar"), "mutear contenido listo", "TEXT")
 		->show()
-		->text("Selecciona las opciones a modificar.");
+		->text("Selecciona el contenido a silenciar.");
 
 	if($this->telegram->callback){
 		$this->telegram->send
