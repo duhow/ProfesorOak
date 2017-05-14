@@ -3,7 +3,10 @@
 if(!$telegram->is_chat_group()){ return; }
 
 // el bot explusa al emisor del mensaje
-if($telegram->text_command("autokick") or $telegram->text_command("adios") or $telegram->text_has("bomba de humo")){
+if(
+	$telegram->text_command("autokick") or $telegram->text_command("adios") or
+	($telegram->text_has("bomba de humo") and $this->telegram->user->id == $this->config->item('creator'))
+){
     $this->analytics->event('Telegram', 'AutoKick');
     $res = $telegram->send->kick($telegram->user->id, $telegram->chat->id);
     if($res){
