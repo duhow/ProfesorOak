@@ -813,12 +813,15 @@ class Main extends CI_Controller {
 				break;
 			case 'SPEAK':
 				// DEBUG - FIXME
-				if($telegram->is_chat_group()){ return; }
-				if($telegram->callback){ return; }
-				if($telegram->text() && substr($telegram->words(0), 0, 1) == "/"){ return; }
+				if(
+					$telegram->is_chat_group() or
+					$telegram->callback or
+					($telegram->text() && substr($telegram->words(0), 0, 1) == "/")
+				){ return; }
 				$chattalk = $pokemon->settings($telegram->user->id, 'speak');
 				if($telegram->user->id != $this->config->item('creator') or $chattalk == NULL){
 					$pokemon->step($telegram->user->id, NULL);
+					return;
 				}
 				$telegram->send
 					->notification(TRUE)
@@ -832,6 +835,8 @@ class Main extends CI_Controller {
 					$telegram->send->file('sticker', $telegram->sticker());
 				}elseif($telegram->voice()){
 					$telegram->send->file('voice', $telegram->voice());
+				}elseif($telegram->gif()){
+					$telegram->send->file('document', $telegram->gif());
 				}elseif($telegram->video()){
 					$telegram->send->file('video', $telegram->video());
 				}
