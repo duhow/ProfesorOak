@@ -650,9 +650,9 @@ elseif(
     $ptc = ($ptc == ":green-check:" && $ptc_t <= 45 ? ':warning:' : ':green-check:');
     $ptc_t = ($ptc_t > 120 ? floor($ptc_t / 60) ."h" : $ptc_t ."m" );
     // Todo funciona bien
-    if($pkgo == TRUE && $ptc == TRUE){ $str = "¡Todo está funcionando correctamente!"; }
+    if($pkgo_t >= 120 && $ptc_t >= 120){ $str = "¡Todo está funcionando correctamente!"; }
     // Problemas con PTC
-    elseif($ptc != TRUE){ $str = "El juego funciona, pero parece que el *Club de Entrenadores tiene problemas.*\n_(¿Y cuándo no los tiene?)_"; }
+    elseif($pkgo_t >= 120 && $ptc_t < 120){ $str = "El juego funciona, pero parece que el *Club de Entrenadores tiene problemas.*\n_(¿Y cuándo no los tiene?)_"; }
     // Esto no va ni a la de tres
     else{ $str = "Parece que *hay problemas con el juego.*"; }
 
