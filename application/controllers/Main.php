@@ -644,44 +644,6 @@ class Main extends CI_Controller {
 					return $data;
 				}
 				break;
-			case 'RULES':
-				if(!$telegram->is_chat_group()){ break; }
-				if(!in_array($user->id, $admins)){ $pokemon->step($user->id, NULL); break; }
-
-				$text = $telegram->text_encoded();
-				if(strlen($text) < 4){ exit(); }
-				if(strlen($text) > 4000){
-					$telegram->send
-						->text("Buah, demasiadas normas. Relájate un poco anda ;)")
-					->send();
-					exit();
-				}
-				$this->analytics->event('Telegram', 'Set rules');
-				$pokemon->settings($telegram->chat->id, 'rules', $text);
-				$telegram->send
-					->text("Hecho!")
-				->send();
-				$pokemon->step($user->id, NULL);
-				break;
-			case 'WELCOME':
-				if(!$telegram->is_chat_group()){ break; }
-				if(!in_array($user->id, $admins)){ $pokemon->step($user->id, NULL); break; }
-
-				$text = $telegram->text_encoded();
-				if(strlen($text) < 4){ exit(); }
-				if(strlen($text) > 4000){
-					$telegram->send
-						->text("Buah, demasiado texto! Relájate un poco anda ;)")
-					->send();
-					exit();
-				}
-				$this->analytics->event('Telegram', 'Set welcome');
-				$pokemon->settings($telegram->chat->id, 'welcome', $text);
-				$telegram->send
-					->text("Hecho!")
-				->send();
-				$pokemon->step($user->id, NULL);
-				break;
 			case 'CHOOSE_POKEMON':
 				// $pk = NULL;
 				$pk = $this->parse_pokemon();

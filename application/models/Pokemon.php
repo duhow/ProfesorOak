@@ -336,6 +336,15 @@ class Pokemon extends CI_Model{
 		return ($query->num_rows() == 1 ? $query->row() : NULL);
 	}
 
+	function is_group_admin($chat){
+		$query = $this->db
+			->select('uid')
+			->where('type', 'admin_chat')
+			->where('value', $chat)
+		->get('settings');
+		return ($query->num_rows() == 1 ? $query->row()->uid : FALSE);
+	}
+
 	function group_find($data){
 		$possible[] = $data;
 		if($data[0] != "@"){ $possible[] = "@" .$data; }

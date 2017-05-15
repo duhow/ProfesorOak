@@ -67,6 +67,39 @@ if($step == "CUSTOM_COMMAND"){
 		->text("¡Comando creado correctamente!")
 	->send();
 	return -1;
+}elseif($step == "RULES" or $step == "WELCOME"){
+	$text = $telegram->text_encoded();
+	if(strlen($text) < 4){ return -1; }
+	if(strlen($text) > 4000){
+		$this->telegram->send
+			->text("Buah, demasiado texto! Relájate un poco anda ;)")
+		->send();
+		return -1;
+	}
+
+	// Ver si estamos en un grupo administrativo o no.
+	$target = $telegram->chat->id;
+
+	$group = $pokemon->is_group_admin($target);
+	if($group and $group != $target){
+		$target = $group; // editar en el grupo general, no en el admin.
+	}
+
+	if($step == "RULES"){
+		$this->analytics->event('Telegram', 'Set rules');
+		$pokemon->settings($target, 'rules', $text);
+	}elseif($step == "WELCOME"){
+		$this->analytics->event('Telegram', 'Set welcome');
+		$pokemon->settings($target, 'welcome', $text);
+	}
+
+	$str = ":ok: ¡Hecho!";
+	if($group){ $str .= " Cambiado en el grupo general."; }
+	$telegram->send
+		->text($this->telegram->emoji($str))
+	->send();
+	$pokemon->step($telegram->user->id, NULL);
+	return -1;
 }
 
 // Echar usuario del grupo
@@ -611,7 +644,7 @@ elseif(
             ->reply_to(TRUE)
             ->text("De acuerdo, envíame el texto que quieres que ponga de normas.")
         ->send();
-        return;
+        return -1;
     }
 }
 
