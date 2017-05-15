@@ -715,8 +715,6 @@ elseif($telegram->text_command("speak") && !$telegram->is_chat_group()){
         $forward = TRUE;
     }
 
-    $pokemon->settings($telegram->user->id, 'speak', $chattalk);
-    $pokemon->step($telegram->user->id, 'SPEAK');
     $title = (isset($chat['title']) ? $chat['title'] : $chat['first_name'] ." " .$chat['last_name']);
 
 	$q = $telegram->send
@@ -727,6 +725,8 @@ elseif($telegram->text_command("speak") && !$telegram->is_chat_group()){
 	$str = $telegram->emoji(":times: No se puede conectar.");
 	if($q !== FALSE){
 		$str = $telegram->emoji(":ok: ") .($forward ? "Forwarding activo. " : "") ."Hablando en " .$title;
+		$pokemon->settings($telegram->user->id, 'speak', $chattalk);
+	    $pokemon->step($telegram->user->id, 'SPEAK');
 	}
 
     $telegram->send
