@@ -639,6 +639,36 @@ elseif(
 ){
     $admins = $pokemon->telegram_admins(TRUE);
     if(in_array($telegram->user->id, $admins)){
+		if($telegram->has_reply and isset($telegram->reply->text)){
+			$text = json_encode($telegram->reply->text);
+			if(strlen($text) > 4000 or strlen($text) < 10){
+				$this->telegram->send
+					->text("¿No crees que te pasas un poco?")
+				->send();
+
+				return -1;
+			}
+
+			// Ver si estamos en un grupo administrativo o no.
+			$target = $telegram->chat->id;
+
+			$group = $pokemon->is_group_admin($target);
+			if($group and $group != $target){
+				$target = $group; // editar en el grupo general, no en el admin.
+			}
+
+			$this->analytics->event('Telegram', 'Set rules');
+			$pokemon->settings($target, 'rules', $text);
+
+			$str = ":ok: ¡Hecho!";
+			if($group){ $str .= " Cambiado en el grupo general."; }
+			$telegram->send
+				->text($this->telegram->emoji($str))
+			->send();
+
+			return -1;
+		}
+
         $pokemon->step($telegram->user->id, 'RULES');
         $telegram->send
             ->reply_to(TRUE)
