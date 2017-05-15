@@ -645,14 +645,15 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 	}
 
 	$str .= "\n";
-	if($cok > 0){ $this->telegram->emoji(":new: ") .$cok ." nuevos." ."\n"; }
-	if($cup > 0){ $this->telegram->emoji(":male: ") .$cup ." actualizados." ."\n"; }
-	if($car > 0){ $this->telegram->emoji(":ok: ") .$car ." ya registrados." ."\n"; }
+	if($cok > 0){ $str .= $this->telegram->emoji(":new: ") .$cok ." nuevos." ."\n"; }
+	if($cup > 0){ $str .= $this->telegram->emoji(":male: ") .$cup ." actualizados." ."\n"; }
+	if($car > 0){ $str .= $this->telegram->emoji(":ok: ") .$car ." ya registrados." ."\n"; }
 
 	$this->telegram->send
-		->notification(TRUE)
+		->message($q)
+		->chat(TRUE)
 		->text($str)
-	->send();
+	->edit('text');
 	return -1;
 }
 
