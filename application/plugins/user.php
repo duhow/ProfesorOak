@@ -650,10 +650,9 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 	if($car > 0){ $this->telegram->emoji(":ok: ") .$car ." ya registrados." ."\n"; }
 
 	$this->telegram->send
-		->message($q['message_id'])
-		->chat(TRUE)
+		->notification(TRUE)
 		->text($str)
-	->edit('text');
+	->send();
 	return -1;
 }
 
