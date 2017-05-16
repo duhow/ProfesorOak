@@ -639,12 +639,7 @@ elseif(
     $web = file_get_contents("https://go.jooas.com/status");
     $web = json_decode($web);
 
-    // $pkgo = ($web->go_online == TRUE ? ':green-check:' : ':times:');
-    // $ptc = ($web->ptc_online == TRUE ? ':green-check:' : ':times:');
-
 	$pkgo_t = $web->go_idle;
-	$pkgo_t = ($pkgo_t > 120 ? floor($pkgo_t / 60) ."h" : $pkgo_t ."m" );
-	// ($pkgo == ":green-check:" && $pkgo_t <= 45 ? ':warning:' : ':green-check:');
 	if($pkgo_t <= 7){
 		$pkgo = ":exclamation-red:";
 	}elseif($pkgo_t <= 45){
@@ -654,7 +649,6 @@ elseif(
 	}
 
     $ptc_t = $web->ptc_idle;
-	$ptc_t = ($ptc_t > 120 ? floor($ptc_t / 60) ."h" : $ptc_t ."m" );
 	if($ptc_t <= 7){
 		$ptc = ":exclamation-red:";
 	}elseif($ptc_t <= 45){
@@ -669,6 +663,10 @@ elseif(
     elseif(intval($pkgo_t) >= 45 && intval($ptc_t) < 45){ $str = "El juego funciona, pero parece que el *Club de Entrenadores tiene problemas.*\n_(¿Y cuándo no los tiene?)_"; }
     // Esto no va ni a la de tres
     else{ $str = "Parece que *hay problemas con el juego.*"; }
+
+	// Pasar minutos a horas.
+	$pkgo_t = ($pkgo_t > 120 ? floor($pkgo_t / 60) ."h" : $pkgo_t ."m" );
+	$ptc_t = ($ptc_t > 120 ? floor($ptc_t / 60) ."h" : $ptc_t ."m" );
 
     $str .= "\n\n$pkgo PKMN ($pkgo_t)\n" ."$ptc PTC ($ptc_t)\n";
     // $str .= "_powered by https://go.jooas.com/ _";
