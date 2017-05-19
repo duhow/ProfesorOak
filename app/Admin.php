@@ -81,7 +81,7 @@ class Admin extends TelegramApp\Module {
 				if($this->chat->settings('antiflood_ban_hidebutton') != TRUE){
 					$this->telegram->send
 					->inline_keyboard()
-						->row_button("Desbanear", "desbanear " .$this->user->id, "TEXT")
+						->row_button($this->strings->get("admin_unban"), "desbanear " .$this->user->id, "TEXT")
 					->show();
 				}
 			}else{
@@ -92,8 +92,11 @@ class Admin extends TelegramApp\Module {
 				$countflood = ($countflood - 1.1); // Avoid another kick.
 				$this->chat->settings('antiflood_count', $countflood); // Save
 
+				$str = $this->strings->get("admin_kicked_flood")
+					." [" .$this->user->id .(isset($this->telegram->user->username) ? " @" .$this->telegram->user->username : "") ."]";
+
 				$this->telegram->send
-					->text("Usuario expulsado por flood. [" .$this->user->id .(isset($this->telegram->user->username) ? " @" .$this->telegram->user->username : "") ."]")
+					->text($str)
 				->send();
 
 				// TODO forward del mensaje afectado
