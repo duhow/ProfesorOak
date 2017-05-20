@@ -21,6 +21,10 @@ if(
 		$this->telegram->send->chat_action('upload_audio')->send();
 		$this->telegram->send
 			->notification(FALSE)
+			/* ->inline_keyboard()
+				->row_button("Abrir", $info->external_urls->spotify)
+			->show() */
+			->caption($info->name)
 			->file('audio', $info->preview_url);
 	}
 }
