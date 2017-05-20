@@ -4,6 +4,7 @@ class Main extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
 	public function run(){
+		if($this->telegram->new_user){ return $this->new_member(); }
 		$this->core->load('Tools');
 		$this->core->load('Pokemon');
 
