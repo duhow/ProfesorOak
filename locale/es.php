@@ -47,6 +47,7 @@ return [
 	'admin_kicked' => 'Kickeado',
 
 	'admin_kicked_flood' => 'Usuario kickeado por flood.',
+	'admin_kicked_unverified' => 'Usuario kickeado por no estar verificado.',
 
 	'dow_1' => 'Lunes',
 	'dow_2' => 'Martes',
@@ -124,6 +125,9 @@ return [
 	'welcome_bot' => "¡Buenas a todos, entrenadores!\n¡Un placer estar con todos vosotros! :D",
 	'welcome_bot_newgroup' => 'Veo que este grupo es nuevo, así que voy a buscar cuánta gente conozco.',
 	'welcome_group' => '¡Bienvenido al grupo, %s!',
+	'welcome_group_creator' => '¡Bienvenido, jefe! ¡Un placer tenerte aquí! :D',
+	'welcome_group_team_exclusive' => '<b>¡SE CUELA UN TOPO!</b> @%s',
+	'welcome_group_unverified' => 'Usuario no está verificado.',
 	'welcome_group_register' => "Oye, ¿podrías decirme el color de tu equipo?\n<b>Di: </b><i>Soy ...</i>",
 	'welcome_group_require_verified' => 'Para estar en este grupo <b>debes estar validado.</b>',
 	'welcome_invite_user' => 'He invitado a @%s a este grupo.',

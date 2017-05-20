@@ -181,39 +181,40 @@ class Main extends TelegramApp\Module {
 		global $Admin;
 
 		$new = new User($this->telegram->new_user, $this->db);
+		$adminchat = $this->chat->settings('admin_chat');
 
 		if($new->id == $this->telegram->bot->id){
+
 			// A excepción de que lo agregue el creador
-			$count = 0;
 			if($this->user->id != CREATOR){
 				// PROVISIONAL TEMP
 				$this->telegram->send->leave_chat();
 				$this->end();
+			}
 
-				// Si el grupo está muerto, salir.
-				if($this->chat->settings('die')){
+			// Si el grupo está muerto, salir.
+			if($this->chat->settings('die')){
+				$this->telegram->send->leave_chat();
+				$this->end();
+			}
+
+			$count = $this->telegram->send->get_members_count();
+			// Si el grupo tiene <= 5 usuarios, el bot abandona el grupo
+			if(is_numeric($count) && $count <= 5){
+				// $this->analytics->event('Telegram', 'Join low group');
+				$this->telegram->send->text("Nope.")->send();
+				$this->telegram->send->leave_chat();
+				$this->end();
+			}
+
+			// Si el que me agrega está registrado
+			if($this->user->load()){
+				if(
+					$this->user->blocked or
+					in_array(['hacks', 'troll', 'ratkid'], $this->user->flags)
+				){
 					$this->telegram->send->leave_chat();
 					$this->end();
-				}
-
-				$count = $this->telegram->send->get_members_count();
-				// Si el grupo tiene <= 5 usuarios, el bot abandona el grupo
-				if(is_numeric($count) && $count <= 5){
-					// $this->analytics->event('Telegram', 'Join low group');
-					$this->telegram->send->text("Nope.")->send();
-					$this->telegram->send->leave_chat();
-					$this->end();
-				}
-
-				// Si el que me agrega está registrado
-				if($this->user->load()){
-					if(
-						$this->user->blocked or
-						in_array(['hacks', 'troll', 'ratkid'], $this->user->flags)
-					){
-						$this->telegram->send->leave_chat();
-						$this->end();
-					}
 				}
 			}
 
@@ -231,10 +232,9 @@ class Main extends TelegramApp\Module {
 
 			// -----------------
 
-			$text = "¡Buenas a todos, entrenadores!\n¡Un placer estar con todos vosotros! :D";
-			// $group = $pokemon->group($telegram->chat->id);
+			$text = $this->strings->get('welcome_bot');
 			if($this->chat->messages == 0){
-				$text .= "\nVeo que este grupo es nuevo, así que voy a buscar cuánta gente conozco.";
+				$text .= "\n" .$this->strings->get('welcome_bot_newgroup');
 				// TODO si el Oak es nuevo en un grupo de más de X personas,
 				// Realizar investigate sólo una vez.
 
@@ -244,19 +244,18 @@ class Main extends TelegramApp\Module {
 			}
 
 			$this->telegram->send
-				->text($text, TRUE)
+				->text($text, 'HTML')
 			->send();
 			$this->end();
 		}
 
-		// $pknew = $pokemon->user($new->id);
 		// Si entra el creador
 		if($new->id == CREATOR){
-			if($this->user->settings('silent_join')){ $this->end(); }
+			if($new->settings('silent_join')){ $this->end(); }
 			$this->telegram->send
 				->notification(TRUE)
 				->reply_to(TRUE)
-				->text("Bienvenido, jefe @duhow! Un placer tenerte aquí! :D")
+				->text($this->strings->get('welcome_group_creator'))
 			->send();
 			$this->end();
 		}
@@ -264,7 +263,7 @@ class Main extends TelegramApp\Module {
 		// Si el grupo no admite más usuarios...
 		if(
 			$this->chat->settings('limit_join') == TRUE &&
-			!$this->chat->is_admin($this->user)
+			!$this->chat->is_admin($this->user) // Si el que lo agrega no es Admin
 		){
 			// $this->analytics->event('Telegram', 'Join limit users');
 			$Admin->kick($new->id);
@@ -279,13 +278,25 @@ class Main extends TelegramApp\Module {
 		// Cargar información del usuario si está registrado.
 		$new->load();
 
+		if($new->settings('follow_join')){
+			$str = ":warning: Join detectado\n"
+					.":id: " .$new->id ." - " .$this->telegram->new_user->first_name ."\n"
+					.":multiuser: " .$this->telegram->chat->id ." - " .$this->telegram->chat->title;
+			$str = $this->telegram->emoji($str);
+			$this->telegram->send
+				->notification(TRUE)
+				->chat(CREATOR)
+				->text($str)
+			->send();
+		}
+
 		if($this->chat->settings('team_exclusive')){
 			// Si el grupo es exclusivo a un color y el usuario es de otro color
 			if($this->chat->settings('team_exclusive') != $new->team){
 				$this->telegram->send
 					->notification(TRUE)
 					->reply_to(TRUE)
-					->text("*¡SE CUELA UN TOPO!* @" .$new->username ." " .$new->team, TRUE)
+					->text_replace($this->strings->get('welcome_group_team_exclusive'), $new->username, 'HTML')
 				->send();
 
 				// Kickear (por defecto TRUE)
@@ -302,6 +313,7 @@ class Main extends TelegramApp\Module {
 						$Admin->admin_chat_message($str);
 					}
 				}
+
 				$this->end();
 			}
 		}
@@ -336,13 +348,13 @@ class Main extends TelegramApp\Module {
 			!$new->verified
 		){
 			// $this->analytics->event('Telegram', 'Kick unverified user');
-			$str = "Usuario " . $this->telegram->new_user->first_name ." / " .$new->id ." ";
+			$str = $this->strings->get('user') ." " .$this->telegram->new_user->first_name ." / " .$new->id ." ";
 
 			if(!$this->chat->is_admin($this->user)){
 				$q = $Admin->kick($new->id);
 				if($q !== FALSE){
 					// $pokemon->user_delgroup($new->id, $telegram->chat->id);
-					$str .= "kickeado por no estar verificado.";
+					$str = $this->strings->get('admin_kicked_unverified');
 
 					$str2 = ":warning: Usuario no validado.\n"
 							.":id: " .$new->id ."\n"
@@ -351,7 +363,7 @@ class Main extends TelegramApp\Module {
 					$Admin->admin_chat_message($str2);
 				}
 			}else{
-				$str .= "no está verificado.";
+				$str = $this->strings->get('welcome_group_unverified');
 			}
 
 			$this->telegram->send
@@ -363,15 +375,15 @@ class Main extends TelegramApp\Module {
 		// Si un usuario generico se une al grupo
 		if($this->chat->settings('announce_welcome') !== FALSE){
 			$custom = $this->chat->settings('welcome');
-			$text = 'Bienvenido al grupo, $nombre!' ."\n";
+			$text = $this->strings->parse('welcome_group', $this->telegram->new_user->first_name) ."\n";
 			if(!empty($custom)){ $text = json_decode($custom) ."\n"; }
 			if(!empty($new->team)){
-				$text .= "Oye, ¿podrías decirme el color de tu equipo?\n*Di: *_Soy ..._";
+				$text .= $this->strings->get('welcome_group_register');
 			}else{
 				$text .= '$pokemon $nivel $equipo $valido $ingress';
 
 				if(!$new->verified && $this->chat->settings('require_verified')){
-					$text .= "\n" ."Para estar en este grupo *debes estar validado.*";
+					$text .= "\n" .$this->strings->get('welcome_group_require_verified');
 
 					$this->telegram->send
 						->inline_keyboard()
@@ -404,7 +416,7 @@ class Main extends TelegramApp\Module {
 			$this->telegram->send
 				->notification(FALSE)
 				->reply_to(TRUE)
-				->text( $text , TRUE)
+				->text( $text , 'HTML')
 			->send();
 		}
 
@@ -414,63 +426,6 @@ class Main extends TelegramApp\Module {
 				.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 		$str = $this->telegram->emoji($str);
 		$Admin->admin_chat_message($str);
-
-		/*
-		if(!empty($new->team)){
-			$team = $pknew->team;
-			$key = $this->chat->settings("pair_team_$team");
-			if(!empty($key)){
-				$teamchat = $pokemon->group_pair($telegram->chat->id, $team);
-				if(!$teamchat){
-					$telegram->send
-						->chat($this->config->item('creator'))
-						->notification(TRUE)
-						->text("Problema con pairing $team en " .$this->chat->id ." (" .substr($key, 0, 10) .")")
-					->send();
-					return -1;
-				}
-				// Tengo chat, comprobar blacklist
-				$black = explode(",", $pokemon->settings($teamchat, 'blacklist'));
-				if($pokemon->user_flags($telegram->new_user->id, $black)){ return -1; }
-
-				$link = $pokemon->settings($teamchat, 'link_chat');
-				if(empty($link)){
-					$telegram->send
-						->chat($this->config->item('creator'))
-						->notification(TRUE)
-						->text("Problema con pair link $team en " .$telegram->chat->id ." (" .substr($key, 0, 10) .")")
-					->send();
-					return -1;
-				}
-				// Si es validado
-				$color = ['Y' => 'Amarillo', 'R' => 'Rojo', 'B' => 'Azul'];
-				$text = "Hola! Veo que eres *" .$color[$pknew->team] ."* y acabas de entrar al grupo " .$telegram->chat->title .".\n"
-						."Hay un grupo de tu team asociado, pero no te puedo invitar porque no estás validado " .$telegram->emoji(":warning:") .".\n"
-						."Si *quieres validarte*, puedes decirmelo. :)";
-				if($pknew->verified){
-					$text = "Hola! Te invito al grupo *" .$color[$pknew->team] ."* asociado a " .$telegram->chat->title .". "
-							."¡No le pases este enlace a nadie!\n"
-							.$telegram->grouplink($link);
-				}
-
-				if(!$telegram->user_in_chat($telegram->user->id, $teamchat)){
-					$telegram->send
-						->notification(TRUE)
-						->chat($telegram->user->id)
-						->text($text, NULL) // TODO NO Markdown.
-					->send();
-
-					if($pknew->verified){
-						$telegram->send
-							->notification(TRUE)
-							->chat($teamchat)
-							->text("He invitado a @" .$pknew->username ." a este grupo.")
-						->send();
-					}
-				}
-			}
-		}
-		*/
 	}
 
 	public function left_member(){
