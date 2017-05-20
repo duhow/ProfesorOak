@@ -191,31 +191,31 @@ class Main extends TelegramApp\Module {
 				// PROVISIONAL TEMP
 				$this->telegram->send->leave_chat();
 				$this->end();
-			}
 
-			// Si el grupo está muerto, salir.
-			if($this->chat->settings('die')){
-				$this->telegram->send->leave_chat();
-				$this->end();
-			}
-
-			$count = $this->telegram->send->get_members_count();
-			// Si el grupo tiene <= 5 usuarios, el bot abandona el grupo
-			if(is_numeric($count) && $count <= 5){
-				// $this->analytics->event('Telegram', 'Join low group');
-				$this->telegram->send->text("Nope.")->send();
-				$this->telegram->send->leave_chat();
-				$this->end();
-			}
-
-			// Si el que me agrega está registrado
-			if($this->user->load()){
-				if(
-					$this->user->blocked or
-					in_array(['hacks', 'troll', 'ratkid'], $this->user->flags)
-				){
+				// Si el grupo está muerto, salir.
+				if($this->chat->settings('die')){
 					$this->telegram->send->leave_chat();
 					$this->end();
+				}
+
+				$count = $this->telegram->send->get_members_count();
+				// Si el grupo tiene <= 5 usuarios, el bot abandona el grupo
+				if(is_numeric($count) && $count <= 5){
+					// $this->analytics->event('Telegram', 'Join low group');
+					$this->telegram->send->text("Nope.")->send();
+					$this->telegram->send->leave_chat();
+					$this->end();
+				}
+
+				// Si el que me agrega está registrado
+				if($this->user->load()){
+					if(
+						$this->user->blocked or
+						in_array(['hacks', 'troll', 'ratkid'], $this->user->flags)
+					){
+						$this->telegram->send->leave_chat();
+						$this->end();
+					}
 				}
 			}
 
