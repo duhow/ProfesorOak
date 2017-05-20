@@ -8,7 +8,6 @@ class Main extends TelegramApp\Module {
 		$this->core->load('Tools');
 		$this->core->load('Pokemon');
 
-		$this->chat->setVar('telegram', $this->telegram);
 		if($this->chat->load()){
 			$this->chat->active_member($this->user->id);
 		}
@@ -37,9 +36,8 @@ class Main extends TelegramApp\Module {
 			if($this->user->blocked){ $this->end(); }
 
 			if($this->chat->settings('custom_commands')){ $Group->custom_commands(); }
-			if($this->chat->settings('admin_chat')){
-				// if($this->chat->settings('blackwords')){ $Admin->blackwords(); }
-			}
+			// if($this->chat->settings('blackwords')){ $Admin->blackwords(); }
+			// if($this->chat->settings('mute_content')){ $Admin->mute_content(); }
 			if($this->chat->settings('dubs')){ $this->core->load('GameDubs', TRUE); }
 		}
 
@@ -69,6 +67,12 @@ class Main extends TelegramApp\Module {
 		// TODO Tiene que pasar TODOS los filtros (aparte de Admin).
 		if($this->user->blocked){ $this->end(); }
 
+		// Change language for user.
+		if($this->user->settings('language')){
+			$this->strings->language = $this->user->settings('language');
+			$this->strings->load();
+		}
+
 		parent::run();
 	}
 
@@ -79,8 +83,9 @@ class Main extends TelegramApp\Module {
 	}
 
 	public function help(){
+		$url = $this->strings->get('help_url');
 		$this->telegram->send
-			->text('¡Aquí tienes la <a href="http://telegra.ph/Ayuda-11-30">ayuda</a>!', 'HTML')
+			->text_replace($this->strings->get('help_text'), $url, 'HTML')
 		->send();
 	}
 
@@ -1079,20 +1084,6 @@ class Main extends TelegramApp\Module {
 	function is_shutup_jokes(){
 		$can = $this->chat->settings('jokes');
 		return ($this->is_shutup() or ($can != NULL && $can == FALSE));
-	}
-
-	function admins($add_creator = TRUE, $custom = NULL){
-		$admins = $this->pokemon->group_admins($this->telegram->chat->id);
-		if(empty($admins)){
-			$admins = $this->telegram->get_admins(); // Del grupo
-			$this->pokemon->group_admins($this->telegram->chat->id, $admins);
-		}
-		if($add_creator){ $admins[] = $this->config->item('creator'); }
-		if($custom != NULL){
-			if(!is_array($custom)){ $custom = [$custom]; }
-			foreach($custom as $c){ $admins[] = $c; }
-		}
-		return $admins;
 	}
 
 	function _update_chat(){

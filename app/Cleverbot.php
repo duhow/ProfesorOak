@@ -16,6 +16,7 @@ class Cleverbot extends TelegramApp\Module {
 
 	public function think($text, $ret = FALSE){
 		if($this->chatter === NULL){ return FALSE; }
+		$this->telegram->send->chat_action("typing")->send();
 		$response = $this->chatter->think($text);
 		$q = $this->telegram->send
 			->notification(FALSE)

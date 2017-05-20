@@ -24,21 +24,6 @@ class Chat extends TelegramApp\Chat {
 		return $user;
 	}
 
-	public function ban($user){
-		$user = $this->get_userid($user);
-		return ($this->telegram->send->ban($user, $this->id) !== FALSE);
-	}
-
-	public function kick($user){
-		$user = $this->get_userid($user);
-		return ($this->telegram->send->kick($user, $this->id) !== FALSE);
-	}
-
-	public function unban($user){
-		$user = $this->get_userid($user);
-		return ($this->telegram->send->unban($user, $this->id) !== FALSE);
-	}
-
 	public function update($key, $value, $table = 'chats', $idcol = 'id'){
 		if(in_array($key, ['settings'])){ return NULL; }
 		// get set variables and set them to DB-table
