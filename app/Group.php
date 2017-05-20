@@ -235,7 +235,7 @@ class Group extends TelegramApp\Module {
 	    // $commands = unserialize($commands);
 	    if(is_array($commands)){
 	        foreach($commands as $word => $action){
-	            if($telegram->text_has($word, TRUE)){
+	            if($this->telegram->text_has($word, TRUE)){
 	                $content = current($action);
 	                $action = key($action);
 	                if($action == "text"){
