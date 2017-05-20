@@ -24,8 +24,7 @@ if(
 			/* ->inline_keyboard()
 				->row_button("Abrir", $info->external_urls->spotify)
 			->show() */
-			->caption($info->name)
-			->file('audio', $info->preview_url);
+			->file('audio', $info->preview_url, $info->name);
 	}
 }
 
