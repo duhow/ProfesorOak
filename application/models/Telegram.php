@@ -810,8 +810,10 @@ class Telegram extends CI_Model{
 		$text = $this->text(FALSE); // No UTF-8 clean
 		$initbegin = FALSE;
 		foreach($this->data['message']['entities'] as $e){
-			if($e['type'] == 'bot_command'){ $cmds[] = strtolower(substr($text, $e['offset'], $e['length'])); }
-			if($initbegin == FALSE && $e['offset'] == 0){ $initbegin = TRUE; }
+			if($e['type'] == 'bot_command'){
+				$cmds[] = strtolower(substr($text, $e['offset'], $e['length']));
+				if($initbegin == FALSE && $e['offset'] == 0){ $initbegin = TRUE; }
+			}
 		}
 		if($cmd == NULL){
 			if(count($cmds) > 0){
