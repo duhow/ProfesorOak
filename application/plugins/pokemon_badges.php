@@ -256,6 +256,7 @@ function pokemon_badges($search = NULL){
 		],
 	];
 	if(empty($search)){ return $badges; }
+	if($search === TRUE){ return array_column($badges, 'type'); }
 	$search = str_replace(["é", "í", "ó"], ["e", "i", "o"], $search);
 	foreach($badges as $badge){
 		if(
@@ -337,6 +338,34 @@ function badges_last($user, $type, $full = FALSE){
 	if($query->num_rows() == 0){ return NULL; }
 	if($full){ return $query->row(); }
 	return $query->row()->date;
+}
+
+function badge_table_diff($user, $type, $limit = 10){
+	$CI =& get_instance();
+
+	$joins = [
+		'A.uid = B.uid',
+		'A.type = B.type',
+		'B.id > A.id',
+		'B.date > A.date'
+	];
+
+	$query = $CI->db
+		->select([
+			'A.value AS old', 'A.date AS old_date',
+			'B.value AS new', 'B.date AS new_date', '(B.value - A.value) AS total'
+		], FALSE)
+		->from('user_badges A')
+		->join('user_badges B', implode(" AND ", $joins))
+		->where('A.uid', $user)
+		->where('A.type', $type)
+		->group_by('A.id')
+		->order_by('A.date', 'DESC')
+		->limit($limit)
+	->get();
+
+	if($query->num_rows() == 0){ return array(); }
+	return $query->result_array();
 }
 
 function badges_max_ranking($badges = NULL){
@@ -785,6 +814,62 @@ if(
 
 	$this->telegram->send
 		->text($str, 'HTML')
+	->send();
+
+	return -1;
+}
+
+elseif($this->telegram->text_command("bdif")){
+	$target = $this->telegram->user->id;
+
+	if($this->telegram->user->id == $this->config->item('creator')){
+		if($this->telegram->has_reply){
+			$target = $this->telegram->reply_target('forward')->id;
+		}elseif($this->telegram->words() == 2){
+			$target = $this->telegram->last_word();
+			if(!is_numeric($target)){
+				$target = str_replace("@", "", $target);
+				$poke = $pokemon->user($target);
+				if(!$poke){
+					$this->telegram->send
+						->notification(FALSE)
+						->text($this->telegram->emoji(":times: ") ."No conozco a esa persona.")
+					->send();
+
+					return -1;
+				}
+				$target = $poke->telegramid;
+			}
+		}
+	}
+
+	$badges = pokemon_badges();
+	$data = array();
+
+	foreach(array_column($badges, 'type') as $badge){
+		$r = badge_table_diff($target, $badge, 1);
+		if(!empty($r)){
+			$data[$badge] = $r[0];
+		}
+	}
+
+	$str = "No tiene medallas registradas.";
+	if(!empty($data)){
+		$str = "Medallas del usuario:\n";
+		foreach($data as $k => $r){
+			$badge = pokemon_badges($k);
+
+			$time = strtotime($r["new_date"]) - strtotime($r["old_date"]);
+			if($time > 86400){ $time = floor($time / 86400) ."d"; }
+			elseif($time > 3600){ $time = floor($time / 3600) ."h"; }
+			else{ $time = floor($time / 60) ."m"; }
+
+			$str .= "- " .$badge["name"] ." " .$r["old"] ." > " .$r["new"] ." +" .$r["total"] ." ($time)" ."\n";
+		}
+	}
+
+	$this->telegram->send
+		->text($str)
 	->send();
 
 	return -1;
