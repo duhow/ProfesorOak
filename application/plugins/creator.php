@@ -468,7 +468,8 @@ elseif($telegram->text_command("cinfo")){
 		$str = ":id: " .$info['id'] ."\n"
 				.":abc: " .($info['title'] ?: $info['first_name']) ."\n"
 				."\ud83c\udf10 " .($info['username'] ? "@" .$info['username'] : "---") ."\n"
-				."\ud83d\udcf3 " .$info['type'] ."\n";
+				."\ud83d\udcf3 " .$info['type'] ."\n"
+				."\ud83c\udff3 " .($info['language_code'] ? $info['language_code'] : "---") ."\n";
 		if($info['type'] != "private"){
 			$info = $telegram->send->get_member_info($this->config->item('telegram_bot_id'), $id);
 			$str .= "\ud83d\udebb " .$count ."\n"
