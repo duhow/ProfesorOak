@@ -131,6 +131,7 @@ class Main extends CI_Controller {
 					}
 					// TODO el Pokemon sólo puede ser +1.5 del nivel de entrenador (guardado en la cuenta)
 					// Calcular posibles niveles
+					if($pk['stardust'] >= 6000){ $pk['powered'] = TRUE; } // A partir de nivel 30+, se habrá mejorado si o si.
 					$levels = $pokemon->stardust($pk['stardust'], $pk['powered']);
 					// $telegram->send->text(json_encode($levels))->send();
 

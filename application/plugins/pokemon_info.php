@@ -262,6 +262,7 @@ function pokemon_iv($pokeobj, $cp, $hp, $stardust, $extra = NULL){
 	$powered = (isset($extra['powered']) ? $extra['powered'] : FALSE);
 	// TODO CHANGE with internal functions.
 
+	if($stardust >= 6000){ $powered = TRUE; } // A partir de nivel 30+, se habrá mejorado si o si.
 	$levels = $pokemon->stardust($stardust, $powered);
 	// De los niveles que tiene...
 	$low = 100;
