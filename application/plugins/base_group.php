@@ -184,6 +184,7 @@ if($mute){
 	$mute = explode(",", $mute);
 	if(
 		(in_array("url", $mute) and $telegram->text_url()) or
+		(in_array("command", $mute) and $telegram->text_command()) or
 		(in_array("gif", $mute) and $telegram->gif()) or
 		(in_array("photo", $mute) and $telegram->photo()) or
 		(in_array("sticker", $mute) and $telegram->sticker()) or
