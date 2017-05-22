@@ -518,7 +518,8 @@ elseif($telegram->text_command("uinfo") or $telegram->text_command("ui")){
         if($info){
             $str .= "\n\ud83d\udcc5 " .date("d/m/Y H:i", strtotime($info->register_date))
 					."\n\ud83d\udcc6 " .date("d/m/Y H:i", strtotime($info->last_date))
-					."\n\ud83d\udcac " .$info->messages;
+					."\n\ud83d\udcac " .$info->messages
+					."\n\ud83c\udff3 " .($find['user']['language_code'] ? $find['user']['language_code'] : "---") ."\n";";
         }elseif($telegram->user_in_chat($find['user']['id'])){
             $pokemon->user_addgroup($find['user']['id'], $telegram->chat->id);
         }
