@@ -708,7 +708,7 @@ elseif(
 
 	$telegram->send
 		->notification(FALSE)
-		->text("/iv <*Pokémon*> <*CP*> <*HP*> <*Polvos*>", TRUE)
+		->text("/iv <*Pokémon*> <*CP*> <*HP*> <*Polvos*> [ mejorado | ataque | salud | defensa ]", TRUE)
 	->send();
 
 	return -1;
