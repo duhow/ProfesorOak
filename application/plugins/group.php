@@ -97,6 +97,7 @@ elseif(
     $teams_verified = ['Y' => 0, 'R' => 0, 'B' => 0];
     $users_left = array();
     foreach($users as $u){
+		if($u == $this->config->item('telegram_bot_id')){ continue; }
         $ul = $pokemon->user($u);
         if(empty($ul)){ continue; }
 
