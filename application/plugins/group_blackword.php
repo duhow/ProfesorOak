@@ -51,23 +51,23 @@ if(!empty($blackwords)){
     if(in_array($this->telegram->user->id, telegram_admins(TRUE))){ return; }
 
     $adminchat = $pokemon->settings($this->telegram->chat->id, 'admin_chat');
-    if(!empty($adminchat)){
+    if($adminchat){
         $this->telegram->send
             ->message(TRUE)
             ->chat(TRUE)
             ->forward_to($adminchat)
         ->send();
-
-        /* $this->telegram->send
-            ->chat($adminchat)
-            ->text("Ha dicho algo malo :(")
-        ->send(); */
     }else{
-        $this->telegram->send
+        $q = $this->telegram->send
             ->text("Eh, te calmas.")
         ->send();
-		return -1;
+
+		sleep(2);
+		$this->telegram->send->delete($q);
     }
+
+	$this->telegram->send->delete(TRUE);
+	return -1;
 }
 
 ?>
