@@ -33,16 +33,53 @@ if($this->telegram->text_command("bw") && $telegram->words() > 1){
         $blackwords = array();
     }
 
-    $blackwords[] = $txt;
+	$add = in_array($txt, $blackwords);
+	if($add){
+		$blackwords[] = $txt;
+	}else{
+		$k = array_search($txt, $blackwords);
+		unset($blackwords[$k]);
+	}
     $blackwords = array_unique($blackwords);
     if(count($blackwords) == 1){ $blackwords = $blackwords[0]; }
     else{ $blackwords = implode(",", $blackwords); }
     $this->pokemon->settings($target, 'blackword', $blackwords);
 
     $this->telegram->send
-        ->text($this->telegram->emoji(":ok: ") ."Agregado.")
+        ->text($this->telegram->emoji(":ok: ") .($add ? "Agregado." : "Quitado."))
     ->send();
     return -1;
+}
+
+elseif($telegram->text_command("bwl")){
+	// Target chat to save
+	$target = $this->telegram->chat->id;
+
+	$query = $this->db
+		->where('type', 'admin_chat')
+		->where('value', $target)
+	->get('settings');
+
+	// Si estás en un grupo admin, cargar info del grupo que administras.
+	if($query->num_rows() == 1){
+		$target = $query->row()->uid;
+		$blackwords = $this->pokemon->settings($target, 'blackword');
+	}else{
+		// Si estás en el grupo no-admin porque no existe
+		// y tu no eres admin, entonces... adios.
+		if(!in_array($this->telegram->user->id, telegram_admins(TRUE))){ return; }
+	}
+
+	$str = "";
+	foreach($blackwords as $word){
+		$str .= "- $word\n";
+	}
+
+	$this->telegram->send
+		->text($str)
+	->send();
+
+	return -1;
 }
 
 if(!empty($blackwords)){
