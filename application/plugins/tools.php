@@ -219,6 +219,21 @@ if(
 			}
 			$users = array_unique($users);
             $admins = TRUE;
+
+			$adminchat = $pokemon->settings($telegram->chat->id, "admin_chat");
+			if($adminchat){
+				$this->telegram->send
+					->notification(FALSE)
+					->chat(TRUE)
+					->message(TRUE)
+					->forward_to($adminchat)
+				->send();
+
+				$this->telegram->send
+					->chat($adminchat)
+					->text_replace("Mensaje del usuario %s.", $telegram->user->id)
+				->send();
+			}
         }
         $find = $pokemon->find_users($users);
         if(!empty($find)){
