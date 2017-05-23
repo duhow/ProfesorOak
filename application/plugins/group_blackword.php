@@ -33,12 +33,12 @@ if($this->telegram->text_command("bw") && $telegram->words() > 1){
         $blackwords = array();
     }
 
-	$add = in_array($txt, $blackwords);
+	$add = !(in_array($txt, $blackwords)); // Agregar si NO existe.
 	if($add){
 		$blackwords[] = $txt;
 	}else{
 		$k = array_search($txt, $blackwords);
-		unset($blackwords[$k]);
+		if($k !== FALSE){ unset($blackwords[$k]); }
 	}
     $blackwords = array_unique($blackwords);
     if(count($blackwords) == 1){ $blackwords = $blackwords[0]; }
