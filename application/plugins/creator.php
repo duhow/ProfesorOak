@@ -462,16 +462,26 @@ elseif($telegram->text_command(["ul", "ulv"]) and $telegram->is_chat_group()){
 
 	$str = "Hay " .count($users) ." usuarios registrados:\n";
 	$teams = ["Y" => "yellow", "R" => "red", "B" => "blue"];
+
+	$strs = array();
 	foreach($users as $user){
 		if($user["telegramid"] == $this->config->item('telegram_bot_id')){ continue; }
 		$str .= "- " .$this->telegram->emoji(":heart-" . $teams[$user["team"]] .":")
 				." L" .$user["lvl"] ." " .$user["username"] ." - " .$user["fullname"] ."\n";
+		if(strlen($str) > 3000){
+			$strs[] = $str;
+			$str = "";
+		}
 	}
+	if(empty($strs)){ $strs[] = $str; }
 
-	$this->telegram->send
-		->notification(FALSE)
-		->text($str)
-	->send();
+	foreach($strs as $str){
+		$this->telegram->send
+			->notification(FALSE)
+			->text($str)
+		->send();
+		usleep(400000);
+	}
 
 	return -1;
 }
