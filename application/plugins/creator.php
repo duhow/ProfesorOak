@@ -457,6 +457,25 @@ elseif($telegram->text_command("vui") && $telegram->words() >= 2){
 	return -1;
 }
 
+elseif($telegram->text_command(["ul", "ulv"]) and $telegram->is_chat_group()){
+	$users = $pokemon->group_get_users($telegram->chat->id);
+
+	$str = "Hay " .count($users) ." usuarios registrados:\n";
+	$teams = ["Y" => "yellow", "R" => "red", "B" => "blue"];
+	foreach($users as $user){
+		if($user["telegramid"] == $this->config->item('telegram_bot_id')){ continue; }
+		$str .= "- " .$this->telegram->emoji(":heart-" . $teams[$user["team"]] .":")
+				." L" .$user["lvl"] ." " .$user["username"] ." - " .$user["fullname"] ."\n";
+	}
+
+	$this->telegram->send
+		->notification(FALSE)
+		->text($str)
+	->send();
+
+	return -1;
+}
+
 // Ver información de un grupo
 elseif($telegram->text_command("cinfo")){
     $id = $telegram->last_word();

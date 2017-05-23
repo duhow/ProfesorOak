@@ -470,6 +470,19 @@ class Pokemon extends CI_Model{
 		return NULL;
 	}
 
+	function group_get_users($cid){
+		$query = $this->db
+			->select("user.*")
+			->from("user")
+			->join("user_inchat", "user.telegramid = user_inchat.uid")
+			->where("user_inchat.cid", $cid)
+		->get();
+		if($query->num_rows() > 0){
+			return $query->result_array();
+		}
+		return NULL;
+	}
+
 	function group_count_members($cid, $min_messages = 0){
 		$query = $this->db
 			->select('uid')
