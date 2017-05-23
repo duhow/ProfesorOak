@@ -71,6 +71,8 @@ elseif($telegram->text_command("bwl")){
 	}
 
 	$str = "";
+	$blackwords = explode(",", $blackwords);
+	if(!is_array($blackwords)){ $blackwords = [$blackwords]; }
 	foreach($blackwords as $word){
 		$str .= "- $word\n";
 	}
