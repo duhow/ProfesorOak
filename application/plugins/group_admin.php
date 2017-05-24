@@ -13,7 +13,7 @@ function user_warns($user, $chat = NULL){
 }
 
 if(!$telegram->is_chat_group()){ return; }
-if(!in_array($telegram->user->id, telegram_admins(TRUE))){ return; }
+if(!$pokemon->is_group_admin($telegram->chat->id) and !in_array($telegram->user->id, telegram_admins(TRUE))){ return; }
 
 $step = $pokemon->step($telegram->user->id);
 // FIXME
@@ -179,16 +179,8 @@ elseif(($telegram->text_contains("desbanea", TRUE) or $telegram->text_command("u
     }
 
 	$chat = $telegram->chat->id;
-
-	$query = $this->db
-		->select('uid')
-		->where('type', 'admin_chat')
-		->where('value', $telegram->chat->id)
-		->limit(1)
-	->get('settings');
-	if($query->num_rows() == 1){
-		$chat = $query->row()->uid;
-	}
+	$adm = $pokemon->is_group_admin($telegram->chat->id);
+	if($adm){ $chat = $adm; }
 
     if($target != NULL){
         $q = $telegram->send->unban($target, $chat);
