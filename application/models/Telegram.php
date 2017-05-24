@@ -301,6 +301,32 @@ class __Module_Telegram_Sender extends CI_Model{
 		return $this;
 	}
 
+	function text_replace($text, $replace, $type = NULL){
+		if(is_array($text)){
+			if(isset($text[$this->language])){
+				$text = $text[$this->language];
+			}elseif(isset($text["en"])){
+				$text = $text["en"];
+			}else{
+				$text = current($text); // First element.
+			}
+		}
+
+		if(strpos($text, "%s") !== FALSE){
+			if(!is_array($replace)){ $replace = [$replace]; }
+			$pos = 0;
+			foreach($replace as $r){
+				$pos = strpos($text, "%s", $pos);
+				if($pos === FALSE){ break; }
+				$text = substr_replace($text, $r, $pos, 2); // 2 = strlen("%s")
+			}
+		}else{
+			$text = str_replace(array_keys($replace), array_values($replace), $text);
+		}
+
+		return $this->text($text, $type);
+	}
+
 	function keyboard(){ return $this->_keyboard; }
 	function inline_keyboard(){ return $this->_inline; }
 
