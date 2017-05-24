@@ -57,7 +57,7 @@ if($flood && !in_array($telegram->user->id, $pokemon->telegram_admins(TRUE))){
 
         $ban = $pokemon->settings($telegram->chat->id, 'antiflood_ban');
 
-        if($ban == TRUE){
+        if($ban){
             $res = $telegram->send->ban($telegram->user->id);
 			if($pokemon->settings($telegram->chat->id, 'antiflood_ban_hidebutton') != TRUE){
 				$telegram->send
@@ -81,13 +81,18 @@ if($flood && !in_array($telegram->user->id, $pokemon->telegram_admins(TRUE))){
 						.":id: " .$telegram->user->id ."\n"
 						.":male: " .(isset($telegram->user->username) ? " @" .$telegram->user->username : "");
 				$str = $this->telegram->emoji($str);
-				$this->telegram->send
-					->chat($adminchat)
-					->inline_keyboard()
-						->row_button("Desbanear", "desbanear " .$telegram->user->id, "TEXT")
-					->show()
-					->text($str)
-				->send();
+
+                if($ban){
+    				$this->telegram->send
+    					->inline_keyboard()
+    						->row_button("Desbanear", "desbanear " .$telegram->user->id, "TEXT")
+    					->show();
+                }
+
+                $this->telegram->send
+                    ->chat($adminchat)
+                    ->text($str)
+                ->send();
 				// Forward del mensaje afectado
 				$this->telegram->send
 					->chat(TRUE)
