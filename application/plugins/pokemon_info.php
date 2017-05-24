@@ -725,6 +725,32 @@ elseif(
 	// TODO
 }
 
+elseif($telegram->text_has(["subir", "levear"]) && $telegram->words() >= 3){
+	$pk = pokemon_parse($telegram->text(TRUE));
+	if(empty($pk['pokemon'])){ return; }
+
+	$nums = array();
+
+	foreach($telegram->words(TRUE) as $w){
+		$w = strtolower($w);
+		if(substr($w, 0, 1) == "l"){ $w = substr($w, 1); }
+		if(is_numeric($w)){ $nums[] = intval($w); }
+	}
+
+	if($telegram->text_has(["máximo", "maximo", "tope"])){
+		$pkuser = $pokemon->user($telegram->user->id);
+		$nums[] = $pkuser->lvl;
+	}
+
+	if(isset($pk['stardust'])){
+		for($i = 0; $i < count($nums); $i++){
+			if($nums[$i] > 40){ unset($nums[$i]); }
+		}
+	}
+
+	sort($nums);
+}
+
 elseif($telegram->text_has(["debilidad", "debilidades", "fortaleza", "fortalezas"], ["contra", "hacia", "sobre", "de"]) && $telegram->words() <= 6){
 	// $chat = NULL;
 	$text = trim($telegram->text());
