@@ -95,8 +95,8 @@ if($telegram->text_has("magikarp", ["salta", "jump"]) and $telegram->words() <= 
         $jumpA = floor($jump * ($powA + $ivA + $extraA), 2);
         $jumpB = floor($jump * ($powB + $ivB + $extraB), 2);
 
-        $str .= "¡El primer Magikarp salta $jumpA m!" .($extraA > 0 ? "<b>JUMP!</b>" : "") ."\n"
-                ."¡El segundo Magikarp salta $jumpB m!" .($extraB > 0 ? "<b>JUMP!</b>" : "") ."\n";
+        $str .= "¡El primer Magikarp salta " .json_encode($jumpA) ." m!" .($extraA > 0 ? "<b>JUMP!</b>" : "") ."\n"
+                ."¡El segundo Magikarp salta " .json_encode($jumpB) ." m!" .($extraB > 0 ? "<b>JUMP!</b>" : "") ."\n";
 
         $winner = NULL;
         if($jumpA > $jumpB){
