@@ -92,11 +92,11 @@ if($telegram->text_has("magikarp", ["salta", "jump"]) and $telegram->words() <= 
             $extraB = (mt_rand(1, 3) / 10);
         }
 
-        $jumpA = floor($jump * ($powA + $ivA + $extraA), 2);
-        $jumpB = floor($jump * ($powB + $ivB + $extraB), 2);
+        $jumpA = round($jump * ($powA + $ivA + $extraA), 2, PHP_ROUND_HALF_DOWN);
+        $jumpB = round($jump * ($powB + $ivB + $extraB), 2, PHP_ROUND_HALF_DOWN);
 
-        $str .= "¡El primer Magikarp salta " .json_encode($jumpA) ." m!" .($extraA > 0 ? "<b>JUMP!</b>" : "") ."\n"
-                ."¡El segundo Magikarp salta " .json_encode($jumpB) ." m!" .($extraB > 0 ? "<b>JUMP!</b>" : "") ."\n";
+        $str .= "¡El primer Magikarp salta $jumpA m!" .($extraA > 0 ? " <b>JUMP!</b>" : "") ."\n"
+                ."¡El segundo Magikarp salta $jumpB m!" .($extraB > 0 ? " <b>JUMP!</b>" : "") ."\n";
 
         $winner = NULL;
         if($jumpA > $jumpB){
@@ -123,6 +123,8 @@ if($telegram->text_has("magikarp", ["salta", "jump"]) and $telegram->words() <= 
         // Cooldown de una hora.
         $pokemon->settings($playerA, "magikarp_cooldown", time() + 3600);
         $pokemon->settings($playerB, "magikarp_cooldown", time() + 3600);
+
+        return -1;
     }
 
     $emoji = json_decode('"\ud83c\udf8f"');
