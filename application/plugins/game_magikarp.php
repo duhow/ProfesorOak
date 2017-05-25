@@ -131,7 +131,7 @@ if($telegram->text_has("magikarp", ["salta", "jump"]) and $telegram->words() <= 
             ->row_button("$emoji Competir", "magikarp jump " .$this->telegram->user->id, "TEXT")
         ->show()
         ->text_replace("¡%s quiere competir a <b>Magikarp Jump</b>!\n¿Quieres retarle?", $this->telegram->user->first_name, "HTML")
-    ->show();
+    ->send();
 
     return -1;
 }
