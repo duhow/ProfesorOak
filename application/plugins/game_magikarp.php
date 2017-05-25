@@ -26,10 +26,14 @@ if($telegram->text_has("magikarp", ["salta", "jump"]) and $telegram->words() <= 
         if($telegram->callback){
             $this->telegram->answer_if_callback($str, TRUE);
         }else{
-            $this->telegram->send
+            $q = $this->telegram->send
                 ->notification(FALSE)
                 ->text($str)
             ->send();
+
+			sleep(4);
+			$this->telegram->send->delete(TRUE);
+			$this->telegram->send->delete($q);
         }
 
         return -1;
@@ -37,15 +41,19 @@ if($telegram->text_has("magikarp", ["salta", "jump"]) and $telegram->words() <= 
 
     // Comprobar que haya pasado tiempo suficiente como para volver a jugar.
     $last = $pokemon->settings($this->telegram->user->id, "magikarp_cooldown");
-    if($last && $last >= time()){
+    if($last && $last >= time() && $telegram->user->id != $this->config->item('creator')){
         $str = "¡Aún es demasiado pronto para volver a competir!";
         if($telegram->callback){
             $this->telegram->answer_if_callback($str, TRUE);
         }else{
-            $this->telegram->send
+            $q = $this->telegram->send
                 ->notification(FALSE)
                 ->text($str)
             ->send();
+
+			sleep(4);
+			$this->telegram->send->delete(TRUE);
+			$this->telegram->send->delete($q);
         }
 
         return -1;
@@ -121,11 +129,13 @@ if($telegram->text_has("magikarp", ["salta", "jump"]) and $telegram->words() <= 
         $pokemon->settings($winner->telegramid, "magikarp_points", $points);
 
         // Cooldown de una hora.
-        $pokemon->settings($playerA, "magikarp_cooldown", time() + 3600);
-        $pokemon->settings($playerB, "magikarp_cooldown", time() + 3600);
+        // $pokemon->settings($playerA, "magikarp_cooldown", time() + 1800);
+        $pokemon->settings($playerB, "magikarp_cooldown", time() + 1800);
 
         return -1;
     }
+
+	$pokemon->settings($this->telegram->user->id, "magikarp_cooldown", time() + 1800);
 
     $emoji = json_decode('"\ud83c\udf8f"');
     $this->telegram->send
