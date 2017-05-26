@@ -119,8 +119,9 @@ class __Module_Telegram_InlineKeyboard_Row extends CI_Model{
 		$data['text'] = $text;
 		if(filter_var($request, FILTER_VALIDATE_URL) !== FALSE){ $data['url'] = $request; }
 		elseif($switch === TRUE or (is_string($switch) && strtolower($switch) == "command")){
-			// enviar por privado
-			$data['url'] = "https://telegram.me/" .$this->config->item('telegram_bot_name') ."?start=" .urlencode($request);
+			// Iniciar por privado
+			$request = preg_replace("/([^-_a-zA-Z0-9]+)/i", "", $request); // Caracteres permitidos
+			$data['url'] = "https://t.me/" .$this->config->item('telegram_bot_name') ."?start=" .$request;
 		}elseif(is_string($switch) && strtolower($switch) == "share"){
 			$enc = NULL;
 			if(is_array($request) && count($request) == 2){
@@ -128,12 +129,19 @@ class __Module_Telegram_InlineKeyboard_Row extends CI_Model{
 			}else{
 				$enc = ['url' => urlencode($request)];
 			}
-			$data['url'] = "https://telegram.me/share/url?" .http_build_query($enc);
+			$data['url'] = "https://t.me/share/url?" .http_build_query($enc);
+		}elseif(strtolower($switch) == "text"){
+			$data['switch_inline_query'] = $switch;
+			$data['callback_data'] = "T:" .$request;
+		}elseif(strtolower($switch) == "pay"){
+			$data['switch_inline_query'] = $switch;
+			$data['pay'] = TRUE;
+		}elseif($switch === FALSE){
+			$data['switch_inline_query'] = $request;
+		}else{
+			$data['switch_inline_query'] = $switch;
+			$data['callback_data'] = $request;
 		}
-		elseif($switch === FALSE){ $data['switch_inline_query'] = $request; }
-		elseif(is_string($switch) && strtolower($switch) == "text"){ $data['callback_data'] = "T:" .$request; }
-		elseif($switch === NULL or is_string($switch)){ $data['callback_data'] = $request; }
-		if(is_string($switch)){ $data['switch_inline_query'] = $switch; }
 		$this->buttons[] = $data;
 		return $this;
 	}
