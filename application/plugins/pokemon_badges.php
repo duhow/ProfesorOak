@@ -640,6 +640,16 @@ if(
 		$str = $this->telegram->emoji(":times:") ." Dímelo por privado, por favor.";
 		$this->telegram->send->keyboard()->hide(TRUE);
 	}else{
+		// Evitar que se envien las capturas de medallas como petición para validación.
+		if(!$pokemon->user_verified($this->telegram->user->id)){
+			$str = $this->telegram->emoji(":warning:") ." Por favor, <b>valídate</b> antes de enviar las medallas.";
+			$this->telegram->send
+				->text($str, "HTML")
+			->send();
+
+			return -1;
+		}
+
 		$this->telegram->send
 		->keyboard()
 			->row_button("Cancelar")
