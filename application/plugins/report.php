@@ -177,6 +177,25 @@ if(
 		$this->telegram->send
 			->text($this->telegram->emoji($str))
 		->send();
+
+		$str = ":id: %s\n"
+				.":male: %s\n"
+				.":warning: %s\n\n"
+				.$str;
+		$str = $this->telegram->emoji($str);
+
+		$this->telegram->send
+			->notification(FALSE)
+			->chat("-246585563") // Reportes
+			->text_replace($str, [$this->telegram->user->id, $target, $type])
+		->send();
+
+		$this->telegram->send
+			->notification(TRUE)
+			->chat(TRUE)
+			->message(TRUE)
+			->forward_to("-246585563") // Reportes
+		->send();
 	}
 	return -1;
 }
