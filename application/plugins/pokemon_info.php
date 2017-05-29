@@ -955,8 +955,10 @@ elseif($telegram->text_command("pkseed")){
 		$seed .= str_pad(dechex(bindec($bin)), 2, "0", STR_PAD_LEFT);
 	}
 
+	$str = $seed . " / " .base64_encode(hex2bin($seed));
+
 	$this->telegram->send
-		->text($seed)
+		->text($str)
 	->send();
 
 	return -1;
