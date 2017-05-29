@@ -886,5 +886,81 @@ elseif($telegram->text_has(["pokédex", "pokémon"], TRUE) or $telegram->text_co
 	}
 }
 
+elseif($telegram->text_command("pkseed")){
+	if($telegram->words() < 6){
+		$str = "Uso: " .$this->telegram->text_command() ." <Pokemon> <LV> <ATK> <DEF> <STA>";
+
+		$this->telegram->send
+			->text($str)
+		->send();
+
+		return -1;
+	}
+
+	$pk = pokemon_parse($this->telegram->text());
+
+	if(!isset($pk['pokemon']) or empty($pk['pokemon'])){
+		if(is_numeric($this->telegram->words(1))){
+			$pk['pokemon'] = $this->telegram->words(1);
+		}else{
+			$this->telegram->send
+				->text(":times: Pokémon no encontrado.")
+			->send();
+
+			return -1;
+		}
+	}
+
+	$pk['lvl'] = $this->telegram->words(2);
+	$pk['atk'] = $this->telegram->words(3);
+	$pk['def'] = $this->telegram->words(4);
+	$pk['sta'] = $this->telegram->words(5);
+
+	$error = NULL;
+
+	if($pk['lvl'] > 40 or $pk['lvl'] <= 0){
+		$error = "Nivel incorrecto.";
+	}elseif($pk['atk'] > 15 or $pk['atk'] < 0){
+		$error = "IV de Ataque incorrecto.";
+	}elseif($pk['def'] > 15 or $pk['def'] < 0){
+		$error = "IV de Defensa incorrecto.";
+	}elseif($pk['sta'] > 15 or $pk['sta'] < 0){
+		$error = "IV de Salud incorrecto.";
+	}
+
+	if($error){
+		$error = $this->telegram->emoji(":times: ") .$error;
+		$this->telegram->send
+			->text($error)
+		->send();
+
+		return -1;
+	}
+
+	$data['pokemon'] = str_pad(decbin($pk['pokemon']), 12, "0", STR_PAD_LEFT);
+
+	$half = (int) ($pk['lvl'] % 2 == 1);
+	$data['lvl'] = $half . str_pad(decbin(floor($pk['lvl']), 7, "0", STR_PAD_LEFT);
+
+	foreach(['atk', 'def', 'sta'] as $iv){
+		$data['iv'][] = str_pad(decbin($pk[$iv]), 4, "0", STR_PAD_LEFT);
+	}
+	$data['iv'] = implode("", $data['iv']);
+
+	$join = $data['pokemon'] . $data['lvl'] . $data['iv'];
+	$join = str_split($join, 8);
+
+	$seed = "";
+	foreach($join as $bin){
+		$seed .= str_pad(dechex(bindec($bin)), 2, "0", STR_PAD_LEFT);
+	}
+
+	$this->telegram->send
+		->text($seed)
+	->send();
+
+	return -1;
+}
+
 
 ?>
