@@ -973,6 +973,31 @@ elseif($telegram->text_has("limpia", ["de", "desde"], TRUE) and $telegram->text_
 	return -1;
 }
 
+elseif(
+	$this->telegram->text_has(["limpia", "borra"], ["de", "desde"], TRUE) and
+	$this->telegram->text_has("aquí") and
+	$this->telegram->words() == 3 and
+	$this->telegram->has_reply
+){
+	$from = $this->telegram->reply->message_id;
+	$to = $this->telegram->message_id;
+
+	$c = 0;
+	for($i = $from; $i < $to; $i++){
+		$q = $this->telegram->send->delete($i);
+		if($q !== FALSE){ $c++; }
+	}
+
+	$q = $this->telegram->send
+		->text("$c mensajes borrados.")
+	->send();
+	sleep(3);
+
+	$this->telegram->send->delete($q);
+
+	return -1;
+}
+
 elseif($telegram->text_command("urec")){
 	$pokemon->step($telegram->user->id, "USERREC_LIST");
 	$this->telegram->send
