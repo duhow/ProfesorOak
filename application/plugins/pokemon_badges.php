@@ -488,10 +488,10 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 		$photo = array_pop($photos);
 		$photo = $photo['file_id'];
 
-		$url = $this->telegram->download($photo);
-
 		$temp = tempnam("/tmp", "tgphoto");
-		file_put_contents($temp, file_get_contents($url));
+		$file = $this->telegram->download($photo, $temp);
+
+		if(!$file){ return -1; }
 
 		require_once APPPATH .'third_party/tesseract-ocr-for-php/src/TesseractOCR.php';
 
