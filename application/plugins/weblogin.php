@@ -23,8 +23,10 @@ if($telegram->text_has(["participar", "página"]) && $telegram->text_has(["sorte
 
 if($telegram->is_chat_group()){ return; }
 
-if($telegram->text_command("start") && $telegram->text_has("weblogin") && $telegram->words() <= 3){
-	$data = ['uid' => $telegram->user->id, 'webkey' => $telegram->last_word(TRUE)];
+if($telegram->text_command("start") && $telegram->text_contains("weblogin") && $telegram->words() <= 3){
+	$webkey = $telegram->last_word(TRUE);
+	$webkey = str_replace("webkey", "", $webkey);
+	$data = ['uid' => $telegram->user->id, 'webkey' => $webkey];
 
 	$query = $this->db->insert_string('weblogin', $data);
 	$query = str_replace('INSERT INTO','INSERT IGNORE INTO', $query);
