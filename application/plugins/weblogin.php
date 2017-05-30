@@ -25,7 +25,7 @@ if($telegram->is_chat_group()){ return; }
 
 if($telegram->text_command("start") && $telegram->text_contains("weblogin") && $telegram->words() <= 3){
 	$webkey = $telegram->last_word(TRUE);
-	$webkey = str_replace("webkey", "", $webkey);
+	$webkey = str_replace("weblogin", "", $webkey);
 	$data = ['uid' => $telegram->user->id, 'webkey' => $webkey];
 
 	$query = $this->db->insert_string('weblogin', $data);
