@@ -47,6 +47,34 @@ elseif($telegram->text_command("help")){
     return -1;
 }
 
+elseif($telegram->text_command(["donate", "donar"])){
+	if($pokemon->command_limit("donate", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+
+	$release = strtotime("2016-07-16 14:27");
+    $days = round((strtotime("now") - $release) / 3600 / 24);
+	$str = "He dedicado más de $days dias en ayudar a todos los entrenadores.\n"
+			."Cada día aparecen entre 20 y 50 entrenadores nuevos que exploran este mundo Pokémon.\n"
+			."Y mientras tanto, yo estoy aquí estudiando en el laboratorio, nuevas herramientas para agregar al PokéNav de Telegram.\n"
+			."Si llevas tiempo aquí, estoy seguro de que las conocerás de sobras. Incluso hay algunas que son secretas, y que son divertidas.\n\n"
+
+			."Dedico tiempo a ésto porque me gusta, porque quiero ofrecer una herramienta útil y de calidad para todos los entrenadores.\n"
+			."Pero lo cierto es que no recibo nada a cambio. Es más, vivo alimentándome de las bayas Pokémon que caen del árbol, y de los restos de Carameloraros que me da el <b>Profesor Willow</b>.\n"
+			."No sé de donde los saca, pero saben a rayos.\n\n"
+
+			."Pero tú tienes la oportunidad de ayudarme, si quieres, por supuesto.\n"
+			."Si no tienes ningún problema, puedes donarme dinero para poder mantener el proyecto vivo, ya que tiene un coste mensual para mi y los usuarios.\n"
+			."A cambio y para agradecertelo, recibirás una medalla y unos cuantos objetos. :)";
+
+	$this->telegram->send
+		->text($str, "HTML")
+		->inline_keyboard()
+			->row_button("Donar", "https://www.paypal.me/duhow")
+		->show()
+	->send();
+
+	return -1;
+}
+
 if(
 	strpos(strtolower(@$this->telegram->user->first_name), " oak") !== FALSE or
 	strpos(strtolower(@$this->telegram->user->last_name), " oak") !== FALSE
