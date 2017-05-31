@@ -63,10 +63,11 @@ elseif($telegram->text_command(["donate", "donar"])){
 
 			."Pero tú tienes la oportunidad de ayudarme, si quieres, por supuesto... \ud83d\ude33 \n"
 			."Si no tienes ningún problema, puedes donarme dinero para poder mantener el proyecto vivo, ya que tiene un coste mensual para mi y los usuarios.\n"
-			."Aunque sea tan solo 1€, ya es una ayuda, créeme.\n"
+			."Aunque sea tan solo 1€, ya es una ayuda, créeme. \ud83d\udcb6 \n"
 			."A cambio y para agradecertelo, recibirás una medalla y unos cuantos objetos. \ud83e\udd17"
 
-			."\n\nPayPal cobra tarifas por cargos con tarjeta. Asegúrate de enviar desde saldo PayPal o cuenta bancaria, y <b>para un amigo</b>. Muchas gracias <3";
+			."\n\n<i>Nota:</i> PayPal cobra tarifas por cargos con tarjeta. Asegúrate de enviar desde saldo PayPal o cuenta bancaria, y <b>para un amigo</b>.\n\n"
+			."¡Muchísimas gracias, de verdad! <3";
 
 	$str = $this->telegram->emoji($str);
 
