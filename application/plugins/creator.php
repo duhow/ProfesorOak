@@ -998,6 +998,27 @@ elseif(
 	return -1;
 }
 
+elseif($telegram->text_command("dbdump") && !$telegram->is_chat_group()){
+	$this->telegram->send
+		->text("Generando...")
+	->send();
+
+	$tmp = tempnam("/tmp", "db");
+	passthru("/usr/bin/mysqldump --opt --host=" .$this->db->hostname ." --user=" .$this->db->username
+			." --password=" .$this->db->password ." " .$this->db->database ." > $tmp");
+	passthru("gzip $tmp");
+	$tmp .= ".gz";
+
+	$this->telegram->send
+		->chat_action("upload_document")
+	->send();
+
+	$this->telegram->send->file('document', $tmp);
+
+	unlink($tmp);
+	return -1;
+}
+
 elseif($telegram->text_command("urec")){
 	$pokemon->step($telegram->user->id, "USERREC_LIST");
 	$this->telegram->send
