@@ -2,7 +2,7 @@
 
 if($telegram->text_has(["participar", "página"]) && $telegram->text_has(["sorteo"]) && $telegram->words() <= 9){
 	if($telegram->is_chat_group()){
-		$str = "¡Consigue incienso y cebos para Telegram!\nhttp://oak.duhowpi.net/";
+		$str = "¡Consigue incienso y cebos para Telegram!\nhttp://profoak.me/";
 	}else{
 		$key = md5($telegram->user->id .":" .time());
 		$query = $this->db
@@ -10,7 +10,7 @@ if($telegram->text_has(["participar", "página"]) && $telegram->text_has(["sorte
 			->set('webkey', $key)
 		->insert('weblogin');
 
-		$str = "Este es un link exclusivo para ti, ¡no se lo pases a nadie!\nhttp://oak.duhowpi.net/login/$key";
+		$str = "Este es un link exclusivo para ti, ¡no se lo pases a nadie!\nhttp://profoak.me/login/$key";
 	}
 
 	$telegram->send
@@ -35,7 +35,7 @@ if($telegram->text_command("start") && $telegram->text_contains("weblogin") && $
 	$telegram->send
 		->text("¡Login hecho! Ya puedes volver.")
 		->inline_keyboard()
-			->row_button("Abrir web", "http://oak.duhowpi.net")
+			->row_button("Abrir web", "http://profoak.me")
 		->show()
 	->send();
 	return -1;

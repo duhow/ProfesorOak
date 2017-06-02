@@ -16,7 +16,7 @@ if($telegram->text_command("register")){
         $str = "Hola! Ábreme y registrate por privado :)";
         $telegram->send
             ->inline_keyboard()
-                ->row_button("Registrar", "https://telegram.me/ProfesorOak_bot")
+                ->row_button("Registrar", "https://t.me/ProfesorOak_bot")
             ->show();
     }
     $telegram->send

@@ -41,7 +41,7 @@ elseif($telegram->text_command("help")){
 
     $telegram->send
         ->notification(FALSE)
-        ->text('¡Aquí tienes la <a href="http://telegra.ph/Ayuda-11-30">ayuda</a>!', 'HTML')
+        ->text('¡Aquí tienes la <a href="http://help.profoak.me">ayuda</a>!', 'HTML')
         // ->disable_web_page_preview(TRUE)
     ->send();
     return -1;
@@ -74,7 +74,7 @@ elseif($telegram->text_command(["donate", "donar"])){
 	$this->telegram->send
 		->text($str, "HTML")
 		->inline_keyboard()
-			->row_button("Donar", "https://www.paypal.me/duhow")
+			->row_button("Donar", "http://donar.profoak.me/")
 		->show()
 	->send();
 

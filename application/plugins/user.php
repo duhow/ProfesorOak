@@ -291,7 +291,7 @@ if(
 	if(!empty($pokeuser->username)){
 		$this->telegram->send
 		->inline_keyboard()
-			->row_button($telegram->emoji("\ud83d\udcdd Ver perfil"), "http://oak.duhowpi.net/user/" .$pokeuser->username)
+			->row_button($telegram->emoji("\ud83d\udcdd Ver perfil"), "http://profoak.me/user/" .$pokeuser->username)
 		->show();
 	}
 
@@ -425,7 +425,7 @@ elseif(
 	if(!empty($info->username) && !$offline){
 		$this->telegram->send
 		->inline_keyboard()
-			->row_button($telegram->emoji("\ud83d\udcdd Ver perfil"), "http://oak.duhowpi.net/user/" .$info->username)
+			->row_button($telegram->emoji("\ud83d\udcdd Ver perfil"), "http://profoak.me/user/" .$info->username)
 		->show();
 	}
 	// $this->last_command('WHOIS');
