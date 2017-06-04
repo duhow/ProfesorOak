@@ -27,7 +27,31 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 		}
 
     // Bot agregado al grupo. Yo no saludo bots :(
-    }elseif($new->id != $this->config->item('telegram_bot_id') && $telegram->is_bot($new->username)){ return -1; }
+    }elseif($new->id != $this->config->item('telegram_bot_id') && $telegram->is_bot($new->username)){
+		if(in_array($this->telegram->user->id, telegram_admins(TRUE))){ return -1; } // Lo agrega un admin, no pasa na.
+		$mute = $pokemon->settings($telegram->chat->id, 'mute_content');
+		if(empty($mute)){ return -1; }
+		$mute = explode(",", $mute);
+		if(!in_array("bot", $mute)){ return -1; } // Se permite agregar bots
+
+		$this->telegram->send->ban($this->telegram->user->id);
+		$this->telegram->send->ban($new->id);
+
+		if($adminchat){
+			$str = ":warning: Poner bot en el grupo\n"
+					.":id: @" .$new->username ." - " .$new->id ."\n"
+					.":male: " .$this->telegram->user->first_name ." - " . $this->telegram->user->id;
+
+			$str = $this->telegram->emoji($str);
+			$this->telegram->send
+				->chat($adminchat)
+				->notification(TRUE)
+				->text($str)
+			->send();
+		}
+
+		return -1;
+	}
 
 	if($pokemon->settings($new->id, 'follow_join')){
 		$str = ":warning: Join detectado\n"

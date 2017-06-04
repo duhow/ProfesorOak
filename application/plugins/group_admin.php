@@ -831,6 +831,7 @@ elseif($telegram->text_has("mutear contenido") and $telegram->words() <= 6){
 		"gif" => "\ud83d\udd01",
 		"game" => "\ud83d\udd79",
 		"document" => "\ud83d\udcdd",
+		"bot" => "\ud83e\udd16",
 	];
 
 	$display = array();
@@ -864,6 +865,9 @@ elseif($telegram->text_has("mutear contenido") and $telegram->words() <= 6){
 				->button($this->telegram->emoji($keys["game"] ." " .$display["game"]), "mutear contenido game", "TEXT")
 				->button($this->telegram->emoji($keys["url"] ." " .$display["url"]), "mutear contenido url", "TEXT")
 				->button($this->telegram->emoji($keys["gif"] ." " .$display["gif"]), "mutear contenido gif", "TEXT")
+			->end_row()
+			->row()
+				->button($this->telegram->emoji($keys["bot"] ." " .$display["bot"]), "mutear contenido bot", "TEXT")
 			->end_row()
 			->row_button($this->telegram->emoji("\ud83d\udcbe Guardar"), "mutear contenido listo", "TEXT")
 		->show()
