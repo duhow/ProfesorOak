@@ -194,7 +194,7 @@ if($telegram->text_command("polerank") or $telegram->text_has("!polerank")){
 
     $pole = $pokemon->settings($telegram->chat->id, 'pole');
 
-    if($pole == FALSE){ return -1; }
+    if($pole != NULL && $pole == FALSE){ return -1; }
 
 	$full = ($telegram->text_has("full"));
     $pole = pole_ranking($telegram->chat->id, $full);
