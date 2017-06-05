@@ -708,6 +708,58 @@ elseif(
     return -1;
 }
 
+elseif(
+	$this->telegram->text_has(["borra", "borrar"], "comando", TRUE)
+){
+	if($this->telegram->words() == 2){
+		$this->telegram->send
+			->text("Indica el comando que quieres borrar.")
+		->send();
+
+		return -1;
+	}
+
+	$command = trim(strtolower($this->telegram->words(2, 10)));
+	$commands = $pokemon->settings($telegram->chat->id, 'custom_commands');
+
+	$commands = unserialize($commands);
+	if(empty($commands) or !is_array($commands)){ return -1; }
+
+	$str = "No existe ese comando: $command";
+	if(isset($commands[$command])){
+		unset($commands[$command]);
+
+		$commands = serialize($commands);
+		$pokemon->settings($telegram->chat->id, 'custom_commands', $commands);
+
+		$str = "¡Comando borrado correctamente!";
+	}
+
+	$this->telegram->send
+		->text($str)
+	->send();
+
+	return -1;
+}
+
+elseif(
+	$this->telegram->text_has(["borra", "borrar"], ["todos los comandos", "los comandos"], TRUE) and
+	$this->telegram->words() <= 5
+){
+	$commands = $pokemon->settings($telegram->chat->id, 'custom_commands');
+
+	$commands = unserialize($commands);
+	if(empty($commands) or !is_array($commands)){ return -1; }
+
+	$pokemon->settings($telegram->chat->id, 'custom_commands', "DELETE");
+
+	$this->telegram->send
+		->text_replace("%s comandos borrados.", count($commands))
+	->send();
+
+	return -1;
+}
+
 // Lista de comandos
 elseif($this->telegram->text_has("lista de comandos") && $this->telegram->words() <= 5){
 	$commands = $pokemon->settings($telegram->chat->id, 'custom_commands');
