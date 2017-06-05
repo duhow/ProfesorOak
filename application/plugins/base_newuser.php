@@ -186,7 +186,7 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 			// TODO Get avatar
 			// $text .= "Por favor, antes de nada, ponte una foto de avatar. La gente quiere ver caras familiares, no letras. :*" ."\n";
 		}
-        if(empty($pknew)){
+        if(empty($pknew) and $pokemon->settings($telegram->chat->id, 'force_welcome') != TRUE){
             $text .= "Oye, ¿podrías decirme el color de tu equipo?\n*Di: *_Soy ..._";
         }else{
             $emoji = ["Y" => "yellow", "B" => "blue", "R" => "red"];
