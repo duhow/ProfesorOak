@@ -289,14 +289,20 @@ elseif($this->telegram->text_command("reportm")){
 
 	$res = report_multiaccount_exists($names, TRUE);
 	if($res){
-		// Identifica los que no están repes y agregalos.
-		$diff = array_diff($names, $res['usernames']);
+		$final_names = array_diff($names, $res['usernames']);
+		$grouping = $res['grouping']; // Agregar sobre el primer grouping que exista.
+		// Bucle mientras haya nombres repetidos / agrupados.
+		while(!empty($final_names) && report_multiaccount_exists($final_names)){
+			$res = report_multiaccount_exists($final_names, TRUE);
+			$final_names = array_diff($final_names, $res['usernames']);
+		}
 
 		$str = "No hay usuarios nuevos.";
-		if(count($diff) > 0){
-			$diff = array_values($diff);
-			$q = report_multiaccount_add($diff, $this->telegram->user->id, $res['grouping']);
-			$str = $this->telegram->emoji(":ok: ") . count($diff) ." usuarios agregados.";
+		if(count($final_names) > 0){
+			// Transformar original el acortado / final.
+			$names = array_values($final_names);
+			$q = report_multiaccount_add($names, $this->telegram->user->id, $grouping);
+			$str = $this->telegram->emoji(":ok: ") . count($names) ." usuarios agregados.";
 		}
 
 		$this->telegram->send
