@@ -46,6 +46,69 @@ function report_user_chat($id, $chat){
 	->update('reports');
 }
 
+// Devuelve ID de grupo.
+function report_multiaccount_exists($names, $retall = FALSE){
+	$CI =& get_instance();
+	if(!is_array($names)){ $names = [$names]; }
+	$query = $CI->db
+		->where_in('username', $names)
+	->get('user_multiaccount');
+
+	if($query->num_rows() == 0){ return FALSE; }
+	if(!$retall){ return $query->row()->grouping; }
+
+	$gid = $query->row()->grouping;
+	return report_multiaccount_grouping($gid);
+}
+
+// Devuelve el ultimo ID de grupo creado.
+function report_multiaccount_last_grouping(){
+	$CI =& get_instance();
+
+	$query = $CI->db
+		->select('grouping')
+		->order_by('grouping', 'DESC')
+		->limit(1)
+	->get('user_multiaccount');
+
+	if($query->num_rows() == 0){ return 0; }
+	return $query->row()->grouping;
+}
+
+function report_multiaccount_grouping($group, $onlynames = FALSE){
+	$CI =& get_instance();
+
+	$query = $CI->db
+		->where('grouping', $group)
+	->get('user_multiaccount');
+
+	if($query->num_rows() == 0){ return array(); }
+	$final = ['grouping' => $group];
+	$final['usernames'] = array_column($query->result_array, 'username');
+
+	if($onlynames){ return $final['usernames']; }
+	return $final;
+}
+
+function report_multiaccount_add($users, $referer = NULL, $group = NULL){
+	$CI =& get_instance();
+
+	if(!is_array($users)){ $users = [$users]; }
+	if(empty($group)){ $group = report_multiaccount_last_grouping() + 1; }
+
+	$data = array();
+	foreach($users as $user){
+		$data[] = [
+			'grouping' => $group,
+			'username' => $user,
+			'referer' => $referer,
+			'data' => date("Y-m-d H:i:s")
+		];
+	}
+
+	return $CI->db->insert_batch('user_multiaccount', $data);
+}
+
 if(
 	$telegram->text_command("report") or
 	$telegram->text_command("reportv")
@@ -197,6 +260,56 @@ if(
 			->forward_to("-246585563") // Reportes
 		->send();
 	}
+	return -1;
+}
+
+elseif($this->telegram->text_command("reportm")){
+	if($pokemon->user_flags($telegram->user->id, ['troll', 'ratkid', 'rager', 'spam', 'bot', 'hacks', 'gps', 'fly', 'multiaccount', 'report'])){ return -1; }
+	$pokeuser = $pokemon->user($this->telegram->user->id);
+	if(!$pokeuser->verified or strtotime("+1 month", strtotime($pokeuser->register_date)) > time() ){
+		$this->telegram->send
+			->text($this->telegram->emoji(":warning: ") ."Sólo pueden reportar los usuarios validados de hace tiempo.")
+		->send();
+		return -1;
+	}
+
+	if($this->telegram->words() <= 2){
+		if($pokemon->command_limit("report", $telegram->chat->id, $telegram->message, 5)){ return -1; }
+
+		$str = "Uso: " .$this->telegram->text_command() ." <Nombre principal> <Nombre 1> <Nombre 2> ...";
+		$this->telegram->send
+			->text($str)
+		->send();
+
+		return -1;
+	}
+
+	$names = $this->telegram->words(TRUE);
+	array_shift($names); // Quitar comando
+
+	$res = report_multiaccount_exists($names, TRUE);
+	if($res){
+		// Identifica los que no están repes y agregalos.
+		$diff = array_diff($names, $res['usernames']);
+
+		$str = "No hay usuarios nuevos.";
+		if(count($diff) > 0){
+			$diff = array_values($diff);
+			$q = report_multiaccount_add($diff, $this->telegram->user->id, $res['grouping']);
+			$str = $this->telegram->emoji(":ok: ") . count($diff) ." usuarios agregados.";
+		}
+
+		$this->telegram->send
+			->text($str)
+		->send();
+	}else{
+		$q = report_multiaccount_add($names, $this->telegram->user->id);
+		$str = $this->telegram->emoji(":ok: ") . "%s usuarios nuevos agregados.";
+		$this->telegram->send
+			->text_replace($str, count($names))
+		->send();
+	}
+
 	return -1;
 }
 

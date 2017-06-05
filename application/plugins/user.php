@@ -360,7 +360,13 @@ elseif(
 			if(!empty($reps)){
 				$reptype = array_column($reps, 'type');
 				$reptype = array_unique($reptype);
-				$str .= "\n" .$this->telegram->emoji("\ud83d\udcdb ") ."*" .count($reps) ."* reportes por " .implode(", ", $reptype) .".";
+				$str .= "\n" .$this->telegram->emoji("\ud83d\udcdb ") ."*" .count($reps) ."* reportes";
+				if(!empty($reptype)){ $str .= " por " .implode(", ", $reptype); }
+				$str .= ".";
+			}
+			$ma = report_multiaccount_exists($user_search, TRUE);
+			if(!empty($ma)){
+				$str .= "\n" .$this->telegram->emoji("\ud83d\udc65 ") .count($ma['usernames']) ." cuentas agrupadas. #" .$ma['grouping'];
 			}
 		}
 
@@ -377,7 +383,13 @@ elseif(
 			if(!empty($reps)){
 				$reptype = array_column($reps, 'type');
 				$reptype = array_unique($reptype);
-				$str .= $this->telegram->emoji("\ud83d\udcdb ") ."*" .count($reps) ."* reportes por " .implode(", ", $reptype) .".\n";
+				$str .= "\n" .$this->telegram->emoji("\ud83d\udcdb ") ."*" .count($reps) ."* reportes";
+				if(!empty($reptype)){ $str .= " por " .implode(", ", $reptype); }
+				$str .= ".";
+			}
+			$ma = report_multiaccount_exists($user_search, TRUE);
+			if(!empty($ma)){
+				$str .= "\n" .$this->telegram->emoji("\ud83d\udc65 ") .count($ma['usernames']) ." cuentas agrupadas. #" .$ma['grouping'];
 			}
 		}
 	}
