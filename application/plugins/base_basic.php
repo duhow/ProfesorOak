@@ -47,12 +47,25 @@ elseif($telegram->text_command("help")){
     return -1;
 }
 
-elseif($telegram->text_command(["donate", "donar"])){
+elseif($telegram->text_command(["donate", "donar"]) or
+	($telegram->text_command("start") and $telegram->text_has("donate"))
+){
 	if($pokemon->command_limit("donate", $telegram->chat->id, $telegram->message, 7)){ return -1; }
 
-	$release = strtotime("2016-07-16 14:27");
-    $days = round((strtotime("now") - $release) / 3600 / 24);
-	$str = "\ud83d\udcc6 He dedicado <b>más de $days dias</b> en ayudar a todos los entrenadores.\n"
+	if($telegram->is_chat_group()){
+		$str = "Si quieres ayudarme, puedes contribuir con la cantidad que quieras, aunque sea un 1€. Te prometo que merecerá la pena. <3";
+
+		$this->telegram->send
+			->inline_keyboard()
+			->row()
+				->button("Más info", "donate", "COMMAND")
+				->button("Donar", "http://donar.profoak.me/")
+			->end_row()
+		->show();
+	}else{
+		$release = strtotime("2016-07-16 14:27");
+	    $days = round((strtotime("now") - $release) / 3600 / 24);
+		$str = "\ud83d\udcc6 He dedicado <b>más de $days dias</b> en ayudar a todos los entrenadores.\n"
 			.":male: Cada día aparecen entre 20 y 50 entrenadores nuevos que exploran este mundo Pokémon.\n"
 			."Y mientras tanto, yo estoy aquí estudiando en el laboratorio, nuevas herramientas para agregar al PokéNav de Telegram.\n"
 			."Si llevas tiempo aquí, estoy seguro de que las conocerás de sobras. Incluso hay algunas que son secretas, y que son divertidas.\n\n"
@@ -69,13 +82,15 @@ elseif($telegram->text_command(["donate", "donar"])){
 			."\n\n<i>Nota:</i> PayPal cobra tarifas por cargos con tarjeta. Asegúrate de enviar desde saldo PayPal o cuenta bancaria, y <b>para un amigo</b>.\n\n"
 			."¡Muchísimas gracias, de verdad! <3";
 
-	$str = $this->telegram->emoji($str);
+		$this->telegram->send
+			->inline_keyboard()
+			->row_button("Donar", "http://donar.profoak.me/")
+		->show();
+	}
 
+	$str = $this->telegram->emoji($str);
 	$this->telegram->send
 		->text($str, "HTML")
-		->inline_keyboard()
-			->row_button("Donar", "http://donar.profoak.me/")
-		->show()
 	->send();
 
 	return -1;
