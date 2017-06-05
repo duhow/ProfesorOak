@@ -102,7 +102,7 @@ function report_multiaccount_add($users, $referer = NULL, $group = NULL){
 			'grouping' => $group,
 			'username' => $user,
 			'referer' => $referer,
-			'data' => date("Y-m-d H:i:s")
+			'date' => date("Y-m-d H:i:s")
 		];
 	}
 
