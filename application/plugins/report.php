@@ -84,7 +84,7 @@ function report_multiaccount_grouping($group, $onlynames = FALSE){
 
 	if($query->num_rows() == 0){ return array(); }
 	$final = ['grouping' => $group];
-	$final['usernames'] = array_column($query->result_array, 'username');
+	$final['usernames'] = array_column($query->result_array(), 'username');
 
 	if($onlynames){ return $final['usernames']; }
 	return $final;
