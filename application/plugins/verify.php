@@ -69,7 +69,7 @@ if($telegram->text_command("register")){
     return;
 }
 
-if($telegram->text_has(["Te valido", "No te valido"], TRUE) && $telegram->words() <= 3){
+if($telegram->text_has(["Te valido", "No te valido"], TRUE) && $telegram->words() <= 4){
     $pokeuser = $pokemon->user($telegram->user->id);
     if(!$pokeuser->authorized){ return; }
     $target = NULL;
