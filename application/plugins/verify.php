@@ -69,7 +69,7 @@ if($telegram->text_command("register")){
     return;
 }
 
-if($telegram->text_has("Te valido", TRUE) && $telegram->words() <= 3){
+if($telegram->text_has(["Te valido", "No te valido"], TRUE) && $telegram->words() <= 3){
     $pokeuser = $pokemon->user($telegram->user->id);
     if(!$pokeuser->authorized){ return; }
     $target = NULL;
@@ -98,6 +98,26 @@ if($telegram->text_has("Te valido", TRUE) && $telegram->words() <= 3){
         ->edit('text');
         return;
     }
+
+	if($telegram->text_has("no")){
+		$telegram->send
+            ->notification(TRUE)
+            ->chat($target)
+            ->text($telegram->emoji(":times: ") ."La validación no es correcta. Revisa la captura de pantalla, y envíala tal y como se pide.")
+        ->send();
+
+		if($telegram->callback){
+            $telegram->answer_if_callback("");
+            $telegram->send
+                ->message(TRUE)
+                ->chat(TRUE)
+                ->text($str .$telegram->emoji(" :times:"))
+            ->edit('text');
+        }
+
+		return -1;
+	}
+
     if($pokemon->verify_user($telegram->user->id, $target)){
         $telegram->send
             ->notification(FALSE)
