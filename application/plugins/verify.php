@@ -166,10 +166,11 @@ elseif(
 
     $text = "Para validarte, necesito que me envies una *captura de tu perfil Pokemon GO.* "
             ."La captura tiene que cumplir las siguientes condiciones:\n\n"
-            .":triangle-right: Tiene que verse la hora de tu móvil, y tienes que enviarlo en un márgen de 5 minutos.\n"
+            .":triangle-right: Tiene que verse la hora de tu móvil, y tienes que enviarlo en un márgen de 7 minutos.\n"
             .":triangle-right: Tiene que aparecer tu nombre de entrenador y color.\n"
-            .":triangle-right: Si te has cambiado de nombre, avisa a @duhow para tenerlo en cuenta.\n"
-            .":triangle-right: Si no tienes nombre puesto, *cancela el comando* y dime cómo te llamas.\n"
+			.":triangle-right: Tienes que tener una mascota que se llame *Oak*. Luego puedes cambiarle el nombre.\n"
+            // .":triangle-right: Si te has cambiado de nombre, avisa a @duhow para tenerlo en cuenta.\n"
+            // .":triangle-right: Si no tienes nombre puesto, *cancela el comando* y dime cómo te llamas.\n"
             ."\nCuando haya confirmado la validación, te avisaré por aquí.\n\n"
             ."Tus datos son: ";
 
