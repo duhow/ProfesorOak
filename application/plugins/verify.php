@@ -78,7 +78,7 @@ if($telegram->text_has(["Te valido", "No te valido"], TRUE) && $telegram->words(
         if($telegram->reply_is_forward && $telegram->reply_user->id != $telegram->reply->forward_from->id){
             $target = $telegram->reply->forward_from['id'];
         }
-    }elseif($telegram->words() == 3){
+    }elseif(in_array($telegram->words(), [3,4])){
         $target = $telegram->last_word(TRUE);
         if($target[0] == "@"){ $target = substr($target, 1); }
         $target = $pokemon->find_users($target);
