@@ -287,7 +287,7 @@ function pokegame_egg_open($user, $open = FALSE, $force = FALSE){
 
 function __pokegame_item_manage($user, $item, $action = "+", $amount = 1){
     $item = strtolower($item);
-    if(!in_array($item, ['pokeball', 'superball', 'ultraball', 'lure', 'incense'])){ return FALSE; }
+    if(!in_array($item, ['pokeball', 'superball', 'ultraball', 'lure', 'incense', 'fishingrod'])){ return FALSE; }
 
     $CI =& get_instance();
     $query = $CI->db
@@ -531,7 +531,7 @@ if(
 	$telegram->words() > 1
 ){
 	$data = array();
-	$spanish = ['cebo' => 'lure', 'pokecebo' => 'lure', 'incienso' => 'incense'];
+	$spanish = ['cebo' => 'lure', 'pokecebo' => 'lure', 'incienso' => 'incense', 'caña' => 'fishingrod'];
 
 	foreach($telegram->words(TRUE) as $w){
 		$w = strtolower($w);
@@ -546,7 +546,7 @@ if(
 
 		// Items
 		if(!isset($data['item'])){
-			if(in_array($w, ['pokeball', 'superball', 'ultraball', 'lure', 'incense'])){ $data['item'] = $w; }
+			if(in_array($w, ['pokeball', 'superball', 'ultraball', 'lure', 'incense', 'fishingrod'])){ $data['item'] = $w; }
 			elseif(in_array($w, array_keys($spanish))){ $data['item'] = $spanish[$w]; }
 		}
 
@@ -1034,22 +1034,27 @@ if(
 }
 
 if(
-	$telegram->chat->id == "-1001091905005" &&
-	($telegram->key == 'message' &&
-	$telegram->message % 30 == 0)
+	$telegram->is_chat_group() and
+	$telegram->sticker() == 'CAADBAADOwoAAjbFNAABpIfi763TplEC'
 ){
 
-	/* $set = $pokemon->settings($telegram->chat->id, 'pokegame_spawns');
-	if($set >= 20){ return; } */
-	$num = pokegame_number(FALSE, 251);
+	$items = pokegame_items($telegram->user->id);
+	if($items->fishingrod == 0){
+		$telegram->send
+			->notification(FALSE)
+			->text("A ver a quien le tiras la caña, porque te has quedado sin.")
+		->send();
+		return -1;
+	}
+	pokegame_item_remove($telegram->user->id, 'fishingrod');
 
-	$poke = $pokemon->pokedex($num);
+	$poke = $pokemon->pokedex(129); // Magikarp
 
 	$pokedata = pokegame_pokemon_generate($telegram->chat->id, $poke, TRUE);
 	$id = pokegame_pokemon_add($pokedata);
 	pokegame_pokemon_appearview($telegram->chat->id, $id, $poke);
 
-	$pokemon->settings($telegram->chat->id, 'pokegame_spawns', ($set + 1));
+	return -1;
 }
 
 if(
