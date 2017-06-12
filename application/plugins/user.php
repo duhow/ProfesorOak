@@ -777,9 +777,11 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 		$error = ":warning: Experiencia no reconocida.";
 	}elseif($pkuser->exp != 0 and $exp > ($pkuser->exp * 1.15) ){
 		$error = ":warning: Experiencia excede el límite. Contacta con @duhow.";
+		$perc = round(($exp / $pkuser->exp) * 100, 2);
+		
 		$this->telegram->send
 			->chat("-236154993") // Oak - Experiencia
-			->caption($this->telegram->user->id . " excede: $exp VS " .$pkuser->exp)
+			->caption($this->telegram->user->id . " excede: $exp VS " .$pkuser->exp . " ($perc %)")
 		->file('photo', $photo);
 	}elseif($pkuser->exp == $exp){
 		$error = ":ok: Experiencia ya registrada.";
