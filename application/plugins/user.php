@@ -739,7 +739,9 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 	$pkuser = $pokemon->user($telegram->user->id);
 
 	$error = FALSE;
-	if(empty($csel)){
+	if(!$pkuser->verified){
+		$error = ":times: Valídate antes de registrar la experiencia.";
+	}elseif(empty($csel)){
 		$error = ":times: La captura no parece válida.";
 	}elseif($csel != $pkuser->team){
 		$error = ":times: El equipo no corresponde.";
