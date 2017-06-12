@@ -801,16 +801,18 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 	if(function_exists('badge_register')){
 		badge_register("TRAINER_XP", $exp, $telegram->user->id, TRUE);
 
-		$str = ":ok: ¡Experiencia registrada correctamente! - $exp XP";
+		$str = ":ok: ¡Experiencia registrada correctamente! - " .number_format($exp, 2, ',', '.') ." XP";
 		$str = $this->telegram->emoji($str);
 
 		$this->telegram->send
 			->text($str)
 		->send();
 
+		$str = $this->telegram->user->id ." - @" .$pkuser->username ." " .number_format($exp, 2, ',', '.');
+
 		$this->telegram->send
 			->chat("-236154993") // Oak - Experiencia
-			->text($this->telegram->user->id ." - $exp")
+			->text($str)
 		->send();
 	}
 }
