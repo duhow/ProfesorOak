@@ -251,8 +251,8 @@ if(
 	else{ $str .= '$pokemon, '; }
 
 	$str .= 'eres *$team* $nivel';
-	if($pokeuser->lvl < 40){
-		$str .= ' ($exp EXP)';
+	if($pokeuser->exp > 0){
+		$str .= ' - $exp XP';
 	}
 	$str .= '. $valido';
 
@@ -271,7 +271,7 @@ if(
 		'$usuario' => "@" .$telegram->user->username,
 		'$pokemon' => "@" .$pokeuser->username,
 		'$nivel' => "L" .$pokeuser->lvl,
-		'$exp' => $pokeuser->exp,
+		'$exp' => number_format($pokeuser->exp, 2, ',', '.'),
 		'$valido' => ($pokeuser->verified ? ':green-check:' : ':warning:')
 	];
 
