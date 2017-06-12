@@ -670,4 +670,140 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 	return -1;
 }
 
+elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
+	if(isset($this->telegram->reply->photo)){
+		$photo = array_pop($this->telegram->reply->photo);
+		$photo = $photo['file_id'];
+	}elseif(isset($this->telegram->reply->document)){
+		$doc = $this->telegram->reply->document;
+		if(strpos($doc['mime_type'], "image") === FALSE){
+			$this->telegram->send
+				->text($this->telegram->emoji(":warning: ") ."No es imagen. " .$doc['mime_type'])
+			->send();
+			return -1;
+		}
+		$photo = $doc['file_id'];
+	}else{
+		return -1;
+	}
+
+	$temp = tempnam("/tmp", "tgphoto");
+	$res = $this->telegram->download($photo, $temp);
+
+	// Error al descargar la foto.
+	if(!$res){
+		return -1;
+	}
+
+	// Reconocer la foto como perfil correspondiente
+	// ----------
+
+	$out = shell_exec("convert $temp +dither -posterize 2 -crop 20x20%+600+50 -define histogram:unique-colors=true -format %c histogram:info:-");
+
+	$colors = ['Y' => 'yellow', 'R' => 'red', 'B' => 'cyan'];
+	$csel = NULL;
+	foreach($colors as $team => $color){
+		if(strpos($out, $color) !== FALSE){
+			$csel = $team; break;
+		}
+	}
+
+	$pkuser = $pokemon->user($telegram->user->id);
+
+	$error = FALSE;
+	if(empty($csel)){
+		$error = ":times: La captura no parece válida.";
+	}elseif($csel != $pkuser->team){
+		$error = ":times: El equipo no corresponde.";
+	}
+
+	if($error){
+		$error = $this->telegram->emoji($error);
+		$this->telegram->send
+			->text($error)
+		->send();
+
+		unlink($temp);
+		return -1;
+	}
+
+	// OCR
+	// ----------
+
+	require_once APPPATH .'third_party/tesseract-ocr-for-php/src/TesseractOCR.php';
+
+	$ocr = new TesseractOCR($temp);
+
+	$str = $ocr->lang('spa', 'eng')->run();
+	$str = trim($str);
+
+	unlink($temp);
+
+	$error = FALSE;
+	if(empty($str)){
+		$error = ":warning: No se ha reconocido la imagen.";
+	}
+
+	$str = strtoupper($str);
+
+	if(strpos($str, "TOTAL XP") === FALSE){
+		$error = ":warning: No se ha reconocido la experiencia.";
+	}elseif(strpos($str, "DATE") === FALSE && strpos($str, "FECHA") === FALSE){
+		$error = ":warning: La captura no parece válida.";
+		$this->telegram->send
+			->chat("-236154993") // Oak - Experiencia
+			->caption($this->telegram->user->id)
+		->file('photo', $photo);
+	}
+
+	if($error){
+		$error = $this->telegram->emoji($error);
+		$this->telegram->send
+			->text($error)
+		->send();
+
+		return -1;
+	}
+
+	// Extraer experiencia y comparar
+	// ----------
+
+	$pos = strpos($str, "TOTAL XP");
+	$exp = substr($str, $pos);
+	$exp = filter_var($exp, FILTER_SANITIZE_NUMBER_INT);
+
+	$error = FALSE;
+	if($exp > 30000000 or empty($exp) or $exp <= 5000){
+		$error = ":warning: Experiencia no reconocida.";
+	}elseif($pkuser->exp != 0 and $exp > ($pkuser->exp * 1.15) ){
+		$error = ":warning: Experiencia excede el límite. Contacta con @duhow.";
+		$this->telegram->send
+			->chat("-236154993") // Oak - Experiencia
+			->caption($this->telegram->user->id . " excede: $exp VS " .$pkuser->exp)
+		->file('photo', $photo);
+	}
+
+	if($error){
+		$error = $this->telegram->emoji($error);
+		$this->telegram->send
+			->text($error)
+		->send();
+
+		return -1;
+	}
+
+	$pokemon->update_user_data($telegram->user->id, 'exp', $exp);
+
+	if(function_exists('badge_register')){
+		badge_register("TRAINER_XP", $exp, $telegram->user->id);
+
+		$str = ":ok: ¡Experiencia registrada correctamente!";
+		$str = $this->telegram->emoji($str);
+
+		$this->telegram->send
+			->text($str)
+		->send();
+	}
+}
+
 ?>
