@@ -983,7 +983,7 @@ elseif(
 	$to = $this->telegram->message_id;
 
 	$c = 0;
-	for($i = $from; $i < $to; $i++){
+	for($i = $from; $i <= $to; $i++){
 		$q = $this->telegram->send->delete($i);
 		if($q !== FALSE){ $c++; }
 	}
