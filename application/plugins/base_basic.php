@@ -25,6 +25,7 @@ elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has("dónde
 // comprobar estado del bot
 elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has(["ping", "pong", "me recibe", "estás", "estás ahí"]) && $telegram->words() <= 4){
 	if($pokemon->command_limit("ping", $telegram->chat->id, $telegram->message, 5)){ return -1; }
+	if($pokemon->settings($telegram->user->id, 'mute')){ return -1; }
 
     $this->analytics->event('Telegram', 'Ping');
     $q = $telegram->send->text("Pong! :D")->send();
@@ -38,6 +39,7 @@ elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has(["ping"
 
 elseif($telegram->text_command("help")){
 	if($pokemon->command_limit("help", $telegram->chat->id, $telegram->message, 5)){ return -1; }
+	if($pokemon->settings($telegram->user->id, 'mute')){ return -1; }
 
     $telegram->send
         ->notification(FALSE)
@@ -51,6 +53,7 @@ elseif($telegram->text_command(["donate", "donar"]) or
 	($telegram->text_command("start") and $telegram->text_has("donate"))
 ){
 	if($pokemon->command_limit("donate", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+	if($pokemon->settings($telegram->user->id, 'mute')){ return -1; }
 
 	if($telegram->is_chat_group()){
 		$str = "Si quieres ayudarme, puedes contribuir con la cantidad que quieras, aunque sea un 1€. Te prometo que merecerá la pena. <3";
