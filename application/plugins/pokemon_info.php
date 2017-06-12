@@ -937,7 +937,8 @@ elseif($telegram->text_command("pkseed")){
 
 	$data['pokemon'] = str_pad(decbin($pk['pokemon']), 12, "0", STR_PAD_LEFT);
 
-	$half = (int) ($pk['lvl'] % 2 == 1);
+	$half = floor((floatval($pk['lvl']) - intval($pk['lvl'])) * 10) >= 5; // bool
+	$half = (int) $half; // bool -> int 1/0
 	$data['lvl'] = $half . str_pad(decbin(floor($pk['lvl'])), 7, "0", STR_PAD_LEFT);
 
 	foreach(['atk', 'def', 'sta'] as $iv){
