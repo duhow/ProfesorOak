@@ -255,7 +255,7 @@ class Main extends CI_Controller {
 
 		if($telegram->text_contains( ["atacando", "atacan"]) && $telegram->text_contains(["gimnasio", "gym"])){
 
-		}elseif($telegram->text_has(["evolución", "evolucionar"])){
+		}elseif($telegram->text_has(["evolución", "evolucionar"]) && $telegram->words() <= 7){
 			$chat = ($telegram->text_has("aquí") && !$this->is_shutup() ? $telegram->chat->id : $telegram->user->id);
 
 			$pk = $this->parse_pokemon();
