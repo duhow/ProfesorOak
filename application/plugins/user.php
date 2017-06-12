@@ -271,7 +271,7 @@ if(
 		'$usuario' => "@" .$telegram->user->username,
 		'$pokemon' => "@" .$pokeuser->username,
 		'$nivel' => "L" .$pokeuser->lvl,
-		'$exp' => number_format($pokeuser->exp, 2, ',', '.'),
+		'$exp' => number_format($pokeuser->exp, 0, ',', '.'),
 		'$valido' => ($pokeuser->verified ? ':green-check:' : ':warning:')
 	];
 
@@ -801,14 +801,14 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 	if(function_exists('badge_register')){
 		badge_register("TRAINER_XP", $exp, $telegram->user->id, TRUE);
 
-		$str = ":ok: ¡Experiencia registrada correctamente! - " .number_format($exp, 2, ',', '.') ." XP";
+		$str = ":ok: ¡Experiencia registrada correctamente! - " .number_format($exp, 0, ',', '.') ." XP";
 		$str = $this->telegram->emoji($str);
 
 		$this->telegram->send
 			->text($str)
 		->send();
 
-		$str = $this->telegram->user->id ." - @" .$pkuser->username ." " .number_format($exp, 2, ',', '.');
+		$str = $this->telegram->user->id ." - @" .$pkuser->username ." " .number_format($exp, 0, ',', '.');
 
 		$this->telegram->send
 			->chat("-236154993") // Oak - Experiencia
