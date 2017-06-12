@@ -670,6 +670,34 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 	return -1;
 }
 
+elseif(
+	$this->telegram->text_command("exp") and
+	$this->telegram->user->id == $this->config->item('creator') and
+	$this->telegram->words() == 2 and
+	$this->telegram->has_reply
+){
+	$target = $this->telegram->reply_target('forward')->id;
+	$pkuser = $pokemon->user($target);
+
+	$exp = $this->telegram->last_word(TRUE);
+
+	$pokemon->update_user_data($target, 'exp', $exp);
+	if(function_exists('badge_register')){ badge_register("TRAINER_XP", $exp, $target, TRUE); }
+
+	$str = ":ok: ¡Experiencia registrada correctamente! - " .number_format($exp, 0, ',', '.') ." XP";
+	$str = $this->telegram->emoji($str);
+	$this->telegram->send
+		->text($str)
+	->send();
+
+	$str = $target ." - @" .$pkuser->username ." " .number_format($exp, 0, ',', '.') ." MANUAL";
+
+	$this->telegram->send
+		->chat("-236154993") // Oak - Experiencia
+		->text($str)
+	->send();
+}
+
 elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 	if(isset($this->telegram->reply->photo)){
 		$photo = array_pop($this->telegram->reply->photo);
@@ -773,7 +801,7 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 	$exp = filter_var($exp, FILTER_SANITIZE_NUMBER_INT);
 
 	$error = FALSE;
-	if($exp > 30000000 or empty($exp) or $exp <= 5000){
+	if($exp > 30000000 or empty($exp) or $exp <= 5000 or $exp < $pkuser->exp){
 		$error = ":warning: Experiencia no reconocida.";
 	}elseif($pkuser->exp != 0 and $exp > ($pkuser->exp * 1.15) ){
 		$error = ":warning: Experiencia excede el límite. Contacta con @duhow.";
