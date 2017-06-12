@@ -805,6 +805,11 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 		$this->telegram->send
 			->text($str)
 		->send();
+
+		$this->telegram->send
+			->chat("-236154993") // Oak - Experiencia
+			->text($this->telegram->user->id ." - $exp")
+		->send();
 	}
 }
 
