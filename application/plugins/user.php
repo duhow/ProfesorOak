@@ -769,7 +769,7 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 	// ----------
 
 	$pos = strpos($str, "TOTAL XP");
-	$exp = substr($str, $pos);
+	$exp = trim(substr($str, $pos, 20));
 	$exp = filter_var($exp, FILTER_SANITIZE_NUMBER_INT);
 
 	$error = FALSE;
@@ -781,6 +781,8 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 			->chat("-236154993") // Oak - Experiencia
 			->caption($this->telegram->user->id . " excede: $exp VS " .$pkuser->exp)
 		->file('photo', $photo);
+	}elseif($pkuser->exp == $exp){
+		$error = ":ok: Experiencia ya registrada.";
 	}
 
 	if($error){
@@ -797,7 +799,7 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 	if(function_exists('badge_register')){
 		badge_register("TRAINER_XP", $exp, $telegram->user->id);
 
-		$str = ":ok: ¡Experiencia registrada correctamente!";
+		$str = ":ok: ¡Experiencia registrada correctamente! - $exp XP";
 		$str = $this->telegram->emoji($str);
 
 		$this->telegram->send
