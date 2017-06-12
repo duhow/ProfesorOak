@@ -797,7 +797,7 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 	$pokemon->update_user_data($telegram->user->id, 'exp', $exp);
 
 	if(function_exists('badge_register')){
-		badge_register("TRAINER_XP", $exp, $telegram->user->id);
+		badge_register("TRAINER_XP", $exp, $telegram->user->id, TRUE);
 
 		$str = ":ok: ¡Experiencia registrada correctamente! - $exp XP";
 		$str = $this->telegram->emoji($str);

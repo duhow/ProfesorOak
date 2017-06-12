@@ -294,11 +294,15 @@ function badge_points($badge, $user, $update = FALSE){
 	return $data;
 }
 
-function badge_register($badge, $amount, $user){
+function badge_register($badge, $amount, $user, $force = FALSE){
 	$CI =& get_instance();
 	if(is_string($badge)){
-		$badge = pokemon_badges($badge);
-		if(empty($badge)){ return FALSE; }
+		if($force){
+			$badge = ['type' => $badge];
+		}else{
+			$badge = pokemon_badges($badge);
+			if(empty($badge)){ return FALSE; }
+		}
 	}
 
 	$data = [
