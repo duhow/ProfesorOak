@@ -698,7 +698,7 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 	// Reconocer la foto como perfil correspondiente
 	// ----------
 
-	$out = shell_exec("convert $temp +dither -posterize 2 -crop 20x20%+600+50 -define histogram:unique-colors=true -format %c histogram:info:-");
+	$out = shell_exec("convert $temp +dither -posterize 2 -crop 20x20%+640+550 -define histogram:unique-colors=true -format %c histogram:info:-");
 
 	$colors = ['Y' => 'yellow', 'R' => 'red', 'B' => 'cyan'];
 	$csel = NULL;
@@ -778,7 +778,7 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 	}elseif($pkuser->exp != 0 and $exp > ($pkuser->exp * 1.15) ){
 		$error = ":warning: Experiencia excede el límite. Contacta con @duhow.";
 		$perc = round(($exp / $pkuser->exp) * 100, 2);
-		
+
 		$this->telegram->send
 			->chat("-236154993") // Oak - Experiencia
 			->caption($this->telegram->user->id . " excede: $exp VS " .$pkuser->exp . " ($perc %)")
