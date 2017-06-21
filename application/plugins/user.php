@@ -334,6 +334,7 @@ elseif(
 		else{ $text = $telegram->last_word(); } // Si no hay mención, coger la última palabra
 		$text = $telegram->clean('alphanumeric', $text);
 		if(strlen($text) < 4){ return; }
+		if(in_array($text, ["creado", "creador"])){ $text = "duhow"; } // Quien es tu creador?
 		if(text_find(["quien", "quién", "quin", "este", "aqui", "aquí", "eres"], $text)){ return; } // Quien es quien?
 		$pk = pokemon_parse($text);
 		if(!empty($pk['pokemon'])){ /* $this->_pokedex($pk['pokemon']); */ return; } // TODO FIXME
