@@ -777,7 +777,7 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 
 	$str = strtoupper($str);
 
-	if(strpos($str, "TOTAL XP") === FALSE){
+	if(strpos($str, "TOTAL XP") === FALSE and strpos($str, "TOTALXP") === FALSE){
 		$error = ":warning: No se ha reconocido la experiencia.";
 	}elseif(strpos($str, "DATE") === FALSE && strpos($str, "FECHA") === FALSE){
 		$error = ":warning: La captura no parece válida.";
@@ -799,14 +799,14 @@ elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
 	// Extraer experiencia y comparar
 	// ----------
 
-	$pos = strpos($str, "TOTAL XP");
+	$pos = strpos($str, "TOTAL");
 	$exp = trim(substr($str, $pos, 20));
 	$exp = filter_var($exp, FILTER_SANITIZE_NUMBER_INT);
 
 	$error = FALSE;
 	if($exp > 30000000 or empty($exp) or $exp <= 5000 or $exp < $pkuser->exp){
 		$error = ":warning: Experiencia no reconocida.";
-	}elseif($pkuser->exp != 0 and $exp > ($pkuser->exp * 1.15) ){
+	}elseif($pkuser->exp != 0 and $exp > ($pkuser->exp * 1.8) ){
 		$error = ":warning: Experiencia excede el límite. Contacta con @duhow.";
 		$perc = round(($exp / $pkuser->exp) * 100, 2);
 
