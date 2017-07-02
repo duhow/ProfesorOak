@@ -149,6 +149,9 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 					.":abc: " .$new->first_name ." - @" .$pknew->username;
 			$str = $telegram->emoji($str);
 			$telegram->send
+				->inline_keyboard()
+					->row_button("Desbanear", "desbanear " .$new->id, "TEXT")
+				->show()
 				->notification(TRUE)
 				->chat($adminchat)
 				->text($str)
