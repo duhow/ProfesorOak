@@ -138,10 +138,23 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
     // Si el grupo no admite más usuarios...
     $nojoin = $pokemon->settings($telegram->chat->id, 'limit_join');
     // TODO excepto si el que lo agrega es admin.
-    if($nojoin == TRUE){
+    if($nojoin and !in_array($this->telegram->user->id, telegram_admins(TRUE))){
         $this->analytics->event('Telegram', 'Join limit users');
-        $telegram->send->kick($new->id, $telegram->chat->id);
+        $telegram->send->ban($new->id, $telegram->chat->id);
         $pokemon->user_delgroup($new->id, $telegram->chat->id);
+
+		if($adminchat){
+			$str = ":warning: Limit Join - bloqueo entrada.\n"
+					.":id: " .$new->id ."\n"
+					.":abc: " .$new->first_name ." - @" .$pknew->username;
+			$str = $telegram->emoji($str);
+			$telegram->send
+				->notification(TRUE)
+				->chat($adminchat)
+				->text($str)
+			->send();
+		}
+
         return -1;
     }
 
