@@ -27,7 +27,7 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 		}
 
     // Bot agregado al grupo. Yo no saludo bots :(
-    }elseif($new->id != $this->config->item('telegram_bot_id') && $telegram->is_bot($new->username)){
+    }elseif($new->id != $this->config->item('telegram_bot_id') && isset($new->username) and $telegram->is_bot($new->username)){
 		if(in_array($this->telegram->user->id, telegram_admins(TRUE))){ return -1; } // Lo agrega un admin, no pasa na.
 		$mute = $pokemon->settings($telegram->chat->id, 'mute_content');
 		if(empty($mute)){ return -1; }
