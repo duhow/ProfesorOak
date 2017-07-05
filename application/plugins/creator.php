@@ -1133,7 +1133,7 @@ elseif($telegram->text_command("pokerecalc")){
 	->send();
 
 	$final = array();
-	foreach($pokes->row_array() as $poke){
+	foreach($pokes->result() as $poke){
 		$hp = ($pokedex[$poke->pokemon]->stamina + $poke->sta) * pokemon_level($poke->lvl);
 		$cp =
 			($pokedex[$poke->pokemon]->attack + $poke->atk) *
@@ -1141,7 +1141,7 @@ elseif($telegram->text_command("pokerecalc")){
 			pow($pokedex[$poke->pokemon]->stamina + $poke->sta, 1/2) *
 			pow(pokemon_level($poke->lvl), 2) / 10;
 
-		$final[$poke->id] = ['hp' => $hp, 'cp' => $cp];
+		$final[$poke->id] = ['hp' => max($hp, 10), 'cp' => max($cp, 10)];
 	}
 
 	foreach($final as $id => $stats){

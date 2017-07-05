@@ -243,9 +243,11 @@ function pokemon_level($data, $powered = FALSE, $full = FALSE){
 		}
 	}else{
 		if(!is_float($data)){ $data = (float) $data; }
-		foreach($levels as $level){
-			foreach($level as $lvl => $multiplier){
-				if($data == $lvl){ return $multiplier; }
+		foreach($levels as $sublevels){
+			foreach($sublevels as $ldata){
+				foreach($ldata as $lvl => $multiplier){
+					if($data == $lvl){ return $multiplier; }
+				}
 			}
 		}
 		return NULL;
