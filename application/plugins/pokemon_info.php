@@ -242,11 +242,13 @@ function pokemon_level($data, $powered = FALSE, $full = FALSE){
 			}
 		}
 	}else{
+		if(!is_float($data)){ $data = (float) $data; }
 		foreach($levels as $level){
 			foreach($level as $lvl => $multiplier){
-				// TODO
+				if($data == $lvl){ return $multiplier; }
 			}
 		}
+		return NULL;
 	}
 	// if $powered === FALSE, sólo niveles acabados en 0.
 

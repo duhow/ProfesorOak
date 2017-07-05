@@ -1119,6 +1119,44 @@ elseif($telegram->text_command("upar")){
 	return -1;
 }
 
+elseif($telegram->text_command("pokerecalc")){
+	$this->plugin->load('pokemon_info');
+
+	$pokes = $this->db
+		->select(['id', 'pokemon', 'atk', 'def', 'sta', 'lvl'])
+	->get('pokegame_sightseens');
+
+	$pokedex = $pokemon->pokedex();
+
+	$q = $this->telegram->send
+		->text("Recalculando " .$pokes->num_rows() ." Pokémon...")
+	->send();
+
+	$final = array();
+	foreach($pokes->row_array() as $poke){
+		$hp = ($pokedex[$poke->pokemon]->stamina + $poke->sta) * pokemon_level($poke->lvl);
+		$cp =
+			($pokedex[$poke->pokemon]->attack + $poke->atk) *
+			pow($pokedex[$poke->pokemon]->defense + $poke->def, 1/2) *
+			pow($pokedex[$poke->pokemon]->stamina + $poke->sta, 1/2) *
+			pow(pokemon_level($poke->lvl), 2) / 10;
+
+		$final[$poke->id] = ['hp' => $hp, 'cp' => $cp];
+	}
+
+	foreach($final as $id => $stats){
+		$this->db
+			->where('id', $id)
+		->update('pokegame_sightseens', $stats);
+	}
+
+	$this->telegram->send
+		->chat(TRUE)
+		->message($q)
+		->text("¡Pokémon recalculados!")
+	->edit('text');
+}
+
 $step = $pokemon->step($telegram->user->id);
 if($telegram->document() && in_array($step, ["USERREC_LIST", "USERDIF_LIST"])){
 	set_time_limit(2700);
