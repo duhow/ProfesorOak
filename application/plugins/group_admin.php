@@ -785,7 +785,11 @@ elseif(
 		$this->telegram->text_has(["primer", "último", "quedas"], ["aviso", "avisado"])
 	) and $this->telegram->has_reply
 	and $this->telegram->words() < 6
-	and $this->telegram->user->id != $this->telegram->reply_user->id // No autowarn
+	and !in_array($this->telegram->reply_user->id, [
+		$this->telegram->user->id, // No autowarn
+		$this->config->item('telegram_bot_id'), // No warn al bot
+		$this->config->item('creator') // No al creador
+	])
 ){
 	$adminchat = $pokemon->settings($this->telegram->chat->id, 'admin_chat');
 
