@@ -791,6 +791,7 @@ elseif(
 		$this->config->item('creator') // No al creador
 	])
 ){
+	if($pokemon->user_flags($this->telegram->user->id, ['troll', 'troll_warn'])){ return -1; }
 	$adminchat = $pokemon->settings($this->telegram->chat->id, 'admin_chat');
 
 	$reasons = [
