@@ -15,14 +15,28 @@ class Config extends TelegramApp\Module {
 			}
 			$target = NULL;
 			if($this->user->id == CREATOR){
-				// if($this->telegram->reply_target('forward'))
+				if($this->telegram->has_reply){
+					$target = $this->telegram->reply_target('forward')->id;
+				}elseif($this->telegram->words() >= 3){
+					$target = $this->telegram->last_word();
+					if(!is_numeric($target) and is_string($target)){
+						$this->core->load('Group');
+						global $Group;
+						$target = $Group->search_by_name($target);
+					}
+				}
 			}
-			$v = $this->get($this->telegram->words(1), NULL);
+			$v = $this->get($this->telegram->words(1), $target);
 			$this->telegram->send
+				->notification(FALSE)
 				->text($v)
 			->send();
 			$this->end();
 		}elseif($this->telegram->text_command("set") && in_array($this->telegram->words(), [3,4])){
+			if(
+				$this->telegram->words() == 4 and
+				$this->user->id != CREATOR
+			){ $this->end(); }
 
 			$this->end();
 		}
@@ -30,6 +44,7 @@ class Config extends TelegramApp\Module {
 
 	public function set($key, $value, $chat = NULL){
 		if(empty($key) or empty($value)){ return FALSE; }
+		if(empty($chat)){ $chat = $this->chat->id; }
 	}
 
 	public function get($key, $chat = NULL){

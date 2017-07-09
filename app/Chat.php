@@ -13,6 +13,8 @@ class Chat extends TelegramApp\Chat {
 	// $blocked
 	// $authorized
 
+	// $admins - Admin list
+
 	private function set_chat($chat = NULL){
 		if($chat !== NULL){ $this->chat = $chat; }
 		else{ $chat = $this->chat; }
@@ -212,8 +214,9 @@ class Chat extends TelegramApp\Chat {
 		}
 	}
 
-	public function is_admin($user){
+	public function is_admin($user, $forcequery = FALSE){
 		$user = $this->get_userid($user);
+		if(!empty($this->admins) && !$forcequery){ return in_array($user, $this->admins); }
 		$query = $this->db
 			->where('gid', $this->id)
 			->where('uid', $user)
