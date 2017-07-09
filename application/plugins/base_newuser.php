@@ -65,6 +65,35 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 		->send();
 	}
 
+	$blacklist = $pokemon->settings($this->telegram->chat->id, 'blacklist');
+	if(!empty($blacklist)){
+		$blacklist = explode(",", $blacklist);
+		$pknew_flags = $pokemon->user_flags($new->id);
+		// TODO excepto si el que lo agrega es admin.
+		foreach($blacklist as $b){
+			if(in_array($b, $pknew_flags)){
+				$this->analytics->event('Telegram', 'Join blacklist user', $b);
+				$q = $this->telegram->send->ban($new->id, $this->telegram->chat->id);
+				if($q){
+					$pokemon->user_delgroup($new->id, $this->telegram->chat->id);
+				}
+
+				if($adminchat){
+					$str = ":times: Usuario en blacklist - $b\n"
+							.":id: " .$new->id ."\n"
+							.":abc: " .$new->first_name ." - @" .$pknew->username;
+					$str = $this->telegram->emoji($str);
+					$this->telegram->send
+						->notification(TRUE)
+						->chat($adminchat)
+						->text($str)
+					->send();
+				}
+				return -1;
+			}
+		}
+	}
+
     $pknew = $pokemon->user($new->id);
     // El usuario nuevo es creador
     if($new->id == $this->config->item('creator')){
@@ -105,33 +134,6 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
                 $pokemon->user_delgroup($new->id, $telegram->chat->id);
             }
             return -1;
-        }
-
-        $blacklist = $pokemon->settings($telegram->chat->id, 'blacklist');
-        if(!empty($blacklist)){
-            $blacklist = explode(",", $blacklist);
-            $pknew_flags = $pokemon->user_flags($pknew->telegramid);
-            // TODO excepto si el que lo agrega es admin.
-            foreach($blacklist as $b){
-                if(in_array($b, $pknew_flags)){
-                    $this->analytics->event('Telegram', 'Join blacklist user', $b);
-                    $telegram->send->ban($new->id, $telegram->chat->id);
-                    $pokemon->user_delgroup($new->id, $telegram->chat->id);
-
-					if($adminchat){
-						$str = ":times: Usuario en blacklist - $b\n"
-								.":id: " .$new->id ."\n"
-								.":abc: " .$new->first_name ." - @" .$pknew->username;
-						$str = $telegram->emoji($str);
-						$telegram->send
-							->notification(TRUE)
-							->chat($adminchat)
-							->text($str)
-						->send();
-					}
-                    return -1;
-                }
-            }
         }
     }
 
