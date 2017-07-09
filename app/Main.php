@@ -8,7 +8,10 @@ class Main extends TelegramApp\Module {
 		$this->core->load('Tools');
 		$this->core->load('Pokemon');
 
-		if($this->chat->load()){
+		if(
+			$this->chat->load() and
+			!$this->telegram->callback // Para botones inline de juegos y demás.
+		){
 			$this->chat->active_member($this->user->id);
 		}
 
@@ -21,7 +24,7 @@ class Main extends TelegramApp\Module {
 			$this->core->load('Group');
 			global $Admin, $Group;
 
-			if($this->telegram->data_received("migrate_to_chat_id")){
+			if($this->telegram->data_received('migrate_to_chat_id')){
 				$Admin->migrate_settings($this->telegram->migrate_chat, $this->chat->id);
 				$this->chat->disable();
 				$this->end();
@@ -30,6 +33,10 @@ class Main extends TelegramApp\Module {
 			if($this->chat->settings('forwarding_to')){ $Admin->forward_to_groups(); }
 			if($this->chat->settings('antiflood')){ $Admin->antiflood(); }
 			if($this->chat->settings('antispam') != FALSE && $this->telegram->text_url()){ $Admin->antispam(); }
+			if($this->chat->settings('mute_content')){ $Admin->mute_content(); }
+			if($this->chat->settings('antiafk') and $this->telegram->key == 'message'){ $Admin->antiafk(); }
+			// if($this->user->settings('mute')){ /* TODO Mute User */ }
+			// if($this->chat->settings('require_avatar')){ $Admin->antinoavatar(); }
 			if($this->chat->settings('die') && $this->user->id != CREATOR){ $this->end(); }
 			if($this->chat->settings('abandon')){ $Group->abandon(); }
 
@@ -37,8 +44,10 @@ class Main extends TelegramApp\Module {
 
 			if($this->chat->settings('custom_commands')){ $Group->custom_commands(); }
 			// if($this->chat->settings('blackwords')){ $Admin->blackwords(); }
-			// if($this->chat->settings('mute_content')){ $Admin->mute_content(); }
 			if($this->chat->settings('dubs')){ $this->core->load('GameDubs', TRUE); }
+
+			// Cancelar acciones sobre comandos provenientes de mensajes de channels. STOP SPAM.
+			if($this->telegram->has_forward && $this->telegram->forward_type("channel")){ $this->end(); }
 		}
 
 		if($this->user->load() !== TRUE){
@@ -93,10 +102,9 @@ class Main extends TelegramApp\Module {
 		$str = NULL;
 		if($this->user->telegramid === NULL){
 			if($team === NULL){
-				$str = "Hola " .$this->user->telegram->first_name ."! ¿Puedes decirme qué color eres?\n"
-				."<b>Di:</b> Soy...";
+				$str = $this->strings->parse('register_hello_start', $this->user->telegram->first_name);
 				if($this->telegram->is_chat_group()){
-					$str = "Hola " .$this->user->telegram->first_name ."! Ábreme por privado para registrate! :)";
+					$str = $this->strings->parse('register_hello_private', $this->user->telegram->first_name);
 					$this->telegram->send
 					->inline_keyboard()
 						->row_button("Registrar", "https://t.me/ProfesorOak_bot")
@@ -104,24 +112,24 @@ class Main extends TelegramApp\Module {
 				}
 			}elseif($team === FALSE){
 				$this->telegram->send->reply_to(TRUE);
-				$str = "No te he entendido bien...\n¿Puedes decirme sencillamente <b>soy rojo, soy azul</b> o <b>soy amarillo</b>?";
+				$str = $this->strings->get('error_register');
 			}else{
 				// Intentar registrar, ignorar si es anonymous.
 				if($this->user->register($team) === FALSE){
 					$this->telegram->send
-						->text("Error general al registrar.")
+						->text($this->strings->get('error_register'))
 					->send();
 					$this->end();
 				}
 				if($this->user->load() !== FALSE){
 					$this->user->step = "SETNAME";
-					$str = "Muchas gracias " .$this->user->telegram->first_name ."! Por cierto, ¿cómo te llamas <b>en el juego</b>? \n<i>(Me llamo...)</i>";
+					$str = $this->strings->parse('register_ok_name', $this->user->telegram->first_name);
 				}
 			}
-		}elseif($this->user->username === NULL){
-			$str = "Oye, ¿cómo te llamas? <b>Di:</b> Me llamo ...";
+		}elseif(empty($this->user->username)){
+			$str = $this->strings->get('register_hello_name');
 		}elseif($this->user->verified == FALSE){
-			$str = $this->telegram->emoji(":warning:") ."¿Entiendo que quieres <b>validarte</b>?";
+			$str = $this->telegram->emoji(":warning:") .$this->strings->get('register_hello_verify');
 			$this->telegram->send
 	        ->inline_keyboard()
 	            ->row_button("Validar", "quiero validarme", TRUE)
@@ -134,25 +142,6 @@ class Main extends TelegramApp\Module {
 			->send();
 		}
 		$this->end();
-	}
-
-	private function setname($name, $user = NULL){
-		if(empty($user)){ $user = $this->user; }
-		if($user->step == "SETNAME"){ $user->step = NULL; }
-		try {
-			$user->username = $name;
-		} catch (Exception $e) {
-			$this->telegram->send
-				->text("Ya hay alguien que se llama @$name. Habla con @duhow para arreglarlo.")
-			->send();
-			$this->end();
-		}
-		$str = "De acuerdo, @$name!\n"
-				."¡Recuerda <b>validarte</b> para poder entrar en los grupos de colores!";
-		$this->telegram->send
-			->text($str, 'HTML')
-		->send();
-		return TRUE;
 	}
 
 	private function forward_creator(){
@@ -226,14 +215,20 @@ class Main extends TelegramApp\Module {
 
 			// Avisar al creador de que hay un grupo nuevo
 			$text = ":new: ¡Grupo nuevo!\n"
-					.":abc: " .$this->chat->title ."\n"
-					.":id: " .$this->chat->id ."\n"
-					."\ud83d\udec2 " .$count ."\n" // del principio de ejecución.
-					.":male: " .$this->user->id ." - " .$this->user->first_name;
+					.":abc: %s\n"
+					.":id: %s\n"
+					."\ud83d\udec2 %s\n" // del principio de ejecución.
+					.":male: %s - %s";
+			$text = $this->telegram->emoji($text);
+
+			$repl = [$this->chat->title,
+					$this->chat->id,
+					$count,
+					$this->user->id, $this->user->first_name];
 
 			$this->telegram->send
 				->chat(CREATOR)
-				->text($this->telegram->emoji($text))
+				->text_replace($text, $repl)
 			->send();
 
 			// -----------------
@@ -273,7 +268,7 @@ class Main extends TelegramApp\Module {
 		){
 			// $this->analytics->event('Telegram', 'Join limit users');
 			$Admin->kick($new->id);
-			$Admin->admin_chat_message($new->id ." ha intentado entrar.");
+			$Admin->admin_chat_message($this->strings->parse('adminchat_newuser_limit_join', $new->id));
 			// $pokemon->user_delgroup($new->id, $telegram->chat->id);
 			$this->end();
 		}
@@ -312,7 +307,7 @@ class Main extends TelegramApp\Module {
 				){
 					$q = $Admin->kick($new->id);
 					if($q !== FALSE){
-						$str = ":times: Topo detectado!\n"
+						$str = ":times: " .$this->strings->get('adminchat_newuser_team_exclusive_invalid') ."\n"
 								.":id: " .$new->id ."\n"
 								.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 						$str = $this->telegram->emoji($str);
@@ -335,7 +330,7 @@ class Main extends TelegramApp\Module {
 					// $this->analytics->event('Telegram', 'Join blacklist user', $b);
 					$q = $Admin->kick($new->id);
 
-					$str = ":times: Usuario en blacklist - $b\n"
+					$str = ":times: " .$this->strings->get('adminchat_newuser_in_blacklist') ." - $b\n"
 					.":id: " .$new->id ."\n"
 					.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 					$str = $this->telegram->emoji($str);
@@ -362,7 +357,7 @@ class Main extends TelegramApp\Module {
 					// $pokemon->user_delgroup($new->id, $telegram->chat->id);
 					$str = $this->strings->get('admin_kicked_unverified');
 
-					$str2 = ":warning: Usuario no validado.\n"
+					$str2 = ":warning: " .$this->strings->get('adminchat_newuser_not_verified') ."\n"
 							.":id: " .$new->id ."\n"
 							.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 					$str2 = $this->telegram->emoji($str2);
@@ -465,7 +460,7 @@ class Main extends TelegramApp\Module {
 			$telegram->send
 				->notification(FALSE)
 				->keyboard()->selective(FALSE)->hide()
-				->text("Acción cancelada.")
+				->text($this->strings->get('step_cancel'))
 			->send();
 			$this->end();
 		}
@@ -534,15 +529,8 @@ class Main extends TelegramApp\Module {
 						// $pokedex = $pokemon->pokedex($pk['pokemon']);
 						$this->analytics->event("Telegram", "Calculate IV", $pokedex->name);
 
-						$frases = [
-							'Es una.... mierda. Si quieres caramelos, ya sabes que hacer.',
-							'Bueno, no está mal. :)',
-							'Oye, ¡pues mola!',
-							'Menuda suerte que tienes, cabrón...'
-						];
-
 						if(count($table) == 0){
-							$text = "Los cálculos no me salen...\n¿Seguro que me has dicho bien los datos?";
+							$text = $this->strings->get('pokemon_iv_not_found');
 						}elseif(count($table) == 1){
 							if($low == $high){ $sum = round($high, 1); }
 							reset($table); // HACK Reiniciar posicion
@@ -552,22 +540,24 @@ class Main extends TelegramApp\Module {
 							elseif($sum > 50 && $sum <= 66){ $frase = 1; }
 							elseif($sum > 66 && $sum <= 80){ $frase = 2; }
 							elseif($sum > 80){ $frase = 3; }
-							$text = "Pues parece que tienes un *$sum%*!\n"
-									.$frases[$frase] ."\n"
-									."*L" .round($r['level']) ."* " .$r['atk'] ." ATK, " .$r['def'] ." DEF, " .$r['sta'] ." STA";
+							$text = $this->strings->parse('pokemon_iv_found_percentage', $sum) ."\n"
+									.$this->strings->get_multi('pokemon_iv_found_result_sentence', $frase) ."\n"
+									."<b>L" .round($r['level']) ."</b> " .$r['atk'] ." ATK, " .$r['def'] ." DEF, " .$r['sta'] ." STA";
 						}else{
 							$low = round($low, 1);
 							$high = round($high, 1);
-							$text = "He encontrado *" .count($table) ."* posibilidades, "; // \n
-							if($low == $high){ $text .= "con un *$high%*."; }
-							else{ $text .= "entre *" .round($low, 1) ."% - " .round($high, 1) ."%*."; }
+							if($low == $high){
+								$text = $this->strings->parse('pokemon_iv_found_multiple_range_lowhigh', [count($table), $low, $high]);
+							}else{
+								$text = $this->strings->parse('pokemon_iv_found_multiple_range_same', [count($table), $high]);
+							}
 
 							if($high <= 50 or ($low <= 60 and $high <= 60) ){ $frase = 0; }
 							elseif($low > 75){ $frase = 3; }
 							elseif($low > 66){ $frase = 2; }
 							elseif($low > 50 or ($high >= 75 and $low <= 65)){ $frase = 1; }
 
-							$text .= "\n" .$frases[$frase] ."\n";
+							$text .= "\n" .$this->strings->get_multi('pokemon_iv_found_result_sentence', $frase) ."\n";
 
 							// Si hay menos de 6 resultados, mostrar.
 							if(count($table) <= 6){

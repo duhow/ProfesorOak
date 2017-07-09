@@ -33,21 +33,26 @@ return [
 
 	'done' => 'Hecho',
 	'done_excl' => '¡Hecho!',
-	'added' => 'Agregado',
-	'left' => 'Restantes',
+	'added' => ['Agregado', 'Agregados'],
+	'left' => ['Restante', 'Restantes'],
 
-	'user' => 'Usuario',
+	'user' => ['Usuario', 'Usuarios'],
 	'user_level_up_to' => '¡<b>%s</b> ha subido al <b>nivel %s</b>!',
 
 	'admin_ban' => 'Banear',
-	'admin_banned' => 'Baneado',
+	'admin_banned' => ['Baneado', 'Baneados'],
 	'admin_unban' => 'Desbanear',
-	'admin_unbanned' => 'Desbaneado',
+	'admin_unbanned' => ['Desbaneado', 'Desbaneados'],
 	'admin_kick' => 'Kickear',
-	'admin_kicked' => 'Kickeado',
+	'admin_kicked' => ['Kickeado', 'Kickeados'],
 
 	'admin_kicked_flood' => 'Usuario kickeado por flood.',
 	'admin_kicked_unverified' => 'Usuario kickeado por no estar verificado.',
+
+	'adminchat_newuser_limit_join' => '%s ha intentado entrar.',
+	'adminchat_newuser_team_exclusive_invalid' => '¡Topo detectado!',
+	'adminchat_newuser_in_blacklist' => 'Usuario en blacklist',
+	'adminchat_newuser_not_verified' => 'Usuario no validado.',
 
 	'dow_1' => 'Lunes',
 	'dow_2' => 'Martes',
@@ -116,6 +121,17 @@ return [
 	'pokemon_nest_list_full' => "He contado <b>%s</b> nidos. Te los mando por privado!\n¿Alguien más los quiere ver?",
 	'pokemon_nest_list_count' => 'Hay <b>%s</b> nidos de:',
 
+	'pokemon_iv_not_found' => "Los cálculos no me salen...\n¿Seguro que me has dicho bien los datos?",
+	'pokemon_iv_found_multiple_range_lowhigh' => 'He encontrado <b>%s</b> posibilidades, entre <b>%s% - %s%</b>.',
+	'pokemon_iv_found_multiple_range_same' => 'He encontrado <b>%s</b> posibilidades, con un <b>%s%</b>.',
+	'pokemon_iv_found_percentage' => '¡Pues parece que tienes un <b>%s%</b>!',
+	'pokemon_iv_found_result_sentence' => [
+		'Es una.... mierda. Si quieres caramelos, ya sabes que hacer.',
+		'Bueno, no está mal. :)',
+		'Oye, ¡pues mola!',
+		'Menuda suerte que tienes, cabrón...'
+	],
+
 	'report_only_old_members' => 'Sólo pueden reportar los usuarios validados de hace tiempo.',
 	'report_error_self' => '¿Porqué ibas a reportarte a ti mismo?',
 	'report_error_general' => 'Error al generar report.',
@@ -132,7 +148,13 @@ return [
 	'welcome_group_require_verified' => 'Para estar en este grupo <b>debes estar validado.</b>',
 	'welcome_invite_user' => 'He invitado a @%s a este grupo.',
 
+	'register_hello_start' => "¡Hola %s! ¿Puedes decirme qué color eres?\n<b>Di:</b> Soy...",
+	'register_hello_private' => "¡Hola %s! Ábreme por privado para registrate! :)",
+	'register_hello_name' => 'Oye, ¿cómo te llamas? <b>Di:</b> Me llamo ...',
+	'register_hello_verify' => '¿Entiendo que quieres <b>validarte</b>?',
+	'register_error_color' => "No te he entendido bien...\n¿Puedes decirme sencillamente <b>soy rojo, soy azul</b> o <b>soy amarillo</b>?",
 	'register_error_duplicated_name' => "No puede ser, ya hay alguien que se llama <b>@%s</b> :(\nHabla con @duhow para arreglarlo.",
+	'register_ok_name' => "¡Muchas gracias %s! Por cierto, ¿cómo te llamas <b>en el juego</b>? \n<i>(Me llamo...)</i>",
 	'register_successful' => "De acuerdo, <b>@%s</b>!\n¡Recuerda <b>validarte</b> para poder entrar en los grupos de colores!",
 
 	'levelup_same' => 'Si, ya lo sé.',
@@ -149,6 +171,7 @@ return [
 	'lure_seen_place' => 'Cebo en <b>%s</b>, gracias por avisar! :D',
 	'pokemon_found_position' => 'Tienes a <b>%s</b> a %s, ve a por él!',
 
+	'error_register' => 'Error general al registrar.',
 	'error_chat_abandoned' => 'Este chat ha sido abandonado.',
 	'error_candy_as_stardust' => '¿Caramelos? Querrás decir polvos...',
 	'error_pokemon_does_not_exist' => 'El Pokémon mencionado no existe.',

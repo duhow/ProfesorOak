@@ -147,6 +147,89 @@ class Admin extends TelegramApp\Module {
 		$this->end();
 	}
 
+	public function antiafk(){
+		$antiafk = $this->chat->settings('antiafk');
+		if(!is_numeric($antiafk) or $antiafk <= 1){ $antiafk = 5; }
+	    $except = [$this->telegram->bot->id, $this->telegram->user->id];
+
+	    $query = $this->db
+	        // ->select(['uid', 'register_date'])
+	        ->where('cid', $this->chat->id)
+	        ->where('messages', 0)
+	        ->where('register_date = last_date')
+	        ->where('register_date IS NOT NULL')
+	        ->where("DATE_ADD(register_date, INTERVAL $antiafk MINUTE) < NOW()")
+	        ->where('uid', $except, 'NOT IN')
+	    ->getOne('user_inchat');
+
+	    if(!empty($query)){
+	        $afk = (object) $query;
+
+	        $q = $this->kick($afk->uid);
+	        if($q !== FALSE){
+	            // $pokemon->user_delgroup($afk->uid, $this->telegram->chat->id);
+				$str = ":warning: AntiAFK Newbie\n"
+						.":id: " .$afk->uid ."\n"
+						."\ud83d\udcc5 " .$afk->register_date;
+
+				$str = $this->telegram->emoji($str);
+				$this->admin_chat_message($str);
+	        }
+	    }
+	}
+
+	public function antinoavatar(){
+		$query = $this->db
+			// ->select('messages')
+			->where('cid', $this->chat->id)
+			->where('uid', $this->telegram->user->id)
+		->getOne('user_inchat');
+
+		if(!empty($query) and $query['messages'] == 5){
+			// TODO Get avatar
+			if(1 == 2){
+				$q = $this->kick($this->telegram->user->id);
+
+				if($q === FALSE){
+					$str = ":warning: No foto de perfil\n"
+							.":id: " .$telegram->user->id ."\n"
+							.":male: " .$telegram->user->first_name;
+				}else{
+					// Si está kick, quitar del grupo.
+					// $pokemon->user_delgroup($telegram->user->id, $this->telegram->chat->id);
+
+					$str = ":forbid: Kick por no foto de perfil\n"
+							.":id: " .$telegram->user->id ."\n"
+							.":male: " .$telegram->user->first_name;
+				}
+
+				$str = $this->telegram->emoji($str);
+				$this->admin_chat_message($str);
+
+				$this->end();
+			}
+		}
+	}
+
+	public function mute_content(){
+		$mute = explode(",", $this->chat->settings('mute_content'));
+		if(
+			(in_array("url", $mute) and $this->telegram->text_url()) or
+			(in_array("command", $mute) and $this->telegram->text_command()) or
+			(in_array("gif", $mute) and $this->telegram->gif()) or
+			(in_array("photo", $mute) and $this->telegram->photo()) or
+			(in_array("sticker", $mute) and $this->telegram->sticker()) or
+			(in_array("voice", $mute) and $this->telegram->voice()) or
+			(in_array("audio", $mute) and $this->telegram->audio()) or
+			(in_array("video", $mute) and $this->telegram->video()) or
+			(in_array("game", $mute) and $this->telegram->game()) or
+			(in_array("document", $mute) and $this->telegram->document())
+		){
+			$q = $this->telegram->send->delete(TRUE);
+			if($q !== FALSE){ return -1; }
+		}
+	}
+
 	public function kick($user, $chat = NULL){
 		if(empty($chat)){ $chat = $this->chat->id; }
 		if(is_array($user)){
@@ -219,6 +302,16 @@ class Admin extends TelegramApp\Module {
 			->where('cid', $chat)
 			->where('messages >=', $min)
 		->get('user_inchat');
+		if($this->db->count == 0 or $countonly){ return $this->db->count; }
+		return $this->multikick(array_column($users, 'uid'));
+	}
+
+	function kick_team($team){
+		$users = $this->db
+			->join('user_inchat c', 'u.telegramid = c.uid')
+			->where('c.cid', $chat)
+			->where('u.team', $team)
+		->get("user u", null, "c.uid");
 		if($this->db->count == 0 or $countonly){ return $this->db->count; }
 		return $this->multikick(array_column($users, 'uid'));
 	}

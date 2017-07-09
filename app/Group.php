@@ -224,6 +224,15 @@ class Group extends TelegramApp\Module {
 
 	}
 
+	// Dar name y devolver ID
+	public function search_by_name($data){
+		$query = $this->db
+			->where('type', 'name')
+			->where('value', $data)
+		->getOne('settings', 'uid');
+		return (!empty($query) ? $query['uid'] : NULL);
+	}
+
 	public function custom_commands(){
 		if(
 			$this->user->blocked or
