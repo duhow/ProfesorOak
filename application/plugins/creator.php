@@ -117,6 +117,37 @@ elseif($telegram->text_contains(["/block", "/unblock"], TRUE)){
     $pokemon->update_user_data($user, 'blocked', $telegram->text_contains("/block"));
 }
 
+// Banear usuario de todos los grupos.
+elseif($telegram->text_command(["banall", "kickall"])){
+	$target = NULL;
+	if($telegram->has_reply){
+		$target = $telegram->reply_target('forward')->id;
+	}elseif($telegram->words() == 2){
+		$target = $telegram->last_word();
+		if(!is_numeric($target)){
+			$target = $pokemon->user($target);
+			if(!empty($target)){ $target = $target->telegramid; }
+		}
+	}
+	if(empty($target)){ return -1; }
+
+	$groups = $pokemon->group_find_member($target);
+	$c = 0;
+	foreach($groups as $g){
+		$q = $this->telegram->send->ban($target, $g);
+		if($telegram->text_has("kick")){
+			$this->telegram->send->unban($target, $g);
+		}
+		if($q !== FALSE){ $c++; }
+	}
+
+	$this->telegram->send
+		->text("Fuera $c de " .count($groups) ." grupos.")
+	->send();
+
+	return -1;
+}
+
 // Desbanear usuarios de un grupo
 elseif($telegram->text_command("unban") && !$telegram->has_reply){
     // si es group y
