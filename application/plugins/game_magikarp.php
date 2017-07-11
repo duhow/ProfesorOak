@@ -16,7 +16,11 @@ function load_karps($user){
 if(!$this->telegram->is_chat_group()){ return; }
 if($pokemon->settings($this->telegram->chat->id, "play_games") == FALSE){ return; }
 
-if($telegram->text_has("magikarp", ["salta", "jump"]) and $telegram->words() <= 5){
+if(
+	$telegram->text_has("magikarp", ["salta", "jump"]) and
+	!$telegram->has_forward and
+	$telegram->words() <= 5
+){
 
     // Cargar los Karp Karp del usuario.
     $pokes = load_karps($this->telegram->user->id);
