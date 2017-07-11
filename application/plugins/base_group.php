@@ -159,9 +159,31 @@ if($telegram->text_url() && $telegram->is_chat_group()){
             ->text("¡*SPAM* detectado!", TRUE)
         ->send();
 
+		$ban = $telegram->send->ban($telegram->user->id, $telegram->chat->id);
+
+		$adminchat = $pokemon->settings($telegram->chat->id, 'admin_chat');
+		if($adminchat){
+			$str = ($ban !== FALSE ? ":ok:" : ":warning:") ." Antispam\n"
+					.":id: " .$this->telegram->user->id;
+
+			$str = $this->telegram->emoji($str);
+
+			$this->telegram->send
+				->notification(TRUE)
+				->chat($adminchat)
+				->text($str)
+			->send();
+
+			$this->telegram->send
+				->notification(FALSE)
+				->chat(TRUE)
+				->message(TRUE)
+				->forward_to($adminchat)
+			->send();
+		}
+
 		$telegram->send->delete(TRUE);
 
-        $telegram->send->ban($telegram->user->id, $telegram->chat->id);
         return -1;
     }
 }
