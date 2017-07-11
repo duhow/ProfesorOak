@@ -22,9 +22,13 @@ if(
 ){
     $release = strtotime("2016-07-16 14:27");
     $birthdate = strtotime("now") - $release;
-    $days = floor($birthdate / (60*60*24));
-    $joke = "Cumplo " .floor($days/30) ." meses y " .($days % 30) ." días. ";
-    $joke .= $telegram->emoji(":)");
+    $days = floor($birthdate / (60*60*24)) - 5; // -5 dias, 360
+	if($days % 365 == 0){
+		$joke = "¡Es mi cumpleaños! Puedes felicitar a @duhow también.";
+	}else{
+		$joke = "Cumplo " .floor($days/30) ." meses y " .($days % 30) ." días.";
+	}
+    $joke .= $this->telegram->emoji(" :)");
 }elseif($telegram->text_has("quién es Ash") && $telegram->words() <= 7){
 	$this->analytics->event('Telegram', 'Jokes', 'Ash');
 	$joke = "Ah! Ese es un *cheater*, es nivel 100...\nLo que no sé de dónde saca tanto dinero para viajar tanto...";
