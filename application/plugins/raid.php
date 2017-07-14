@@ -48,7 +48,7 @@ if($this->telegram->is_chat_group()){
 		$str = $this->telegram->text_message();
 		$user = $pokemon->user($this->telegram->user->id);
 
-		if(strpos($user->username, $str) !== FALSE){
+		if(strpos($str, $user->username) !== FALSE){
 			$this->telegram->answer_if_callback("¡Ya estás apuntado en la lista!", TRUE);
 			return -1;
 		}
