@@ -8,7 +8,7 @@ if($this->telegram->is_chat_group()){
 			$pos = strpos($this->telegram->text(), " en ") + strlen(" en ");
 			$place = substr($this->telegram->text(), $pos);
 		}
-		if(empty($place) and $this->telegram->words() >= 5){ return; }
+		if(empty($place) and $this->telegram->words() > 5){ return; }
 
 		$poke = pokemon_parse($this->telegram->text());
 		$time = time_parse($this->telegram->text());
