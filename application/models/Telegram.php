@@ -653,7 +653,7 @@ class Telegram extends CI_Model{
 				$this->reply_user = (object) $this->data[$this->key]['reply_to_message']['from'];
 				$this->reply = (object) $this->data[$this->key]['reply_to_message'];
 			}
-			if(isset($this->data[$this->key]['forward_from_chat'])){
+			if(isset($this->data[$this->key]['forward_from']) or isset($this->data[$this->key]['forward_from_chat'])){
 				$this->has_forward = TRUE;
 			}
 			if(isset($this->data[$this->key]['new_chat_participant'])){
