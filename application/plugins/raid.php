@@ -44,7 +44,7 @@ if($this->telegram->is_chat_group()){
 		return -1;
 	}
 
-	elseif($this->telegram->callback and $this->telegram->text_has("raid apuntar")){
+	elseif($this->telegram->callback == "raid apuntar"){
 		$str = $this->telegram->text_message();
 		$user = $pokemon->user($this->telegram->user->id);
 
