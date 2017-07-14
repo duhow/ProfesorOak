@@ -4,7 +4,7 @@ if($this->telegram->is_chat_group()){
 
 	if($this->telegram->text_has(["montar", "monta", "crear", "organizar", "organiza"], ["raid", "incursión"])){
 		$place = NULL;
-		if($this->telegram->text_has(["raid", "incursión"], "en")){
+		if($this->telegram->text_has("en")){
 			$pos = strpos($this->telegram->text(), " en ") + strlen(" en ");
 			$place = substr($this->telegram->text(), $pos);
 		}
@@ -32,7 +32,7 @@ if($this->telegram->is_chat_group()){
 
 		$user = $pokemon->user($this->telegram->user->id);
 		$team = ['R' => 'red', 'B' => 'blue', 'Y' => 'yellow'];
-		$str .= "- L" .$user->lvl ." @" .$user->username ." " .$this->telegram->emoji(":heart-" .$team[$user->team] .":") ."\n";
+		$str .= "- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username ."\n";
 
 		$this->telegram->send
 			->text($str)
@@ -54,7 +54,7 @@ if($this->telegram->is_chat_group()){
 		}
 
 		$team = ['R' => 'red', 'B' => 'blue', 'Y' => 'yellow'];
-		$str .= "\n- L" .$user->lvl ." @" .$user->username ." " .$this->telegram->emoji(":heart-" .$team[$user->team] .":");
+		$str .= "\n- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
 
 		$this->telegram->send
 			->chat(TRUE)
