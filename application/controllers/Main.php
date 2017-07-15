@@ -793,7 +793,9 @@ class Main extends CI_Controller {
 					->chat($chattalk);
 
 				if($telegram->text()){
-					$telegram->send->text( $telegram->text(), 'Markdown' )->send();
+					$type = 'Markdown';
+					if(strip_tags($telegram->text()) != $telegram->text()){ $type = 'HTML'; }
+					$telegram->send->text( $telegram->text(), $type )->send();
 				}elseif($telegram->photo()){
 					$telegram->send->file('photo', $telegram->photo());
 				}elseif($telegram->sticker()){
