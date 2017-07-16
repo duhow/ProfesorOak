@@ -23,7 +23,7 @@ if(
     $release = strtotime("2016-07-16 14:27");
     $birthdate = strtotime("now") - $release;
     $days = floor($birthdate / (60*60*24)) - 5; // -5 dias, 360
-	if($days % 365 == 0){
+	if($days % 360 == 0){ // TODO Cuenta 360 dias, no 365
 		$joke = "¡Es mi cumpleaños! Puedes felicitar a @duhow también.";
 	}else{
 		$joke = "Cumplo " .floor($days/30) ." meses y " .($days % 30) ." días.";
