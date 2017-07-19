@@ -112,8 +112,8 @@ class Main extends TelegramApp\Module {
 			}
 		}
 
-		$str = "This new version has translations, but currently there is Spanish and a bit of English.\n"
-				."If you want to contribute or improve them, please contact @duhow. Thank you! <3";
+		$str = "This new version has translations, but currently there is Spanish and a bit of English." ."\n"
+			."If you want to contribute or improve them, please contact @duhow. Thank you!";
 
 		$this->telegram->send
 			->text($str)
