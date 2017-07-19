@@ -104,6 +104,39 @@ class User extends TelegramApp\User {
 		return $this->db->insert('user', $data);
 	}
 
+	public function register_username($name, $force = FALSE){
+		if($name[0] == "@"){ $name = substr($name, 1); }
+
+		if(
+			(!$this->load()) or
+			(!$force && !empty($this->username)) or
+			(strlen($name) < 4 or strlen($name) > 18)
+		){ return FALSE; }
+
+		try {
+			$this->username = $name;
+			$this->analytics->event('Telegram', 'Register username');
+
+			$this->telegram->send
+				->inline_keyboard()
+					->row_button("Validar perfil", "quierovalidarme", TRUE)
+				->show()
+				->reply_to(TRUE)
+				->notification(FALSE)
+				->text($this->strings->parse("register_successful", $name), TRUE)
+			->send();
+		} catch (Exception $e) {
+			// si el nombre ya existe
+			$this->telegram->send
+				->reply_to(TRUE)
+				->notification(FALSE)
+				->text($this->strings->parse("register_error_duplicated_name", $name), "HTML")
+			->send();
+			return FALSE;
+		}
+		return TRUE;
+	}
+
 	public function load($force = FALSE){
 		// load variables and set them here.
 		if($this->loaded && !$force){ return TRUE; }
