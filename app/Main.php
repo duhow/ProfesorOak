@@ -98,6 +98,30 @@ class Main extends TelegramApp\Module {
 		->send();
 	}
 
+	public function lang($set = NULL){ return $this->language($set); }
+	public function language($set = NULL){
+		if($this->telegram->is_chat_group()){ $this->end(); }
+
+		if($this->user->telegramid !== NULL){
+			if(strlen($set) == 2 and !is_numeric($set)){
+				$this->user->settings('language', $set);
+				$this->telegram->send
+					->text("Language set to $set!")
+				->send();
+				$this->end();
+			}
+		}
+
+		$str = "This new version has translations, but currently there is Spanish and a bit of English.\n"
+				."If you want to contribute or improve them, please contact @duhow. Thank you! <3";
+
+		$this->telegram->send
+			->text($str)
+		->send();
+
+		$this->end();
+	}
+
 	public function register($team = NULL){
 		$str = NULL;
 		if($this->user->telegramid === NULL){
