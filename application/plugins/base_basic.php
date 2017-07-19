@@ -9,7 +9,8 @@ if($telegram->text_contains(["fake GPS", "fake", "fakegps", "nox"])){
             ->chat($this->config->item('creator'))
         ->send();
         // $this->telegram->sendHTML("*OYE!* Si vas a empezar con esas, deberías dejar el juego. En serio, hacer trampas *NO MOLA*.");
-        return -1;
+		$bw = $pokemon->settings($telegram->chat->id, 'blackword');
+		if(!$bw or stripos($bw, "fake") === FALSE){ return -1; }
     }
 }
 
