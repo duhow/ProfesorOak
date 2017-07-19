@@ -26,7 +26,7 @@ return [
 	'egg_register' => 'Thanks! I\'ll write it in my list :)',
 
 	'calciv_not_found' => "Los cálculos no me salen...\n¿Seguro que me has dicho bien los datos? (¿Lo has <b>mejorado</b>?)",
-	'calciv_found' => '¡Pues parece que tienes un <b>%s%</b>!',
+	'calciv_found' => 'It looks like you have <b>%s%</b>!',
 
 	'yes' => 'Yes',
 	'no' => 'No',
@@ -133,20 +133,20 @@ return [
 	],
 
 	'report_only_old_members' => 'Sólo pueden reportar los usuarios validados de hace tiempo.',
-	'report_error_self' => '¿Porqué ibas a reportarte a ti mismo?',
+	'report_error_self' => 'Why would you report yourself?',
 	'report_error_general' => 'Error al generar report.',
-	'report_error_duplicated' => 'Report duplicado.',
-	'report_sent' => '¡Report enviado!',
+	'report_error_duplicated' => 'Report duplicated.',
+	'report_sent' => 'Report sent!',
 
-	'welcome_bot' => "¡Buenas a todos, entrenadores!\n¡Un placer estar con todos vosotros! :D",
-	'welcome_bot_newgroup' => 'Veo que este grupo es nuevo, así que voy a buscar cuánta gente conozco.',
-	'welcome_group' => '¡Bienvenido al grupo, %s!',
-	'welcome_group_creator' => '¡Bienvenido, jefe! ¡Un placer tenerte aquí! :D',
+	'welcome_bot' => "Hello to all trainers!\nIt's a pleasure to be here with you! :D",
+	'welcome_bot_newgroup' => 'I see this group is new, so I\'ll try to look for how many trainers do I know.',
+	'welcome_group' => 'Welcome to the group, %s %s!',
+	'welcome_group_creator' => 'Welcome, boss! It\'s a pleasure to see you here! :D',
 	'welcome_group_team_exclusive' => '<b>¡SE CUELA UN TOPO!</b> @%s',
-	'welcome_group_unverified' => 'Usuario no está verificado.',
-	'welcome_group_register' => "Oye, ¿podrías decirme el color de tu equipo?\n<b>Di: </b><i>Soy ...</i>",
-	'welcome_group_require_verified' => 'Para estar en este grupo <b>debes estar validado.</b>',
-	'welcome_invite_user' => 'He invitado a @%s a este grupo.',
+	'welcome_group_unverified' => 'User not verified.',
+	'welcome_group_register' => "Hey, can you tell me your team color?\n<b>Say: </b><i>I'm ...</i>",
+	'welcome_group_require_verified' => 'If you want to belong to this group, <b>you must be verified.</b>',
+	'welcome_invite_user' => 'I\'ve invited @%s here.',
 
 	'register_hello_start' => "Hi %s! Can you tell me what's your color?\n<b>Say:</b> I'm...",
 	'register_hello_private' => "Hi %s! Start me private to register! :)",
@@ -217,10 +217,10 @@ return [
 	'error_chat_abandoned' => 'Este chat ha sido abandonado.',
 	'error_candy_as_stardust' => '¿Caramelos? Querrás decir polvos...',
 	'error_pokemon_does_not_exist' => 'El Pokémon mencionado no existe.',
-	'error_pokemon_not_found' => 'No se han encontrado Pokemon.',
+	'error_pokemon_not_found' => 'I haven\'t found any Pokémon.',
 	'error_wait_too_soon' => 'Aún no ha pasado suficiente tiempo. Espera un poco, anda. :)',
 	'error_pokestop_not_near' => 'No hay Pokeparadas por ahí cerca, o no están registradas. Pregúntalo más adelante.',
-	'error_group_mention_admin' => 'No puedo avisar a los @admin, no me han iniciado :(',
+	'error_group_mention_admin' => 'I can\'t talk to @admin, they haven\'t started me yet :(',
 ];
 
 ?>
