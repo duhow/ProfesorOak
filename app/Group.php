@@ -163,7 +163,11 @@ class Group extends TelegramApp\Module {
 	}
 
 	public function autokick(){
-
+		if($this->telegram->text_has("bomba de humo") and $this->user->id == CREATOR){
+			$this->telegram->send->file('sticker', 'CAADBAADFQgAAjbFNAABxSRoqJmT9U8C');
+		}
+		global $Admin;
+		return $Admin->kick($this->user->id);
 	}
 
 	public function adminlist($chat = NULL){

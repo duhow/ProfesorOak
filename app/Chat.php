@@ -233,6 +233,26 @@ class Chat extends TelegramApp\Chat {
 		return $this->update('active', FALSE);
 	}
 
+	public function command_limit($command, $minimal = 7){
+		// @return FALSE si puedes ejecutar el comando. / NO se limita el comando
+		$repeat = $this->settings('command_limit');
+		$command = strtolower($command);
+		$id = $this->telegram->message_id;
+
+		$commands = array();
+		if(!empty($repeat)){
+			$commands = unserialize($repeat);
+		}
+
+		if(!isset($commands[$command]) && $value == 0){ return FALSE; }
+		if(isset($commands[$command]) && $id < $commands[$command]){ return TRUE; }
+
+		$commands[$command] = ($id + $value);
+		$commands = serialize($commands);
+		$this->settings('command_limit', $commands);
+		return FALSE;
+	}
+
 	public function active_member($user){
 		// Chats
 		$data = [

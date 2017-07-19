@@ -120,6 +120,7 @@ class Admin extends TelegramApp\Module {
             $this->telegram->text_contains(["PokéTrack", "PokeTrack"]) or
             $this->telegram->text_contains(["maps.google", "google.com/maps"])
         ){ return FALSE; } // HACK Falsos positivos.
+		if(stripos($this->telegram->text_url(), "pokemon") !== FALSE){ return FALSE; } // HACK cosas de Pokemon oficiales u otros.
 
         // TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
         $this->telegram->send
