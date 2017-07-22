@@ -159,6 +159,8 @@ return [
 	'register_error_color' => "No te he entendido bien...\n¿Puedes decirme sencillamente <b>soy rojo, soy azul</b> o <b>soy amarillo</b>?",
 	'register_error_duplicated_name' => "No puede ser, ya hay alguien que se llama <b>@%s</b> :(\nHabla con @duhow para arreglarlo.",
 	'register_ok_name' => "¡Muchas gracias %s! Por cierto, ¿cómo te llamas <b>en el juego</b>? \n<i>(Me llamo...)</i>",
+	'register_error_name_shln' => "No creo que te llames realmente así... Va, en serio. ¿Cómo te llamas?",
+	'register_error_name_real' => "Me refería a tu <b>NOMBRE DE JUEGO</b>, no el de verdad. Prueba de nuevo.",
 	'register_successful' => "De acuerdo, <b>@%s</b>!\n¡Recuerda <b>validarte</b> para poder entrar en los grupos de colores!",
 
 	'config_announce_welcome_on' => 'Saludaré a los nuevos usuarios',

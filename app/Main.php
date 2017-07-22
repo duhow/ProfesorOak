@@ -521,10 +521,19 @@ class Main extends TelegramApp\Module {
 		}
 
 		if($this->telegram->text_command("register")){ return $this->register(); }
-		if($this->user->step == "SETNAME" && $this->telegram->words() == 1 && !$this->telegram->text_command()){
+		if(
+			!$this->telegram->text_command() and
+			(
+				$this->user->step == "SETNAME" and $this->telegram->words() == 1
+			) or (
+				$this->telegram->text_has($this->strings->get('command_register_username'), TRUE) and
+				in_array($this->telegram->words(), [3,4]) // HACK
+			)
+		){
 			$this->user->step = NULL;
 			$word = $this->telegram->last_word(TRUE);
-			if($this->user->register_username($word, FALSE)){
+			$res = $this->user->register_username($word, FALSE);
+			if($res === TRUE){
 				$this->tracking->track('Register username');
 				$this->telegram->send
 					->inline_keyboard()
@@ -534,11 +543,20 @@ class Main extends TelegramApp\Module {
 					->notification(FALSE)
 					->text($this->strings->parse("register_successful", $word), "HTML")
 				->send();
-			}else{
+			}elseif($res === FALSE){
 				$this->telegram->send
 					->reply_to(TRUE)
 					->notification(FALSE)
 					->text($this->strings->parse("register_error_duplicated_name", $word), "HTML")
+				->send();
+			}elseif($res == -1){
+				// Name already set.
+				$this->end();
+			}elseif($res == -2){
+				$this->telegram->send
+					>reply_to(TRUE)
+					->notification(FALSE)
+					->text($this->strings->get("register_error_name_shln"), "HTML")
 				->send();
 			}
 			$this->end();
