@@ -126,12 +126,12 @@ class Main extends TelegramApp\Module {
 		$str = NULL;
 		if($this->user->telegramid === NULL){
 			if($team === NULL){
-				$str = $this->strings->parse('register_hello_start', $this->user->telegram->first_name);
+				$str = $this->strings->parse('register_hello_start', $this->telegram->first_name);
 				if($this->telegram->is_chat_group()){
-					$str = $this->strings->parse('register_hello_private', $this->user->telegram->first_name);
+					$str = $this->strings->parse('register_hello_private', $this->telegram->first_name);
 					$this->telegram->send
 					->inline_keyboard()
-						->row_button("Registrar", "https://t.me/ProfesorOak_bot")
+						->row_button($this->strings->get('register'), "https://t.me/ProfesorOak_bot")
 					->show();
 				}
 			}elseif($team === FALSE){
@@ -147,7 +147,7 @@ class Main extends TelegramApp\Module {
 				}
 				if($this->user->load() !== FALSE){
 					$this->user->step = "SETNAME";
-					$str = $this->strings->parse('register_ok_name', $this->user->telegram->first_name);
+					$str = $this->strings->parse('register_ok_name', $this->telegram->first_name);
 				}
 			}
 		}elseif(empty($this->user->username)){
@@ -156,7 +156,7 @@ class Main extends TelegramApp\Module {
 			$str = $this->telegram->emoji(":warning:") .$this->strings->get('register_hello_verify');
 			$this->telegram->send
 	        ->inline_keyboard()
-	            ->row_button("Validar", "quiero validarme", TRUE)
+	            ->row_button($this->strings->get('verify'), "verify", TRUE)
 	        ->show();
 		}
 		if(!empty($str)){
@@ -490,8 +490,9 @@ class Main extends TelegramApp\Module {
 		}
 
 		if($this->telegram->text_command("register")){ return $this->register(); }
-		if($this->user->step == "SETNAME" && $this->telegram->words() == 1){
-			$this->setname($this->telegram->last_word(TRUE));
+		if($this->user->step == "SETNAME" && $this->telegram->words() == 1 && !$this->telegram->text_command()){
+			$word = $this->telegram->last_word(TRUE);
+			$this->user->register_username($word, FALSE);
 			$this->end();
 		}
 		if($this->telegram->text_command("info")){ $this->telegram->send->text($this->user->telegramid)->send(); }

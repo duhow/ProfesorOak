@@ -30,6 +30,8 @@ return [
 
 	'yes' => 'Yes',
 	'no' => 'No',
+	'register' => 'Register',
+	'verify' => 'Verify',
 
 	'done' => 'Done',
 	'done_excl' => 'Done!',
