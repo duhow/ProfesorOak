@@ -116,22 +116,8 @@ class User extends TelegramApp\User {
 		try {
 			$this->username = $name;
 			$this->tracking->track('Register username');
-
-			$this->telegram->send
-				->inline_keyboard()
-					->row_button($this->strings->get('verify'), "verify", TRUE)
-				->show()
-				->reply_to(TRUE)
-				->notification(FALSE)
-				->text($this->strings->parse("register_successful", $name), TRUE)
-			->send();
 		} catch (Exception $e) {
 			// si el nombre ya existe
-			$this->telegram->send
-				->reply_to(TRUE)
-				->notification(FALSE)
-				->text($this->strings->parse("register_error_duplicated_name", $name), "HTML")
-			->send();
 			return FALSE;
 		}
 		return TRUE;
