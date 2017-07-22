@@ -1,3 +1,6 @@
 [submodule "libs/chatter-bot-api"]
 	path = libs/chatter-bot-api
 	url = https://github.com/pierredavidbelanger/chatter-bot-api.git
+[submodule "libs/tesseract-ocr-for-php"]
+	path = libs/tesseract-ocr-for-php
+	url = https://github.com/thiagoalessio/tesseract-ocr-for-php
