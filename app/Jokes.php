@@ -4,7 +4,7 @@ class Jokes extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
 	public function run(){
-		if(!$this->chat->settings['jokes']){ return; }
+		if(!$this->chat->settings('jokes')){ return; }
 		$res = parent::run();
 
 		if($res !== NULL){ $this->end(); }
