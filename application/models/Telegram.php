@@ -545,7 +545,7 @@ class __Module_Telegram_Sender extends CI_Model{
 
 		if ($http_code >= 500) {
 		// do not wat to DDOS server if something goes wrong
-			sleep(10);
+			sleep(2);
 			return false;
 		} else if ($http_code != 200) {
 			$response = json_decode($response, true);
