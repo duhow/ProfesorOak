@@ -155,9 +155,9 @@ class Main extends TelegramApp\Module {
 					$str = $this->strings->parse('register_ok_name', $this->telegram->user->first_name);
 				}
 			}
-		}elseif(empty($this->user->username)){
+		}elseif(!$this->user->username){
 			$str = $this->strings->get('register_hello_name');
-		}elseif($this->user->verified == FALSE){
+		}elseif(!$this->user->verified){
 			$str = $this->telegram->emoji(":warning:") .$this->strings->get('register_hello_verify');
 			$this->telegram->send
 	        ->inline_keyboard()
