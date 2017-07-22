@@ -491,8 +491,24 @@ class Main extends TelegramApp\Module {
 
 		if($this->telegram->text_command("register")){ return $this->register(); }
 		if($this->user->step == "SETNAME" && $this->telegram->words() == 1 && !$this->telegram->text_command()){
+			$this->user->step = NULL;
 			$word = $this->telegram->last_word(TRUE);
-			$this->user->register_username($word, FALSE);
+			if($this->user->register_username($word, FALSE)){
+				$this->telegram->send
+					->inline_keyboard()
+						->row_button($this->strings->get('verify'), "verify", TRUE)
+					->show()
+					->reply_to(TRUE)
+					->notification(FALSE)
+					->text($this->strings->parse("register_successful", $word), TRUE)
+				->send();
+			}else{
+				$this->telegram->send
+					->reply_to(TRUE)
+					->notification(FALSE)
+					->text($this->strings->parse("register_error_duplicated_name", $word), "HTML")
+				->send();
+			}
 			$this->end();
 		}
 		if($this->telegram->text_command("info")){ $this->telegram->send->text($this->user->telegramid)->send(); }
