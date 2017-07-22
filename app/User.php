@@ -128,6 +128,7 @@ class User extends TelegramApp\User {
 		if($this->loaded && !$force){ return TRUE; }
 		$query = $this->db
 			->where('telegramid', $this->id)
+			->where('anonymous', FALSE)
 			// ->orWhere('username', $this->username)
 		->getOne('user');
 		if(empty($query)){ return NULL; }
