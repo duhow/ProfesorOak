@@ -33,7 +33,7 @@ class GameGeneral extends TelegramApp\Module {
 	}
 
 	public function dado($num = 6){
-		// $this->analytics->event('Telegram', 'Games', 'Dice');
+		// $this->tracking->event('Telegram', 'Games', 'Dice');
 
 	    if(!is_numeric($num) or ($num < 0 or $num > 1000)){ $num = 6; } // default MAX
 		$dice = mt_rand(1,$num);
@@ -45,7 +45,7 @@ class GameGeneral extends TelegramApp\Module {
 
 	public function rpsls(){ return $this->rps(TRUE); }
 	public function rps($ls = FALSE){
-		// $this->analytics->event('Telegram', 'Games', 'RPS');
+		// $this->tracking->event('Telegram', 'Games', 'RPS');
 
 	    $rps = ["Piedra", "Papel", "Tijera"];
 	    if($this->telegram->text_contains(["lagarto", "/rpsls"]) or $ls === TRUE){ $rps[] = "Lagarto"; }
@@ -58,7 +58,7 @@ class GameGeneral extends TelegramApp\Module {
 
 	public function flip(){ return $this->coin(); }
 	public function coin(){
-		// $this->analytics->event('Telegram', 'Games', 'Coin');
+		// $this->tracking->event('Telegram', 'Games', 'Coin');
 
 	    $n = mt_rand(0, 99);
 	    $flip = ["Cara!", "Cruz!"];

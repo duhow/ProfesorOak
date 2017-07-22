@@ -59,7 +59,7 @@ class Config extends TelegramApp\Module {
 		if(empty($key) or empty($value)){ return FALSE; }
 		if(empty($chat)){ $chat = $this->chat->id; }
 
-		// $this->analytics->event('Telegram', 'Set config', $key);
+		// $this->tracking->track('Set config', $key);
 		$target = new Chat($chat);
 		if($target->load()){
 			$value = $this->parse_value($value);
