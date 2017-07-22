@@ -4,6 +4,7 @@ class Main extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
 	public function run(){
+		if($this->telegram->left_user){ return $this->left_member(); }
 		if($this->telegram->new_user){ return $this->new_member(); }
 		$this->core->load('Tools');
 		$this->core->load('Pokemon');
@@ -147,6 +148,10 @@ class Main extends TelegramApp\Module {
 				}
 				if($this->user->load() !== FALSE){
 					$this->user->step = "SETNAME";
+					if($this->user->settings('language')){
+						$this->strings->language = $this->user->settings('language');
+						$this->strings->load();
+					}
 					$str = $this->strings->parse('register_ok_name', $this->telegram->user->first_name);
 				}
 			}
@@ -204,19 +209,15 @@ class Main extends TelegramApp\Module {
 
 		if($new->id == $this->telegram->bot->id){
 
+			$count = $this->telegram->send->get_members_count();
 			// A excepción de que lo agregue el creador
 			if($this->user->id != CREATOR){
-				// PROVISIONAL TEMP
-				$this->telegram->send->leave_chat();
-				$this->end();
-
 				// Si el grupo está muerto, salir.
 				if($this->chat->settings('die')){
 					$this->telegram->send->leave_chat();
 					$this->end();
 				}
 
-				$count = $this->telegram->send->get_members_count();
 				// Si el grupo tiene <= 5 usuarios, el bot abandona el grupo
 				if(is_numeric($count) && $count <= 5){
 					// $this->tracking->event('Telegram', 'Join low group');
@@ -455,11 +456,11 @@ class Main extends TelegramApp\Module {
 
 	public function left_member(){
 		$this->chat->load();
-		if($this->telegram->left_member->id == $this->telegram->bot->id){
+		if($this->telegram->left_user->id == $this->telegram->bot->id){
 			$str = ":door: Me han echado :(\n"
-					.":id: " .$this->chat->id ."\n"
+					.":id: " .$this->telegram->chat->id ."\n"
 					.":abc: " .$this->telegram->chat->title ."\n"
-					.":male: " .$this->user->id . " - " . $this->telegram->user->first_name;
+					.":male: " .$this->telegram->user->id . " - " . $this->telegram->user->first_name;
 			$str = $this->telegram->emoji($str);
 
 			$this->telegram->send
@@ -468,6 +469,8 @@ class Main extends TelegramApp\Module {
 				->text($str)
 			->send();
 			$this->chat->disable();
+		}else{
+			// TODO remove user from list
 		}
 		$this->end();
 	}
@@ -500,7 +503,7 @@ class Main extends TelegramApp\Module {
 					->show()
 					->reply_to(TRUE)
 					->notification(FALSE)
-					->text($this->strings->parse("register_successful", $word), TRUE)
+					->text($this->strings->parse("register_successful", $word), "HTML")
 				->send();
 			}else{
 				$this->telegram->send
