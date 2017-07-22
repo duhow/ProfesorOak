@@ -106,9 +106,18 @@ class Main extends TelegramApp\Module {
 		if($this->user->telegramid !== NULL){
 			if(strlen($set) == 2 and !is_numeric($set)){
 				$this->user->settings('language', $set);
-				$this->telegram->send
-					->text("Language set to $set!")
-				->send();
+				$this->telegram->send->text("Language set to <b>$set</b>!");
+
+				if($this->telegram->callback){
+					$this->telegram->answer_if_callback("");
+					$this->telegram->send
+						->chat(TRUE)
+						->message(TRUE)
+					->edit('text');
+				}else{
+					$this->telegram->send->send();
+				}
+
 				$this->end();
 			}
 		}
@@ -116,7 +125,26 @@ class Main extends TelegramApp\Module {
 		$str = "This new version has translations, but currently there is Spanish and a bit of English." ."\n"
 			."If you want to contribute or improve them, please contact @duhow. Thank you!";
 
+		$flags = [
+			'es' => '\ud83c\uddea\ud83c\uddf8',
+			'en' => '\ud83c\uddfa\ud83c\uddf8',
+			'fr' => '\ud83c\uddeb\ud83c\uddf7',
+			'it' => '\ud83c\uddee\ud83c\uddf9',
+			'de' => '\ud83c\udde9\ud83c\uddea'
+		];
+
 		$this->telegram->send
+			->inline_keyboard()
+				->row()
+					->button(json_encode($flag['es']), "language es", "TEXT")
+					->button(json_encode($flag['en']), "language en", "TEXT")
+				->end_row()
+				->row()
+					->button(json_encode($flag['fr']), "language fr", "TEXT")
+					->button(json_encode($flag['it']), "language it", "TEXT")
+					->button(json_encode($flag['de']), "language de", "TEXT")
+				->end_row()
+			->show()
 			->text($str)
 		->send();
 
@@ -413,7 +441,7 @@ class Main extends TelegramApp\Module {
 
 					$this->telegram->send
 						->inline_keyboard()
-							->row_button("Validar", "quiero validarme", "COMMAND")
+							->row_button("Validar", "verify", "COMMAND")
 						->show();
 				}
 			}
@@ -516,6 +544,9 @@ class Main extends TelegramApp\Module {
 			$this->end();
 		}
 		if($this->telegram->text_command("info")){ $this->telegram->send->text($this->user->telegramid)->send(); }
+		if($this->telegram->callback and $this->telegram->text_has("language", TRUE)){
+			return $this->language($this->telegram->words(1));
+		}
 
 		$folder = dirname(__FILE__) .'/';
 		foreach(scandir($folder) as $file){
