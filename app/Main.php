@@ -219,7 +219,7 @@ class Main extends TelegramApp\Module {
 				$count = $this->telegram->send->get_members_count();
 				// Si el grupo tiene <= 5 usuarios, el bot abandona el grupo
 				if(is_numeric($count) && $count <= 5){
-					// $this->analytics->event('Telegram', 'Join low group');
+					// $this->tracking->event('Telegram', 'Join low group');
 					$this->telegram->send->text("Nope.")->send();
 					$this->telegram->send->leave_chat();
 					$this->end();
@@ -290,7 +290,7 @@ class Main extends TelegramApp\Module {
 			$this->chat->settings('limit_join') == TRUE &&
 			!$this->chat->is_admin($this->user) // Si el que lo agrega no es Admin
 		){
-			// $this->analytics->event('Telegram', 'Join limit users');
+			// $this->tracking->event('Telegram', 'Join limit users');
 			$Admin->kick($new->id);
 			$Admin->admin_chat_message($this->strings->parse('adminchat_newuser_limit_join', $new->id));
 			// $pokemon->user_delgroup($new->id, $telegram->chat->id);
@@ -351,7 +351,7 @@ class Main extends TelegramApp\Module {
 			$blacklist = explode(",", $this->chat->settings('blacklist'));
 			foreach($blacklist as $b){
 				if(in_array($b, $new->flags)){
-					// $this->analytics->event('Telegram', 'Join blacklist user', $b);
+					// $this->tracking->event('Telegram', 'Join blacklist user', $b);
 					$q = $Admin->kick($new->id);
 
 					$str = ":times: " .$this->strings->get('adminchat_newuser_in_blacklist') ." - $b\n"
@@ -372,7 +372,7 @@ class Main extends TelegramApp\Module {
 			$this->chat->settings('require_verified_kick') &&
 			!$new->verified
 		){
-			// $this->analytics->event('Telegram', 'Kick unverified user');
+			// $this->tracking->event('Telegram', 'Kick unverified user');
 			$str = $this->strings->get('user') ." " .$this->telegram->new_user->first_name ." / " .$new->id ." ";
 
 			if(!$this->chat->is_admin($this->user)){
@@ -418,7 +418,7 @@ class Main extends TelegramApp\Module {
 			}
 
 			// $pokemon->user_addgroup($new->id, $telegram->chat->id);
-			// $this->analytics->event('Telegram', 'Join user');
+			// $this->tracking->event('Telegram', 'Join user');
 
 			$ingress = NULL;
 			if(in_array('resistance', $new->flags)){ $ingress = ":key:"; }
@@ -552,7 +552,7 @@ class Main extends TelegramApp\Module {
 					if(isset($pk['hp']) and isset($pk['cp'])){
 						$chat = ($telegram->is_chat_group() && $this->is_shutup(TRUE) ? $telegram->user->id : $telegram->chat->id);
 						// $pokedex = $pokemon->pokedex($pk['pokemon']);
-						$this->analytics->event("Telegram", "Calculate IV", $pokedex->name);
+						$this->tracking->event("Telegram", "Calculate IV", $pokedex->name);
 
 						if(count($table) == 0){
 							$text = $this->strings->get('pokemon_iv_not_found');
@@ -618,7 +618,7 @@ class Main extends TelegramApp\Module {
 			if(empty($pk['pokemon'])){ return; }
 
 			$search = $pokemon->pokedex($pk['pokemon']);
-			$this->analytics->event('Telegram', 'Search Pokemon Evolution', $search->name);
+			$this->tracking->event('Telegram', 'Search Pokemon Evolution', $search->name);
 
 			$evol = $pokemon->evolution($search->id);
 			$str = array();
@@ -796,7 +796,7 @@ class Main extends TelegramApp\Module {
 				$pokemon->settings($this->user->id, 'pokemon_cooldown', time() + 60);
 				$pokemon->step($this->user->id, NULL);
 
-				$this->analytics->event("Telegram", "Pokemon Seen", $pk);
+				$this->tracking->event("Telegram", "Pokemon Seen", $pk);
 				$telegram->send
 					->text("Hecho! Gracias por avisar! :D")
 					->keyboard()->hide(TRUE)
@@ -858,7 +858,7 @@ class Main extends TelegramApp\Module {
 				$pokemon->settings($this->user->id, 'pokemon_cooldown', time() + 60);
 				$pokemon->step($this->user->id, NULL);
 
-				$this->analytics->event("Telegram", "Lure Seen", $pk);
+				$this->tracking->event("Telegram", "Lure Seen", $pk);
 				$telegram->send
 					->text("Cebo en *" .$pkstop['title'] ."*, gracias por avisar! :D", TRUE)
 					->keyboard()->hide(TRUE)
@@ -1052,7 +1052,7 @@ class Main extends TelegramApp\Module {
 			$str = "";
 			$pokedex = $pokemon->pokedex();
 			$pkfind = (empty($pk['pokemon']) ? "All" : $pokedex[$pk['pokemon']]->name);
-			$this->analytics->event("Telegram", "Search Pokemon Location", $pkfind);
+			$this->tracking->event("Telegram", "Search Pokemon Location", $pkfind);
 			if(count($list) > 1){
 				foreach($list as $e){
 					$met = floor($e['distance']);

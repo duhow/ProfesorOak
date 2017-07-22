@@ -115,11 +115,11 @@ class User extends TelegramApp\User {
 
 		try {
 			$this->username = $name;
-			$this->analytics->event('Telegram', 'Register username');
+			$this->tracking->track('Register username');
 
 			$this->telegram->send
 				->inline_keyboard()
-					->row_button("Validar perfil", "quierovalidarme", TRUE)
+					->row_button($this->strings->get('verify'), "verify", TRUE)
 				->show()
 				->reply_to(TRUE)
 				->notification(FALSE)
