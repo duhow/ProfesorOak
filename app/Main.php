@@ -126,9 +126,9 @@ class Main extends TelegramApp\Module {
 		$str = NULL;
 		if($this->user->telegramid === NULL){
 			if($team === NULL){
-				$str = $this->strings->parse('register_hello_start', $this->telegram->first_name);
+				$str = $this->strings->parse('register_hello_start', $this->telegram->user->first_name);
 				if($this->telegram->is_chat_group()){
-					$str = $this->strings->parse('register_hello_private', $this->telegram->first_name);
+					$str = $this->strings->parse('register_hello_private', $this->telegram->user->first_name);
 					$this->telegram->send
 					->inline_keyboard()
 						->row_button($this->strings->get('register'), "https://t.me/ProfesorOak_bot")
@@ -147,7 +147,7 @@ class Main extends TelegramApp\Module {
 				}
 				if($this->user->load() !== FALSE){
 					$this->user->step = "SETNAME";
-					$str = $this->strings->parse('register_ok_name', $this->telegram->first_name);
+					$str = $this->strings->parse('register_ok_name', $this->telegram->user->first_name);
 				}
 			}
 		}elseif(empty($this->user->username)){
