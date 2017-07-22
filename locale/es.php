@@ -150,6 +150,8 @@ return [
 	'welcome_group_require_verified' => 'Para estar en este grupo <b>debes estar validado.</b>',
 	'welcome_invite_user' => 'He invitado a @%s a este grupo.',
 
+	'command_register_username' => ["Me llamo", "Mi nombre es", "Mi usuario es"],
+
 	'register_hello_start' => "¡Hola %s! ¿Puedes decirme qué color eres?\n<b>Di:</b> Soy...",
 	'register_hello_private' => "¡Hola %s! Ábreme por privado para registrate! :)",
 	'register_hello_name' => 'Oye, ¿cómo te llamas? <b>Di:</b> Me llamo ...',

@@ -7,8 +7,8 @@ class UserFunctions extends TelegramApp\Module {
 		// guardar nombre de user
 		if(
 			!$this->telegram->text_command() and
-			$this->telegram->text_has(["Me llamo", "Mi nombre es", "Mi usuario es"], TRUE) and
-			in_array($this->telegram->words(), [3,4])
+			$this->telegram->text_has($this->strings->get('command_register_username'), TRUE) and
+			in_array($this->telegram->words(), [3,4]) // HACK
 		){
 			// if(){ $this->end(); }
 			// $pokeuser = $pokemon->user($this->telegram->user->id);
