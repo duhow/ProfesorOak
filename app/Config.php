@@ -5,7 +5,7 @@ class Config extends TelegramApp\Module {
 
 	public function run(){
 		if($this->telegram->is_chat_group() and !$this->chat->is_admin($this->user)){ return; }
-		if(in_array($this->user->flags, "set_abuse")){ return; }
+		if(in_array("set_abuse", $this->user->flags)){ return; }
 		parent::run();
 	}
 
