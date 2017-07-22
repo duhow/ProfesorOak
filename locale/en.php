@@ -150,6 +150,8 @@ return [
 	'welcome_group_require_verified' => 'If you want to belong to this group, <b>you must be verified.</b>',
 	'welcome_invite_user' => 'I\'ve invited @%s here.',
 
+	'command_register_username' => ["My name's", "My username is", "My name is", "The username is", "The name is"],
+
 	'register_hello_start' => "Hi %s! Can you tell me what's your color?\n<b>Say:</b> I'm...",
 	'register_hello_private' => "Hi %s! Start me private to register! :)",
 	'register_hello_name' => 'Hey, what\'s your name? <b>Say:</b> My name is ...',
