@@ -497,6 +497,7 @@ class Main extends TelegramApp\Module {
 			$this->user->step = NULL;
 			$word = $this->telegram->last_word(TRUE);
 			if($this->user->register_username($word, FALSE)){
+				$this->tracking->track('Register username');
 				$this->telegram->send
 					->inline_keyboard()
 						->row_button($this->strings->get('verify'), "verify", TRUE)

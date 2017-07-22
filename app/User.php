@@ -115,7 +115,6 @@ class User extends TelegramApp\User {
 
 		try {
 			$this->username = $name;
-			$this->tracking->track('Register username');
 		} catch (Exception $e) {
 			// si el nombre ya existe
 			return FALSE;
