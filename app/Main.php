@@ -109,11 +109,11 @@ class Main extends TelegramApp\Module {
 				$this->telegram->send->text("Language set to <b>$set</b>!");
 
 				if($this->telegram->callback){
-					$this->telegram->answer_if_callback("");
 					$this->telegram->send
 						->chat(TRUE)
 						->message(TRUE)
 					->edit('text');
+					$this->telegram->answer_if_callback("");
 				}else{
 					$this->telegram->send->send();
 				}
