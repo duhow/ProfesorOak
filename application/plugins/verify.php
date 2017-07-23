@@ -2,7 +2,8 @@
 
 if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 	if(!$telegram->is_chat_group() && $telegram->photo()){
-		$pokeuser = $pokemon->user($telegram->user->id);
+		$userid = $this->telegram->user->id;
+		$pokeuser = $pokemon->user($userid);
 		if(empty($pokeuser->username) or $pokeuser->lvl == 1){
 			$text = "Antes de validarte, necesito saber tu *";
 			$add = array();
@@ -16,13 +17,44 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 			$text .= "Cuando lo hayas dicho, *vuelve a enviarme la captura.*";
 			$telegram->send
 				->notification(TRUE)
-				->chat($telegram->user->id)
+				->chat($userid)
 				->text($telegram->emoji($text), TRUE)
 				->keyboard()->hide(TRUE)
 			->send();
-			$pokemon->step($telegram->user->id, NULL);
+			$pokemon->step($userid, NULL);
 			return -1;
 		}
+
+		// Comprobar si ya hay otra imagen previamente en cola.
+		$cooldown = $pokemon->settings($userid, 'verify_cooldown');
+		if(!empty($cooldown) and $cooldown > time()){
+			$this->telegram->send
+				->chat($userid)
+				->text($this->telegram->emoji(":warning: ") ."¡Para el carro! Ya me has mandado una foto. Esperate a que la compruebe, no me des más faena...")
+			->send();
+			$pokemon->step($userid, NULL);
+			return -1;
+		}
+
+		// Comprobar si ya me ha mandado la misma foto.
+		$images = $pokemon->settings($userid, 'verify_images');
+		if(!empty($images)){
+			$images = unserialize($images);
+			if(in_array($this->telegram->photo(), array_values($images))){
+				$this->telegram->send
+					->chat($userid)
+					->text($this->telegram->emoji(":times: ") ."¡Esta foto ya me la has mandado! Haz otra foto nueva, y asegúrate de que cumple los requisitos.")
+				->send();
+				return -1;
+			}
+		}
+
+		if(!is_array($images)){ $images = array(); }
+		$images[time()] = $this->telegram->photo();
+
+		// Cooldown +18h
+		$pokemon->settings($userid, 'verify_cooldown', (time() + 64800));
+		$pokemon->settings($userid, 'verify_images', serialize($images));
 
 		$telegram->send
 			->message(TRUE)
@@ -33,23 +65,23 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 		$telegram->send
 			->notification(TRUE)
 			->chat("-197822813")
-			->text("Validar " .$telegram->user->id ." @" .$pokeuser->username ." L" .$pokeuser->lvl ." " .$pokeuser->team)
+			->text("Validar " .$userid ." @" .$pokeuser->username ." L" .$pokeuser->lvl ." " .$pokeuser->team)
 			->inline_keyboard()
 				->row()
-					->button($telegram->emoji(":ok:"), "te valido " .$telegram->user->id, "TEXT")
-					->button($telegram->emoji(":times:"), "no te valido " .$telegram->user->id, "TEXT")
+					->button($telegram->emoji(":ok:"), "te valido " .$userid, "TEXT")
+					->button($telegram->emoji(":times:"), "no te valido " .$userid, "TEXT")
 				->end_row()
 			->show()
 		->send();
 
 		$telegram->send
 			->notification(TRUE)
-			->chat($telegram->user->id)
+			->chat($userid)
 			->keyboard()->hide(TRUE)
-			->text("¡Enviado correctamente! El proceso de validar puede tardar un tiempo.")
+			->text($this->telegram->emoji(":ok: ") ."¡Enviado correctamente! El proceso de validar puede tardar un tiempo.")
 		->send();
 
-		$pokemon->step($telegram->user->id, NULL);
+		$pokemon->step($userid, NULL);
 		return -1;
 	}
 }
@@ -98,6 +130,8 @@ if($telegram->text_has(["Te valido", "No te valido"], TRUE) && $telegram->words(
         ->edit('text');
         return;
     }
+
+	$pokemon->settings($target, 'verify_cooldown', 'DELETE');
 
 	if($telegram->text_has("no")){
 		$telegram->send
