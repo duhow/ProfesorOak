@@ -472,6 +472,9 @@ function pokegame_duel($user, $target, $tg){
 // Para evitar sobrecarga de callbacks durante la pole - por si aparece un Pokemon.
 if(date("G") == "0" && intval(date("i")) <= 5){ return; }
 
+$play = $pokemon->settings($telegram->chat->id, 'pokegram');
+if($play != NULL && $play == FALSE){ return; }
+
 // Anti cheats
 if($pokemon->user_flags($telegram->user->id, ['summonear', 'poketelegram_cheat'])){ return; }
 
@@ -662,8 +665,6 @@ if(
 // ---------------------------------
 
 if(!$telegram->is_chat_group()){ return; }
-$play = $pokemon->settings($telegram->chat->id, 'pokegram');
-if($play != NULL && $play == FALSE){ return; }
 
 $pokeballs_sticker = [
     'pokeball' => 'CAADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
