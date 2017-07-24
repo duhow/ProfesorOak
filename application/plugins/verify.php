@@ -28,7 +28,7 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 		if($pokemon->settings($this->config->item('creator'), 'disable_verify')){
 			$this->telegram->send
 				->chat($userid)
-				->text($this->telegram->emoji(":clock: ") ."Lo siento, pero ahora mismo estoy muy saturado. Prueba dentro de unas horas.")
+				->text($this->telegram->emoji(":clock: ") ."Lo siento, pero ahora mismo estoy muy saturado. Prueba dentro de unas horas.\n¡Y recuerda mandarme una captura nueva del perfil donde se vea la hora!")
 			->send();
 			$pokemon->step($userid, NULL);
 			return -1;
