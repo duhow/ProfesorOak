@@ -92,6 +92,18 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 
 		$pokemon->step($userid, NULL);
 		return -1;
+	// Si la gente no sabe decir bien el nivel...
+	}elseif(
+		!$telegram->is_chat_group() and
+		$telegram->text() and
+		$telegram->words() == 1 and
+		is_numeric($telegram->text())
+	){
+		$str = $telegram->text() . " que? Dime la frase bien.";
+		$this->telegram->send
+			->text($str)
+		->send();
+		return -1;
 	}
 }
 
@@ -157,6 +169,8 @@ if($telegram->text_has(["Te valido", "No te valido"], TRUE) && $telegram->words(
                 ->text($str .$telegram->emoji(" :times:"))
             ->edit('text');
         }
+
+		$pokemon->step($target, "SCREENSHOT_VERIFY");
 
 		return -1;
 	}
