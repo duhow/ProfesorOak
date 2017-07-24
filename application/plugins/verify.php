@@ -25,6 +25,15 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 			return -1;
 		}
 
+		if($pokemon->settings($this->config->item('creator'), 'disable_verify')){
+			$this->telegram->send
+				->chat($userid)
+				->text($this->telegram->emoji(":clock: ") ."Lo siento, pero ahora mismo estoy muy saturado. Prueba dentro de unas horas.")
+			->send();
+			$pokemon->step($userid, NULL);
+			return -1;
+		}
+
 		// Comprobar si ya hay otra imagen previamente en cola.
 		$cooldown = $pokemon->settings($userid, 'verify_cooldown');
 		if(!empty($cooldown) and $cooldown > time()){
