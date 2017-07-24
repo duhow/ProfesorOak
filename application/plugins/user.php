@@ -24,8 +24,13 @@ function user_set_name($user, $name, $force = FALSE){
 	else{
 		$analytics->event('Telegram', 'Register username');
 		$pokemon->update_user_data($user, 'username', $name);
-		$str = "De acuerdo, *@$name*!\n"
-				."¡Recuerda *validarte* para poder entrar en los grupos de colores!";
+		$str = "De acuerdo, *@$name*!\n";
+		if($pokemon->settings($telegram->chat->id, 'require_verified')){
+			$str .= "Para estar en este grupo *debes estar validado.*";
+		}else{
+			$str .= "¡Recuerda *validarte* para poder entrar en los grupos de colores!"; 
+		}
+
 		$telegram->send
 			->inline_keyboard()
 				->row_button("Validar perfil", "quiero validarme", TRUE)
