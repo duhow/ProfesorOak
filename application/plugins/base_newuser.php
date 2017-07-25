@@ -354,6 +354,11 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 	$left = $telegram->new_user; // HACK nombre confunde.
     $pokemon->user_delgroup($left->id, $telegram->chat->id);
 	if($left->id == $this->config->item('telegram_bot_id')){
+		// Limpieza general
+		$this->db
+			->where('chat', $telegram->chat->id)
+		->delete('poleauth');
+
 		$str = ":door: Me echan :(\n"
 				.":id: " .$telegram->chat->id ."\n"
 				.":abc: " .$telegram->chat->title ."\n"
