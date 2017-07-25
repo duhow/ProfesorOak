@@ -24,11 +24,23 @@ function user_set_name($user, $name, $force = FALSE){
 	else{
 		$analytics->event('Telegram', 'Register username');
 		$pokemon->update_user_data($user, 'username', $name);
+
+		if(function_exists('report_user_get')){
+			$reps = report_user_get($name);
+			if($reps and count($reps) > 0){
+				$telegram->send
+					->notification(TRUE)
+					->chat("-246585563")
+					->text($telegram->emoji(":warning: ") ."Se ha registrado el usuario $name.")
+				->send();
+			}
+		}
+
 		$str = "De acuerdo, *@$name*!\n";
 		if($pokemon->settings($telegram->chat->id, 'require_verified')){
 			$str .= "Para estar en este grupo *debes estar validado.*";
 		}else{
-			$str .= "¡Recuerda *validarte* para poder entrar en los grupos de colores!"; 
+			$str .= "¡Recuerda *validarte* para poder entrar en los grupos de colores!";
 		}
 
 		$telegram->send
