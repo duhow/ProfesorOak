@@ -1,6 +1,6 @@
 <?php
 
-if($this->telegram->is_chat_group()){
+if($this->telegram->is_chat_group() or $this->telegram->key == "channel_post"){
 
 	if($this->telegram->text_has(["montar", "monta", "crear", "organizar", "organiza"], ["raid", "incursión"])){
 		$place = NULL;
@@ -43,30 +43,30 @@ if($this->telegram->is_chat_group()){
 
 		return -1;
 	}
+}
 
-	elseif($this->telegram->callback == "raid apuntar"){
-		$str = $this->telegram->text_message();
-		$user = $pokemon->user($this->telegram->user->id);
+if($this->telegram->callback == "raid apuntar"){
+	$str = $this->telegram->text_message();
+	$user = $pokemon->user($this->telegram->user->id);
 
-		if(strpos($str, $user->username) !== FALSE){
-			$this->telegram->answer_if_callback("¡Ya estás apuntado en la lista!", TRUE);
-			return -1;
-		}
-
-		$team = ['R' => 'red', 'B' => 'blue', 'Y' => 'yellow'];
-		$str .= "\n- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
-
-		$this->telegram->send
-			->chat(TRUE)
-			->message(TRUE)
-			->text($str)
-			->inline_keyboard()
-				->row_button("¡Me apunto!", "raid apuntar")
-			->show()
-		->edit('text');
-
+	if(strpos($str, $user->username) !== FALSE){
+		$this->telegram->answer_if_callback("¡Ya estás apuntado en la lista!", TRUE);
 		return -1;
 	}
+
+	$team = ['R' => 'red', 'B' => 'blue', 'Y' => 'yellow'];
+	$str .= "\n- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
+
+	$this->telegram->send
+		->chat(TRUE)
+		->message(TRUE)
+		->text($str)
+		->inline_keyboard()
+			->row_button("¡Me apunto!", "raid apuntar")
+		->show()
+	->edit('text');
+
+	return -1;
 }
 
 ?>
