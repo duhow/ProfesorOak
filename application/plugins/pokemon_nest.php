@@ -101,6 +101,21 @@ if(
 	// Registrar el último comando, independientemente de su resultado.
 	$pokemon->settings($telegram->user->id, 'last_command', 'POKEMON_FIND_LOCATION');
 
+	$uinfo = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
+	$utime = strtotime($uinfo->register_date);
+
+	if($uinfo->messages <= 7 or strtotime("+4 days", $utime) > time() && $this->telegram->user->id != $this->config->item('creator')){
+		$str = "¿Acabas de llegar y ya estás pidiendo nidos? Te calmas.";
+		if($telegram->callback){
+			$telegram->answer_if_callback($str, TRUE);
+		}else{
+			$telegram->send
+				->text($str)
+			->send();
+		}
+		return -1;
+	}
+
     $query = $this->db
         ->where_in('chat', $target)
         ->where('pokemon', $pk['pokemon'])
