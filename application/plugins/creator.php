@@ -1029,7 +1029,7 @@ elseif(
 	return -1;
 }
 
-elseif($telegram->text_command("dbdump") && !$telegram->is_chat_group()){
+elseif($telegram->text_command(["dbdump", "dumpdb"]) && !$telegram->is_chat_group()){
 	$this->telegram->send
 		->text("Generando...")
 	->send();
@@ -1186,6 +1186,37 @@ elseif($telegram->text_command("pokerecalc")){
 		->message($q)
 		->text("¡Pokémon recalculados!")
 	->edit('text');
+}
+
+elseif($telegram->text_command(["flagswap", "swapflag"])){
+	$target = NULL;
+	if($telegram->has_reply){
+		$target = $telegram->reply_target('forward')->id;
+	}elseif($telegram->words() == 2 and is_numeric($telegram->last_word()){
+		$target = $telegram->last_word();
+	}
+
+	if(empty($target)){ return -1; }
+
+	$insert = [
+		['user' => $target, 'value' => 'change_name'],
+		['user' => $target, 'value' => 'change_faction'],
+		['user' => $target, 'value' => 'change_account'],
+		['user' => $target, 'value' => 'posible_multiaccount'],
+	];
+
+	$str = "Cambio de cuenta asignado a $target.";
+
+	try {
+		$this->db->insert_batch('user_flags', $insert);
+	} catch (Exception $e) {
+		$str = "Error general.";
+	}
+
+	$this->telegram->send
+		->text($str)
+	->send();
+	return -1;
 }
 
 $step = $pokemon->step($telegram->user->id);
