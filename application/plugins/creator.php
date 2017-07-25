@@ -1192,7 +1192,7 @@ elseif($telegram->text_command(["flagswap", "swapflag"])){
 	$target = NULL;
 	if($telegram->has_reply){
 		$target = $telegram->reply_target('forward')->id;
-	}elseif($telegram->words() == 2 and is_numeric($telegram->last_word()){
+	}elseif($telegram->words() == 2 and is_numeric($telegram->last_word())){
 		$target = $telegram->last_word();
 	}
 
