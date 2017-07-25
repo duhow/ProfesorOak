@@ -1219,6 +1219,27 @@ elseif($telegram->text_command(["flagswap", "swapflag"])){
 	return -1;
 }
 
+elseif($telegram->text_command(["newreg", "regnew"])){
+	$query = $this->db
+		->select("COUNT(*) AS count, DATE_FORMAT(register_date, '%Y-%m-%d') AS fecha", FALSE)
+		->from('user')
+		->group_by("fecha")
+		->having("fecha >=", date("Y-m-d", strtotime("-7 days")))
+		->order_by("fecha", "ASC")
+	->get();
+
+	$str = "";
+	foreach($query->result_array() as $row){
+		$str .= date("d/m/Y", strtotime($row['fecha'])) ." - " .$row['count'] ."\n";
+	}
+
+	$this->telegram->send
+		->text($str)
+	->send();
+
+	return -1;
+}
+
 $step = $pokemon->step($telegram->user->id);
 if($telegram->document() && in_array($step, ["USERREC_LIST", "USERDIF_LIST"])){
 	set_time_limit(2700);
