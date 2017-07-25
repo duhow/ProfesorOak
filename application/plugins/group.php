@@ -307,7 +307,11 @@ elseif(
     $this->analytics->event('Telegram', 'Search User', $find);
     $data = $pokemon->user($find);
     if(empty($data)){
-        $str = "No sé quien es. ($find)";
+		$data = $pokemon->user($find, TRUE);
+		$str = "No sé quien es. ($find)";
+		if(!empty($data)){
+			$str = "Lo conozco, pero que yo sepa no usa Telegram.";
+		}
     }else{
         $find = $telegram->user_in_chat($data->telegramid);
         if(!$find){
