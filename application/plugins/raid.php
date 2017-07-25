@@ -30,9 +30,11 @@ if($this->telegram->is_chat_group() or $this->telegram->key == "channel_post"){
 
 		$str .= "!\n";
 
+		/* Desactivado por canal y gente que crea y no va.
 		$user = $pokemon->user($this->telegram->user->id);
 		$team = ['R' => 'red', 'B' => 'blue', 'Y' => 'yellow'];
 		$str .= "- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username ."\n";
+		*/
 
 		$this->telegram->send
 			->text($str)
