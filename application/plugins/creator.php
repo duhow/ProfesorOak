@@ -900,11 +900,13 @@ elseif($telegram->text_command("register") && $telegram->has_reply){
 
     foreach($data as $k => $v){
         if(in_array($k, ['telegramid'])){ continue; } // , 'team'
-        $q = $pokemon->update_user_data($data['telegramid'], $k, $v);
-		if($q === FALSE){
+		try {
+			$pokemon->update_user_data($data['telegramid'], $k, $v);
+		} catch (Exception $e) {
 			$telegram->send
 				->text($telegram->emoji(":times:") . " Error al cambiar $k.")
 			->send();
+			return -1;
 		}
     }
 
