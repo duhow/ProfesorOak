@@ -167,6 +167,15 @@ if($telegram->text_has(["Te valido", "No te valido"], TRUE) && $telegram->words(
 	$pokemon->settings($target, 'verify_cooldown', 'DELETE');
 
 	if($telegram->text_has("no")){
+
+		// Update en nueva tabla.
+		$this->db
+			->where('telegramid', $target)
+			->where('status IS NULL')
+			->set('status', 3) // REJECT
+			->set('date_finish', date("Y-m-d H:i:s"))
+		->update('user_verify');
+
 		$telegram->send
             ->notification(TRUE)
             ->chat($target)
@@ -188,6 +197,14 @@ if($telegram->text_has(["Te valido", "No te valido"], TRUE) && $telegram->words(
 	}
 
     if($pokemon->verify_user($telegram->user->id, $target)){
+		// Update en nueva tabla.
+		$this->db
+			->where('telegramid', $target)
+			->where('status IS NULL')
+			->set('status', 1) // REJECT
+			->set('date_finish', date("Y-m-d H:i:s"))
+		->update('user_verify');
+
         $telegram->send
             ->notification(FALSE)
             ->text( $telegram->emoji(":green-check:") )
