@@ -6,7 +6,7 @@ if($telegram->text_contains(["fake GPS", "fake", "fakegps", "nox"])){
         $this->analytics->event('Telegram', 'Talk cheating');
         $telegram->send
             ->text("*(A)* *" .$telegram->chat->title ."* - " .$telegram->user->first_name ." @" .$telegram->user->username .":\n" .$telegram->text(), TRUE)
-            ->chat($this->config->item('creator'))
+            ->chat("-226115807")
         ->send();
         // $this->telegram->sendHTML("*OYE!* Si vas a empezar con esas, deberías dejar el juego. En serio, hacer trampas *NO MOLA*.");
 		$bw = $pokemon->settings($telegram->chat->id, 'blackword');
