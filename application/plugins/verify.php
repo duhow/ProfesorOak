@@ -21,7 +21,7 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 				->text($telegram->emoji($text), TRUE)
 				->keyboard()->hide(TRUE)
 			->send();
-			$pokemon->step($userid, NULL);
+			// $pokemon->step($userid, NULL);
 			return -1;
 		}
 
@@ -65,6 +65,18 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 		$pokemon->settings($userid, 'verify_cooldown', (time() + 64800));
 		$pokemon->settings($userid, 'verify_images', serialize($images));
 
+		// Cola de validaciones
+		// -----------------
+		$data = [
+			'photo' => $this->telegram->photo(),
+			'telegramid' => $userid,
+			'username' => $pokeuser->username,
+			'team' => $pokeuser->team,
+		];
+
+		$this->db->insert('user_verify', $data);
+		// -----------------
+
 		$telegram->send
 			->message(TRUE)
 			->chat(TRUE)
@@ -87,7 +99,7 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 			->notification(TRUE)
 			->chat($userid)
 			->keyboard()->hide(TRUE)
-			->text($this->telegram->emoji(":ok: ") ."¡Enviado correctamente! El proceso de validar puede tardar un tiempo.")
+			->text($this->telegram->emoji(":ok: ") ."¡Enviado correctamente! El proceso de validar puede tardar un tiempo. Ten paciencia, que últimamente se registra mucha gente y no doy abasto!")
 		->send();
 
 		$pokemon->step($userid, NULL);
@@ -226,7 +238,7 @@ elseif(
                     ->row_button("Validar perfil", "quiero validarme", TRUE)
                 ->show()
             ->send();
-            return;
+            return -1;
         }
     }
 
