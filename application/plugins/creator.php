@@ -439,6 +439,62 @@ elseif($this->telegram->text_command("kickteam")){
 	return -1;
 }
 
+elseif($this->telegram->text_command(["kickblack", "kickblacklist"])){
+	$black = $pokemon->settings($telegram->chat->id, 'blacklist');
+
+	if(empty($black)){
+		$this->telegram->send
+			->text($this->telegram->emoji(":times: ") ."No hay lista negra.")
+		->send();
+		return -1;
+	}
+
+	$black = explode(",", $black);
+
+	if(!in_array($this->config->item('telegram_bot_id'), $pokemon->telegram_admins(TRUE))){ // Tiene que ser admin
+		$telegram->send
+			->notification(FALSE)
+			->text("Jefe, no puedo, que no soy admin :(")
+		->send();
+		return -1;
+	}
+
+	$query = $this->db
+		->select('uid')
+		->from('user_inchat')
+		->join('user_flags', 'user_flags.user = user_inchat.uid', 'LEFT')
+		->where('cid', $telegram->chat->id)
+		->where_in('value', $black)
+	->get();
+
+	if($query->num_rows() == 0){
+		$telegram->send
+			->text("Todo limpio!")
+		->send();
+		return -1;
+	}
+
+	$telegram->send
+		->text("Cuento " .$query->num_rows() ." usuarios.")
+	->send();
+
+	$c = 0;
+	foreach($query->result_array() as $u){
+		if($u['uid'] == $this->config->item('telegram_bot_id')){ continue; }
+		$q = $telegram->send->kick($u['uid'], $telegram->chat->id);
+		if($q !== FALSE){
+			$pokemon->user_delgroup($u['uid'], $telegram->chat->id);
+			$c++;
+		}
+	}
+
+	$telegram->send
+		->text("Vale, $c fuera!")
+	->send();
+
+	return -1;
+}
+
 // Quitar tag de SPAM
 elseif($telegram->text_has("/nospam", TRUE) && $telegram->words() <= 3){
     // HACK text_has porque comandos no se parsean en INLINE_keyboard.
