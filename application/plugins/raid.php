@@ -51,14 +51,21 @@ if($this->telegram->callback == "raid apuntar"){
 	$str = $this->telegram->text_message();
 	$user = $pokemon->user($this->telegram->user->id);
 
+	$team = ['R' => 'red', 'B' => 'blue', 'Y' => 'yellow'];
+
 	if(strpos($str, $user->username) !== FALSE){
-		$this->telegram->answer_if_callback("¡Ya estás apuntado en la lista!", TRUE);
-		return -1;
+		// $this->telegram->answer_if_callback("¡Ya estás apuntado en la lista!", TRUE);
+		// return -1;
+		$str = explode("\n", $str);
+		foreach($str as $k => $s){
+			if(strpos($s, $user->username) !== FALSE){ unset($str[$k]); }
+		}
+		$str = implode("\n", $str);
+	}else{
+		$str .= "\n- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
 	}
 
-	$team = ['R' => 'red', 'B' => 'blue', 'Y' => 'yellow'];
-	$str .= "\n- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
-
+	$this->telegram->answer_if_callback();
 	$this->telegram->send
 		->chat(TRUE)
 		->message(TRUE)
