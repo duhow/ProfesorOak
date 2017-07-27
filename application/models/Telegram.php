@@ -255,6 +255,8 @@ class __Module_Telegram_Sender extends CI_Model{
 
 		if($url === TRUE){ unlink($file); }
 		if($keep === FALSE){ $this->_reset(); }
+		$json = json_decode($output, TRUE);
+		if($json){ return $json['result']; }
 		return $output;
 		// return $this;
 	}
@@ -1167,6 +1169,8 @@ class Telegram extends CI_Model{
 			'multiuser' => '\ud83d\udc65',
 			'robot' => '\ud83e\udd16',
 			'fire' => '\ud83d\udd25',
+			'thunder' => '\u26a1\ufe0f',
+			'droplet' => '\ud83d\udca7',
 			'collision' => '\ud83d\udca5',
 			'joker' => '\ud83c\udccf',
 			'medal-1' => '\ud83e\udd47',
@@ -1299,6 +1303,8 @@ class Telegram extends CI_Model{
 			'robot' => [':robot:', ':bot:'],
 			'multiuser' => [':multiuser:'],
 			'fire' => [':fire:'],
+			'thunder' => [':thunder:', ':voltage:', ':lightning:'],
+			'droplet' => [':water:', ':waterdrop:', ':droplet:'],
 			'collision' => [':collision:'],
 			'joker' => [':joker:'],
 			'antenna' => [':antenna:'],
