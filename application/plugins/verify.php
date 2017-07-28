@@ -201,7 +201,7 @@ if($telegram->text_has(["Te valido", "No te valido"], TRUE) && $telegram->words(
 		$this->db
 			->where('telegramid', $target)
 			->where('status IS NULL')
-			->set('status', 1) // REJECT
+			->set('status', 1) // OK
 			->set('date_finish', date("Y-m-d H:i:s"))
 		->update('user_verify');
 
