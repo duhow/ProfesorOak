@@ -373,7 +373,7 @@ elseif(
     }else{
         $set = "es " .$telegram->emoji($iconteam[$set]);
     }
-    $seticon = ($set && $set != FALSE ? 1 : 0);
+    $seticon = ($set && $set != FALSE && $set != NULL ? 1 : 0);
     $str .= $telegram->emoji( $icon[$seticon] ) ." Grupo de color $set\n";
 
     $telegram->send->text($str)->send();
