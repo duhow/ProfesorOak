@@ -64,6 +64,7 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 		// Cooldown +18h
 		$pokemon->settings($userid, 'verify_cooldown', (time() + 64800));
 		$pokemon->settings($userid, 'verify_images', serialize($images));
+		$pokemon->settings($userid, 'verify_id', $this->telegram->message_id);
 
 		// Cola de validaciones
 		// -----------------
@@ -77,7 +78,7 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 		$this->db->insert('user_verify', $data);
 		// -----------------
 
-		$telegram->send
+		/* $telegram->send
 			->message(TRUE)
 			->chat(TRUE)
 			->forward_to("-197822813")
@@ -93,7 +94,7 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 					->button($telegram->emoji(":times:"), "no te valido " .$userid, "TEXT")
 				->end_row()
 			->show()
-		->send();
+		->send(); */
 
 		$telegram->send
 			->notification(TRUE)
