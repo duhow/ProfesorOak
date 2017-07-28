@@ -823,6 +823,59 @@ class Main extends CI_Controller {
 		// exit(); // FIXME molesta. se queda comentado.
 	}
 
+	function cron(){
+		$chat = "-221103258";
+		if($_SERVER['REMOTE_ADDR'] != getHostByName(getHostName())){ die(); }
+		$q = $this->telegram->send->Request("getWebhookInfo", array());
+		if($q !== FALSE){
+			if(strpos(sha1($q['url']), "6a0644e5f2c5d79d") === FALSE){
+				$this->telegram->send
+					->chat($chat)
+					->text($this->telegram->emoji(":warning: ") ."¡Webhook ha variado!")
+				->send();
+			}
+			if($q['pending_update_count'] >= 100){
+				$str = $this->telegram->emoji(":warning: ") ."¡Hay " .$q['pending_update_count'] ." requests pendientes!";
+				if($q['pending_update_count'] >= 300){
+					$str .= "\n" .$this->telegram->emoji(":!: ") ."Vale, son demasiados. Frenando...";
+				}
+
+				$this->telegram->send
+					->chat($chat)
+					->text($str)
+				->send();
+
+				if($q['pending_update_count'] >= 300){
+					if(touch('die')){
+						while($q['pending_update_count'] >= 30){
+							$q = $this->telegram->send->Request("getWebhookInfo", array());
+							sleep(6);
+						}
+						unlink('die');
+						$this->telegram->send
+							->chat($chat)
+							->text($this->telegram->emoji(":ok: ") ."Ahora hay " .$q['pending_update_count'] .".")
+						->send();
+					}
+				}
+			}
+			if(isset($q['last_error_date']) and $q['last_error_date'] >= time() + 60){
+				$time = time() - $q['last_error_date'];
+				$this->telegram->send
+					->chat($chat)
+					->text($this->telegram->emoji(":warning: ") ."Error hace $time s: " .$q['last_error_message'])
+				->send();
+			}
+			$cpu = sys_getloadavg();
+			if($cpu[0] >= 6.5){
+				$this->telegram->send
+					->chat($chat)
+					->text($this->telegram->emoji(":warning: ") ."¡CPU caliente! " .implode(" / ", $cpu))
+				->send();
+			}
+		}
+	}
+
 	function _joke(){
 		$this->analytics->event('Telegram', 'Games', 'Jokes');
 		$this->last_command("JOKE");
