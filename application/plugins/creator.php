@@ -228,6 +228,13 @@ if($telegram->text_command("kickold") && $telegram->words() == 2){
 		return -1;
 	}
 
+	set_time_limit(2700);
+    $run = $pokemon->settings($telegram->chat->id, 'investigation');
+    if($run !== NULL){
+        if(time() <= ($run + 3600)){ return -1; }
+    }
+    $run = $pokemon->settings($telegram->chat->id, 'investigation', time());
+
 	/* if($telegram->words() == 3){
 		$ids = $telegram->last_word();
 		$ids = explode(",", $ids);
@@ -316,6 +323,13 @@ if($telegram->text_command("kickmsg") && $telegram->words() == 2){
 		return -1;
 	}
 
+	set_time_limit(2700);
+    $run = $pokemon->settings($telegram->chat->id, 'investigation');
+    if($run !== NULL){
+        if(time() <= ($run + 3600)){ return -1; }
+    }
+    $run = $pokemon->settings($telegram->chat->id, 'investigation', time());
+
 	$messages = $telegram->words(1);
 	if(intval($messages) <= 1){
 		$messages = 6;
@@ -357,6 +371,13 @@ elseif($telegram->text_command("kickuv")){
 		->send();
 		return -1;
 	}
+
+	set_time_limit(2700);
+    $run = $pokemon->settings($telegram->chat->id, 'investigation');
+    if($run !== NULL){
+        if(time() <= ($run + 3600)){ return -1; }
+    }
+    $run = $pokemon->settings($telegram->chat->id, 'investigation', time());
 
 	$query = $this->db
 		->select('uid')
@@ -458,6 +479,13 @@ elseif($this->telegram->text_command(["kickblack", "kickblacklist"])){
 		->send();
 		return -1;
 	}
+
+	set_time_limit(2700);
+    $run = $pokemon->settings($telegram->chat->id, 'investigation');
+    if($run !== NULL){
+        if(time() <= ($run + 3600)){ return -1; }
+    }
+    $run = $pokemon->settings($telegram->chat->id, 'investigation', time());
 
 	$query = $this->db
 		->select('uid')
