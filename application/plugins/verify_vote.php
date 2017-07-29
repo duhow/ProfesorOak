@@ -408,10 +408,12 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 			if($pokemon->verify_user($telegram->user->id, $targetid)){
 				// Update en nueva tabla.
 				verify_response_accept($targetid, $id);
+				$pokemon->settings($targetid, 'verify_cooldown', 'DELETE');
 		    }
 		}elseif($action == VERIFY_REJECT){
 			// Update en nueva tabla.
 			verify_response_reject($targetid, $id);
+			$pokemon->settings($targetid, 'verify_cooldown', 'DELETE');
 
 		}elseif($action == VERIFY_REPORT){
 			$pokemon->user_flags($targetid, "fly", TRUE);
@@ -432,6 +434,8 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 		if($totalvotes[VERIFY_OK] >= 60){
 			if($pokemon->verify_user($telegram->user->id, $targetid)){
 				verify_response_accept($targetid, $id);
+				$pokemon->settings($targetid, 'verify_cooldown', 'DELETE');
+
 				$this->telegram->send
 					->notification(FALSE)
 					->chat("-221103258")
@@ -440,6 +444,8 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 			}
 		}elseif($totalvotes[VERIFY_REJECT] >= 60){
 			verify_response_reject($targetid, $id);
+			$pokemon->settings($targetid, 'verify_cooldown', 'DELETE');
+			
 			$this->telegram->send
 				->notification(FALSE)
 				->chat("-221103258")
