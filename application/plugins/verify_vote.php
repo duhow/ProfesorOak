@@ -17,8 +17,8 @@ function verify_get_randuser($helperid){
 		->where_not_in("v.id", "(SELECT photo FROM user_verify_vote WHERE telegramid = $helperid)", FALSE)
 		->where_not_in("v.id", "(SELECT photo FROM user_verify_vote GROUP BY photo HAVING count(*) >= " .VERIFY_MIN_VOTE_AMOUNT ." )", FALSE)
 		->where_not_in("v.telegramid", "(SELECT telegramid FROM user WHERE verified = TRUE)", FALSE)
-		// ->order_by('RAND()')
-		->order_by('v.id ASC')
+		->order_by('RAND()')
+		// ->order_by('v.id ASC')
 		->limit(1);
 
 	/* if($helperid == "3458358"){
@@ -142,11 +142,11 @@ function verify_text_generate($verifydata, $userdata, $left = NULL){
 	];
 
 	$str .= $old ."  ";
-	if(!empty($left)){ $str .= "$left :triangle-left:  "; }
-	$str .= date("H:i", strtotime($verifydata->date_add)) ." :clock:";
+	if(!empty($left)){ $str .= "<code>          </code>$left :triangle-left: "; }
+	$str .= "<code>          </code>" .date("H:i", strtotime($verifydata->date_add)) ." :clock:";
 
 	$str .= "\n" .":arrow-up: <b>L" .$userdata->lvl ." </b>"
-		.$teamico[$userdata->team] ."<code>  </code>@" .$userdata->username;
+		.$teamico[$userdata->team] ."<code>          </code>@" .$userdata->username;
 
 	/* if(strtolower($userdata->username) == strtolower($userdata->telegramuser)){
 		$str .= " :ok:";
@@ -291,16 +291,17 @@ if(
 		}
 
 		$res = verify_vote_get_results($id);
-		$str .= "\n" .$this->telegram->emoji(":id: ") .$verifydata->telegramid;
+		$str .= "\n" .$this->telegram->emoji(":id: ") .$verifydata->telegramid
+			."<code>      </code>" .$this->telegram->emoji("\ud83d\udcdd") ." #$id";
 
 		$rt = $this->telegram->send
 			->notification(TRUE)
 			->inline_keyboard()
 				->row()
-					->button($this->telegram->emoji(":ok: " .$res[VERIFY_OK]), 				"verivote $id 1", "TEXT")
-					->button($this->telegram->emoji(":warning: " .$res[VERIFY_CHECK]),		"verivote $id 2", "TEXT")
-					->button($this->telegram->emoji(":times: " .$res[VERIFY_REJECT]),		"verivote $id 3", "TEXT")
-					->button($this->telegram->emoji("\u203c\ufe0f " .$res[VERIFY_REPORT]),	"verivote $id 4", "TEXT")
+					->button($this->telegram->emoji(":ok: " .$res[VERIFY_OK]), 				"verivote $id " .VERIFY_OK, "TEXT")
+					->button($this->telegram->emoji(":warning: " .$res[VERIFY_CHECK]),		"verivote $id " .VERIFY_CHECK, "TEXT")
+					->button($this->telegram->emoji(":times: " .$res[VERIFY_REJECT]),		"verivote $id " .VERIFY_REJECT, "TEXT")
+					->button($this->telegram->emoji("\u203c\ufe0f " .$res[VERIFY_REPORT]),	"verivote $id " .VERIFY_REPORT, "TEXT")
 				->end_row()
 				->row()
 					->button($this->telegram->emoji("\ud83d\udcdd"),	"vericount $id", "TEXT")
@@ -317,36 +318,15 @@ if(
 			->notification(TRUE)
 			->inline_keyboard()
 				->row()
-					->button($this->telegram->emoji(":ok:"), 		"verivote $id 1", "TEXT")
-					->button($this->telegram->emoji(":warning:"),	"verivote $id 2", "TEXT")
-					->button($this->telegram->emoji(":times:"),		"verivote $id 3", "TEXT")
-					->button($this->telegram->emoji("\u203c\ufe0f"),"verivote $id 4", "TEXT")
+					->button($this->telegram->emoji(":ok:"), 		"verivote $id " .VERIFY_OK , "TEXT")
+					->button($this->telegram->emoji(":warning:"),	"verivote $id " .VERIFY_CHECK , "TEXT")
+					->button($this->telegram->emoji(":times:"),		"verivote $id " .VERIFY_REJECT , "TEXT")
+					->button($this->telegram->emoji("\u203c\ufe0f"),"verivote $id " .VERIFY_REPORT , "TEXT")
 				->end_row()
 			->show()
 			->text($str, "HTML")
 		->send();
 	}
-
-
-
-	/*
-	$rt = $this->telegram->send
-		->notification(FALSE)
-		->text($str, "HTML")
-	->send();
-
-	$rp = $this->telegram->send
-		->notification(TRUE)
-		->inline_keyboard()
-			->row()
-				->button($this->telegram->emoji(":ok:"), 		"verivote $id 1", "TEXT")
-				->button($this->telegram->emoji(":warning:"),	"verivote $id 2", "TEXT")
-				->button($this->telegram->emoji(":times:"),		"verivote $id 3", "TEXT")
-				->button($this->telegram->emoji("\u203c\ufe0f"),"verivote $id 4", "TEXT")
-			->end_row()
-		->show()
-	->file('photo', $verifydata->photo);
-	*/
 
 	$messages = implode(",", [$rp['message_id'], $rt['message_id']]);
 	$pokemon->settings($userid, 'verify_messages', $messages);
@@ -589,16 +569,17 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 		}
 
 		$res = verify_vote_get_results($id);
-		$str .= "\n" .$this->telegram->emoji(":id: ") .$verifydata->telegramid;
+		$str .= "\n" .$this->telegram->emoji(":id: ") .$verifydata->telegramid
+			."<code>      </code>" .$this->telegram->emoji("\ud83d\udcdd") ." #$id";
 
 		$rt = $this->telegram->send
 			->notification(TRUE)
 			->inline_keyboard()
 				->row()
-					->button($this->telegram->emoji(":ok: " .$res[VERIFY_OK]), 				"verivote $id 1", "TEXT")
-					->button($this->telegram->emoji(":warning: " .$res[VERIFY_CHECK]),		"verivote $id 2", "TEXT")
-					->button($this->telegram->emoji(":times: " .$res[VERIFY_REJECT]),		"verivote $id 3", "TEXT")
-					->button($this->telegram->emoji("\u203c\ufe0f " .$res[VERIFY_REPORT]),	"verivote $id 4", "TEXT")
+					->button($this->telegram->emoji(":ok: " .$res[VERIFY_OK]), 				"verivote $id " .VERIFY_OK, "TEXT")
+					->button($this->telegram->emoji(":warning: " .$res[VERIFY_CHECK]),		"verivote $id " .VERIFY_CHECK, "TEXT")
+					->button($this->telegram->emoji(":times: " .$res[VERIFY_REJECT]),		"verivote $id " .VERIFY_REJECT, "TEXT")
+					->button($this->telegram->emoji("\u203c\ufe0f " .$res[VERIFY_REPORT]),	"verivote $id " .VERIFY_REPORT, "TEXT")
 				->end_row()
 				->row()
 					->button($this->telegram->emoji("\ud83d\udcdd"),	"vericount $id", "TEXT")
@@ -615,10 +596,10 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 			->notification(TRUE)
 			->inline_keyboard()
 				->row()
-					->button($this->telegram->emoji(":ok:"), 		"verivote $id 1", "TEXT")
-					->button($this->telegram->emoji(":warning:"),	"verivote $id 2", "TEXT")
-					->button($this->telegram->emoji(":times:"),		"verivote $id 3", "TEXT")
-					->button($this->telegram->emoji("\u203c\ufe0f"),"verivote $id 4", "TEXT")
+					->button($this->telegram->emoji(":ok:"), 		"verivote $id " .VERIFY_OK, "TEXT")
+					->button($this->telegram->emoji(":warning:"),	"verivote $id " .VERIFY_CHECK, "TEXT")
+					->button($this->telegram->emoji(":times:"),		"verivote $id " .VERIFY_REJECT, "TEXT")
+					->button($this->telegram->emoji("\u203c\ufe0f"),"verivote $id " .VERIFY_REPORT, "TEXT")
 				->end_row()
 			->show()
 			->text($str, "HTML")
