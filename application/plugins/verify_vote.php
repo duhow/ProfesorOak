@@ -302,6 +302,9 @@ if(
 					->button($this->telegram->emoji(":times: " .$res[VERIFY_REJECT]),		"verivote $id 3", "TEXT")
 					->button($this->telegram->emoji("\u203c\ufe0f " .$res[VERIFY_REPORT]),	"verivote $id 4", "TEXT")
 				->end_row()
+				->row()
+					->button($this->telegram->emoji("\ud83d\udcdd"),	"vericount $id", "TEXT")
+				->end_row()
 			->show()
 			->text($str, "HTML")
 		->send();
@@ -597,6 +600,9 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 					->button($this->telegram->emoji(":times: " .$res[VERIFY_REJECT]),		"verivote $id 3", "TEXT")
 					->button($this->telegram->emoji("\u203c\ufe0f " .$res[VERIFY_REPORT]),	"verivote $id 4", "TEXT")
 				->end_row()
+				->row()
+					->button($this->telegram->emoji("\ud83d\udcdd"),	"vericount $id", "TEXT")
+				->end_row()
 			->show()
 			->text($str, "HTML")
 		->send();
@@ -623,5 +629,40 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 	$pokemon->settings($userid, 'verify_messages', $messages);
 	// ---------------------------
 
+}
+
+if($this->telegram->callback and $this->telegram->text_has("vericount", TRUE)){
+	if($this->telegram->user->id != $this->config->item('creator')){ return -1; }
+
+	$id = $this->telegram->words(1);
+	$str = "\ud83d\udcdd #$id\n";
+	$icons = [
+		VERIFY_OK		=> ":ok:",
+		VERIFY_CHECK	=> ":warning:",
+		VERIFY_REJECT	=> ":times:",
+		VERIFY_REPORT	=> "\u203c\ufe0f",
+	];
+
+	$query = $this->db
+		->select(['u.username', 'v.status'])
+		->from('user_verify_vote v')
+		->join('user u', 'u.telegramid = v.telegramid')
+		->where('photo', $id)
+	->get();
+
+	foreach($query->result_array() as $vote){
+		$str .= $icons[$vote['status']] ." " .$vote['username'] ."\n";
+	}
+
+	$req = $this->telegram->send
+		->text($this->telegram->emoji($str), "HTML")
+	->send();
+
+	$msgs = $pokemon->settings($telegram->user->id, 'verify_messages');
+	$msgs .= "," .$req;
+	$pokemon->settings($telegram->user->id, 'verify_messages', $msgs);
+
+	$this->telegram->answer_if_callback("");
+	return -1;
 }
 ?>
