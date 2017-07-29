@@ -836,7 +836,7 @@ class Main extends CI_Controller {
 			}
 			if($q['pending_update_count'] >= 100){
 				$str = $this->telegram->emoji(":warning: ") ."¡Hay " .$q['pending_update_count'] ." requests pendientes!";
-				if($q['pending_update_count'] >= 300){
+				if($q['pending_update_count'] >= 300 and (date("G") != 0 and date("i") > 5) ){
 					$str .= "\n" .$this->telegram->emoji(":!: ") ."Vale, son demasiados. Frenando...";
 				}
 
@@ -845,7 +845,7 @@ class Main extends CI_Controller {
 					->text($str)
 				->send();
 
-				if($q['pending_update_count'] >= 300){
+				if($q['pending_update_count'] >= 300 and (date("G") != 0 and date("i") > 5)){
 					if(touch('die')){
 						while($q['pending_update_count'] >= 30){
 							$q = $this->telegram->send->Request("getWebhookInfo", array());
@@ -863,14 +863,14 @@ class Main extends CI_Controller {
 				$time = time() - $q['last_error_date'];
 				$this->telegram->send
 					->chat($chat)
-					->text($this->telegram->emoji(":warning: ") ."Error hace $time s: " .$q['last_error_message'])
+					->text($this->telegram->emoji(":!: ") ."Error hace $time s: " .$q['last_error_message'])
 				->send();
 			}
 			$cpu = sys_getloadavg();
 			if($cpu[0] >= 6.5){
 				$this->telegram->send
 					->chat($chat)
-					->text($this->telegram->emoji(":warning: ") ."¡CPU caliente! " .implode(" / ", $cpu))
+					->text($this->telegram->emoji(":fire: ") ."¡CPU caliente! " .implode(" / ", $cpu))
 				->send();
 			}
 		}
