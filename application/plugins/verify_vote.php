@@ -396,7 +396,9 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 		'status' => $action
 	];
 
-	$this->db->insert('user_verify_vote', $data);
+	$insert = $this->db->insert_string('user_verify_vote', $data)
+		." ON DUPLICATE KEY UPDATE status = $action";
+	$this->db->query($insert);
 
 	// --------------
 
@@ -445,7 +447,7 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 		}elseif($totalvotes[VERIFY_REJECT] >= 60){
 			verify_response_reject($targetid, $id);
 			$pokemon->settings($targetid, 'verify_cooldown', 'DELETE');
-			
+
 			$this->telegram->send
 				->notification(FALSE)
 				->chat("-221103258")
