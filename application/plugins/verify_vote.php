@@ -659,7 +659,7 @@ if($this->telegram->callback and $this->telegram->text_has("vericount", TRUE)){
 	->send();
 
 	$msgs = $pokemon->settings($telegram->user->id, 'verify_messages');
-	$msgs .= "," .$req;
+	$msgs .= "," .$req['message_id'];
 	$pokemon->settings($telegram->user->id, 'verify_messages', $msgs);
 
 	$this->telegram->answer_if_callback("");
