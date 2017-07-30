@@ -1326,6 +1326,66 @@ elseif($telegram->text_command(["newreg", "regnew"])){
 	return -1;
 }
 
+elseif($telegram->text_command("nuke")){
+
+	set_time_limit(2700);
+    $run = $pokemon->settings($telegram->chat->id, 'investigation');
+    if($run !== NULL){
+        if(time() <= ($run + 150)){ return -1; }
+    }
+    $run = $pokemon->settings($telegram->chat->id, 'investigation', time());
+
+	$chatid = NULL;
+
+	if($this->telegram->words() == 1 and $this->telegram->is_chat_group()){
+		$chatid = $this->telegram->chat->id;
+	}
+
+	if($this->telegram->words() == 2){
+		$chatid = $this->telegram->last_word();
+	}
+
+	if(empty($chatid)){ return -1; }
+
+	if(!in_array($this->config->item('telegram_bot_id'), telegram_admins(TRUE, NULL, $chatid))){ // Tiene que ser admin
+		$telegram->send
+			->notification(FALSE)
+			->text("Jefe, no puedo, que no soy admin :(")
+		->send();
+		return -1;
+	}
+
+	$users = $pokemon->group_get_members($chatid);
+	$skip = [
+		$this->config->item('creator'),
+		$this->config->item('telegram_bot_id')
+	];
+
+	$c = 0;
+	foreach($users as $u){
+		if(in_array($u, $skip)){ continue; }
+		$q = $this->telegram->send->ban($u, $chatid);
+		if($q !== FALSE){
+			$pokemon->user_delgroup($u, $chatid);
+			$c++;
+		}
+	}
+
+	$this->telegram->send->kick($this->config->item('creator'), $chatid);
+
+	$count = $this->telegram->send->get_members_count($chatid);
+	$this->telegram->send->leave_chat($chatid);
+
+	$str = ":ok: $c fuera, quedan " .($count - 1) .".";
+
+	$this->telegram->send
+		->chat($this->config->item('creator'))
+		->text($this->telegram->emoji($str), "HTML")
+	->send();
+
+	return -1;
+}
+
 $step = $pokemon->step($telegram->user->id);
 if($telegram->document() && in_array($step, ["USERREC_LIST", "USERDIF_LIST"])){
 	set_time_limit(2700);

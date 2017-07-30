@@ -13,17 +13,19 @@ function text_find($find, $text){
     return FALSE;
 }
 
-function telegram_admins($add_creator = TRUE, $custom = NULL){
+function telegram_admins($add_creator = TRUE, $custom = NULL, $chatid = NULL){
     $CI =& get_instance();
     $pokemon = new Pokemon();
     $telegram = new Telegram();
 
-    $admins = $pokemon->group_admins($telegram->chat->id);
+	if(empty($chatid)){ $chatid = $telegram->chat->id; }
+
+    $admins = $pokemon->group_admins($chatid);
     if(empty($admins)){
-        $admins = $telegram->get_admins(); // Del grupo
-        $pokemon->group_admins($telegram->chat->id, $admins);
+        $admins = $telegram->get_admins($chatid); // Del grupo
+        $pokemon->group_admins($chatid, $admins);
     }
-	$setadmins = $pokemon->settings($telegram->chat->id, "admins");
+	$setadmins = $pokemon->settings($chatid, "admins");
 	if(!empty($setadmins)){
 		$setadmins = explode(",", $setadmins);
 		foreach($setadmins as $a){ $admins[] = $a; }
