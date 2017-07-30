@@ -5,7 +5,7 @@ const VERIFY_CHECK = 2;
 const VERIFY_REJECT = 3;
 const VERIFY_REPORT = 4;
 
-const VERIFY_MIN_VOTE_AMOUNT = 7;
+const VERIFY_MIN_VOTE_AMOUNT = 5;
 
 function verify_get_randuser($helperid){
 	$CI =& get_instance();
@@ -416,7 +416,7 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 			$totalvotes[$tag] = floor(($res[$tag] / $total) * 100);
 		}
 
-		if($totalvotes[VERIFY_OK] >= 60){
+		if($totalvotes[VERIFY_OK] == 100){
 			if($pokemon->verify_user($telegram->user->id, $targetid)){
 				verify_response_accept($targetid, $id);
 				$pokemon->settings($targetid, 'verify_cooldown', 'DELETE');
@@ -469,14 +469,21 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 					->file('photo', $verifydata->photo);
 			}
 
+			$str = verify_text_generate($verifydata, $userdata);
+			$str .= "\n" .":id: " .$userdata->telegramid
+				."<code>      </code>\ud83d\udcdd" ." #$id";
+
 			$this->telegram->send
 				->notification(TRUE)
 				->chat("-197822813")
-				->text("Validar " .$userdata->telegramid ." @" .$userdata->username ." L" .$userdata->lvl ." " .$userdata->team)
+				->text($this->telegram->emoji($str), "HTML")
 				->inline_keyboard()
 					->row()
-						->button($telegram->emoji(":ok:"), "te valido " .$userdata->telegramid, "TEXT")
-						->button($telegram->emoji(":times:"), "no te valido " .$userdata->telegramid, "TEXT")
+						->button($this->telegram->emoji(":ok:"), "te valido " .$userdata->telegramid, "TEXT")
+						->button($this->telegram->emoji(":times:"), "no te valido " .$userdata->telegramid, "TEXT")
+					->end_row()
+					->row()
+						->button($this->telegram->emoji("\ud83d\udcdd"),	"vericount $id", "TEXT")
 					->end_row()
 				->show()
 			->send();
