@@ -271,11 +271,12 @@ elseif(
         return;
     }
 
-    $text = "Para validarte, necesito que me envies una *captura de tu perfil Pokemon GO.* "
+    $text = "Para validarte, necesito que me envies <b>UNA captura de tu PERFIL Pokémon GO.</b> "
             ."La captura tiene que cumplir las siguientes condiciones:\n\n"
-            .":triangle-right: Tiene que verse la hora de tu móvil, y tienes que enviarlo en un márgen de 7 minutos.\n"
-            .":triangle-right: Tiene que aparecer tu nombre de entrenador y color.\n"
-			.":triangle-right: Tienes que tener una mascota que se llame *Oak*. Luego puedes cambiarle el nombre.\n"
+            .":clock: Tiene que verse la <b>HORA</b> de tu móvil, y tienes que enviarlo en un márgen de <b>6 minutos</b>. No valen capturas antiguas.\n"
+            .":male: En tu <b>PERFIL</b> se tiene que ver el nombre de entrenador y color.\n"
+			.":triangle-right: En tu <b>PERFIL</b> se tiene que ver que la <b>MASCOTA</b> se llame <b>Oak</b>. Luego puedes cambiarle el nombre.\n"
+			.":triangle-up: Asegúrate de que el <b>NIVEL</b> es correcto. Se revisará igualmente, pero la validación se hace más rápida si el nivel está bien puesto.\n"
             // .":triangle-right: Si te has cambiado de nombre, avisa a @duhow para tenerlo en cuenta.\n"
             // .":triangle-right: Si no tienes nombre puesto, *cancela el comando* y dime cómo te llamas.\n"
             ."\nCuando haya confirmado la validación, te avisaré por aquí.\n\n"
@@ -283,12 +284,12 @@ elseif(
 
     $color = ['Y' => ':heart-yellow:', 'R' => ':heart-red:', 'B' => ':heart-blue:'];
 
-    $text .= (empty($pokeuser->username) ? "Sin nombre" : "@" .$pokeuser->username) ." L" .$pokeuser->lvl ." " .$color[$pokeuser->team];
+    $text .= (strlen($pokeuser->username) < 4 ? "Sin nombre" : "@" .$pokeuser->username) ." L" .$pokeuser->lvl ." " .$color[$pokeuser->team];
 
     $telegram->send
         ->notification(TRUE)
         ->chat($telegram->user->id)
-        ->text($telegram->emoji($text), TRUE)
+        ->text($telegram->emoji($text), "HTML")
         ->keyboard()
             ->row_button("Cancelar")
         ->show(TRUE, TRUE)
@@ -304,7 +305,7 @@ elseif(
 		if(empty($pokeuser->username)){ $text .= ":triangle-right: *Me llamo ...*\n"; }
 		if($pokeuser->lvl == 1){ $text .= ":triangle-right: *Soy nivel ...*\n"; }
 
-		$text .= "Cuando lo hayas dicho, *vuelve a enviarme la captura.*";
+		$text .= "Cuando lo hayas dicho, *enviame la captura.*";
 
         $telegram->send
             ->notification(TRUE)
@@ -312,7 +313,7 @@ elseif(
             ->text($telegram->emoji($text), TRUE)
             ->keyboard()->hide(TRUE)
         ->send();
-		$pokemon->step($telegram->user->id, NULL);
+		// $pokemon->step($telegram->user->id, NULL);
         return -1; // Kill process for STEP
     }
 
