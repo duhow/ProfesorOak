@@ -91,7 +91,7 @@ function verify_vote_profile_count($photoid){
 	->count_all_results();
 }
 
-function verify_vote_get_results($photoid){
+function verify_vote_get_results($photoid, $retpercbase = FALSE){
 	$CI =& get_instance();
 
 	$query = $CI->db
@@ -112,7 +112,16 @@ function verify_vote_get_results($photoid){
 		$res[intval($row['status'])] = intval($row['count']);
 	}
 
-	return $res;
+	if($retpercbase === FALSE){ return $res; }
+
+	// Percentage base
+	$total = array_sum(array_values($res));
+	$totalvotes = array();
+
+	foreach($res as $status => $count){
+		$totalvotes[$status] = floor(($count / $retpercbase) * 100);
+	}
+	return $totalvotes;
 }
 
 function verify_text_generate($verifydata, $userdata, $left = NULL){
@@ -404,19 +413,14 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 			$pokemon->user_flags($targetid, "fly", TRUE);
 			$pokemon->user_flags($targetid, "gps", TRUE);
 			$this->telegram->answer_if_callback("Reportado por fly.", TRUE);
+			// TODO Ban de grupos con blacklist.
 			return -1;
 		}
-	}elseif(verify_vote_profile_count($id) >= VERIFY_MIN_VOTE_AMOUNT){
-		$res = verify_vote_get_results($id);
+	}else{
+		$totalvotes = verify_vote_get_results($id, VERIFY_MIN_VOTE_AMOUNT);
+		$total = array_sum($totalvotes);
 
-		$total = array_sum(array_values($res));
-		$totalvotes = array();
-
-		foreach([VERIFY_OK, VERIFY_CHECK, VERIFY_REJECT, VERIFY_REPORT] as $tag){
-			$totalvotes[$tag] = floor(($res[$tag] / $total) * 100);
-		}
-
-		if($totalvotes[VERIFY_OK] == 100){
+		if($totalvotes[VERIFY_OK] >= 100){
 			if($pokemon->verify_user($telegram->user->id, $targetid)){
 				verify_response_accept($targetid, $id);
 				$pokemon->settings($targetid, 'verify_cooldown', 'DELETE');
@@ -436,8 +440,8 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 				->chat("-221103258")
 				->text($this->telegram->emoji(":times: ") ."No valido a $id / $targetid por " .implode("/", $totalvotes) ." a " .$total .".")
 			->send();
-		}else{
-			verify_vote_set($targetid, 0); // TEMP NOT NULL
+		}elseif($total >= VERIFY_MIN_VOTE_AMOUNT){
+			// verify_vote_set($targetid, 0); // TEMP NOT NULL
 
 			if($totalvotes[VERIFY_REPORT] >= 50){
 				$this->telegram->send
@@ -481,32 +485,13 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 					->row()
 						->button($this->telegram->emoji(":ok:"), "te valido " .$userdata->telegramid, "TEXT")
 						->button($this->telegram->emoji(":times:"), "no te valido " .$userdata->telegramid, "TEXT")
+						->button($this->telegram->emoji("\u203c\ufe0f"),"verivote $id 4", "TEXT")
 					->end_row()
 					->row()
 						->button($this->telegram->emoji("\ud83d\udcdd"),	"vericount $id", "TEXT")
 					->end_row()
 				->show()
 			->send();
-
-			/* $this->telegram->send
-				->notification(FALSE)
-				->chat("-197945564")
-				->file('photo', $verifydata->photo);
-
-			$str = $this->telegram->emoji(verify_text_generate($verifydata, $userdata));
-			$this->telegram->send
-				->chat("-197945564")
-				->notification(TRUE)
-				->inline_keyboard()
-					->row()
-						->button($this->telegram->emoji(":ok:"), 		"verivote $id 1", "TEXT")
-						->button($this->telegram->emoji(":warning:"),	"verivote $id 2", "TEXT")
-						->button($this->telegram->emoji(":times:"),		"verivote $id 3", "TEXT")
-						->button($this->telegram->emoji("\u203c\ufe0f"),"verivote $id 4", "TEXT")
-					->end_row()
-				->show()
-				->text($str, "HTML")
-			->send(); */
 		}
 	}
 
