@@ -418,7 +418,7 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 		}
 	}else{
 		$totalvotes = verify_vote_get_results($id, VERIFY_MIN_VOTE_AMOUNT);
-		$total = array_sum($totalvotes);
+		$total = verify_vote_profile_count($id);
 
 		if($totalvotes[VERIFY_OK] >= 100){
 			if($pokemon->verify_user($telegram->user->id, $targetid)){
