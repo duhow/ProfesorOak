@@ -1001,7 +1001,7 @@ elseif($telegram->text_command("countonline") && $telegram->is_chat_group()){
 }
 
 // Registro manual - creador.
-elseif($telegram->text_command("register") && $telegram->has_reply){
+elseif($telegram->text_command(["register", "r"]) && $telegram->has_reply){
 	$data['telegramid'] = $telegram->reply_target('forward')->id;
 	$data['telegramuser'] = @$telegram->reply_target('forward')->username;
 
