@@ -801,6 +801,60 @@ elseif(
     return -1;
 }
 
+elseif(
+    $telegram->text_command("f") &&
+    $telegram->words() >= 2
+){
+    if($telegram->words() == 2 and $telegram->has_reply){
+        $f_user = $telegram->reply_target('forward')->id;
+    }elseif(is_numeric($telegram->last_word())){
+        $f_user = (int) $telegram->last_word();
+    }
+	if(empty($f_user)){ return -1; } // Double and final check
+
+	$list = [
+		'CF' => 'change_faction',
+		'CN' => 'change_name',
+		'CA' => 'change_account',
+		'PM' => 'posible_multiaccount',
+		'PF' => 'posible_fly',
+		'PT' => 'posible_troll',
+		'MA' => 'multiaccount',
+		'TR' => 'troll',
+		'PB' => 'permaban'
+	];
+
+	$text = str_replace(",", " ", $telegram->text());
+	$text = explode(" ", $text);
+	array_shift($text); // remove first
+
+	$flags = array();
+	foreach($text as $t){
+		if(strlen($t) <= 1){ continue; }
+		$tu = strtoupper($t);
+		if(in_array($tu, array_keys($list))){
+			$flags[] = $list[$tu];
+		}elseif(strlen($t) > 2 && !is_numeric($t)){
+			$flags[] = $t;
+		}
+	}
+
+	if(empty($flags)){ return -1; }
+
+    foreach($flags as $f){
+        $pokemon->user_flags($f_user, $f, TRUE);
+    }
+
+	$q = $this->telegram->send
+			->text($this->telegram->emoji(":ok: ") ."Aplico flags " .implode(", ", $flags) .".")
+		->send();
+	sleep(3);
+
+	$this->telegram->send->delete($q);
+
+    return -1;
+}
+
 // Ver o poner STEP a un usuario.
 elseif($telegram->text_command("mode")){
     $user = ($telegram->has_reply ? $telegram->reply_target('forward')->id : $telegram->user->id);
