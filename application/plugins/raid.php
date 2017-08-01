@@ -72,8 +72,10 @@ if($this->telegram->callback){
 			->message(TRUE)
 			->text($str)
 			->inline_keyboard()
-				->row_button("¡Me apunto!", "raid apuntar")
-				->row_button("¡Ya estoy!", "raid estoy")
+				->row()
+					->button("¡Me apunto!", "raid apuntar")
+					->button("¡Ya estoy!", "raid estoy")
+				->end_row()
 			->show()
 		->edit('text');
 
@@ -91,9 +93,9 @@ if($this->telegram->callback){
 			foreach($str as $k => $s){
 				if(strpos($s, $user->username) !== FALSE){
 					if(strpos($s, $this->telegram->emoji(":ok:")) !== FALSE){
-						$str[$k] = "\n- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
+						$str[$k] = "- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
 					}else{
-						$str[$k] = "\n- " .$this->telegram->emoji(":ok: ")  .$this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
+						$str[$k] = "- " .$this->telegram->emoji(":ok: ")  .$this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
 					}
 				}
 			}
@@ -106,8 +108,10 @@ if($this->telegram->callback){
 			->message(TRUE)
 			->text($str)
 			->inline_keyboard()
-				->row_button("¡Me apunto!", "raid apuntar")
-				->row_button("¡Ya estoy!", "raid estoy")
+				->row()
+					->button("¡Me apunto!", "raid apuntar")
+					->button("¡Ya estoy!", "raid estoy")
+				->end_row()
 			->show()
 		->edit('text');
 
