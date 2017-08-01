@@ -63,7 +63,7 @@ if($this->telegram->callback){
 			}
 			$str = implode("\n", $str);
 		}else{
-			$str .= "\n- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
+			$str .= "\n- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." " .$user->username;
 		}
 
 		$this->telegram->answer_if_callback();
@@ -93,9 +93,9 @@ if($this->telegram->callback){
 			foreach($str as $k => $s){
 				if(strpos($s, $user->username) !== FALSE){
 					if(strpos($s, $this->telegram->emoji(":ok:")) !== FALSE){
-						$str[$k] = "- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
+						$str[$k] = "- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." " .$user->username;
 					}else{
-						$str[$k] = "- " .$this->telegram->emoji(":ok: ")  .$this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." @" .$user->username;
+						$str[$k] = "- " .$this->telegram->emoji(":ok: ")  .$this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." " .$user->username;
 					}
 				}
 			}
