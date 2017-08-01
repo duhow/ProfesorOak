@@ -805,7 +805,7 @@ elseif(
     $telegram->text_command("f") &&
     $telegram->words() >= 2
 ){
-    if($telegram->words() == 2 and $telegram->has_reply){
+    if($telegram->has_reply){
         $f_user = $telegram->reply_target('forward')->id;
     }elseif(is_numeric($telegram->last_word())){
         $f_user = (int) $telegram->last_word();
