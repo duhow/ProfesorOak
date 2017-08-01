@@ -12,6 +12,10 @@ class Main extends CI_Controller {
 		if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ die(); }
 		// Kill switch for overloading.
 		if(file_exists('die')){ die(); }
+		if(file_exists('skip')){
+			unlink('skip');
+			die();
+		}
 
 		// iniciar variables
 		$telegram = $this->telegram;
@@ -836,7 +840,10 @@ class Main extends CI_Controller {
 			}
 			if($q['pending_update_count'] >= 100){
 				$str = $this->telegram->emoji(":warning: ") ."¡Hay " .$q['pending_update_count'] ." requests pendientes!";
-				if($q['pending_update_count'] >= 300 and (date("G") != 0 and date("i") > 5) ){
+				if($q['pending_update_count'] >= 300 and (
+						!in_array(date("H:i"), ["00:00", "00:01", "00:02", "00:03", "00:04", "00:05"])
+					)
+				){
 					$str .= "\n" .$this->telegram->emoji(":!: ") ."Vale, son demasiados. Frenando...";
 				}
 
@@ -849,7 +856,7 @@ class Main extends CI_Controller {
 					if(touch('die')){
 						while($q['pending_update_count'] >= 30){
 							$q = $this->telegram->send->Request("getWebhookInfo", array());
-							sleep(6);
+							sleep(2);
 						}
 						unlink('die');
 						$this->telegram->send
@@ -859,7 +866,7 @@ class Main extends CI_Controller {
 					}
 				}
 			}
-			if(isset($q['last_error_date']) and $q['last_error_date'] >= time() + 60){
+			if(isset($q['last_error_date']) and $q['last_error_date'] >= time() + 90){
 				$time = time() - $q['last_error_date'];
 				$this->telegram->send
 					->chat($chat)
