@@ -54,17 +54,24 @@ if($this->telegram->callback){
 
 		$team = ['R' => 'red', 'B' => 'blue', 'Y' => 'yellow'];
 
-		if(strpos($str, $user->username) !== FALSE){
-			// $this->telegram->answer_if_callback("¡Ya estás apuntado en la lista!", TRUE);
-			// return -1;
-			$str = explode("\n", $str);
-			foreach($str as $k => $s){
-				if(strpos($s, $user->username) !== FALSE){ unset($str[$k]); }
+		$str = explode("\n", $str);
+		$str[1] = ""; // RESERVED
+		$found = FALSE;
+
+		foreach($str as $k => $s){
+			if(strpos($s, $user->username) !== FALSE){
+				$found = TRUE;
+				unset($str[$k]);
 			}
-			$str = implode("\n", $str);
-		}else{
-			$str .= "\n- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." " .$user->username;
 		}
+		// Agregar
+		if(!$found){
+			$str[] = "- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." " .$user->username;
+		}
+
+		$str[1] = "Hay " .(count($str) - 2) ." entrenadores:";
+
+		$str = implode("\n", $str);
 
 		$this->telegram->answer_if_callback();
 		$this->telegram->send
