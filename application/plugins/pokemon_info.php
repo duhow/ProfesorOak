@@ -563,7 +563,12 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
 }elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["facción", "color", "equipo", "team"]) && $telegram->words() <= 12){
     $help = "Según la página oficial de Niantic, aún no es posible cambiarse de equipo. Tendrás que esperar o hacerte una cuenta nueva, pero *procura no jugar con multicuentas, está prohibido.*";
 }elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["usuario", "nombre", "apodo", "llamo"]) && $telegram->words() <= 15){
-    $help = "Si quieres cambiarte de nombre, puedes hacerlo en los *Ajustes de Pokemon GO.*\nUna vez hecho, habla con @duhow para que pueda cambiarte el nombre aquí!";
+    $help = "Si quieres cambiarte de nombre, puedes hacerlo en los *Ajustes de Pokemon GO.*\n";
+	if(!$pokemon->user_verified($this->telegram->user->id)){
+		$help .= "Si te has equivocado de nombre al registrarte, *valídate* conmigo siguiendo las indicaciones que te diré, y si lo haces correctamente, te cambiaré el nombre.";
+	}else{
+		$help .= "Una vez hecho, habla con @duhow para que pueda cambiarte el nombre aquí!";
+	}
 }elseif($telegram->text_has("datos") && $telegram->text_has(["móvil", "móviles"]) && !$telegram->text_contains("http")){
     $help = "Si te has quedado sin datos, deberías pensar en cambiarte a otra compañía o conseguir una tarifa mejor. "
             ."Te recomiendo que tengas al menos 4GB si vas a ponerte a jugar en serio.";
