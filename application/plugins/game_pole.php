@@ -136,12 +136,12 @@ if($this->telegram->text_contains(["pole", "bronce"]) && !$this->telegram->is_ch
 
 if(!$telegram->is_chat_group()){ return; }
 
-if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_command("pole") or $telegram->text_command("subpole")){
+if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_command(["pole", "subpole", "bronce"])){
     // $this->analytics->event("Telegram", "Pole"); // HACK TEMP
     if(
         !pole_can_group($telegram->chat->id) or // El grupo tiene que estar en la lista para poder hacer poles.
-		time() % 3600 < 1 or // Tiene que haber pasado un segundo de la hora en punto.
-		$pokemon->settings($telegram->user->id, 'no_pole')
+		time() % 3600 < 1 // or // Tiene que haber pasado un segundo de la hora en punto.
+		// $pokemon->settings($telegram->user->id, 'no_pole')
 	){ return -1; }
 
     // Si está el Modo HARDCORE, la pole es cada hora. Si no, cada día.
@@ -161,32 +161,34 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
         $action = "el *bronce*";
     }
 
-	$timeuser = $pokemon->settings($telegram->user->id, 'lastpole');
-    if(empty($timeuser)){ $timeuser = 0; }
+	// No varias veces (cid, uid, date);
+	// No misma posición (cid, type, date);
 
-	$firstpole = (date("d") != $timeuser);
+	$select = $this->db
+		->select([
+			$this->telegram->chat->id,
+			$this->telegram->user->id,
+			$pole,
+			"'" .date("Y-m-d") ."'",
+			0 // TEMP HACK - No la primera.
+		], FALSE)
+		->from('user u')
+		->join('user_inchat c', 'u.telegramid = c.uid')
+		->where('u.telegramid', $this->telegram->user->id) // Registered
+		->where('c.messages >=', 10) // Que haya hablado
+	->get_compiled_select();
 
-    pole_lock(TRUE);
+	$sql = "INSERT IGNORE INTO pole (cid,uid,type,date,first) $select";
 
-    if(!pole_can_type($telegram->user->id, $telegram->chat->id, $pole)){
-		pole_lock(FALSE); // Unlock antes de matar el proceso.
-		// $this->telegram->send->delete(TRUE); // Borrar el mensaje si se puede.
-		return -1;
-	}
-    pole_add($telegram->user->id, $telegram->chat->id, $pole, $firstpole);
-
-    pole_lock(FALSE);
-
-    if($firstpole){
-        $pokemon->inc_user_data($telegram->user->id, 'pole', (4 - $pole)); // DEPRECATED
-        $pokemon->settings($telegram->user->id, 'lastpole', date("d"));
-    }
+	$query = $this->db->query($sql);
 
 	// "Lo siento " .$telegram->user->first_name .", pero hoy la *pole* es mía! :D"
-    $telegram->send
-		->text($telegram->emoji(":medal-" .$pole .": ") .$telegram->user->first_name ." ha hecho $action!", TRUE)
-	->send();
-    return -1;
+	if($query and $this->db->insert_id() > 0){
+		$this->telegram->send
+			->text($this->telegram->emoji(":medal-" .$pole .": ") .$this->telegram->user->first_name ." ha hecho $action!", TRUE)
+		->send();
+	}
+	return -1;
 }
 
 if($telegram->text_command("polerank") or $telegram->text_has("!polerank")){

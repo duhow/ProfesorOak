@@ -25,11 +25,16 @@ class Main extends CI_Controller {
 		// Actualizamos datos de chat
 		$this->_update_chat();
 
+		$this->load->model('plugin');
+		// PRIO LOAD
+		if(date("G") == "0" && intval(date("i")) <= 7 && $this->telegram->words() == 1){
+			$this->plugin->load('game_pole');
+		}
+
 		if($this->telegram->is_chat_group()){
 			$this->pokemon->load_settings($telegram->chat->id);
 		}
 
-		$this->load->model('plugin');
 		$this->plugin->load_all(TRUE); // BASE
 
 		$colores_full = [
@@ -52,10 +57,6 @@ class Main extends CI_Controller {
 
 		$pokeuser = $pokemon->user($telegram->user->id);
 		$step = $pokemon->step($telegram->user->id);
-
-		if(date("G") == "0" && intval(date("i")) <= 7 && $telegram->words() == 1){
-			$this->plugin->load('game_pole');
-		}
 
 		// Cancelar pasos en general.
 		if($step != NULL && $telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
