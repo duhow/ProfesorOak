@@ -16,6 +16,9 @@ class Main extends CI_Controller {
 			unlink('skip');
 			die();
 		}
+		if(file_exists('callback') and $this->telegram->callback){
+			die();
+		}
 
 		// iniciar variables
 		$telegram = $this->telegram;
@@ -853,12 +856,15 @@ class Main extends CI_Controller {
 					->text($str)
 				->send();
 
+				touch('callback');
+
 				if($q['pending_update_count'] >= 300 and (date("G") != 0 and date("i") > 5)){
 					if(touch('die')){
 						while($q['pending_update_count'] >= 30){
 							$q = $this->telegram->send->Request("getWebhookInfo", array());
 							sleep(2);
 						}
+						unlink('callback');
 						unlink('die');
 						$this->telegram->send
 							->chat($chat)
@@ -866,6 +872,8 @@ class Main extends CI_Controller {
 						->send();
 					}
 				}
+			}elseif(file_exists('callback')){
+				unlink('callback');
 			}
 			if(isset($q['last_error_date']) and $q['last_error_date'] >= time() + 90){
 				$time = time() - $q['last_error_date'];
