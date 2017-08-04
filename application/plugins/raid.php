@@ -43,6 +43,8 @@ if($this->telegram->is_chat_group() or $this->telegram->key == "channel_post"){
 			->show()
 		->send();
 
+		$this->telegram->send->delete(TRUE);
+
 		return -1;
 	}
 }
