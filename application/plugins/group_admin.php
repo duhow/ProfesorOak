@@ -31,6 +31,12 @@ if($step == "CUSTOM_COMMAND"){
 			    ->send();
 			    return -1;
 			}
+			if($this->telegram->words() >= 5 or strlen($this->telegram->text()) >= 30){
+				$this->telegram->send
+					->text("¡Hala loco! No te pases. Prueba de nuevo.")
+				->send();
+				return -1;
+			}
 			$pokemon->settings($telegram->user->id, 'command_name', $command);
 			$telegram->send
 				->text("¡De acuerdo! Ahora envíame la respuesta que quieres enviar.")
