@@ -54,6 +54,11 @@ if($this->telegram->callback){
 		$str = $this->telegram->text_message();
 		$user = $pokemon->user($this->telegram->user->id);
 
+		if(empty($user->username) or $user->lvl < 5){
+			$this->telegram->answer_if_callback("Deberías validarte antes de apuntarte a una raid.", TRUE);
+			return -1;
+		}
+
 		$team = ['R' => 'red', 'B' => 'blue', 'Y' => 'yellow'];
 
 		$str = explode("\n", $str);
