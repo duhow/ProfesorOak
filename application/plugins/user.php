@@ -87,13 +87,13 @@ $step = $pokemon->step($telegram->user->id);
 if($step == "SETNAME"){
 	if($telegram->words() == 1 && !$telegram->text_command()){ user_set_name($telegram->user->id, $telegram->last_word(TRUE), TRUE); }
 	$pokemon->step($telegram->user->id, NULL);
-}elseif($step == "CHANGE_LEVEL"){
-	// TODO get numbers
-	$level = NULL;
-
+}elseif($step == "CHANGE_LEVEL" and $this->telegram->text()){
 	$pokeuser = $pokemon->user($telegram->user->id);
 	$pokemon->step($pokeuser->telegramid, NULL);
-	if($telegram->words() > 4){ return -1; } // TODO ?
+
+	if($this->telegram->words() > 4 or $this->telegram->has_forward){ return -1; }
+
+	$level = filter_var($this->telegram->text(), FILTER_SANITIZE_NUMBER_INT);
 	if(is_numeric($level)){
 		if($level == $pokeuser->lvl){
 			$telegram->send
