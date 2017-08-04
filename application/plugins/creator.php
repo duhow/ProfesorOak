@@ -1036,6 +1036,21 @@ elseif($telegram->text_command(["register", "r"]) && $telegram->has_reply){
         $pkuser = $pokemon->user($telegram->reply_user->id);
     }
 
+	if(isset($data['username'])){
+		$query = $this->db
+			->where('username', $data['username'])
+			->where('telegramid !=', $data['telegramid'])
+		->get('user');
+
+		if($query->num_rows() >= 1){
+			$str = ":times: Nombre duplicado por " .$query->row()->telegramid .", cancelando.";
+			$this->telegram->send
+				->text($this->telegram->emoji($str))
+			->send();
+			return -1;
+		}
+	}
+
     foreach($data as $k => $v){
         if(in_array($k, ['telegramid'])){ continue; } // , 'team'
 		try {
