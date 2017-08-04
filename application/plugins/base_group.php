@@ -135,7 +135,8 @@ if($telegram->text_url() && $telegram->is_chat_group()){
             !$telegram->text_contains(["http", "www", ".com", ".es", ".net"]) &&
             !$telegram->text_contains("telegram.me") or
             $telegram->text_contains(["PokéTrack", "PokeTrack"]) or
-            $telegram->text_contains(["maps.google", "google.com/maps"])
+            $telegram->text_contains(["maps.google", "google.com/maps"]) or
+			$telegram->text_contains("poke") // Pokémon related things
         ){ return -1; } // HACK Falsos positivos.
 
         // TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
