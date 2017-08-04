@@ -440,6 +440,16 @@ elseif(
 	if(!empty($str)){
 	// $chat = ($telegram->is_chat_group() && $this->is_shutup() && !in_array($telegram->user->id, $this->admins(TRUE)) ? $telegram->user->id : $telegram->chat->id);
 
+	$validicon = ":green-check:";
+
+	if(!$info->verified){
+		$validicon = ":warning:";
+		$query = $this->db
+			->where('telegramid', $info->telegramid)
+		->get('user_verify');
+		if($query->num_rows() > 0){ $validicon .= " :clock:"; }
+	}
+
 	$repl = [
 		// '$nombre' => $new->first_name,
 		// '$apellidos' => $new->last_name,
@@ -448,7 +458,7 @@ elseif(
 		// '$usuario' => "@" .$new->username,
 		'$pokemon' => "@" .$info->username,
 		'$nivel' => "L" .$info->lvl,
-		'$valido' => ($info->verified ? ':green-check:' : ':warning:')
+		'$valido' => $validicon
 	];
 
 	$str = str_replace(array_keys($repl), array_values($repl), $str);
