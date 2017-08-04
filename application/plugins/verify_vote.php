@@ -440,10 +440,10 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 				->chat("-221103258")
 				->text($this->telegram->emoji(":times: ") ."No valido a $id / $targetid por " .implode("/", $totalvotes) ." a " .$total .".")
 			->send();
-		}elseif($total >= VERIFY_MIN_VOTE_AMOUNT){
+		}elseif($total >= VERIFY_MIN_VOTE_AMOUNT or $totalvotes[VERIFY_CHECK] >= 60){
 			// verify_vote_set($targetid, 0); // TEMP NOT NULL
 
-			if($totalvotes[VERIFY_REPORT] >= 50){
+			if($totalvotes[VERIFY_REPORT] >= 33){
 				$this->telegram->send
 					->notification(FALSE)
 					->chat("-221103258")
