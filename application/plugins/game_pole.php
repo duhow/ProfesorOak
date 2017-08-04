@@ -147,19 +147,22 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
     // Si está el Modo HARDCORE, la pole es cada hora. Si no, cada día.
     // $timer = ($pokemon->settings($telegram->chat->id, 'pole_hardcore') ? "H" : "d");
     $timer = "d"; // FIXME TEMP
+	$pole = 0;
 
-    if($telegram->text_has("pole", TRUE)){
+    if($telegram->text_contains("pole")){
         $pole = 1;
         $action = "la *pole*";
     }
-    elseif($telegram->text_has("subpole", TRUE)){
+    elseif($telegram->text_contains("subpole")){
         $pole = 2;
         $action = "la *subpole*";
     }
-    elseif($telegram->text_has("bronce", TRUE)){
+    elseif($telegram->text_contains("bronce")){
         $pole = 3;
         $action = "el *bronce*";
     }
+
+	if(empty($pole)){ return -1; }
 
 	// No varias veces (cid, uid, date);
 	// No misma posición (cid, type, date);
