@@ -1,7 +1,7 @@
 <?php
 
 if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
-	if(!$telegram->is_chat_group() && $telegram->photo()){
+	if(!$telegram->is_chat_group() && $telegram->photo() and !$telegram->has_forward){
 		$userid = $this->telegram->user->id;
 		$pokeuser = $pokemon->user($userid);
 		if(empty($pokeuser->username) or $pokeuser->lvl == 1){
