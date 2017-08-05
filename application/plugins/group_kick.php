@@ -195,6 +195,15 @@ if(
 		->text($this->telegram->emoji($str))
 	->send();
 
+	// Quitar botones por si acaso
+	$this->telegram->send
+		->message(TRUE)
+		->chat(TRUE)
+		->text($this->telegram->text_message())
+	->edit('text');
+
+	$this->telegram->answer_if_callback("");
+
 	// --------
 
 	$c = 0;
@@ -221,13 +230,15 @@ if(
 	->send();
 
 	$str = $this->telegram->text_message() ."\n"
-			.":i: $c expulsados.";
+			.$this->telegram->emoji(":ok:") ." $c expulsados.";
 
 	$this->telegram->send
 		->message(TRUE)
 		->chat(TRUE)
 		->text($str)
 	->edit('text');
+
+	$this->pokemon->settings($this->telegram->chat->id, 'investigation', 'DELETE');
 
 	return -1;
 }
