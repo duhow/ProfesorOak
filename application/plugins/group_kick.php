@@ -216,6 +216,7 @@ if(
 
 		$q = $this->telegram->send->ban_until("+1 minute", $user, $chat);
 		if($q !== FALSE){
+			$this->pokemon->user_delgroup($user, $chat);
 			$c++;
 		}
 		usleep(500000);
