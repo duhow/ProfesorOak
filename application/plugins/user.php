@@ -8,6 +8,17 @@ function user_set_name($user, $name, $force = FALSE){
 	$pokeuser = $pokemon->user($user);
 	if(empty($pokeuser)){ return; }
 	if(!$force && !empty($pokeuser->username)){ return; }
+
+	$accents = [
+		'á' => 'a',
+		'é' => 'e',
+		'í' => 'i',
+		'ó' => 'o',
+		'ú' => 'u'
+	];
+
+	$name = str_replace(array_keys($accents), array_values($accents), $name);
+
 	if($name[0] == "@"){ $name = substr($name, 1); }
 	if(strlen($name) < 4 or strlen($name) > 18){ return; }
 
