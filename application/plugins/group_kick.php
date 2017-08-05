@@ -140,6 +140,7 @@ if($this->telegram->text_command([
 
 	$this->telegram->send
 		->notification(TRUE)
+		->chat("-224436942") // Kicks
 		->inline_keyboard()
 			->row()
 				->button($this->telegram->emoji(":ok:"), "kickf $chat $action $filter", "TEXT")
