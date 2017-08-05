@@ -134,7 +134,7 @@ if($this->telegram->text_command([
 	$final = $count - count($users);
 
 	$str = ":id: " .$this->telegram->user->id . " - " . $this->telegram->user->first_name ."\n"
-			.":abc: " .$this->telegram->chat->first_name ."\n"
+			.":abc: " .$this->telegram->chat->title ."\n"
 			.":i: $count :triangle-right: $final (" .count($users) .")\n"
 			.":forbid: $action $filter";
 
@@ -144,7 +144,7 @@ if($this->telegram->text_command([
 		->inline_keyboard()
 			->row()
 				->button($this->telegram->emoji(":ok:"), "kickf $chat $action $filter", "TEXT")
-				->button($this->telegram->emoji(":ok:"), "kickf $chat nope 0", "TEXT")
+				->button($this->telegram->emoji(":times:"), "kickf $chat nope 0", "TEXT")
 			->end_row()
 		->show()
 		->text($this->telegram->emoji($str))
@@ -175,7 +175,7 @@ if(
 		$this->telegram->send
 			->message(TRUE)
 			->chat(TRUE)
-			->text($this->telegram->text_message())
+			->text($this->telegram->text_message() ."\nDENEGADO.")
 		->edit('text');
 
 		return -1;
@@ -200,10 +200,12 @@ if(
 	$c = 0;
 
 	foreach($users as $user){
-		$q = $this->telegram->send
-			->user($user)
-			->chat($chat)
-		->ban_until("+1 minute");
+		if(in_array($user, [
+			$this->config->item('creator'),
+			$this->config->item('telegram_bot_id')]
+		)){ continue; }
+
+		$q = $this->telegram->send->ban_until("+1 minute", $user, $chat);
 		if($q !== FALSE){
 			$c++;
 		}

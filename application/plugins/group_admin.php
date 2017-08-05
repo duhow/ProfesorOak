@@ -109,7 +109,7 @@ if($step == "CUSTOM_COMMAND"){
 }
 
 // Echar usuario del grupo
-if($telegram->text_has(["/kick", "/ban"], TRUE)){
+if($telegram->text_command(["kick", "ban"])){
     $admins = $pokemon->telegram_admins(TRUE);
 
     if(in_array($telegram->user->id, $admins)){ // Tiene que ser admin
