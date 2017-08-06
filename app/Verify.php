@@ -77,7 +77,7 @@ class Verify extends TelegramApp\Module {
 		$this->telegram->send
 	        ->notification(TRUE)
 	        ->chat($this->telegram->user->id)
-	        ->text($this->telegram->emoji($text), "HTML")
+	        ->text($this->telegram->emoji($str), "HTML")
 	        ->keyboard()
 	            ->row_button($this->strings->get("cancel"))
 	        ->show(TRUE, TRUE)
@@ -93,7 +93,7 @@ class Verify extends TelegramApp\Module {
 		if(empty($this->user->username) or $this->user->lvl == 1){
 			$text = $this->strings->get('verify_before_send') .' <b>';
 			$add = array();
-			if(empty($this->user->username)){ $add[] = $this->strings->get('verify_before_send_username'); }
+			if(empty(strval($this->user->username))){ $add[] = $this->strings->get('verify_before_send_username'); }
 			if($this->user->lvl == 1){ $add[] = $this->strings->get('verify_before_send_level'); }
 			$text .= implode($this->strings->get('verify_before_send_concat'), $add) ."</b>.\n";
 
