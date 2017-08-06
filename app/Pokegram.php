@@ -3,21 +3,22 @@
 class Pokegram extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 	protected $tables = [
-		'account' => 'pokegame_account',
-		'pokestop' => 'pokegame_pokestop',
-		'pokemon' => 'pokegame_sightseens',
-		'eggs' => 'pokegame_eggs',
+		'account'	=> 'pokegame_account',
+		'pokestop'	=> 'pokegame_pokestop',
+		'pokemon'	=> 'pokegame_sightseens',
+		'eggs'		=> 'pokegame_eggs',
 	];
 
 	protected $sticker = [
-	    'pokeball' => 'CAADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
-	    'superball' => 'CAADBAADDggAAjbFNAABArAsznkfzmAC',
-	    'ultraball' => 'CAADBAADEAgAAjbFNAABc1c6B4iXJosC',
-	    'masterball' => 'CAADBAADEggAAjbFNAABanVUlBU9VxwC',
-		'egg' => 'CAADBAADcggAAjbFNAAB4a2hODCkLw8C',
-		'incense' => 'CAADBAADcAgAAjbFNAABpv0WcvCzRoIC',
-		'lure' => 'CAADBAADdAgAAjbFNAABYcghFn7ZiQIC',
-		'pokestop' => 'BQADAgADAQIAApb6EgUZaAnSEGh43gI'
+	    'pokeball'		=> 'CAADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
+	    'superball'		=> 'CAADBAADDggAAjbFNAABArAsznkfzmAC',
+	    'ultraball'		=> 'CAADBAADEAgAAjbFNAABc1c6B4iXJosC',
+	    'masterball'	=> 'CAADBAADEggAAjbFNAABanVUlBU9VxwC',
+		'egg'			=> 'CAADBAADcggAAjbFNAAB4a2hODCkLw8C',
+		'incense'		=> 'CAADBAADcAgAAjbFNAABpv0WcvCzRoIC',
+		'lure'			=> 'CAADBAADdAgAAjbFNAABYcghFn7ZiQIC',
+		'fishingrod'	=> 'CAADBAADOwoAAjbFNAABpIfi763TplEC',
+		'pokestop'		=> 'BQADAgADAQIAApb6EgUZaAnSEGh43gI',
 	];
 
 	protected $pokeballs_sticker = [
@@ -61,8 +62,7 @@ class Pokegram extends TelegramApp\Module {
 		}
 
 		// -----------------
-		if(!$this->chat->is_group()){ return; }
-		if(isset($this->chat->settings['pokegram']) && $this->chat->settings['pokegram'] == FALSE){ return; }
+		if(!$this->chat->is_group() or $this->chat->settings('pokegram') === FALSE){ return; }
 
 		if(
 			($this->telegram->callback && $this->telegram->text_has("capturar") && $this->telegram->words() == 2) or

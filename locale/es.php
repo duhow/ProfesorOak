@@ -163,6 +163,35 @@ return [
 	'register_error_name_real' => "Me refería a tu <b>NOMBRE DE JUEGO</b>, no el de verdad. Prueba de nuevo.",
 	'register_successful' => "De acuerdo, <b>@%s</b>!\n¡Recuerda <b>validarte</b> para poder entrar en los grupos de colores!",
 
+	'verify_register' => '¿Entiendo que quieres <b>validarte</b>?',
+	'verify_register_touch' => '¡Hola, %s!',
+	'verify_register_private' => 'Pídemelo por privado, por favor.',
+	'verify_register_button' => 'Validar perfil',
+
+	'verify_info' => [
+		"Para validarte, necesito que me envies <b>UNA captura de tu PERFIL Pokémon GO.</b>",
+        "La captura tiene que cumplir las siguientes condiciones:\n",
+        ":clock: Tiene que verse la <b>HORA</b> de tu móvil, y tienes que enviarlo en un márgen de <b>6 minutos</b>. No valen capturas antiguas.",
+        ":male: En tu <b>PERFIL</b> se tiene que ver el nombre de entrenador y color.",
+		":triangle-right: En tu <b>PERFIL</b> se tiene que ver que la <b>MASCOTA</b> se llame <b>Oak</b>. Luego puedes cambiarle el nombre.",
+		":triangle-up: Asegúrate de que el <b>NIVEL</b> es correcto. Se revisará igualmente, pero la validación se hace más rápida si el nivel está bien puesto.",
+        "Cuando haya confirmado la validación, te avisaré por aquí.\n"
+	],
+
+	'verify_before_send' => 'Antes de validarte, necesito saber',
+	'verify_before_send_username' => 'tu nombre',
+	'verify_before_send_level' => 'tu nivel actual',
+	'verify_before_send_concat' => ' y ',
+	'verify_before_send_ready' => 'Cuando lo hayas dicho, <b>vuelve a enviarme la captura.</b>',
+
+	'verify_disabled_too_many' => "Lo siento, pero ahora mismo estoy muy saturado. Prueba dentro de unas horas.\n¡Y recuerda mandarme una captura nueva del perfil donde se vea la hora!",
+	'verify_disabled_cooldown' => '¡Para el carro! Ya me has mandado una foto. Esperate a que la compruebe, no me des más faena...',
+	'verify_disabled_repeat' => '¡Esta foto ya me la has mandado! Haz otra foto nueva, y asegúrate de que cumple los requisitos.',
+	'verify_sent' => '¡Enviado correctamente! El proceso de validar puede tardar un tiempo. Ten paciencia, que últimamente se registra mucha gente y no doy abasto!',
+	'verify_invalid' => 'La validación no es correcta. Revisa la captura de pantalla, y envíala tal y como se pide.',
+	'verify_successful' => '¡Enhorabuena, estás validado!',
+	'verify_already' => '¡Ya estás validado!',
+
 	'config_announce_welcome_on' => 'Saludaré a los nuevos usuarios',
 	'config_announce_welcome_off' => '<b>NO</b> saludaré a los nuevos usuarios',
 	'config_announce_welcome_custom' => ' con un mensaje personalizado',
