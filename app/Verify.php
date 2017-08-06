@@ -90,15 +90,18 @@ class Verify extends TelegramApp\Module {
 	}
 
 	private function verify_check(){
-		if(empty($this->user->username) or $this->user->lvl == 1){
+		$notname = empty(strval($this->user->username));
+		$notlvl = ($this->user->lvl == 1);
+
+		if($notname or $notlvl){
 			$text = $this->strings->get('verify_before_send') .' <b>';
 			$add = array();
-			if(empty(strval($this->user->username))){ $add[] = $this->strings->get('verify_before_send_username'); }
-			if($this->user->lvl == 1){ $add[] = $this->strings->get('verify_before_send_level'); }
+			if($notname){ $add[] = $this->strings->get('verify_before_send_username'); }
+			if($notlvl){ $add[] = $this->strings->get('verify_before_send_level'); }
 			$text .= implode($this->strings->get('verify_before_send_concat'), $add) ."</b>.\n";
 
-			if(empty($this->user->username)){ $text .= ":triangle-right: <b>Me llamo ...</b>\n"; }
-			if($this->user->lvl == 1){ $text .= ":triangle-right: <b>Soy nivel ...</b>\n"; }
+			if($notname){ $text .= ":triangle-right: <b>" .$this->strings->get("command_register_username")[0] ." ...</b>\n"; }
+			if($notlvl){ $text .= ":triangle-right: <b>" .$this->strings->get("command_levelup")[0] ." ...</b>\n"; }
 
 			$text .= $this->strings->get('verify_before_send_ready');
 

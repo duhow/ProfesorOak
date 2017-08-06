@@ -151,6 +151,7 @@ return [
 	'welcome_invite_user' => 'He invitado a @%s a este grupo.',
 
 	'command_register_username' => ["Me llamo", "Mi nombre es", "Mi usuario es"],
+	'command_levelup' => ["Soy nivel", "Soy L", "Soy lvl", "He subido al", "Ya soy nivel"],
 
 	'register_hello_start' => "¡Hola %s! ¿Puedes decirme qué color eres?\n<b>Di:</b> Soy...",
 	'register_hello_private' => "¡Hola %s! Ábreme por privado para registrate! :)",
