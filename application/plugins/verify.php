@@ -14,7 +14,7 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 			if(empty($pokeuser->username)){ $text .= ":triangle-right: *Me llamo ...*\n"; }
 			if($pokeuser->lvl == 1){ $text .= ":triangle-right: *Soy nivel ...*\n"; }
 
-			$text .= "Cuando lo hayas dicho, *vuelve a enviarme la captura.*";
+			$text .= "Cuando lo hayas dicho, vuelve a enviarme la captura de pantalla de tu *PERFIL de Pokémon GO*.";
 			$telegram->send
 				->notification(TRUE)
 				->chat($userid)
@@ -305,7 +305,7 @@ elseif(
 		if(empty($pokeuser->username)){ $text .= ":triangle-right: *Me llamo ...*\n"; }
 		if($pokeuser->lvl == 1){ $text .= ":triangle-right: *Soy nivel ...*\n"; }
 
-		$text .= "Cuando lo hayas dicho, *enviame la captura.*";
+		$text .= "Cuando lo hayas dicho, enviame la captura de pantalla de tu *PERFIL de Pokémon GO*.";
 
         $telegram->send
             ->notification(TRUE)
