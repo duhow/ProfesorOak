@@ -394,7 +394,12 @@ class __Module_Telegram_Sender extends CI_Model{
 	}
 
 	function ban_until($until = "+1 minute", $user = NULL, $chat = NULL, $keep = FALSE){
-		if(is_string($until)){ $until = strtotime($until); }
+		if(is_string($until)){
+			$until = strtotime($until);
+		}
+		if(is_numeric($until)){
+			$this->content['until_date'] = $until;
+		}
 		return $this->_parse_generic_chatFunctions("kickChatMember", $keep, $chat, $user);
 	}
 	function ban($user = NULL, $chat = NULL, $keep = FALSE){ return $this->_parse_generic_chatFunctions("kickChatMember", $keep, $chat, $user); }
