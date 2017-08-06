@@ -61,7 +61,7 @@ class GamePole extends TelegramApp\Module {
 		// "Lo siento " .$telegram->user->first_name .", pero hoy la *pole* es mía! :D"
 		if($query){
 			$this->telegram->send
-				->text($this->telegram->emoji(":medal-" .$position .": ") .$this->telegram->user->first_name ." ha hecho " $action[$position] ."!", "HTML")
+				->text($this->telegram->emoji(":medal-" .$position .": ") .$this->telegram->user->first_name ." ha hecho " .$action[$position] ."!", "HTML")
 			->send();
 		}
 
