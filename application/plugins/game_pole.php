@@ -149,13 +149,13 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
     $timer = "d"; // FIXME TEMP
 	$pole = 0;
 
-    if($telegram->text_contains("pole")){
-        $pole = 1;
-        $action = "la *pole*";
-    }
-    elseif($telegram->text_contains("subpole")){
+	if($telegram->text_contains("subpole")){
         $pole = 2;
         $action = "la *subpole*";
+    }
+    elseif($telegram->text_contains("pole")){
+        $pole = 1;
+        $action = "la *pole*";
     }
     elseif($telegram->text_contains("bronce")){
         $pole = 3;
