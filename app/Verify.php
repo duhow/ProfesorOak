@@ -120,7 +120,7 @@ class Verify extends TelegramApp\Module {
 
 	private function verify_send(){
 		if(!$this->verify_check()){ $this->end(); }
-		$Creator = new User(CREATOR);
+		$Creator = new User(CREATOR, $this->db);
 		$Creator->load();
 
 		$str = NULL;
