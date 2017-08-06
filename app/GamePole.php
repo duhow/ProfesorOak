@@ -5,70 +5,67 @@ class GamePole extends TelegramApp\Module {
 
 	public function run(){
 		if(!$this->telegram->is_chat_group()){ return; }
-		if($this->chat->settings('pole') == FALSE){ return; }
-		if($this->user->settings('no_pole') == TRUE){ return; }
 		parent::run();
 	}
 
 	public function pole(){
-		return $this->polear(1);
+		$this->polear(1);
+		$this->end();
 	}
 
 	public function subpole(){
-		return $this->polear(2);
+		$this->polear(2);
+		$this->end();
 	}
 
 	public function bronce(){
-		return $this->polear(3);
+		$this->polear(3);
+		$this->end();
 	}
 
 	private function polear($position){
 		// $this->analytics->event("Telegram", "Pole");
+		if(
+			$this->chat->settings('pole') === FALSE or
+			$this->user->settings('no_pole') == TRUE or
+			time() % 3600 <= 1
+		){ $this->end(); }
 
-		// Si está el Modo HARDCORE, la pole es cada hora. Si no, cada día.
-		$timer = ($this->chat->settings('pole_hardcore') ? "H" : "d");
-		$pole = $this->chat->settings('pole');
-		if(!empty($pole)){
-	        // $pole = unserialize($pole);
-	        if(
-	            ( $position == 1 && is_numeric($pole[0]) && date($timer) == date($timer, $pole[0]) ) or
-	            ( $position == 2 && is_numeric($pole[1]) && date($timer) == date($timer, $pole[1]) ) or
-	            ( $position == 3 && is_numeric($pole[2]) && date($timer) == date($timer, $pole[2]) )
-	        ){
-	            return;  // Mismo dia? nope.
-	        }
-	    }
-		$pole_user = $this->chat->settings('pole_user');
-        $timeuser = $this->user->settings('lastpole');
-        if(empty($timeuser)){ $timeuser = 0; }
+		// $timer = "d"; // FIXME TEMP
+		$action = ["",
+			"la <b>pole</b>",
+			"la <b>subpole</b>",
+			"el <b>bronce</b>",
+		];
 
-		if($position == 1){ // and date($timer) != date($timer, $pole[0])
-	        $pole = [time(), NULL, NULL];
-	        $pole_user = [$this->user->id, NULL, NULL];
-	        $action = "la *pole*";
-	    }elseif($position == 2 and date($timer) == date($timer, $pole[0]) and $pole_user[1] == NULL){
-	        if(in_array($this->user->id, $pole_user)){ return; } // Si ya ha hecho pole, nope.
-	        $pole[1] = time();
-	        $pole_user[1] = $this->user->id;
-	        $action = "la *subpole*";
-	    }elseif($position == 3 and date($timer) == date($timer, $pole[0]) and $pole_user[1] != NULL and $pole_user[2] == NULL){
-	        if(in_array($this->user->id, $pole_user)){ return; } // Si ya ha hecho sub/pole, nope.
-	        $pole[2] = time();
-	        $pole_user[2] = $this->user->id;
-	        $action = "el *bronce*";
+		$select = [
+			"uid" => $this->telegram->user->id,
+			"cid" => $this->telegram->chat->id,
+			"type" => $position,
+			"date" => "'" .date("Y-m-d") ."'",
+			"first" => 0 // TEMP HACK - No la primera.
+		];
+
+		/* $sq = $this->db->subQuery();
+		$sq
+			->join('user_inchat c', 'u.telegramid = c.uid')
+			->where('u.telegramid', $this->telegram->user->id)
+			->where('c.cid', $this->telegram->chat->id)
+			->where('c.messages >=', 10)
+		->get('user u', NULL, array_values($select)); */
+
+		$query = $this->db
+			->setQueryOption('IGNORE')
+			->insert("pole", $select);
+
+		// "Lo siento " .$telegram->user->first_name .", pero hoy la *pole* es mía! :D"
+		if($query){
+			$this->telegram->send
+				->text($this->telegram->emoji(":medal-" .$position .": ") .$this->telegram->user->first_name ." ha hecho " $action[$position] ."!", "HTML")
+			->send();
 		}
 
-		if($timer == "d"){
-			if(date("d") != $timeuser){
-				$this->user->pole += (4 - $position);
-				$this->user->settings('lastpole', date("d"));
-			}
-		}
-
-		$this->chat->settings('pole', $pole);
-		$this->chat->settings('pole_user', $pole_user);
-	    $this->telegram->send->text($this->telegram->user->first_name ." ha hecho $action!", TRUE)->send();
-		$this->end(); // ?
+		return $query;
 	}
 
 	public function polerank(){
