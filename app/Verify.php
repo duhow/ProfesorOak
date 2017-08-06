@@ -15,7 +15,7 @@ class Verify extends TelegramApp\Module {
 			return $this->verify_send();
 		}
 		if($this->telegram->text_command("start") and $this->telegram->text_has("verify")){
-			return $this->verify();
+			return $this->verify_run();
 		}
 	}
 
@@ -37,7 +37,7 @@ class Verify extends TelegramApp\Module {
 	/**
 	 * Validar usuario.
 	 */
-	public function verify(){
+	public function verify_run(){
 		if($this->telegram->is_chat_group()){
 			// if($pokemon->command_limit("validar", $this->telegram->chat->id, $this->telegram->message, 7)){ return -1; }
 
