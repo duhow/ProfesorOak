@@ -284,6 +284,15 @@ if(
 	$id = $verifydata->id;
 	$str = $this->telegram->emoji(verify_text_generate($verifydata, $userdata, $times));
 
+	$groups = $this->pokemon->group_find_member($verifydata->telegramid, TRUE);
+	if($groups){
+		$str .= "\n";
+		foreach($groups as $g => $d){
+			$info = $this->pokemon->group($g);
+			$str .= $info->title ."\n";
+		}
+	}
+
 	if($this->telegram->user->id == $this->config->item('creator')){
 		$photo = $pokemon->settings($verifydata->telegramid, 'verify_id');
 
@@ -545,6 +554,15 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 
 	$id = $verifydata->id;
 	$str = $this->telegram->emoji(verify_text_generate($verifydata, $userdata, $times));
+
+	$groups = $this->pokemon->group_find_member($verifydata->telegramid, TRUE);
+	if($groups){
+		$str .= "\n";
+		foreach($groups as $g => $d){
+			$info = $this->pokemon->group($g);
+			$str .= $info->title ."\n";
+		}
+	}
 
 	if($this->telegram->user->id == $this->config->item('creator')){
 		$photo = $pokemon->settings($verifydata->telegramid, 'verify_id');
