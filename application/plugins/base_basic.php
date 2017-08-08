@@ -1,7 +1,7 @@
 <?php
 
 // pillando a los h4k0rs
-if($telegram->text_contains(["fake GPS", "fake", "fakegps", "nox"])){
+if($telegram->text_contains(["fake GPS", "fake", "fakegps", "nox"]) and !$telegram->text_contains("me llamo", TRUE)){
     if($telegram->user->id != $this->config->item("creator")){
         $this->analytics->event('Telegram', 'Talk cheating');
         $telegram->send
