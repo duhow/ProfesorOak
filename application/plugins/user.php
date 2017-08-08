@@ -445,7 +445,7 @@ elseif(
 			if(in_array("enlightened", $flags)){ $str .= $telegram->emoji(":frog: "); }
 			if(in_array("resistance", $flags)){ $str .= $telegram->emoji(":key: "); }
 			if(in_array("donator", $flags)){ $str .= $telegram->emoji("\ud83d\udcb6 "); }
-			if(in_array("gay", $flags)){ $str .= $telegram->emoji(":rainbowflag: "); }
+			if(in_array("gay", $flags)){ $str .= $telegram->emoji(":rainbow: "); }
 		}
 	}
 
