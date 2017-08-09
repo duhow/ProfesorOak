@@ -31,6 +31,36 @@ if($this->telegram->text_has(["I found a", "Encontré un"], TRUE)){
 	$this->telegram->send->delete(TRUE);
 
 	return -1;
+}elseif($this->telegram->text_url() and $this->telegram->text_contains("m.poketrack.xyz")){
+	$url = $this->telegram->text_url();
+	$ch = curl_init($url);
+	curl_setopt($ch, CURLOPT_HEADER, TRUE); //include headers in http data
+	curl_setopt($ch, CURLOPT_FOLLOWLOCATION, FALSE); //don't follow redirects
+	$http_data = curl_exec($ch); //hit the $url
+	$curl_info = curl_getinfo($ch);
+	curl_close($ch);
+
+	if(!isset($curl_info['redirect_url'])){ return; }
+
+	$query = parse_url($curl_info['redirect_url'], PHP_URL_QUERY);
+	$query = explode("&", $query);
+	$data = array();
+	foreach($query as $q){
+		$t = explode("=", $q);
+		$data[$t[0]] = $t[1];
+	}
+
+	if(isset($data['lat']) and isset($data['lon'])){
+		$poke = "¡Pokémon visto!";
+		if(isset($data['name'])){ $poke = $data['name']; }
+
+		$this->telegram->send
+			->location($data['lat'], $data['lon'])
+			->venue($poke, "")
+		->send();
+
+		$this->telegram->send->delete(TRUE);
+	}
 }
 
 ?>
