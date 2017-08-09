@@ -53,7 +53,7 @@ if(
 }elseif($telegram->text_has("quién es N") && $telegram->words() <= 7){
 	$this->analytics->event('Telegram', 'Jokes', 'N');
 	$joke = "Este es un entrenador amigo de los Pokémon, pero es un fetichista raro... Escuché de mi amiga, la profesora Encina, que N se quiere casar con su Gardevoir...";
-}elseif($telegram->text_has("quien es", ["tu amante", "tu novio", "tu novia", "ese tio bueno"]) and $telegram->words() <= 7){
+}elseif($telegram->text_has("quien es", ["tu amante", "el amor de tu vida", "tu novio", "tu novia", "ese tio bueno"]) and $telegram->words() <= 9){
 	// Donator command
 	$frases = [
 		"Oh, cada vez que me acuerdo de su dulce cu...",
