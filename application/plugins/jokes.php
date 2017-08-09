@@ -53,6 +53,15 @@ if(
 }elseif($telegram->text_has("quién es N") && $telegram->words() <= 7){
 	$this->analytics->event('Telegram', 'Jokes', 'N');
 	$joke = "Este es un entrenador amigo de los Pokémon, pero es un fetichista raro... Escuché de mi amiga, la profesora Encina, que N se quiere casar con su Gardevoir...";
+}elseif($telegram->text_has("quien es", ["tu amante", "tu novio", "tu novia", "ese tio bueno"]) and $telegram->words() <= 7){
+	// Donator command
+	$frases = [
+		"Oh, cada vez que me acuerdo de su dulce cu...",
+		"Sólo sé quién es cuando lo noto por detr... OH SI SEMPAAAII!!! <3",
+		"¡Uy! Solo te diré que es un tío muy atlético. <3",
+	];
+	$n = mt_rand(0, count($frases) - 1);
+	$joke = $frases[$n];
 }elseif($telegram->text_has(["profesor", "profe", "oak"]) and $telegram->text_has(["chico", "hombre"]) and $telegram->text_has(["chica", "mujer"]) and $telegram->text_contains("?") and $telegram->words() <= 8){
 	$this->analytics->event('Telegram', 'Jokes', 'Chico o chica');
 	$joke = "Pues no estoy muy seguro. A veces me siento Evax. :>";
