@@ -544,7 +544,7 @@ elseif($telegram->text_has(["emparejamiento", "crear unión"], ["de grupo", "del
             ->text("¡Hecho! Por favor *reenvía* la clave al *administrador* del grupo que quieres unir.", TRUE)
         ->send();
     }
-}elseif($telegram->text_has(["unir", "unión"], ["de grupo", "del grupo", "grupo", "grupal"])){
+}elseif($telegram->text_has("Unir grupo", TRUE) and $telegram->words() == 3){
     $key = $telegram->last_word();
     $admins = $pokemon->telegram_admins(TRUE);
     if(!in_array($telegram->user->id, $admins)){ return; }
