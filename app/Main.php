@@ -509,7 +509,7 @@ class Main extends TelegramApp\Module {
 			if($this->telegram->words() == 1){
 				$username = $this->telegram->last_word();
 			}
-			$this->set_username($username)
+			$this->set_username($username);
 			$this->end();
 		}
 

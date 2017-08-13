@@ -14,7 +14,15 @@ class Verify extends TelegramApp\Module {
 		){
 			return $this->verify_send();
 		}
-		if($this->telegram->text_command("start") and $this->telegram->text_has("verify")){
+		if(
+			(
+				$this->telegram->text_command("start") and $this->telegram->text_has("verify")
+			) or (
+				$this->telegram->text_contains($this->strings->get('command_verify')[0]) and
+				$this->telegram->text_contains($this->strings->get('command_verify')[1]) and
+				$this->telegram->words() <= 7
+			)
+		){
 			return $this->verify_run();
 		}
 	}
@@ -100,8 +108,14 @@ class Verify extends TelegramApp\Module {
 			if($notlvl){ $add[] = $this->strings->get('verify_before_send_level'); }
 			$text .= implode($this->strings->get('verify_before_send_concat'), $add) ."</b>.\n";
 
-			if($notname){ $text .= ":triangle-right: <b>" .$this->strings->get("command_register_username")[0] ." ...</b>\n"; }
-			if($notlvl){ $text .= ":triangle-right: <b>" .$this->strings->get("command_levelup")[0] ." ...</b>\n"; }
+			if($notname){
+				$cmd = trim(str_replace('{name}', '', $this->strings->get("command_register_username")[0]));
+				$text .= ":triangle-right: <b>$cmd ...</b>\n";
+			}
+			if($notlvl){
+				$cmd = trim(str_replace('{level}', '', $this->strings->get("command_levelup")[0]));
+				$text .= ":triangle-right: <b>$cmd ...</b>\n";
+			}
 
 			$text .= $this->strings->get('verify_before_send_ready');
 
