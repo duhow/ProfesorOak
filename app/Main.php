@@ -577,7 +577,7 @@ class Main extends TelegramApp\Module {
 		if($level == $this->user->lvl){
 			$this->telegram->send
 				->notification(FALSE)
-				->text($this->strings->get('register_levelup_same'))
+				->text($this->strings->get('levelup_same'))
 			->send();
 			$this->end();
 		}
@@ -592,10 +592,10 @@ class Main extends TelegramApp\Module {
 			// $pokemon->log($telegram->user->id, 'levelup', $level);
 
 			// Vale. Como me vuelvas a preguntar quien eres, te mando a la mierda. Que lo sepas.
-			$str = $this->strings->parse("register_levelup_ok", $level);
+			$str = $this->strings->parse("levelup_ok_2", $level);
 
 			if($this->user->step == "SCREENSHOT_VERIFY" and $old == 1){
-				$str = $this->strings->get("register_levelup_verify");
+				$str = $this->strings->get("levelup_verify");
 			}
 
 			$this->telegram->send
@@ -610,12 +610,12 @@ class Main extends TelegramApp\Module {
 				$this->user->lvl = $level;
 				$this->user->exp = 0;
 
-				$str = 'register_levelup_newhigh';
+				$str = 'levelup_first_too_much';
 			}elseif($level > $this->user->lvl + 1){
-				$str = 'register_levelup_trollhigh';
+				$str = 'levelup_too_much';
 			}else{
 				$this->user->step = "LEVEL_SCREENSHOT";
-				$str = 'register_levelup_checkhigh';
+				$str = 'levelup_screenshot';
 			}
 
 			$this->telegram->send
