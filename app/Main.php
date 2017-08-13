@@ -111,7 +111,7 @@ class Main extends TelegramApp\Module {
 			->inline_keyboard()
 				->row()
 					->button($this->telegram->emoji(':es:'), "language es", "TEXT")
-					->button($this->telegram->emoji(':en:'), "language en", "TEXT")
+					->button($this->telegram->emoji(':us:'), "language en", "TEXT")
 				->end_row()
 				->row()
 					->button($this->telegram->emoji(':fr:'), "language fr", "TEXT")
@@ -505,36 +505,19 @@ class Main extends TelegramApp\Module {
 				in_array($this->telegram->words(), [3,4,5,6]) // HACK
 			)
 		){
-			$this->user->step = NULL;
-			$word = $this->telegram->input->name;
-			$res = $this->user->register_username($word, FALSE);
-			if($res === TRUE){
-				$this->tracking->track('Register username');
-				$this->telegram->send
-					->inline_keyboard()
-						->row_button($this->strings->get('verify'), "verify", TRUE)
-					->show()
-					->reply_to(TRUE)
-					->notification(FALSE)
-					->text($this->strings->parse("register_successful", $word), "HTML")
-				->send();
-			}elseif($res === FALSE){
-				$this->telegram->send
-					->reply_to(TRUE)
-					->notification(FALSE)
-					->text($this->strings->parse("register_error_duplicated_name", $word), "HTML")
-				->send();
-			}elseif($res == -1){
-				// Name already set.
-				$this->end();
-			}elseif($res == -2){
-				$this->telegram->send
-					->reply_to(TRUE)
-					->notification(FALSE)
-					->text($this->strings->get("register_error_name_shln"), "HTML")
-				->send();
+			$username = $this->telegram->input->name;
+			if($this->telegram->words() == 1){
+				$username = $this->telegram->last_word();
 			}
+			$this->set_username($username)
 			$this->end();
+		}
+
+		if(
+			$this->telegram->text_regex($this->strings->get("command_levelup")) and
+			$this->telegram->words() <= 6
+		){
+			$this->levelup($this->telegram->input->level);
 		}
 
 		if($this->telegram->callback and $this->telegram->text_regex("language {lang}")){
@@ -551,6 +534,94 @@ class Main extends TelegramApp\Module {
 		}
 
 		$this->end();
+	}
+
+	private function set_username($name = NULL){
+		if(empty($name) or strlen($name) < 4){ $this->end(); }
+
+		$this->user->step = NULL;
+		$res = $this->user->register_username($word, FALSE);
+		if($res === TRUE){
+			$this->tracking->track('Register username');
+			$this->telegram->send
+				->inline_keyboard()
+					->row_button($this->strings->get('verify'), "verify", TRUE)
+				->show()
+				->reply_to(TRUE)
+				->notification(FALSE)
+				->text($this->strings->parse("register_successful", $word), "HTML")
+			->send();
+		}elseif($res === FALSE){
+			$this->telegram->send
+				->reply_to(TRUE)
+				->notification(FALSE)
+				->text($this->strings->parse("register_error_duplicated_name", $word), "HTML")
+			->send();
+		}elseif($res == -1){
+			// Name already set.
+			$this->end();
+		}elseif($res == -2){
+			$this->telegram->send
+				->reply_to(TRUE)
+				->notification(FALSE)
+				->text($this->strings->get("register_error_name_shln"), "HTML")
+			->send();
+		}
+	}
+
+	private function levelup($level = NULL){
+		if(empty($level) or !is_numeric($level)){
+			$this->end();
+		}
+
+		if($level == $this->user->lvl){
+			$this->telegram->send
+				->notification(FALSE)
+				->text($this->strings->get('register_levelup_same'))
+			->send();
+			$this->end();
+		}
+
+		$this->tracking->track("Change level $level");
+		$this->user->settings('last_command', 'LEVELUP');
+		if($level >= 5 && $level <= 35){
+			if($level < $this->user->lvl){ $this->end(); } // No volver atrás.
+			$old = $this->user->lvl;
+			$this->user->lvl = $level;
+			$this->user->exp = 0;
+			// $pokemon->log($telegram->user->id, 'levelup', $level);
+
+			// Vale. Como me vuelvas a preguntar quien eres, te mando a la mierda. Que lo sepas.
+			$str = $this->strings->parse("register_levelup_ok", $level);
+
+			if($this->user->step == "SCREENSHOT_VERIFY" and $old == 1){
+				$str = $this->strings->get("register_levelup_verify");
+			}
+
+			$this->telegram->send
+				->text($str, 'HTML')
+				->notification(FALSE)
+			->send();
+		}elseif(
+			($level > 35 and $level <= 40) and
+			$level > $this->user->lvl // No volver atrás.
+		){
+			if($this->user->lvl == 1){
+				$this->user->lvl = $level;
+				$this->user->exp = 0;
+
+				$str = 'register_levelup_newhigh';
+			}elseif($level > $this->user->lvl + 1){
+				$str = 'register_levelup_trollhigh';
+			}else{
+				$this->user->step = "LEVEL_SCREENSHOT";
+				$str = 'register_levelup_checkhigh';
+			}
+
+			$this->telegram->send
+				->text($this->strings->get($str))
+			->send();
+		}
 	}
 
 	private function hooks_newuser(){
