@@ -170,13 +170,6 @@ return [
 	'register_error_name_shln' => "No creo que te llames realmente así... Va, en serio. ¿Cómo te llamas?",
 	'register_error_name_real' => "Me refería a tu <b>NOMBRE DE JUEGO</b>, no el de verdad. Prueba de nuevo.",
 	'register_successful' => "De acuerdo, <b>@%s</b>!\n¡Recuerda <b>validarte</b> para poder entrar en los grupos de colores!",
-	'register_levelup_ok' => 'Así que has subido al nivel <b>%s</b>... ¡Guay!',
-	'register_levelup_same' => 'Si, ya lo sé...',
-	'register_levelup_newhigh' => 'Bueno... No sé si creermelo, pero...',
-	'register_levelup_trollhigh' => 'Si, ya. Claro.',
-	'register_levelup_checkhigh' => '¡Guau! Pues... Mándame captura para confirmarlo, anda.',
-	'register_levelup_verify' => "¡Genial! Ahora mándame una captura de pantalla de tu <b>perfil Pokémon GO</b> como te he pedido para validarte.\n"
-								."¡Recuerda que tiene que ser <b>de ahora<b>, no una antigua!",
 
 	'verify_register' => '¿Entiendo que quieres <b>validarte</b>?',
 	'verify_register_touch' => '¡Hola, %s!',
@@ -254,6 +247,8 @@ return [
 	'levelup_ok_2' => 'Así que has subido al nivel <b>%s</b>... ¡Guay!',
 	'levelup_first_too_much' => 'Bueno... No sé si creermelo, pero...',
 	'levelup_too_much' => 'Si, ya. Claro.',
+	'levelup_verify' => "¡Genial! Ahora mándame una captura de pantalla de tu <b>perfil Pokémon GO</b> como te he pedido para validarte.\n"
+						."¡Recuerda que tiene que ser <b>de ahora<b>, no una antigua!",
 
 	'levelup_screenshot' => '¿En serio? Pues... Mándame captura para demostrarlo.',
 	'levelup_screenshot_ok' => '¡Guay! La miro en un rato.',
