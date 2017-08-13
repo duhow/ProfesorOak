@@ -43,22 +43,24 @@ class User extends TelegramApp\User {
 			$value = serialize($value);
 		}
 
-		if(isset($this->settings[$key])){
-			$ret = $this->db
-				->where('type', $key)
-				->where('uid', $this->id)
-			->update('settings', ['value' => $value]);
-		}else{
-			$data = [
-				'uid' => $this->id,
-				'type' => $key,
-				'value' => $value,
-				'hidden' => FALSE,
-				'displaylist' => TRUE,
-				'lastupdate' => date("Y-m-d H:i:s")
-			];
-			$ret = $this->db->insert('settings', $data);
-		}
+		$data = [
+			'uid' => $this->id,
+			'type' => $key,
+			'value' => $value,
+			'hidden' => FALSE,
+			'displaylist' => TRUE,
+			'lastupdate' => date("Y-m-d H:i:s")
+		];
+
+		$update = [
+			'value' => $value,
+			'lastupdate' => date("Y-m-d H:i:s")
+		];
+
+		$ret = $this->db
+			->onDuplicate($update)
+		->insert('settings', $data);
+
 		// ---------
 		$settings = $this->settings;
 		$settings[$key] = $value;
@@ -153,7 +155,7 @@ class User extends TelegramApp\User {
 		$this->flags = array();
 		$query = $this->db
 			->where('user', $this->id)
-		->get('user_flags');
+		->get('user_flags', NULL, 'value');
 		if(count($query) > 0){
 			$this->flags = array_column($query, 'value');
 		}
@@ -183,7 +185,7 @@ class User extends TelegramApp\User {
 		$settings = array();
 		$query = $this->db
 			->where('uid', $this->id)
-		->get('settings');
+		->get('settings', NULL, ['type', 'value']);
 		if(count($query) > 0){
 			$settings = array_column($query, 'value', 'type');
 			foreach($settings as $k => $v){

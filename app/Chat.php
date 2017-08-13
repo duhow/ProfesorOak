@@ -54,22 +54,24 @@ class Chat extends TelegramApp\Chat {
 			$value = serialize($value);
 		}
 
-		if(isset($this->settings[$key])){
-			$ret = $this->db
-				->where('type', $key)
-				->where('uid', $this->id)
-			->update('settings', ['value' => $value]);
-		}else{
-			$data = [
-				'uid' => $this->id,
-				'type' => $key,
-				'value' => $value,
-				'hidden' => FALSE,
-				'displaylist' => TRUE,
-				'lastupdate' => date("Y-m-d H:i:s")
-			];
-			$ret = $this->db->insert('settings', $data);
-		}
+		$data = [
+			'uid' => $this->id,
+			'type' => $key,
+			'value' => $value,
+			'hidden' => FALSE,
+			'displaylist' => TRUE,
+			'lastupdate' => date("Y-m-d H:i:s")
+		];
+
+		$update = [
+			'value' => $value,
+			'lastupdate' => date("Y-m-d H:i:s")
+		];
+
+		$ret = $this->db
+			->onDuplicate($update)
+		->insert('settings', $data);
+
 		// ---------
 		$settings = $this->settings;
 		$settings[$key] = $value;
@@ -112,7 +114,9 @@ class Chat extends TelegramApp\Chat {
 			'users' => $this->telegram->send->get_members_count($this->id),
 			// 'spam' => to setting
 		];
-		$id = $this->db->insert('chats', $data);
+		$id = $this->db
+			->setQueryOption('IGNORE')
+		->insert('chats', $data);
 		return ($ret == FALSE ? $id : $data);
 	}
 
@@ -143,9 +147,10 @@ class Chat extends TelegramApp\Chat {
 	private function load_users(){
 		$this->users = array();
 		$users = array();
+		$cols = ['uid', 'messages', 'last_date', 'register_date'];
 		$query = $this->db
 			->where('cid', $this->id)
-		->get('user_inchat');
+		->get('user_inchat', NULL, $cols);
 		if(count($query) > 0){
 			foreach($query as $user){
 				$userobj = $user;
@@ -163,7 +168,7 @@ class Chat extends TelegramApp\Chat {
 		$settings = array();
 		$query = $this->db
 			->where('uid', $this->id)
-		->get('settings');
+		->get('settings', NULL, ['type', 'value']);
 		if(count($query) > 0){
 			$settings = array_column($query, 'value', 'type');
 			foreach($settings as $k => $v){
@@ -182,7 +187,7 @@ class Chat extends TelegramApp\Chat {
 		$query = $this->db
 			->where('gid', $this->id)
 			->where('expires', date("Y-m-d H:i:s"), ">=")
-		->get('user_admins');
+		->get('user_admins', NULL, 'uid');
 		if(count($query) == 0){
 			// Load and insert
 			$admins = $this->telegram->get_admins();
@@ -279,31 +284,21 @@ class Chat extends TelegramApp\Chat {
 
 		// -------------------
 		// User InChat
-		$user = $this->get_userid($user);
-		$query = $this->db
-			->where('uid', $user)
-			->where('cid', $this->id)
-		->get('user_inchat');
+		$data = [
+			'uid' => $user,
+			'cid' => $this->id,
+			'messages' => 0,
+			'last_date' => $this->db->now(),
+			'register_date' => $this->db->now(),
+		];
 
-		if($this->db->count == 1){
-			// UPDATE
-			$data = [
-				'messages' =>  $this->db->inc(1),
-				'last_date' => $this->db->now()
-			];
-			$this->db
-				->where('uid', $user)
-				->where('cid', $this->id)
-			->update('user_inchat', $data);
-		}else{
-			$data = [
-				'uid' => $user,
-				'cid' => $this->id,
-				'messages' => 0,
-				'last_date' => $this->db->now(),
-				'register_date' => $this->db->now(),
-			];
-			$this->db->insert('user_inchat', $data);
-		}
+		$update = [
+			'messages' =>  $this->db->inc(1),
+			'last_date' => $this->db->now()
+		];
+
+		$this->db
+			->onDuplicate($update)
+		->insert('user_inchat', $data);
 	}
 }
