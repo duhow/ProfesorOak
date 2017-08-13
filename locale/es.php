@@ -150,8 +150,11 @@ return [
 	'welcome_group_require_verified' => 'Para estar en este grupo <b>debes estar validado.</b>',
 	'welcome_invite_user' => 'He invitado a @%s a este grupo.',
 
-	'command_register_username' => ["Me llamo", "Mi nombre es", "Mi usuario es"],
-	'command_levelup' => ["Soy nivel", "Soy L", "Soy lvl", "He subido al", "Ya soy nivel"],
+	'command_register_username' => [
+		"Me llamo {name}", "Mi nombre es {name}", "Mi usuario es {name}",
+		"En el juego me llamo {name}", "Me llamo {name} en el juego"
+	],
+	'command_levelup' => ["Soy nivel {N:level}", "Soy L{N:level}", "Soy lvl {N:level}", "He subido al {N:level}", "Ya soy nivel {N:level}"],
 
 	'register_hello_start' => "¡Hola %s! ¿Puedes decirme qué color eres?\n<b>Di:</b> Soy...",
 	'register_hello_private' => "¡Hola %s! Ábreme por privado para registrate! :)",

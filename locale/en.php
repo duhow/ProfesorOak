@@ -150,7 +150,8 @@ return [
 	'welcome_group_require_verified' => 'If you want to belong to this group, <b>you must be verified.</b>',
 	'welcome_invite_user' => 'I\'ve invited @%s here.',
 
-	'command_register_username' => ["My name's", "My username is", "My name is", "The username is", "The name is"],
+	'command_register_username' => ["My name's {name}", "My username is {name}", "My name is {name}", "The username is {name}", "The name is {name}"],
+	'command_levelup' => ["I'm level {N:level}", "I'm L{N:level}", "I'm lvl {N:level}", "Level up to {N:level}", "Level up {N:level}"],
 
 	'register_hello_start' => "Hi %s! Can you tell me what's your color?\n<b>Say:</b> I'm...",
 	'register_hello_private' => "Hi %s! Start me private to register! :)",
