@@ -74,6 +74,13 @@ if($this->telegram->text_command([
 	$chat = $pokemon->is_group_admin($this->telegram->chat->id);
 	if(empty($chat)){ $chat = $this->telegram->chat->id; }
 
+	if(!in_array($this->config->item('telegram_bot_id'), telegram_admins())){
+		$this->telegram->send
+			->text($this->telegram->emoji(":times: ") ."Dadme admin y esperad una hora para que funcione.")
+		->send();
+		return -1;
+	}
+
 	$filter = 0;
 	$action = NULL;
 
