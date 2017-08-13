@@ -140,10 +140,10 @@ return [
 	'report_error_duplicated' => 'Report duplicado.',
 	'report_sent' => '¡Report enviado!',
 
-	'welcome_bot' => "¡Buenas a todos, entrenadores!\n¡Un placer estar con todos vosotros! :D",
+	'welcome_bot' => "¡Buenas a todos, entrenadores!\n¡Un placer estar con todos vosotros! ^3^",
 	'welcome_bot_newgroup' => 'Veo que este grupo es nuevo, así que voy a buscar cuánta gente conozco.',
 	'welcome_group' => '¡Bienvenido al grupo, %s!',
-	'welcome_group_creator' => '¡Bienvenido, jefe! ¡Un placer tenerte aquí! :D',
+	'welcome_group_creator' => '¡Bienvenido, jefe! ¡Un placer tenerte aquí! ^3^',
 	'welcome_group_team_exclusive' => '<b>¡SE CUELA UN TOPO!</b> @%s',
 	'welcome_group_unverified' => 'Usuario no está verificado.',
 	'welcome_group_register' => "Oye, ¿podrías decirme el color de tu equipo?\n<b>Di: </b><i>Soy ...</i>",
@@ -179,10 +179,10 @@ return [
 	'verify_info' => [
 		"Para validarte, necesito que me envies <b>UNA captura de tu PERFIL Pokémon GO.</b>",
         "La captura tiene que cumplir las siguientes condiciones:\n",
-        ":clock: Tiene que verse la <b>HORA</b> de tu móvil, y tienes que enviarlo en un márgen de <b>6 minutos</b>. No valen capturas antiguas.",
-        ":male: En tu <b>PERFIL</b> se tiene que ver el nombre de entrenador y color.",
-		":triangle-right: En tu <b>PERFIL</b> se tiene que ver que la <b>MASCOTA</b> se llame <b>Oak</b>. Luego puedes cambiarle el nombre.",
-		":triangle-up: Asegúrate de que el <b>NIVEL</b> es correcto. Se revisará igualmente, pero la validación se hace más rápida si el nivel está bien puesto.",
+        ":clock2: Tiene que verse la <b>HORA</b> de tu móvil, y tienes que enviarlo en un márgen de <b>6 minutos</b>. No valen capturas antiguas.",
+        ":mens: En tu <b>PERFIL</b> se tiene que ver el nombre de entrenador y color.",
+		":arrow_forward: En tu <b>PERFIL</b> se tiene que ver que la <b>MASCOTA</b> se llame <b>Oak</b>. Luego puedes cambiarle el nombre.",
+		":arrow_up_small: Asegúrate de que el <b>NIVEL</b> es correcto. Se revisará igualmente, pero la validación se hace más rápida si el nivel está bien puesto.",
         "Cuando haya confirmado la validación, te avisaré por aquí.\n"
 	],
 
@@ -255,7 +255,7 @@ return [
 	'levelup_screenshot_tomorrow' => '¡Guay! Te la miro cuando me despierte mañana...',
 	'levelup_screenshot_early' => '¡Guay! Te la miro cuando esté despierto...',
 
-	'lure_seen_place' => 'Cebo en <b>%s</b>, gracias por avisar! :D',
+	'lure_seen_place' => 'Cebo en <b>%s</b>, gracias por avisar! ^3^',
 	'pokemon_found_position' => 'Tienes a <b>%s</b> a %s, ve a por él!',
 
 	'error_register' => 'Error general al registrar.',
