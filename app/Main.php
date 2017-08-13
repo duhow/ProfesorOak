@@ -1,7 +1,7 @@
 <?php
 
 class Main extends TelegramApp\Module {
-	protected $runCommands = FALSE;
+	protected $runCommands = TRUE;
 
 	public function run(){
 		if($this->telegram->left_user){ return $this->left_member(); }
@@ -53,25 +53,7 @@ class Main extends TelegramApp\Module {
 
 		if($this->user->load() !== TRUE){
 			// Solo puede registrarse o pedir ayuda por privado.
-			$color = Tools::Color($this->telegram->text());
-			if(
-				($this->telegram->text_has(["Soy", "Equipo", "Team"]) && $color) or
-				($color && $this->telegram->words() == 1)
-			){
-				$this->register($color);
-			}elseif(
-				$this->telegram->text_command("register") or
-				($this->telegram->text_command("start") and
-				!$this->telegram->is_chat_group())
-			){
-				$this->register(NULL);
-			}elseif(
-				$this->telegram->text_command("help") and
-				!$this->telegram->is_chat_group()
-			){
-				$this->help();
-			}
-			$this->end();
+			$this->hooks_newuser();
 		}
 
 		// TODO Tiene que pasar TODOS los filtros (aparte de Admin).
@@ -125,24 +107,16 @@ class Main extends TelegramApp\Module {
 		$str = "This new version has translations, but currently there is Spanish and a bit of English." ."\n"
 			."If you want to contribute or improve them, please contact @duhow. Thank you!";
 
-		$flags = [
-			'es' => '\ud83c\uddea\ud83c\uddf8',
-			'en' => '\ud83c\uddfa\ud83c\uddf8',
-			'fr' => '\ud83c\uddeb\ud83c\uddf7',
-			'it' => '\ud83c\uddee\ud83c\uddf9',
-			'de' => '\ud83c\udde9\ud83c\uddea'
-		];
-
 		$this->telegram->send
 			->inline_keyboard()
 				->row()
-					->button(json_decode('"' .$flags['es'] .'"'), "language es", "TEXT")
-					->button(json_decode('"' .$flags['en'] .'"'), "language en", "TEXT")
+					->button($this->telegram->emoji(':es:'), "language es", "TEXT")
+					->button($this->telegram->emoji(':en:'), "language en", "TEXT")
 				->end_row()
 				->row()
-					->button(json_decode('"' .$flags['fr'] .'"'), "language fr", "TEXT")
-					->button(json_decode('"' .$flags['it'] .'"'), "language it", "TEXT")
-					->button(json_decode('"' .$flags['de'] .'"'), "language de", "TEXT")
+					->button($this->telegram->emoji(':fr:'), "language fr", "TEXT")
+					->button($this->telegram->emoji(':it:'), "language it", "TEXT")
+					->button($this->telegram->emoji(':de:'), "language de", "TEXT")
 				->end_row()
 			->show()
 			->text($str)
@@ -204,7 +178,7 @@ class Main extends TelegramApp\Module {
 	private function forward_creator(){
 		return $this->telegram->send
 			->notification(FALSE)
-			->chat($this->telegram->chat->id)
+			->chat(TRUE)
 			->message(TRUE)
 			->forward_to(CREATOR)
 		->send();
@@ -441,7 +415,7 @@ class Main extends TelegramApp\Module {
 
 					$this->telegram->send
 						->inline_keyboard()
-							->row_button("Validar", "verify", "COMMAND")
+							->row_button($this->strings->get("verify"), "verify", "COMMAND")
 						->show();
 				}
 			}
@@ -521,17 +495,18 @@ class Main extends TelegramApp\Module {
 		}
 
 		if($this->telegram->text_command("register")){ return $this->register(); }
+		// Registro nombre
 		if(
 			!$this->telegram->text_command() and
 			(
 				$this->user->step == "SETNAME" and $this->telegram->words() == 1
 			) or (
-				$this->telegram->text_has($this->strings->get('command_register_username'), TRUE) and
-				in_array($this->telegram->words(), [3,4]) // HACK
+				$this->telegram->text_regex($this->strings->get('command_register_username')) and
+				in_array($this->telegram->words(), [3,4,5,6]) // HACK
 			)
 		){
 			$this->user->step = NULL;
-			$word = $this->telegram->last_word(TRUE);
+			$word = $this->telegram->input->name;
 			$res = $this->user->register_username($word, FALSE);
 			if($res === TRUE){
 				$this->tracking->track('Register username');
@@ -554,16 +529,16 @@ class Main extends TelegramApp\Module {
 				$this->end();
 			}elseif($res == -2){
 				$this->telegram->send
-					>reply_to(TRUE)
+					->reply_to(TRUE)
 					->notification(FALSE)
 					->text($this->strings->get("register_error_name_shln"), "HTML")
 				->send();
 			}
 			$this->end();
 		}
-		if($this->telegram->text_command("info")){ $this->telegram->send->text($this->user->telegramid)->send(); }
-		if($this->telegram->callback and $this->telegram->text_has("language", TRUE)){
-			return $this->language($this->telegram->words(1));
+
+		if($this->telegram->callback and $this->telegram->text_regex("language {lang}")){
+			return $this->language($this->telegram->input->lang);
 		}
 
 		$folder = dirname(__FILE__) .'/';
@@ -576,655 +551,28 @@ class Main extends TelegramApp\Module {
 		}
 
 		$this->end();
+	}
 
-		// Ver los IV o demás viendo stats Pokemon.
+	private function hooks_newuser(){
+		$color = Tools::Color($this->telegram->text());
 		if(
-			$telegram->words() >= 4 &&
-			($telegram->text_has(["tengo", "me ha salido", "calculame", "calcula iv", "calcular iv", "he conseguido", "he capturado"], TRUE) or
-			$telegram->text_command("iv"))
+			($this->telegram->text_regex("(Soy|Equipo|Team) {color}") && $color) or
+			($color && $this->telegram->words() == 1)
 		){
-			$pk = Tools::Pokemon($this->telegram->text());
-			// TODO contar si faltan polvos o si se han especificado "caramelos" en lugar de polvos, etc.
-			if(!empty($pk['pokemon'])){
-				if($telegram->text_command("iv")){
-					$pk["cp"] = $telegram->words(2);
-					$pk["hp"] = $telegram->words(3);
-					$pk["stardust"] = $telegram->words(4);
-				}
-				if(($pk['egg'] == TRUE) && isset($pk['distance']) && !$telegram->text_contains("calcu")){
-					if(in_array($pk['distance'], [2000, 5000, 10000])){
-						if(!$pokeuser->verified){ return; } // no cheaters plz
-						if($pokemon->user_flags($telegram->user->id, ['troll', 'bot', 'gps'])){ return; }
-						$pk['distance'] = ($pk['distance'] / 1000);
-						if($pokemon->hatch_egg($pk['distance'], $pk['pokemon'], $telegram->user->id)){
-							$telegram->send
-								->notification(FALSE)
-								->text("¡Gracias! Lo apuntaré en mi lista :)")
-							->send();
-						}
-						return;
-					}
-				}elseif(isset($pk['stardust']) or isset($pk['candy'])){
-					if((!isset($pk['stardust']) or empty($pk['stardust'])) and isset($pk['candy'])){
-						// HACK confusión de la gente
-						$pk['stardust'] = $pk['candy'];
-						if(!empty($pk['hp']) and !empty($pk['cp'])){
-							$telegram->send->text("¿Caramelos? Querrás decir polvos...")->send();
-						}
-					}
-					// TODO el Pokemon sólo puede ser +1.5 del nivel de entrenador (guardado en la cuenta)
-					// Calcular posibles niveles
-					$levels = $pokemon->stardust($pk['stardust'], $pk['powered']);
-					// $telegram->send->text(json_encode($levels))->send();
-
-					// Si tiene HP y CP puesto, calvular IV
-					if(isset($pk['hp']) and isset($pk['cp'])){
-						$chat = ($telegram->is_chat_group() && $this->is_shutup(TRUE) ? $telegram->user->id : $telegram->chat->id);
-						// $pokedex = $pokemon->pokedex($pk['pokemon']);
-						$this->tracking->event("Telegram", "Calculate IV", $pokedex->name);
-
-						if(count($table) == 0){
-							$text = $this->strings->get('pokemon_iv_not_found');
-						}elseif(count($table) == 1){
-							if($low == $high){ $sum = round($high, 1); }
-							reset($table); // HACK Reiniciar posicion
-							$r = current($table); // HACK Seleccionar primer resultado
-							$frase = 0;
-							if($sum <= 50){ $frase = 0; }
-							elseif($sum > 50 && $sum <= 66){ $frase = 1; }
-							elseif($sum > 66 && $sum <= 80){ $frase = 2; }
-							elseif($sum > 80){ $frase = 3; }
-							$text = $this->strings->parse('pokemon_iv_found_percentage', $sum) ."\n"
-									.$this->strings->get_multi('pokemon_iv_found_result_sentence', $frase) ."\n"
-									."<b>L" .round($r['level']) ."</b> " .$r['atk'] ." ATK, " .$r['def'] ." DEF, " .$r['sta'] ." STA";
-						}else{
-							$low = round($low, 1);
-							$high = round($high, 1);
-							if($low == $high){
-								$text = $this->strings->parse('pokemon_iv_found_multiple_range_lowhigh', [count($table), $low, $high]);
-							}else{
-								$text = $this->strings->parse('pokemon_iv_found_multiple_range_same', [count($table), $high]);
-							}
-
-							if($high <= 50 or ($low <= 60 and $high <= 60) ){ $frase = 0; }
-							elseif($low > 75){ $frase = 3; }
-							elseif($low > 66){ $frase = 2; }
-							elseif($low > 50 or ($high >= 75 and $low <= 65)){ $frase = 1; }
-
-							$text .= "\n" .$this->strings->get_multi('pokemon_iv_found_result_sentence', $frase) ."\n";
-
-							// Si hay menos de 6 resultados, mostrar.
-							if(count($table) <= 6){
-								$text .= "\n";
-								foreach($table as $r){
-									$total = number_format(round((($r['atk'] + $r['def'] + $r['sta']) / 45) * 100, 1), 1);
-									$text .= "*L" .$r['level'] ."* - *" .$total ."%*: " .$r['atk'] ."/" .$r['def'] ."/" .$r['sta'] ."\n";
-								}
-							}
-						}
-
-						$telegram->send->chat($chat)->text($text, TRUE)->send();
-						if($this->user->id == $this->config->item('creator') && !$telegram->is_chat_group()){
-							// $telegram->send->text(json_encode($table))->send(); // DEBUG
-						}
-					}
-				}
-				return;
-			}
+			$this->register($color);
+		}elseif(
+			$this->telegram->text_command("register") or
+			($this->telegram->text_command("start") and
+			!$this->telegram->is_chat_group())
+		){
+			$this->register(NULL);
+		}elseif(
+			$this->telegram->text_command("help") and
+			!$this->telegram->is_chat_group()
+		){
+			$this->help();
 		}
-
-		// PARTE 2
-
-
-		// PARTE 3
-
-		if($telegram->text_contains( ["atacando", "atacan"]) && $telegram->text_contains(["gimnasio", "gym"])){
-
-		}elseif($telegram->text_has(["evolución", "evolucionar"])){
-			$chat = ($telegram->text_has("aquí") && !$this->is_shutup() ? $telegram->chat->id : $telegram->user->id);
-
-			$pk = $this->parse_pokemon();
-			if(empty($pk['pokemon'])){ return; }
-
-			$search = $pokemon->pokedex($pk['pokemon']);
-			$this->tracking->event('Telegram', 'Search Pokemon Evolution', $search->name);
-
-			$evol = $pokemon->evolution($search->id);
-			$str = array();
-			if(count($evol) == 1){ $str = "No tiene."; }
-			else{
-				foreach($evol as $i => $p){
-					$cur = FALSE;
-					if($p['id'] == $search->id){ $cur = TRUE; }
-
-					$frase = ($cur ? $telegram->emoji(":triangle-right:") ." *" .$p['name'] ."*" : $p['name']);
-					$frase .= ($p['candy'] != NULL && $p['candy'] > 0 ? " (" .$p['candy'] .$telegram->emoji(" :candy:") .")" : "");
-
-					if(!empty($pk['cp'])){
-						if(!$cur && !empty($p['evolved_from'])){ $pk['cp'] = min(floor($pk['cp'] * $p['evolved_from']['cp_multi']), $p['cp_max']); }
-						if($cur or !empty($p['evolved_from'])){ $frase .= " *" .$pk['cp'] ." CP*"; }
-					}
-					$str[] = $frase;
-				}
-				$str = implode("\n", $str);
-
-			}
-			$telegram->send
-				->chat( $chat )
-				->notification(FALSE)
-				// ->reply_to( ($chat == $telegram->chat->id) )
-				->text($str, TRUE)
-			->send();
-		}elseif(($telegram->text_has(["ataque", "habilidad", "skill"], TRUE) or $telegram->text_command("attack")) && $telegram->words() <= 5){
-			$chat = ($telegram->text_has("aquí") && !$this->is_shutup() ? $telegram->chat->id : $telegram->user->id);
-
-			$find = $telegram->words(1, 2);
-			if($telegram->text_has("aquí")){
-				$find = $telegram->words(1, $telegram->words() - 2);
-			}
-			$skill = $pokemon->skill($find);
-			if($skill){
-				$types = $pokemon->attack_types();
-				$text = "*" .$skill->name_es ."* / _" .$skill->name ."_\n"
-						.$types[$skill->type] ." - " .$skill->attack ." ATK / " .$skill->bars ." barras";
-
-				$telegram->send
-					->notification(TRUE)
-					->chat($chat)
-					->text($text, TRUE)
-				->send();
-				return;
-			}
-		}elseif($telegram->text_has(["pokédex", "pokémon"], TRUE) or $telegram->text_command("pokedex")){
-			// $text = $telegram->text();
-			// $chat = ($telegram->text_has("aqui") && !$this->is_shutup() ? $telegram->chat->id : $telegram->user->id);
-			/* if($telegram->text_has("aquí")){
-				$word = $telegram->words( $telegram->words() - 2 );
-			} */
-			$this->_pokedex($telegram->text(), $telegram->chat->id);
-
-		// ---------------------
-		// Utilidades varias
-		// ---------------------
-
-
-		// ---------------------
-		// Administrativo
-		// ---------------------
-
-		}elseif($telegram->text_has(["team", "equipo"]) && $telegram->text_has(["sóis", "hay aquí", "estáis"])){
-			exit();
-		}elseif($telegram->text_has(["pokemon", "pokemons", "busca", "buscar", "buscame"]) && $telegram->text_contains("cerca") && $telegram->words() <= 10){
-			$this->_locate_pokemon();
-			return;
-		}
-		// ---------------------
-		// Chistes y tonterías
-		// ---------------------
-
-		// Recibir ubicación
-		if($this->telegram->location() && !$this->telegram->is_chat_group()){
-		    $loc = implode(",", $this->telegram->location(FALSE));
-			$this->user->settings('location', $loc);
-			$this->user->step = 'LOCATION';
-		    $this->_step();
-		}
-
-		/* if($telegram->text_has(["agregar"], TRUE) && $telegram->words() == 3 && $telegram->has_reply && isset($telegram->reply->location)){
-			$loc = (object) $telegram->reply->location;
-			$loc = [$loc->latitude, $loc->longitude];
-
-			$am = $telegram->words(1);
-			$dir = $telegram->words(2);
-			if(!is_numeric($am)){ exit(); }
-
-			$telegram->send
-				->text($pokemon->location_add($loc, $am, $dir))
-			->send();
-			exit();
-		} */
-
-		// NUEVO MOLESTO
-		if($this->telegram->photo() && $this->user->id != CREATOR){
-			if($this->user->verified){ return; }
-			$this->user->step = 'SCREENSHOT_VERIFY';
-			$this->_step();
-		}
+		$this->end();
 	}
 
-	function _step(){
-		$telegram = $this->telegram;
-		$pokemon = $this->pokemon;
-		$user = $telegram->user;
-		$chat = $telegram->chat;
-
-		$pokeuser = $pokemon->user($this->user->id);
-		if(empty($pokeuser)){ return; } // HACK cuidado
-
-		$admins = NULL;
-		if($telegram->is_chat_group()){ $admins = $telegram->get_admins(); }
-		$admins[] = $this->config->item('creator');
-
-		$step = $pokeuser->step;
-		switch ($step) {
-			case 'RULES':
-				break;
-			case 'WELCOME':
-				break;
-			case 'CHOOSE_POKEMON':
-				// $pk = NULL;
-				$pk = $this->parse_pokemon();
-				$pokemon->step($this->user->id, 'CHOOSE_POKEMON');
-				/* if($telegram->text()){
-					$pk = trim($telegram->words(0, TRUE));
-					// if( preg_match('/^(?)\d{1,3}$/', $word) ){ }
-				}elseif($telegram->sticker()){
-					// Decode de la lista de stickers cuál es el Pokemon.
-				} */
-				if(!empty($pk)){
-					// $pk = $pokemon->find($pk);
-					if(empty($pk['pokemon'])){
-						$telegram->send
-							->text("El Pokémon mencionado no existe.")
-						->send();
-					}else{
-						$s = $pokemon->settings($this->user->id, 'step_action');
-						$pokemon->step($this->user->id, $s);
-						$pokemon->settings($this->user->id, 'pokemon_select', $pk['pokemon']);
-						$this->_step(); // HACK relaunch
-					}
-				}
-				exit();
-				break;
-			case 'POKEMON_SEEN':
-				// Tienes que estar en el lugar para poder haber reportado el Pokemon
-				// Si tienes flags TROLL, FC u otras, no podrás enviarlo.
-				// Solo puedes hacer uno cada minuto.
-				$pk = $pokemon->settings($this->user->id, 'pokemon_select');
-
-				$pokemon->settings($this->user->id, 'pokemon_select', 'DELETE');
-				$pokemon->settings($this->user->id, 'step_action', 'DELETE');
-
-				$cd = $pokemon->settings($this->user->id, 'pokemon_cooldown');
-				if(!empty($cd) && $cd > time()){
-					$telegram->send->text("Aún no ha pasado suficiente tiempo. Espera un poco, anda. :)");
-					$pokemon->step($this->user->id, NULL);
-					exit();
-				}
-
-				if($pokemon->user_flags($this->user->id, ['troll', 'rager', 'bot', 'forocoches', 'hacks', 'gps', 'trollmap'])){
-					$telegram->send->text("nope.")->send();
-					$pokemon->step($this->user->id, NULL);
-					exit();
-				}
-				$loc = explode(",", $pokemon->settings($this->user->id, 'location')); // FIXME cuidado con esto, si reusamos la funcion.
-				$pokemon->add_found($pk, $this->user->id, $loc[0], $loc[1]);
-
-				// SELECT uid, SUBSTRING(value, 1, INSTR(value, ",") - 1) AS lat, SUBSTRING(value, INSTR(value, ",") + 1) AS lng FROM `settings` WHERE LEFT(uid, 1) = '-' AND type = "location"
-
-				$pokemon->settings($this->user->id, 'pokemon_cooldown', time() + 60);
-				$pokemon->step($this->user->id, NULL);
-
-				$this->tracking->event("Telegram", "Pokemon Seen", $pk);
-				$telegram->send
-					->text("Hecho! Gracias por avisar! :D")
-					->keyboard()->hide(TRUE)
-				->send();
-				exit();
-				break;
-			case 'LURE_SEEN':
-				// Tienes que estar en el lugar para poder haber reportado el Pokemon
-				// Si tienes flags TROLL, FC u otras, no podrás enviarlo.
-				// Solo puedes hacer uno cada minuto.
-				$pokemon->settings($this->user->id, 'step_action', 'DELETE');
-
-				$cd = $pokemon->settings($this->user->id, 'pokemon_cooldown');
-				if(!empty($cd) && $cd > time()){
-					$telegram->send->text("Aún no ha pasado suficiente tiempo. Espera un poco, anda. :)");
-					$pokemon->step($this->user->id, NULL);
-					exit();
-				}
-
-				if($pokemon->user_flags($this->user->id, ['troll', 'rager', 'bot', 'forocoches', 'hacks', 'gps', 'trollmap'])){
-					$telegram->send->text("nope.")->send();
-					$pokemon->step($this->user->id, NULL);
-					exit();
-				}
-				$loc = explode(",", $pokemon->settings($this->user->id, 'location')); // FIXME cuidado con esto, si reusamos la funcion.
-
-				// Buscar Pokeparada correspondiente o cercana.
-				$pkstop = $pokemon->pokestops($loc, 160, 1);
-				if(!$pkstop){
-					$telegram->send
-						->text("No hay Pokeparadas por ahí cerca, o no están registradas. Pregúntalo más adelante.")
-					->send();
-					$telegram->send
-						->chat($this->config->item('creator'))
-						->text("*!!* Buscar Poképaradas en *" .json_encode($loc) ."*", TRUE)
-					->send();
-					return;
-				}
-				$pkstop = $pkstop[0];
-				$loc = [$pkstop['lat'], $pkstop['lng']];
-
-				$pokemon->add_lure_found($this->user->id, $loc[0], $loc[1]);
-
-				$nearest = $pokemon->group_near($loc);
-				foreach($nearest as $g){
-					$telegram->send
-						->chat($g)
-						->location($loc)
-					->send();
-
-					$text = "Cebo en *" .$pkstop['title'] ."*!";
-					$telegram->send
-						->chat($g)
-						->text($text, TRUE)
-					->send();
-				}
-				// SELECT uid, SUBSTRING(value, 1, INSTR(value, ",") - 1) AS lat, SUBSTRING(value, INSTR(value, ",") + 1) AS lng FROM `settings` WHERE LEFT(uid, 1) = '-' AND type = "location"
-
-				$pokemon->settings($this->user->id, 'pokemon_cooldown', time() + 60);
-				$pokemon->step($this->user->id, NULL);
-
-				$this->tracking->event("Telegram", "Lure Seen", $pk);
-				$telegram->send
-					->text("Cebo en *" .$pkstop['title'] ."*, gracias por avisar! :D", TRUE)
-					->keyboard()->hide(TRUE)
-				->send();
-				exit();
-				break;
-			case 'MEETING_LOCATION';
-
-				break;
-			case 'SCREENSHOT_VERIFY':
-				if(!$telegram->is_chat_group() && $telegram->photo()){
-					if(empty($pokeuser->username) or $pokeuser->lvl == 1){
-						$text = "Antes de validarte, necesito saber tu *nombre o nivel actual*.\n"
-								.":triangle-right: *Me llamo ...*\n"
-								.":triangle-right: *Soy nivel ...*";
-						$telegram->send
-							->notification(TRUE)
-							->chat($telegram->user->id)
-							->text($telegram->emoji($text), TRUE)
-							->keyboard()->hide(TRUE)
-						->send();
-						exit();
-					}
-
-					$telegram->send
-						->message(TRUE)
-						->chat(TRUE)
-						->forward_to($this->config->item('creator'))
-					->send();
-
-					$telegram->send
-						->notification(TRUE)
-						->chat($this->config->item('creator'))
-						->text("Validar " .$this->user->id ." @" .$pokeuser->username ." L" .$pokeuser->lvl ." " .$pokeuser->team)
-						->inline_keyboard()
-							->row()
-								->button($telegram->emoji(":ok:"), "te valido " .$pokeuser->telegramid, "TEXT")
-								->button($telegram->emoji(":times:"), "no te valido")
-							->end_row()
-						->show()
-					->send();
-
-					$telegram->send
-						->notification(TRUE)
-						->chat($this->user->id)
-						->keyboard()->hide(TRUE)
-						->text("¡Enviado correctamente! El proceso de validar puede tardar un tiempo.")
-					->send();
-
-					$pokemon->step($this->user->id, NULL);
-					exit();
-				}
-				break;
-			case 'SPEAK':
-				// DEBUG - FIXME
-				if($telegram->is_chat_group()){ return; }
-				if($telegram->callback){ return; }
-				if($telegram->text() && substr($telegram->words(0), 0, 1) == "/"){ return; }
-				$chattalk = $pokemon->settings($telegram->user->id, 'speak');
-				if($telegram->user->id != $this->config->item('creator') or $chattalk == NULL){
-					$pokemon->step($telegram->user->id, NULL);
-				}
-				$telegram->send
-					->notification(TRUE)
-					->chat($chattalk);
-
-				if($telegram->text()){
-					$telegram->send->text( $telegram->text(), 'Markdown' )->send();
-				}elseif($telegram->photo()){
-					$telegram->send->file('photo', $telegram->photo());
-				}elseif($telegram->sticker()){
-					$telegram->send->file('sticker', $telegram->sticker());
-				}elseif($telegram->voice()){
-					$telegram->send->file('voice', $telegram->voice());
-				}elseif($telegram->video()){
-					$telegram->send->file('video', $telegram->video());
-				}
-				exit();
-				break;
-			case 'DUMP':
-				$telegram->send->text( $telegram->dump(TRUE) )->send();
-				exit();
-				break;
-			case 'SETNAME':
-				// Last word con filtro de escapes.
-
-				break;
-			default:
-			break;
-		}
-		// exit(); // FIXME molesta. se queda comentado.
-	}
-
-	// function _pokedex($chat = NULL){
-	function _pokedex($text = NULL, $chat = NULL){
-		$telegram = $this->telegram;
-		$pokemon = $this->pokemon;
-
-		$this->last_command("POKEDEX");
-
-		$types = $pokemon->attack_types();
-
-		if($chat === NULL){ $chat = $telegram->chat->id; }
-		if(!is_numeric($text)){
-			$exp = explode(" ", $text);
-			if(in_array(count($exp), [2, 3])){ // el aquí también cuenta
-				$num = filter_var($exp[1], FILTER_SANITIZE_NUMBER_INT);
-				if(is_numeric($num) && $num > 0 && $num < 251){ $text = $num; }
-			}
-			if(!is_numeric($text)){
-				$poke = $this->parse_pokemon();
-				$text = (!empty($poke['pokemon']) ? $poke['pokemon'] : NULL);
-			}
-		}
-
-		if(empty($text)){ return; }
-		$pokedex = $pokemon->pokedex($text);
-		$str = "";
-		if(!empty($pokedex)){
-			$skills = $pokemon->skill_learn($pokedex->id);
-
-			$str = "*" .$pokedex->id ."* - " .$pokedex->name ."\n"
-					.$types[$pokedex->type] .($pokedex->type2 ? " / " .$types[$pokedex->type2] : "") ."\n"
-					."ATK " .$pokedex->attack ." - DEF " .$pokedex->defense ." - STA " .$pokedex->stamina ."\n\n";
-
-			foreach($skills as $sk){
-				$str .= "[" .$sk->attack ."/" .$sk->bars ."] - " .$sk->name_es  ."\n";
-			}
-		}
-
-		if($pokedex->sticker && ($chat == $telegram->user->id)){
-			$telegram->send
-				->chat($chat)
-				// ->notification(FALSE)
-				->file('sticker', $pokedex->sticker);
-		}
-		if(!empty($str)){
-			$telegram->send
-				->chat($chat)
-				// ->notification(FALSE)
-				->text($str, TRUE)
-			->send();
-		}
-	}
-
-	function _locate_pokemon(){
-		$telegram = $this->telegram;
-		$pokemon = $this->pokemon;
-
-		$distance = 500;
-		$limit = 10;
-
-		$this->last_command("POKEMAP");
-
-		// Bloquear a trols y otros.
-		if($pokemon->user_flags($telegram->user->id, ['troll', 'rager', 'spam', 'bot', 'gps', 'hacks'])){ return; }
-		// Comprobar cooldown.
-		if($pokemon->settings($telegram->user->id, 'pokemap_cooldown') > time()){ return; }
-		// Desactivar por grupos
-		if($pokemon->settings($telegram->chat->id, 'location_disable') && $telegram->user->id != $this->config->item('creator')){ return; }
-
-		// Parsear datos Pokemon
-		$pk = $this->parse_pokemon();
-
-		if(isset($pk['distance'])){ $distance = $pk['distance']; }
-		if($telegram->is_chat_group() && $pokemon->settings($telegram->chat->id, 'location')){
-			// GET location del grupo
-			$loc = explode(",", $pokemon->settings($telegram->chat->id, 'location'));
-			$dist = $pokemon->settings($telegram->chat->id, 'location_radius');
-			// Radio por defecto 5km.
-			$distance = (is_numeric($dist) ? $dist : 5000);
-		}else{
-			// GET location
-			$loc = explode(",", $pokemon->settings($telegram->user->id, 'location'));
-		}
-		// die();
-		$list = $pokemon->spawn_near($loc, $distance, $limit, $pk['pokemon']);
-		$str = "No se han encontrado Pokemon.";
-		if($telegram->user->id == $this->config->item('creator')){
-			$telegram->send->text("Calculando especial...")->send();
-			if(!function_exists("pokeradar")){
-				$telegram->send->text("Función especial no cargada. Mu mal David. u.u")->send();
-				return;
-			}
-			$list = pokeradar($loc, $distance, $limit, $pk['pokemon']);
-			$telegram->send->chat($this->config->item('creator'))->text($list)->send();
-			return;
-			// $list = $pokemon->pokecrew($loc, $distance, $limit, $pk['pokemon']);
-		}
-		if(!empty($list)){
-			$str = "";
-			$pokedex = $pokemon->pokedex();
-			$pkfind = (empty($pk['pokemon']) ? "All" : $pokedex[$pk['pokemon']]->name);
-			$this->tracking->event("Telegram", "Search Pokemon Location", $pkfind);
-			if(count($list) > 1){
-				foreach($list as $e){
-					$met = floor($e['distance']);
-					if($met > 1000){ $met = round($met / 1000, 2) ."km"; }
-					else{ $met .= "m"; }
-
-					$str .= "*" .$pokedex[$e['pokemon']]->name ."* en $met" ." (" .date("d/m H:i", strtotime($e['last_seen'])) .")" ."\n";
-				}
-			}else{
-				$e = $list[0]; // Seleccionar el primero
-				$met = floor($e['distance']);
-				if($met > 1000){ $met = round($met / 1000, 2) ."km"; }
-				else{ $met .= "m"; }
-
-				$str = "Tienes a *" .$pokedex[$e['pokemon']]->name ."* a $met, ve a por él!\n"
-						."(" .date("d/m H:i", strtotime($e['last_seen'])) .")";
-				$telegram->send->location($e['lat'], $e['lng'])->send();
-			}
-		}
-		$time = (empty($list) ? 10 : 15); // Cooldown en función de resultado
-		$this->user->settings('pokemap_cooldown', time() + $time);
-		$telegram->send->keyboard()->hide()->text($str, TRUE)->send();
-	}
-
-	function last_command($action){
-		$command = $this->user->settings('last_command');
-		$amount = 1;
-		if($command == $action){
-			$count = $this->user->settings('last_command_count');
-			$add = ($this->telegram->is_chat_group() ? 0 : 1); // Solo agrega si es grupo
-			$amount = (empty($count) ? 1 : ($count + $add));
-		}
-		$this->user->settings('last_command', $action);
-		$this->user->settings('last_command_count', $amount);
-	}
-
-	function is_shutup($creator = TRUE){
-		$admins = $this->admins($creator);
-		$shutup = $this->chat->settings('shutup');
-		return ($shutup && !in_array($this->telegram->user->id, $admins));
-		// $this->telegram->user->id != $this->config->item('creator')
-	}
-
-	function is_shutup_jokes(){
-		$can = $this->chat->settings('jokes');
-		return ($this->is_shutup() or ($can != NULL && $can == FALSE));
-	}
-
-	function _update_chat(){
-		$chat = $this->telegram->chat;
-		$user = $this->telegram->user;
-
-		if(empty($chat->id)){ return; }
-		$query = $this->db
-			->where('id', $chat->id)
-		->get('chats');
-		if($this->db->count == 1){
-			// UPDATE
-			$data = [
-				'type' => $chat->type,
-				'title' => @$chat->title,
-				'last_date' => date("Y-m-d H:i:s"),
-				'active' => TRUE,
-				'messages' => 'messages + 1',
-			];
-
-			$this->db
-				->where('id', $chat->id)
-			->update('chats', $data);
-		}else{
-			$data = [
-				'id' => $chat->id,
-				'type' => $chat->type,
-				'title' => $chat->title,
-				'active' => TRUE,
-				'register_date' => date("Y-m-d H:i:s"),
-			];
-
-			$this->db->insert('chats', $data);
-		}
-
-		$query = $this->db
-			->where('uid', $this->user->id)
-			->where('cid', $chat->id)
-		->get('user_inchat');
-
-		if($this->db->count == 1){
-			// UPDATE
-			$data = [
-				'messages' => 'messages + 1',
-				'last_date' => date("Y-m-d H:i:s")
-			];
-
-			$this->db
-				->where('uid', $this->user->id)
-				->where('cid', $chat->id)
-			->update('user_inchat', $data);
-		}
-
-		if($this->pokemon->user_exists($this->telegram->user->id)){
-			if(isset($this->telegram->user->username) && !empty($this->telegram->user->username)){
-				$this->pokemon->update_user_data($this->telegram->user->id, 'telegramuser', $this->telegram->user->username);
-			}
-		}
-	}
 }
