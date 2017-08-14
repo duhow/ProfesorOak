@@ -1080,6 +1080,7 @@ class Main extends CI_Controller {
 
 		$this->db->query($sql);
 		// -----------
+		if(empty($user->id)){ return; } // Channels
 
 		$data = [
 			'uid' => $user->id,
