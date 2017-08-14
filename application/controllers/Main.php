@@ -12,13 +12,8 @@ class Main extends CI_Controller {
 		if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ die(); }
 		// Kill switch for overloading.
 		if(file_exists('die')){ die(); }
-		if(file_exists('skip')){
-			unlink('skip');
-			die();
-		}
-		if(file_exists('callback') and $this->telegram->callback){
-			die();
-		}
+		if(file_exists('skip') and unlink('skip')){ die(); }
+		if(file_exists('callback') and $this->telegram->callback){ die(); }
 
 		// iniciar variables
 		$telegram = $this->telegram;
@@ -1061,47 +1056,57 @@ class Main extends CI_Controller {
 		$user = $this->telegram->user;
 
 		if(empty($chat->id)){ return; }
-		$query = $this->db
-			->where('id', $chat->id)
-		->get('chats');
-		if($query->num_rows() == 1){
-			// UPDATE
-			$this->db
-				->set('type', $chat->type)
-				->set('title', @$chat->title)
-				->set('last_date', date("Y-m-d H:i:s"))
-				->set('active', TRUE)
-				->set('messages', 'messages + 1', FALSE)
-				->where('id', $chat->id)
-			->update('chats');
-		}else{
-			$this->db
-				->set('id', $chat->id)
-				->set('type', $chat->type)
-				->set('title', $chat->title)
-				->set('active', TRUE)
-				->set('register_date', date("Y-m-d H:i:s"))
-			->insert('chats');
-		}
 
-		$query = $this->db
-			->where('uid', $user->id)
-			->where('cid', $chat->id)
-		->get('user_inchat');
-		if($query->num_rows() == 1){
-			// UPDATE
-			$this->db
-				->where('uid', $user->id)
-				->where('cid', $chat->id)
-				->set('messages', 'messages + 1', FALSE)
-				->set('last_date', date("Y-m-d H:i:s"))
-			->update('user_inchat');
-		}
+		$data = [
+			'id' 		=> $chat->id,
+			'type' 		=> $chat->type,
+			'title' 	=> @$chat->title,
+			'register_date' => date("Y-m-d H:i:s"),
+			'active' 	=> TRUE,
+			'messages' 	=> 0,
+		];
 
-		if($this->pokemon->user_exists($this->telegram->user->id)){
-			if(isset($this->telegram->user->username) && !empty($this->telegram->user->username)){
-				$this->pokemon->update_user_data($this->telegram->user->id, 'telegramuser', $this->telegram->user->username);
-			}
+		$update = [
+			'title'		=> '"' .@$chat->title .'"',
+			'last_date' => '"' .date("Y-m-d H:i:s") .'"',
+			'active'	=> TRUE,
+			'messages'	=> 'messages + 1'
+		];
+
+		$sql = $this->db->insert_string('chats', $data) ." ON DUPLICATE KEY UPDATE ";
+		$upd = array();
+		foreach($update as $key => $val){ $upd[] = "$key = $val"; }
+		$sql .= implode(", ", $upd);
+
+		$this->db->query($sql);
+		// -----------
+
+		$data = [
+			'uid' => $user->id,
+			'cid' => $chat->id,
+			'messages' => 0,
+			'last_date' => NULL,
+			'register_date' => date("Y-m-d H:i:s")
+		];
+
+		$update = [
+			'messages' => 'messages + 1',
+			'last_date' => '"' .date("Y-m-d H:i:s") .'"'
+		];
+
+		$sql = $this->db->insert_string('user_inchat', $data) ." ON DUPLICATE KEY UPDATE ";
+		$upd = array();
+		foreach($update as $key => $val){ $upd[] = "$key = $val"; }
+		$sql .= implode(", ", $upd);
+
+		$this->db->query($sql);
+		// -----------
+
+		if(isset($user->username) and !empty($user->username)){
+			$this->db
+				->set('telegramuser', $user->username)
+				->where('telegramid', $user->id)
+			->update('user');
 		}
 	}
 }
