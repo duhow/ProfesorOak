@@ -1,5 +1,17 @@
 <?php
 
+if(!in_array(date("H"), range(8, 22))){
+	if(in_array($this->telegram->callback, ["raid apuntar", "raid estoy"])){
+		$this->telegram->answer_if_callback("");
+		// Remove button
+		$this->telegram->send
+			->text($this->telegram->text_message())
+		->edit('text');
+		return -1;
+	}
+	return;
+}
+
 if($this->telegram->is_chat_group() or $this->telegram->key == "channel_post"){
 
 	if($this->telegram->text_has(["montar", "monta", "crear", "organizar", "organiza"], ["raid", "incursión"])){
