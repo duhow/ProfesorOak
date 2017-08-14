@@ -282,12 +282,14 @@ class Pokemon extends CI_Model{
                 return $this->db
                     ->where('uid', $user)
                     ->where('type', $key)
+					->where('hidden', FALSE)
                 ->delete('settings');
 			}else{
                 // UPDATE
                 return $this->db
                     ->where('uid', $user)
                     ->where('type', $key)
+					->where('hidden', FALSE)
                     ->set('value', $value)
                 ->update('settings');
             }
