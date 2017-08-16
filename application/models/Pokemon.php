@@ -51,6 +51,21 @@ class Pokemon extends CI_Model{
 		return ($query->num_rows() == 1 ? (bool) $query->row()->blocked : FALSE);
 	}
 
+	function user_registered_not_blocked($uid){
+		if($cache = $this->cache->get('user_ok_'.$uid)){
+			return $cache;
+		}
+		$query = $this->db
+			->select('telegramid')
+			->where('telegramid', $uid)
+			->where('anonymous', FALSE)
+			->where('blocked', FALSE)
+		->get('user');
+		$ret = ($query->num_rows() == 1);
+		$this->cache->save('user_ok_'.$uid, $ret, 300);
+		return $ret;
+	}
+
 	function user_exists($data, $hidden = FALSE){
 		/* $cache = $this->cache->get('exists_' .$data);
 		if($cache !== FALSE){ return $cache; } */

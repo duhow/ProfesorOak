@@ -105,7 +105,8 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
     // $this->analytics->event("Telegram", "Pole"); // HACK TEMP
     if(
         // !pole_can_group($telegram->chat->id) or // El grupo tiene que estar en la lista para poder hacer poles.
-		time() % 3600 < 1 // or // Tiene que haber pasado un segundo de la hora en punto.
+		time() % 3600 <= 2 or // Tiene que haber pasado un segundo de la hora en punto.
+        time() % 3600 >= 3500
 		// $pokemon->settings($telegram->user->id, 'no_pole')
 	){ return -1; }
 

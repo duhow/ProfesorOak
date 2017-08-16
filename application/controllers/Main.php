@@ -48,10 +48,8 @@ class Main extends CI_Controller {
 		}
 
 		// Si el usuario no está registrado con las funciones básicas, fuera.
-		if(!$pokemon->user_exists($telegram->user->id)){ return; }
-
 		// Si el usuario está bloqueado, fuera.
-		if($pokemon->user_blocked($telegram->user->id)){ return; }
+		if(!$pokemon->user_registered_not_blocked($telegram->user->id)){ return; }
 
 		$this->pokemon->load_settings($telegram->user->id);
 
