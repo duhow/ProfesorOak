@@ -269,7 +269,8 @@ class Pokemon extends CI_Model{
 			->where_in('uid', $uids)
 		->get('settings');
 		if($query->num_rows() > 0){
-			$final = array();
+			$final = $this->settings_loaded;
+			if(empty($final)){ $final = array(); }
 			foreach($query->result_array() as $r){
 				$final[$r['uid']][$r['type']] = $r['value'];
 			}
