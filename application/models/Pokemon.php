@@ -3,12 +3,19 @@ class Pokemon extends CI_Model{
 
 	private $settings_loaded = array();
 	private $step_loaded = array();
+	private $admins_loaded = array();
+	private $user_loaded = array();
+	private $group_admin_loaded = array();
+
 	// --------------------------------
 	//   Funciones de usuario
 	// --------------------------------
 
 	function user($user, $offline = FALSE){
 		if($user[0] == "@"){ $user = substr($user, 1); }
+		if(isset($this->user_loaded[$user])){
+			return $this->user_loaded[$user];
+		}
 
 		// $cache = $this->cache->get('user_' .$user);
 		// if($cache !== FALSE){ return $cache; }
@@ -23,6 +30,9 @@ class Pokemon extends CI_Model{
 		->get('user');
 		if($query->num_rows() == 1){
 			// $this->cache->save('user_' .$user, $query->row(), 3600);
+			$id = $query->row()->telegramid;
+			$this->step_loaded[$id] = $query->row()->step;
+			$this->user_loaded[$id] = $query->row();
 			return $query->row();
 		}
 		return ($offline ? $this->user_offline($user) : NULL);
@@ -266,6 +276,7 @@ class Pokemon extends CI_Model{
 		} */
 		if(empty($uids)){ return; }
 		$query = $this->db
+			->select(['uid', 'type', 'value'])
 			->where_in('uid', $uids)
 		->get('settings');
 		if($query->num_rows() > 0){
@@ -416,12 +427,19 @@ class Pokemon extends CI_Model{
 	}
 
 	function is_group_admin($chat){
+		if(isset($this->group_admin_loaded[$chat])){
+			return $this->group_admin_loaded[$chat];
+		}
+
 		$query = $this->db
 			->select('uid')
 			->where('type', 'admin_chat')
 			->where('value', $chat)
 		->get('settings');
-		return ($query->num_rows() == 1 ? $query->row()->uid : FALSE);
+
+		$val = ($query->num_rows() == 1 ? $query->row()->uid : FALSE);
+		$this->group_admin_loaded[$chat] = $val;
+		return $val;
 	}
 
 	function group_find($data){
@@ -474,11 +492,20 @@ class Pokemon extends CI_Model{
 	function group_admins($gid, $useradd = NULL, $time = 3600){
 		if($useradd === NULL){
 			// GET
+			if(isset($this->admins_loaded[$gid])){
+				return $this->admins_loaded[$gid];
+			}
 			$query = $this->db
+				->select('uid')
 				->where('gid', $gid)
 				->where('expires >=', date("Y-m-d H:i:s"))
 			->get('user_admins');
-			return ($query->num_rows() > 0 ? array_column($query->result_array(), 'uid') : NULL);
+			if($query->num_rows() > 0){
+				$uids = array_column($query->result_array(), 'uid');
+				$this->admins_loaded[$gid] = $uids;
+				return $uids;
+			}
+			return NULL;
 		}elseif(is_string($useradd) && strtoupper($useradd) == "DELETE"){
 			// DELETE
 			return $this->db
@@ -501,6 +528,10 @@ class Pokemon extends CI_Model{
 				'expires' => $time
 			];
 		}
+
+		// Add admins to local array
+		$this->admins_loaded[$gid] = $list;
+
 		$this->db->insert_batch('user_admins', $data);
 		return $list;
 	}

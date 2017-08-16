@@ -49,12 +49,11 @@ class Main extends CI_Controller {
 
 		// Si el usuario no está registrado con las funciones básicas, fuera.
 		// Si el usuario está bloqueado, fuera.
-		if(!$pokemon->user_registered_not_blocked($telegram->user->id)){ return; }
+		$pokeuser = $pokemon->user($telegram->user->id);
+		if(empty($pokeuser) or $pokeuser->blocked){ return; }
 
 		$this->pokemon->load_settings($telegram->user->id);
-
-		$pokeuser = $pokemon->user($telegram->user->id);
-		$step = $pokemon->step($telegram->user->id);
+		$step = $pokeuser->step;
 
 		// Cancelar pasos en general.
 		if($step != NULL && $telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
