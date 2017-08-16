@@ -2,12 +2,17 @@
 class Pokemon extends CI_Model{
 
 	private $settings_loaded = array();
+	private $step_loaded = array();
 	// --------------------------------
 	//   Funciones de usuario
 	// --------------------------------
 
 	function user($user, $offline = FALSE){
 		if($user[0] == "@"){ $user = substr($user, 1); }
+
+		// $cache = $this->cache->get('user_' .$user);
+		// if($cache !== FALSE){ return $cache; }
+
 		$query = $this->db
 			->group_start()
 				->where('telegramid', $user)
@@ -16,7 +21,10 @@ class Pokemon extends CI_Model{
 			->group_end()
 			->where('anonymous', FALSE)
 		->get('user');
-		if($query->num_rows() == 1){ return $query->row(); }
+		if($query->num_rows() == 1){
+			// $this->cache->save('user_' .$user, $query->row(), 3600);
+			return $query->row();
+		}
 		return ($offline ? $this->user_offline($user) : NULL);
 	}
 
@@ -44,6 +52,9 @@ class Pokemon extends CI_Model{
 	}
 
 	function user_exists($data, $hidden = FALSE){
+		/* $cache = $this->cache->get('exists_' .$data);
+		if($cache !== FALSE){ return $cache; } */
+
 		if(!$hidden){ $this->db->where('anonymous', FALSE); }
 
 		$query = $this->db
@@ -57,7 +68,9 @@ class Pokemon extends CI_Model{
 			->limit(1)
 		->get('user');
 		if($query->num_rows() == 1){
-			return $query->row()->telegramid;
+			$id = $query->row()->telegramid;
+			// $this->cache->save('exists_'.$data, $id, 300);
+			return $id;
 			// return ($retid == TRUE ? $query->row()->telegramid : TRUE);
 		}
 		return FALSE;
@@ -204,14 +217,21 @@ class Pokemon extends CI_Model{
 	function step($user, $step = FALSE){
 		if($step === FALSE){
 			// GET
+			if(isset($this->step_loaded[$user])){ return $this->step_loaded[$user]; }
 			$query = $this->db
 				->select('step')
 				->where('telegramid', $user)
 			->get('user');
-			return ($query->num_rows() == 1 ? $query->row()->step : NULL);
+			if($query->num_rows() == 1){
+				$step = $query->row()->step;
+				$this->step_loaded[$user] = $step;
+				return $step;
+			}
+			return NULL;
 		}else{
 			// SET
 			if(!empty($step)){ $step = strtoupper($step); }
+			$this->step_loaded[$user] = $step;
 			$query = $this->db
 				->set('step', $step)
 				->where('telegramid', $user)
@@ -222,43 +242,68 @@ class Pokemon extends CI_Model{
 
 	function load_settings($uids){
 		if(!is_array($uids)){ $uids = [$uids]; }
+		/* foreach($uids as $k => $uid){
+			$data = $this->cache->get('settings_' .$uid);
+			if(is_array($data)){
+				$this->settings_loaded[$uid] = $data;
+				unset($uids[$k]);
+			}
+		} */
+		if(empty($uids)){ return; }
 		$query = $this->db
 			->where_in('uid', $uids)
 		->get('settings');
 		if($query->num_rows() > 0){
+			$final = array();
 			foreach($query->result_array() as $r){
-				$this->settings_loaded[$r['uid']][$r['type']] = $r['value'];
+				$final[$r['uid']][$r['type']] = $r['value'];
 			}
+			$this->settings_loaded = $final;
 		}
+		/* foreach($this->settings_loaded as $uid => $data){
+			$this->cache->save('settings_' .$uid, $data, 300);
+		} */
 	}
 
 	function settings($user, $key, $value = NULL){
 		$full = FALSE;
 		if(strtolower($value) == "fullinfo"){ $value = NULL; $full = TRUE; }
 		if($value === NULL){
-			if(!is_array($key) && isset($this->settings_loaded[$user][$key]) && !empty($this->settings_loaded[$user][$key])){
-				return $this->settings_loaded[$user][$key];
+			if(!is_array($key) && isset($this->settings_loaded[$user])){
+				// Si se ha cargado todo lo del usuario
+				if(isset($this->settings_loaded[$user][$key])){
+					return $this->settings_loaded[$user][$key];
+				}
+				// Si no existe
+				return NULL;
 			}
 
 			if(is_array($key)){
-                $this->db->where_in('type', $key);
-            }elseif(in_array($key, ["all", "*"])){
-                // NADA. Coje todo lo del UID.
-            }else{
-                $this->db
-                    ->where('type', $key)
-                    ->limit(1); // Solo un resultado, seguridad
-            }
+				$this->db->where_in('type', $key);
+			}elseif(in_array($key, ["all", "*"])){
+				// NADA. Coje todo lo del UID.
+			}else{
+				if(!$full){ $this->db->select('value'); }
+				$this->db
+					->where('type', $key)
+					->limit(1); // Solo un resultado, seguridad
+			}
 			$query = $this->db
 				->where('uid', $user)
 			->get('settings');
-            if($query->num_rows() > 1){
+			if($query->num_rows() > 1){
 				if($full){ return $query->result_array(); }
-                return array_column($query->result_array(), 'value', 'type');
-            }
+				return array_column($query->result_array(), 'value', 'type');
+			}
 			elseif($query->num_rows() == 1){
-				$this->settings_loaded[$user][$key] = $query->row()->value;
-				return ($full ? $query->row() : $query->row()->value);
+				$value = $query->row()->value;
+				$this->settings_loaded[$user][$key] = $value;
+				// Cache
+				/* $cache = $this->cache->get('settings_' .$user);
+				$cache[$key] = $value;
+				$this->cache->save('settings_' .$user, $cache, 300); */
+				// --------
+				return ($full ? $query->row() : $value);
 			}
 			return NULL;
 		}else{
@@ -270,29 +315,45 @@ class Pokemon extends CI_Model{
 
 			if($this->settings($user, $key) === NULL && strtoupper($value) !== "DELETE"){
 				// INSERT
+				// Cache
+				/* $cache = $this->cache->get('settings_' .$user);
+				$cache[$key] = $value;
+				$this->cache->save('settings_' .$user, $cache, 300); */
+				// ---------
 				$data = [
 					'uid' => $user,
 					'type' => $key,
 					'value' => $value
 				];
-				$query = $this->db->insert('settings', $data);
+				$query = $this->db->insert_string('settings', $data) ." ON DUPLICATE KEY UPDATE value = '" .$this->db->escape_str($value) ."'";
+				$this->db->query($query);
 				return $this->db->insert_id();
 			}elseif(strtoupper($value) == "DELETE"){
-                // DELETE
-                return $this->db
-                    ->where('uid', $user)
-                    ->where('type', $key)
+				// DELETE
+				// Cache
+				/* $cache = $this->cache->get('settings_' .$user);
+				unset($cache[$key]);
+				$this->cache->save('settings_' .$user, $cache, 300); */
+				// ---------
+				return $this->db
+					->where('uid', $user)
+					->where('type', $key)
 					->where('hidden', FALSE)
-                ->delete('settings');
+				->delete('settings');
 			}else{
-                // UPDATE
-                return $this->db
-                    ->where('uid', $user)
-                    ->where('type', $key)
+				// UPDATE
+				// Cache
+				/* $cache = $this->cache->get('settings_' .$user);
+				$cache[$key] = $value;
+				$this->cache->save('settings_' .$user, $cache, 300); */
+				// ---------
+				return $this->db
+					->where('uid', $user)
+					->where('type', $key)
 					->where('hidden', FALSE)
-                    ->set('value', $value)
-                ->update('settings');
-            }
+					->set('value', $value)
+				->update('settings');
+			}
 		}
 	}
 

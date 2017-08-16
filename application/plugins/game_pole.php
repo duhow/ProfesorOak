@@ -71,41 +71,6 @@ function pole_group_clean($group){
     return $CI->db->query("TRUNCATE TABLE poleauth");
 }
 
-function pole_add($user, $group, $pole_type, $first = FALSE){
-    $CI =& get_instance();
-    $data = [
-        'cid' => $group,
-        'uid' => $user,
-        'type' => $pole_type,
-		'first' => $first,
-        'date' => date("Y-m-d"),
-    ];
-
-    return $CI->db->insert('pole', $data);
-}
-
-function pole_lock($action = TRUE){
-	/* $file = "/tmp/pole";
-	if($action === FALSE){
-		if(file_exists($file)){ unlink($file); }
-		return TRUE;
-	}
-
-	if(file_exists($file)){
-		while(file_exists($file)){
-			usleep(100 * mt_rand(10, 50));
-		}
-	}
-
-	return file_put_contents($file, "pole"); */
-
-    $CI =& get_instance();
-    if($action){
-        return $CI->db->query("LOCK TABLES pole WRITE;");
-    }
-    return $CI->db->query("UNLOCK TABLES");
-}
-
 function pole_ranking($group, $day = "today"){
 	$CI =& get_instance();
 
@@ -139,10 +104,23 @@ if(!$telegram->is_chat_group()){ return; }
 if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_command(["pole", "subpole", "bronce"])){
     // $this->analytics->event("Telegram", "Pole"); // HACK TEMP
     if(
-        !pole_can_group($telegram->chat->id) or // El grupo tiene que estar en la lista para poder hacer poles.
+        // !pole_can_group($telegram->chat->id) or // El grupo tiene que estar en la lista para poder hacer poles.
 		time() % 3600 < 1 // or // Tiene que haber pasado un segundo de la hora en punto.
 		// $pokemon->settings($telegram->user->id, 'no_pole')
 	){ return -1; }
+
+    if(!$groups = $this->cache->get('pole_groups')){
+        $query = $this->db
+            ->select('chat')
+            ->where('date', date("Y-m-d"))
+        ->get('poleauth');
+        if($query->num_rows() > 0){
+            $groups = array_column($query->result_array(), 'chat');
+            $this->cache->save('pole_groups', $groups, 21600); // 6h
+        }
+    }
+    if(!in_array($this->telegram->chat->id, $groups)){ return -1; }
+
 
     // Si está el Modo HARDCORE, la pole es cada hora. Si no, cada día.
     // $timer = ($pokemon->settings($telegram->chat->id, 'pole_hardcore') ? "H" : "d");
@@ -163,6 +141,9 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
     }
 
 	if(empty($pole)){ return -1; }
+    if($done = $this->cache->get('pole_done_' .$this->telegram->chat->id)){
+        if(in_array($pole, $done)){ return -1; } // Ya se ha hecho
+    }
 
 	// No varias veces (cid, uid, date);
 	// No misma posición (cid, type, date);
@@ -187,6 +168,13 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
 
 	// "Lo siento " .$telegram->user->first_name .", pero hoy la *pole* es mía! :D"
 	if($query and $this->db->insert_id() > 0){
+        $done = $this->cache->get('pole_done_' .$this->telegram->chat->id);
+        if(empty($done)){
+            $done = array();
+        }
+        $done[] = $pole;
+        $this->cache->save('pole_done_'.$this->telegram->chat->id, $done, 7200);
+
 		$this->telegram->send
 			->text($this->telegram->emoji(":medal-" .$pole .": ") .$this->telegram->user->first_name ." ha hecho $action!", TRUE)
 		->send();

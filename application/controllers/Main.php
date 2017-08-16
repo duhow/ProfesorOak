@@ -15,6 +15,8 @@ class Main extends CI_Controller {
 		if(file_exists('skip') and unlink('skip')){ die(); }
 		if(file_exists('callback') and $this->telegram->callback){ die(); }
 
+		$this->load->driver('cache');
+
 		// iniciar variables
 		$telegram = $this->telegram;
 		$pokemon = $this->pokemon;
@@ -829,6 +831,15 @@ class Main extends CI_Controller {
 	function cron(){
 		$chat = "-221103258";
 		if($_SERVER['REMOTE_ADDR'] != getHostByName(getHostName())){ die(); }
+
+		$this->load->driver('cache', array('adapter' => 'memcached', 'backup' => 'file'));
+		if($groups = $this->cache->get('pole_groups') and date("H:i") == "23:59"){
+			$this->telegram->send
+				->chat($chat)
+				->text($this->telegram->emoji(":warning: ") ."Hay " .count($groups) ." grupos para la pole.")
+			->send();
+		}
+
 		$q = $this->telegram->send->Request("getWebhookInfo", array());
 		if($q !== FALSE){
 			if(strpos(sha1($q['url']), "6a0644e5f2c5d79d") === FALSE){
@@ -1067,7 +1078,7 @@ class Main extends CI_Controller {
 		];
 
 		$update = [
-			'title'		=> '"' .@$chat->title .'"',
+			// 'title'	=> '"' .@$chat->title .'"',
 			'last_date' => '"' .date("Y-m-d H:i:s") .'"',
 			'active'	=> TRUE,
 			'messages'	=> 'messages + 1'
