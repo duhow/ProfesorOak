@@ -13,7 +13,7 @@ class Pokemon extends CI_Model{
 
 	function user($user, $offline = FALSE){
 		if($user[0] == "@"){ $user = substr($user, 1); }
-		if(isset($this->user_loaded[$user])){
+		if(array_key_exists($user, $this->user_loaded)){
 			return $this->user_loaded[$user];
 		}
 
@@ -42,10 +42,16 @@ class Pokemon extends CI_Model{
 		$query = $this->db
 			->where('username', $user)
 		->get('user_offline');
-		return ($query->num_rows() == 1 ? $query->row() : NULL);
+		$data = NULL;
+		if($query->num_rows() == 1){ $data = $query->row(); }
+		$this->user_loaded[$user] = $data;
+		return $data;
 	}
 
 	function user_verified($user){
+		if(array_key_exists($user, $this->user_loaded)){
+			return $this->user_loaded[$user]->verified;
+		}
 		$query = $this->db
 			->select('verified')
 			->where('telegramid', $user)
@@ -54,6 +60,9 @@ class Pokemon extends CI_Model{
 	}
 
 	function user_blocked($user){
+		if(array_key_exists($user, $this->user_loaded)){
+			return $this->user_loaded[$user]->blocked;
+		}
 		$query = $this->db
 			->select('blocked')
 			->where('telegramid', $user)
@@ -62,9 +71,7 @@ class Pokemon extends CI_Model{
 	}
 
 	function user_registered_not_blocked($uid){
-		if($cache = $this->cache->get('user_ok_'.$uid)){
-			return $cache;
-		}
+		// if($cache = $this->cache->get('user_ok_'.$uid)){ return $cache; }
 		$query = $this->db
 			->select('telegramid')
 			->where('telegramid', $uid)
@@ -80,9 +87,13 @@ class Pokemon extends CI_Model{
 		/* $cache = $this->cache->get('exists_' .$data);
 		if($cache !== FALSE){ return $cache; } */
 
+		if(array_key_exists($data, $this->user_loaded)){
+			return $this->user_loaded[$data]->telegramid;
+		}
 		if(!$hidden){ $this->db->where('anonymous', FALSE); }
 
 		$query = $this->db
+			->select('telegramid')
 			->group_start()
 				->where('telegramid', $data)
 				// ->or_where('telegramuser', $data) FIXME CONFLICTO con Username normal para registro
@@ -242,17 +253,15 @@ class Pokemon extends CI_Model{
 	function step($user, $step = FALSE){
 		if($step === FALSE){
 			// GET
-			if(isset($this->step_loaded[$user])){ return $this->step_loaded[$user]; }
+			if(array_key_exists($user, $this->step_loaded)){ return $this->step_loaded[$user]; }
 			$query = $this->db
 				->select('step')
 				->where('telegramid', $user)
 			->get('user');
-			if($query->num_rows() == 1){
-				$step = $query->row()->step;
-				$this->step_loaded[$user] = $step;
-				return $step;
-			}
-			return NULL;
+			$step = NULL;
+			if($query->num_rows() == 1){ $step = $query->row()->step; }
+			$this->step_loaded[$user] = $step;
+			return $step;
 		}else{
 			// SET
 			if(!empty($step)){ $step = strtoupper($step); }
@@ -285,6 +294,7 @@ class Pokemon extends CI_Model{
 			foreach($query->result_array() as $r){
 				$final[$r['uid']][$r['type']] = $r['value'];
 			}
+			var_dump($final);
 			$this->settings_loaded = $final;
 		}
 		/* foreach($this->settings_loaded as $uid => $data){
@@ -296,9 +306,9 @@ class Pokemon extends CI_Model{
 		$full = FALSE;
 		if(strtolower($value) == "fullinfo"){ $value = NULL; $full = TRUE; }
 		if($value === NULL){
-			if(!is_array($key) && isset($this->settings_loaded[$user])){
+			if(!is_array($key) && array_key_exists($user, $this->settings_loaded)){
 				// Si se ha cargado todo lo del usuario
-				if(isset($this->settings_loaded[$user][$key])){
+				if(array_key_exists($key, $this->settings_loaded[$user])){
 					return $this->settings_loaded[$user][$key];
 				}
 				// Si no existe
@@ -427,7 +437,7 @@ class Pokemon extends CI_Model{
 	}
 
 	function is_group_admin($chat){
-		if(isset($this->group_admin_loaded[$chat])){
+		if(array_key_exists($chat, $this->group_admin_loaded)){
 			return $this->group_admin_loaded[$chat];
 		}
 
@@ -492,7 +502,7 @@ class Pokemon extends CI_Model{
 	function group_admins($gid, $useradd = NULL, $time = 3600){
 		if($useradd === NULL){
 			// GET
-			if(isset($this->admins_loaded[$gid])){
+			if(array_key_exists($gid, $this->admins_loaded)){
 				return $this->admins_loaded[$gid];
 			}
 			$query = $this->db
@@ -502,7 +512,9 @@ class Pokemon extends CI_Model{
 			->get('user_admins');
 			if($query->num_rows() > 0){
 				$uids = array_column($query->result_array(), 'uid');
-				$this->admins_loaded[$gid] = $uids;
+				$change = $this->admins_loaded;
+				$change[$gid] = $uids;
+				$this->admins_loaded = $change;
 				return $uids;
 			}
 			return NULL;

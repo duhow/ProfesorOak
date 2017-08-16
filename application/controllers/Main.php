@@ -31,13 +31,20 @@ class Main extends CI_Controller {
 			$this->plugin->load('game_pole');
 		}
 
+		$loads = [$this->telegram->user->id];
 		if($this->telegram->is_chat_group()){
-			$this->pokemon->load_settings($telegram->chat->id);
+			$loads[] = $this->telegram->chat->id;
+		}
+		$this->pokemon->load_settings($loads);
+
+		$step = NULL;
+		if($pokeuser = $pokemon->user($telegram->user->id)){
+			$step = $pokeuser->step;
 		}
 
 		$this->plugin->load_all(TRUE); // BASE
 
-		$colores_full = [
+		/* $colores_full = [
 			'Y' => ['amarillo', 'instinto', 'yellow', 'instinct'],
 			'R' => ['rojo', 'valor', 'red'],
 			'B' => ['azul', 'sabiduría', 'blue', 'mystic'],
@@ -45,15 +52,12 @@ class Main extends CI_Controller {
 		$colores = array();
 		foreach($colores_full as $c){
 			foreach($c as $col){ $colores[] = $col; }
-		}
+		} */
 
 		// Si el usuario no está registrado con las funciones básicas, fuera.
 		// Si el usuario está bloqueado, fuera.
-		$pokeuser = $pokemon->user($telegram->user->id);
+		// $pokeuser = $pokemon->user($telegram->user->id);
 		if(empty($pokeuser) or $pokeuser->blocked){ return; }
-
-		$this->pokemon->load_settings($telegram->user->id);
-		$step = $pokeuser->step;
 
 		// Cancelar pasos en general.
 		if($step != NULL && $telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
