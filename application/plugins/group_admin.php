@@ -581,6 +581,7 @@ elseif($telegram->text_has(["emparejamiento", "crear unión"], ["de grupo", "del
     $minute = 5; // SYNC
     if($valid == TRUE && (!is_array($keydec) or count($keydec) != 4)){ $valid = -6; } // Decodificación incorrecta
     if($valid == TRUE && $keydec[1] == $telegram->chat->id){ $valid = -5; } // Si el grupo es el mismo, descartar.
+    $this->pokemon->load_settings($keydec[1]); // Cargar datos del grupo.
     if($valid == TRUE && $keydec[0] != $pokemon->settings($keydec[1], 'team_exclusive')){ $valid = -4; } // Si el grupo no tiene el mismo color.
     if($valid == TRUE && $pokemon->settings($keydec[1], 'link_chat') == NULL){ $valid = -3; } // Si el grupo no tiene link.
     if($valid == TRUE && $keydec[2] != (date("Ymd") .floor(date("i") / $minute)) ){ $valid = -2; } // Si ha expirado la clave
