@@ -29,7 +29,7 @@ class User extends TelegramApp\User {
 
 	public function settings($key, $value = NULL){
 		if($value === NULL){
-			return (isset($this->settings[$key]) ? $this->settings[$key] : NULL);
+			return (array_key_exists($key, $this->settings) ? $this->settings[$key] : NULL);
 		}elseif(strtoupper($value) == "DELETE"){
 			$settings = $this->settings;
 			unset($settings[$key]);
@@ -71,7 +71,7 @@ class User extends TelegramApp\User {
 	}
 
 	public function settings_delete($key){
-		if(isset($this->settings[$key])){ unset($this->settings[$key]); }
+		if(array_key_exists($key, $this->settings)){ unset($this->settings[$key]); }
 		return $this->db
 			->where('uid', $this->id)
 			->where('type', $key)
@@ -103,7 +103,9 @@ class User extends TelegramApp\User {
 			'verified' => FALSE,
 			'blocked' => FALSE
 		];
-		return $this->db->insert('user', $data);
+		return $this->db
+			->setQueryOption('IGNORE')
+		->insert('user', $data);
 	}
 
 	public function register_username($name, $force = FALSE){
@@ -167,12 +169,11 @@ class User extends TelegramApp\User {
 		$chats = array();
 		$query = $this->db
 			->where('uid', $this->id)
-		->get('user_inchat');
+		->get('user_inchat', NULL, ['cid', 'messages', 'last_date', 'register_date']);
 		if(count($query) > 0){
 			foreach($query as $chat){
 				$chatobj = $chat;
 				$chatobj['id'] = $chat['cid'];
-				unset($chatobj['uid']);
 				$chats[$chat['cid']] = (object) $chatobj;
 			}
 			$this->chats = $chats;

@@ -6,8 +6,6 @@ class Main extends TelegramApp\Module {
 	public function run(){
 		if($this->telegram->left_user){ return $this->left_member(); }
 		if($this->telegram->new_user){ return $this->new_member(); }
-		$this->core->load('Tools');
-		$this->core->load('Pokemon');
 
 		if(
 			$this->chat->load() and
@@ -21,30 +19,26 @@ class Main extends TelegramApp\Module {
 		}
 
 		if($this->telegram->is_chat_group()){
-			$this->core->load('Admin');
-			$this->core->load('Group');
-			global $Admin, $Group;
-
 			if($this->telegram->data_received('migrate_to_chat_id')){
-				$Admin->migrate_settings($this->telegram->migrate_chat, $this->chat->id);
+				$this->Admin->migrate_settings($this->telegram->migrate_chat, $this->chat->id);
 				$this->chat->disable();
 				$this->end();
 			}
 
-			if($this->chat->settings('forwarding_to')){ $Admin->forward_to_groups(); }
-			if($this->chat->settings('antiflood')){ $Admin->antiflood(); }
-			if($this->chat->settings('antispam') != FALSE && $this->telegram->text_url()){ $Admin->antispam(); }
-			if($this->chat->settings('mute_content')){ $Admin->mute_content(); }
-			if($this->chat->settings('antiafk') and $this->telegram->key == 'message'){ $Admin->antiafk(); }
+			if($this->chat->settings('forwarding_to')){ $this->Admin->forward_to_groups(); }
+			if($this->chat->settings('antiflood')){ $this->Admin->antiflood(); }
+			if($this->chat->settings('antispam') != FALSE && $this->telegram->text_url()){ $this->Admin->antispam(); }
+			if($this->chat->settings('mute_content')){ $this->Admin->mute_content(); }
+			if($this->chat->settings('antiafk') and $this->telegram->key == 'message'){ $this->Admin->antiafk(); }
 			// if($this->user->settings('mute')){ /* TODO Mute User */ }
-			// if($this->chat->settings('require_avatar')){ $Admin->antinoavatar(); }
+			// if($this->chat->settings('require_avatar')){ $this->Admin->antinoavatar(); }
 			if($this->chat->settings('die') && $this->user->id != CREATOR){ $this->end(); }
-			if($this->chat->settings('abandon')){ $Group->abandon(); }
+			if($this->chat->settings('abandon')){ $this->Group->abandon(); }
 
 			if($this->user->blocked){ $this->end(); }
 
-			if($this->chat->settings('custom_commands')){ $Group->custom_commands(); }
-			// if($this->chat->settings('blackwords')){ $Admin->blackwords(); }
+			if($this->chat->settings('custom_commands')){ $this->Group->custom_commands(); }
+			// if($this->chat->settings('blackwords')){ $this->Admin->blackwords(); }
 			if($this->chat->settings('dubs')){ $this->core->load('GameDubs', TRUE); }
 
 			// Cancelar acciones sobre comandos provenientes de mensajes de channels. STOP SPAM.
@@ -203,8 +197,6 @@ class Main extends TelegramApp\Module {
 		// $this->user = El que le invita (puede ser el mismo)
 
 		$this->chat->load();
-		$this->core->load('Admin');
-		global $Admin;
 
 		$new = new User($this->telegram->new_user, $this->db);
 		$adminchat = $this->chat->settings('admin_chat');
@@ -294,14 +286,35 @@ class Main extends TelegramApp\Module {
 			!$this->chat->is_admin($this->user) // Si el que lo agrega no es Admin
 		){
 			// $this->tracking->event('Telegram', 'Join limit users');
-			$Admin->kick($new->id);
-			$Admin->admin_chat_message($this->strings->parse('adminchat_newuser_limit_join', $new->id));
+			$this->Admin->kick($new->id);
+			$this->Admin->admin_chat_message($this->strings->parse('adminchat_newuser_limit_join', $new->id));
 			// $pokemon->user_delgroup($new->id, $telegram->chat->id);
 			$this->end();
 		}
 
-		// Bot agregado al grupo. Yo no saludo bots :(
-		if($new->id != $this->telegram->bot->id && $this->telegram->is_bot($new->username)){ $this->end(); }
+		// Bot agregado al grupo. Vamos a ver si se puede quedar.
+		if($new->id != $this->telegram->bot->id && $this->telegram->is_bot($new->username)){
+			if(
+				in_array($this->telegram->user->id, telegram_admins(TRUE)) or // Lo agrega un admin, no pasa na.
+				!$this->chat->settings('mute_content') // No hay límites.
+			){ $this->end(); }
+
+			$mute = explode(",", $this->chat->settings('mute_content'));
+			if(!in_array("bot", $mute)){ $this->end(); } // Se permite agregar bots
+
+			$this->telegram->send->ban($this->telegram->user->id);
+			$this->telegram->send->ban($new->id);
+
+			// ---------
+			$str = ":warning: " .$this->strings->get('adminchat_newuser_add_bot') ."\n"
+					.":id: @" .$new->username ." - " .$new->id ."\n"
+					.":male: " .$this->telegram->user->first_name ." - " . $this->telegram->user->id;
+
+			$str = $this->telegram->emoji($str);
+			// ---------
+			$this->Admin->admin_chat_message($str);
+			$this->end();
+		}
 
 		// Cargar información del usuario si está registrado.
 		$new->load();
@@ -332,13 +345,13 @@ class Main extends TelegramApp\Module {
 					$this->chat->settings('team_exclusive_kick') != FALSE &&
 					!$this->chat->is_admin($this->user) // Si NO es admin el que lo mete
 				){
-					$q = $Admin->kick($new->id);
+					$q = $this->Admin->kick($new->id);
 					if($q !== FALSE){
 						$str = ":times: " .$this->strings->get('adminchat_newuser_team_exclusive_invalid') ."\n"
 								.":id: " .$new->id ."\n"
 								.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 						$str = $this->telegram->emoji($str);
-						$Admin->admin_chat_message($str);
+						$this->Admin->admin_chat_message($str);
 					}
 				}
 
@@ -355,14 +368,14 @@ class Main extends TelegramApp\Module {
 			foreach($blacklist as $b){
 				if(in_array($b, $new->flags)){
 					// $this->tracking->event('Telegram', 'Join blacklist user', $b);
-					$q = $Admin->kick($new->id);
+					$q = $this->Admin->kick($new->id);
 
 					$str = ":times: " .$this->strings->get('adminchat_newuser_in_blacklist') ." - $b\n"
 					.":id: " .$new->id ."\n"
 					.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 					$str = $this->telegram->emoji($str);
 
-					$Admin->admin_chat_message($str);
+					$this->Admin->admin_chat_message($str);
 					// $pokemon->user_delgroup($new->id, $telegram->chat->id);
 					$this->end();
 				}
@@ -371,15 +384,15 @@ class Main extends TelegramApp\Module {
 
 		// Si el grupo requiere validados
 		if(
-			$this->chat->settings('require_verified') &&
-			$this->chat->settings('require_verified_kick') &&
+			$this->chat->settings('require_verified') and
+			$this->chat->settings('require_verified_kick') and
 			!$new->verified
 		){
 			// $this->tracking->event('Telegram', 'Kick unverified user');
 			$str = $this->strings->get('user') ." " .$this->telegram->new_user->first_name ." / " .$new->id ." ";
 
 			if(!$this->chat->is_admin($this->user)){
-				$q = $Admin->kick($new->id);
+				$q = $this->Admin->kick($new->id);
 				if($q !== FALSE){
 					// $pokemon->user_delgroup($new->id, $telegram->chat->id);
 					$str = $this->strings->get('admin_kicked_unverified');
@@ -388,7 +401,7 @@ class Main extends TelegramApp\Module {
 							.":id: " .$new->id ."\n"
 							.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 					$str2 = $this->telegram->emoji($str2);
-					$Admin->admin_chat_message($str2);
+					$this->Admin->admin_chat_message($str2);
 				}
 			}else{
 				$str = $this->strings->get('welcome_group_unverified');
@@ -405,18 +418,28 @@ class Main extends TelegramApp\Module {
 			$custom = $this->chat->settings('welcome');
 			$text = $this->strings->parse('welcome_group', $this->telegram->new_user->first_name) ."\n";
 			if(!empty($custom)){ $text = json_decode($custom) ."\n"; }
-			if(!empty($new->team)){
+			if($new->team === NULL){
 				$text .= $this->strings->get('welcome_group_register');
 			}else{
 				$text .= '$pokemon $nivel $equipo $valido $ingress';
+				$required = array();
 
 				if(!$new->verified && $this->chat->settings('require_verified')){
-					$text .= "\n" .$this->strings->get('welcome_group_require_verified');
+					$required[] = $this->strings->get('welcome_group_require_verified');
 
 					$this->telegram->send
 						->inline_keyboard()
 							->row_button($this->strings->get("verify"), "verify", "COMMAND")
 						->show();
+				}
+
+				if(!$new->telegram->username and $this->chat->settings('require_alias')){
+					$required[] = $this->strings->get('welcome_group_require_alias');
+				}
+
+				if(!empty($required)){
+					$text .= "\n" .$this->strings->get('welcome_group_require_start') ."<b>"
+								.implode(", ", $required) ."</b>.";
 				}
 			}
 
@@ -425,17 +448,23 @@ class Main extends TelegramApp\Module {
 
 			$ingress = NULL;
 			if(in_array('resistance', $new->flags)){ $ingress = ":key:"; }
-			elseif(in_array('resistance', $new->flags)){ $ingress = ":frog:"; }
+			elseif(in_array('enlightened', $new->flags)){ $ingress = ":frog:"; }
+
+			$pokename = (strlen($new->username) > 1 ? "@" .$new->username : "");
+			$lvl = ($new->lvl > 1 ? "L" .$new->lvl : "");
+			if(empty($pokename) and empty($lvl) and !$new->verified){
+				$pokename = $this->strings->get('register_hello_name');
+			}
 
 			$emoji = ["Y" => "yellow", "B" => "blue", "R" => "red"];
 			$repl = [
-				'$nombre' => $this->telegram->new_user->first_name,
-				'$apellidos' => $this->telegram->new_user->last_name,
+				'$nombre' => $new->telegram->first_name,
+				'$apellidos' => $new->telegram->last_name,
 				'$equipo' => ':heart-' .$emoji[$new->team] .':',
 				'$team' => ':heart-' .$emoji[$new->team] .':',
-				'$usuario' => "@" .$this->telegram->new_user->username,
-				'$pokemon' => "@" .$new->username,
-				'$nivel' => "L" .$new->lvl,
+				'$usuario' => "@" .$new->telegram->username,
+				'$pokemon' => $pokename,
+				'$nivel' => $lvl,
 				'$valido' => $new->verified ? ':green-check:' : ':warning:',
 				'$ingress' => $ingress
 			];
@@ -449,11 +478,11 @@ class Main extends TelegramApp\Module {
 		}
 
 		// Avisar al grupo administrativo
-		$str = ":new: Entra al grupo\n"
+		$str = ":new: " .$this->strings->get('adminchat_newuser_enter') ."\n"
 				.":id: " .$new->id ."\n"
 				.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 		$str = $this->telegram->emoji($str);
-		$Admin->admin_chat_message($str);
+		$this->Admin->admin_chat_message($str);
 	}
 
 	public function left_member(){
@@ -465,14 +494,22 @@ class Main extends TelegramApp\Module {
 					.":male: " .$this->telegram->user->id . " - " . $this->telegram->user->first_name;
 			$str = $this->telegram->emoji($str);
 
+			$this->db
+				->where('chat', $this->telegram->chat->id)
+			->delete('poleauth');
+
 			$this->telegram->send
 				->notification(TRUE)
 				->chat(CREATOR)
 				->text($str)
 			->send();
+
 			$this->chat->disable();
 		}else{
-			// TODO remove user from list
+			$this->db
+				->where('uid', $this->telegram->user->id)
+				->where('cid', $this->telegram->chat->id)
+			->delete('user_inchat');
 		}
 		$this->end();
 	}
@@ -524,23 +561,17 @@ class Main extends TelegramApp\Module {
 			return $this->language($this->telegram->input->lang);
 		}
 
-		$folder = dirname(__FILE__) .'/';
-		foreach(scandir($folder) as $file){
-			if(is_readable($folder . $file) && substr($file, -4) == ".php"){
-				$name = substr($file, 0, -4);
-				if(in_array($name, ["Main", "User", "Chat"])){ continue; }
-				$this->core->load($name, TRUE);
-			}
+		foreach($this->core->getLoaded() as $name){
+			if(in_array($name, ["Main", "User", "Chat"])){ continue; }
+			$this->core->load($name, TRUE);
 		}
-
-		$this->end();
 	}
 
 	private function set_username($name = NULL){
 		if(empty($name) or strlen($name) < 4){ $this->end(); }
 
 		$this->user->step = NULL;
-		$res = $this->user->register_username($word, FALSE);
+		$res = $this->user->register_username($name, FALSE);
 		if($res === TRUE){
 			$this->tracking->track('Register username');
 			$this->telegram->send
@@ -549,13 +580,13 @@ class Main extends TelegramApp\Module {
 				->show()
 				->reply_to(TRUE)
 				->notification(FALSE)
-				->text($this->strings->parse("register_successful", $word), "HTML")
+				->text($this->strings->parse("register_successful", $name), "HTML")
 			->send();
 		}elseif($res === FALSE){
 			$this->telegram->send
 				->reply_to(TRUE)
 				->notification(FALSE)
-				->text($this->strings->parse("register_error_duplicated_name", $word), "HTML")
+				->text($this->strings->parse("register_error_duplicated_name", $name), "HTML")
 			->send();
 		}elseif($res == -1){
 			// Name already set.
@@ -622,6 +653,11 @@ class Main extends TelegramApp\Module {
 				->text($this->strings->get($str))
 			->send();
 		}
+	}
+
+	private function autoconfigure($type, $chat = NULL){
+		if(empty($chat)){ $chat = $this->chat->id; }
+		$chat = new Chat($chat, $this->db);
 	}
 
 	private function hooks_newuser(){
