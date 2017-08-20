@@ -152,9 +152,8 @@ if($telegram->text_command("avoice")){
         $text = str_replace("ii", 'i', $text);
         $text .= ' ñiñiñiñi';
 
-        $telegram->send
-			->caption($text)
-			->file('sticker', 'CAADAgADQQEAAksODwABJlVW31Lsf6sC');
+        $telegram->send->file('sticker', 'CAADAgADQQEAAksODwABJlVW31Lsf6sC');
+		$telegram->send->text($text)->send();
         return -1;
     }
 
