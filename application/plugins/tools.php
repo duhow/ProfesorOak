@@ -150,9 +150,11 @@ if($telegram->text_command("avoice")){
         $text = strtolower($rtext);
         $text = str_replace(['a','e','o','u','á','é','ó','ú'], 'i', $text);
         $text = str_replace("ii", 'i', $text);
-        $text .= ' ñiñiñiñi <a href="https://cdn.meme.am/cache/images/folder504/12146504.jpg">e.e</a>';
+        $text .= ' ñiñiñiñi';
 
-        $telegram->send->text($text, 'HTML')->send();
+        $telegram->send
+			->caption($text)
+			->file('sticker', 'CAADAgADQQEAAksODwABJlVW31Lsf6sC');
         return -1;
     }
 
