@@ -25,12 +25,12 @@ class GameDubs extends TelegramApp\Module {
 			$str = NULL;
 			// if($lon == 2){ $str = "Dubs! :D"; }
 			if($lon == 3){ $str = "Trips checked!"; }
-			elseif($lon == 4){ $str = "QUADS *GET*!"; }
-			elseif($lon == 5){ $str = "QUINTUPLE *GET! OMGGG!!*"; }
+			elseif($lon == 4){ $str = "QUADS <b>GET</b>!"; }
+			elseif($lon == 5){ $str = "QUINTUPLE <b>GET! OMGGG!!</b>"; }
 			if($str){
 				$this->telegram->send
 					->reply_to(TRUE)
-					->text($str, TRUE)
+					->text($str, 'HTML')
 				->send();
 			}
 		}

@@ -55,6 +55,8 @@ return [
 	'adminchat_newuser_team_exclusive_invalid' => '¡Topo detectado!',
 	'adminchat_newuser_in_blacklist' => 'Usuario en blacklist',
 	'adminchat_newuser_not_verified' => 'Usuario no validado.',
+	'adminchat_newuser_add_bot' => 'Poner bot en el grupo',
+	'adminchat_newuser_enter' => 'Entra al grupo',
 
 	'dow_1' => 'Lunes',
 	'dow_2' => 'Martes',
@@ -147,8 +149,11 @@ return [
 	'welcome_group_team_exclusive' => '<b>¡SE CUELA UN TOPO!</b> @%s',
 	'welcome_group_unverified' => 'Usuario no está verificado.',
 	'welcome_group_register' => "Oye, ¿podrías decirme el color de tu equipo?\n<b>Di: </b><i>Soy ...</i>",
-	'welcome_group_require_verified' => 'Para estar en este grupo <b>debes estar validado.</b>',
 	'welcome_invite_user' => 'He invitado a @%s a este grupo.',
+	'welcome_group_require_start' => 'Para estar en este grupo debes',
+	'welcome_group_require_verified' => 'estar validado',
+	'welcome_group_require_alias' => 'tener un @alias de Telegram',
+	'welcome_group_require_avatar' => 'tener una foto de perfil',
 
 	'command_register_username' => [
 		"Me llamo {name}", "Mi nombre es {name}", "Mi usuario es {name}",
@@ -162,7 +167,7 @@ return [
 
 	'register_hello_start' => "¡Hola %s! ¿Puedes decirme qué color eres?\n<b>Di:</b> Soy...",
 	'register_hello_private' => "¡Hola %s! Ábreme por privado para registrate! :)",
-	'register_hello_name' => 'Oye, ¿cómo te llamas? <b>Di:</b> Me llamo ...',
+	'register_hello_name' => 'Oye, ¿cómo te llamas <b>en el juego</b>? <b>Di:</b> Me llamo ...',
 	'register_hello_verify' => '¿Entiendo que quieres <b>validarte</b>?',
 	'register_error_color' => "No te he entendido bien...\n¿Puedes decirme sencillamente <b>soy rojo, soy azul</b> o <b>soy amarillo</b>?",
 	'register_error_duplicated_name' => "No puede ser, ya hay alguien que se llama <b>@%s</b> :(\nHabla con @duhow para arreglarlo.",
