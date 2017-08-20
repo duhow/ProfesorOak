@@ -21,9 +21,7 @@ class Config extends TelegramApp\Module {
 				}elseif($this->telegram->words() >= 3){
 					$target = $this->telegram->last_word();
 					if(!is_numeric($target) and is_string($target)){
-						$this->core->load('Group');
-						global $Group;
-						$target = $Group->search_by_name($target);
+						$target = $this->Group->search_by_name($target);
 					}
 				}
 			}
@@ -91,7 +89,7 @@ class Config extends TelegramApp\Module {
 		}
 
 		$res = $this->db
-			->where('chat', $chat)
+			->where('uid', $chat)
 		->get('settings');
 
 		if($this->db->count == 0){ return NULL; }

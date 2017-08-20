@@ -40,7 +40,7 @@ class Chat extends TelegramApp\Chat {
 
 	public function settings($key, $value = NULL){
 		if($value === NULL){
-			return (isset($this->settings[$key]) ? $this->settings[$key] : NULL);
+			return (array_key_exists($key, $this->settings) ? $this->settings[$key] : NULL);
 		}elseif(strtoupper($value) == "DELETE"){
 			$settings = $this->settings;
 			unset($settings[$key]);
@@ -82,7 +82,7 @@ class Chat extends TelegramApp\Chat {
 	}
 
 	public function settings_delete($key){
-		if(isset($this->settings[$key])){ unset($this->settings[$key]); }
+		if(array_key_exists($key, $this->settings)){ unset($this->settings[$key]); }
 		return $this->db
 			->where('uid', $this->id)
 			->where('type', $key)
@@ -154,7 +154,6 @@ class Chat extends TelegramApp\Chat {
 		if(count($query) > 0){
 			foreach($query as $user){
 				$userobj = $user;
-				unset($userobj['cid']);
 				$userobj['id'] = $userobj['uid'];
 				$users[$userobj['id']] = (object) $userobj;
 			}
@@ -215,7 +214,7 @@ class Chat extends TelegramApp\Chat {
 	public function in_chat($chat = NULL, $check_telegram = FALSE){
 		$chat = $this->set_chat($chat);
 		if($check_telegram == FALSE){
-			return in_array($chat, array_keys($this->chats));
+			return array_key_exists($chat, $this->chats);
 		}
 	}
 
