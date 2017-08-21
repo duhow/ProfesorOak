@@ -409,6 +409,7 @@ class __Module_Telegram_Sender extends CI_Model{
 	function get_admins($chat = NULL, $keep = FALSE){ return $this->_parse_generic_chatFunctions("getChatAdministrators", $keep, $chat); }
 	function get_member_info($user = NULL, $chat = NULL, $keep = FALSE){ return $this->_parse_generic_chatFunctions("getChatMember", $keep, $chat, $user); }
 	function get_members_count($chat = NULL, $keep = FALSE){ return $this->_parse_generic_chatFunctions("getChatMembersCount", $keep, $chat); }
+	function get_chat_link($chat = NULL, $keep = FALSE){ return $this->_parse_generic_chatFunctions("exportChatInviteLink", $keep, $chat); }
 
 	// DEBUG
 	/* function get_message($message, $chat = NULL){
@@ -689,6 +690,20 @@ class Telegram extends CI_Model{
 
 			if(isset($this->data[$this->key]['from'])){
 				$this->user = (object) $this->data[$this->key]['from'];
+			}
+		}
+
+		// Patch invertir texto
+		foreach(['user', 'chat'] as $content){
+			if(!empty($this->{$content})){
+				$data = (array) $this->{$content};
+				foreach(['first_name', 'last_name', 'title'] as $name){
+					if(array_key_exists($name, $data)){
+						$data[$name] = str_replace("\u{202e}", "", $data[$name]);
+					}
+				}
+				$this->{$content} = (object) $data;
+				unset($data);
 			}
 		}
 	}
