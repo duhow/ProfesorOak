@@ -1165,6 +1165,7 @@ class Telegram extends CI_Model{
 			'cloud' => '\u2601\ufe0f',
 			'sun' => '\u2600\ufe0f',
 			'rainbow' => '\ud83c\udf08',
+			'rainbow_flag' => '\ud83c\udff3\ufe0f\u200d\ud83c\udf08',
 			'orange' => '\ud83c\udf4a',
 			'apple-red' => '\ud83c\udf4e',
 			'birthcake' => '\ud83c\udf82',
@@ -1214,6 +1215,7 @@ class Telegram extends CI_Model{
 			'abcd' => '\ud83d\udd21',
 			'ABCD' => '\ud83d\udd20',
 			'OK' => '\ud83c\udd97',
+			'shoshinsha' => '\ud83d\udd30',
 
 			'no-18' => '\ud83d\udd1e',
 			'no-phone' => '\ud83d\udcf5',
@@ -1300,6 +1302,7 @@ class Telegram extends CI_Model{
 			'cloud' => [':cloud:'],
 			'sun' => [':sun:'],
 			'rainbow' => [':rainbow:'],
+			'rainbow_flag' => [':rainbow_flag:'],
 			'gun' => [':gun:'],
 			'door' => [':door:'],
 
@@ -1372,6 +1375,7 @@ class Telegram extends CI_Model{
 			'abcd' => [':abcd:'],
 			'ABCD' => [':ABCD:'],
 			'OK' => [':OK:'],
+			'shoshinsha' => [':beginner:', ':shoshinsha:'],
 			'triangle-left' => [':triangle-left:', '<|'],
 			'triangle-up' => [':triangle-up:'],
 			'triangle-right' => [':triangle-right:', '|>'],
