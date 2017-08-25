@@ -66,6 +66,9 @@ if($this->telegram->is_chat_group() or $this->telegram->key == "channel_post"){
 }
 
 if($this->telegram->callback){
+	$timeout = $this->pokemon->settings($this->telegram->chat->id, 'raid_timeout');
+	if($timeout and $timeout > time()){ return -1; }
+	$this->pokemon->settings($this->telegram->chat->id, 'raid_timeout', time() + 2);
 	if($this->telegram->callback == "raid apuntar"){
 		$str = $this->telegram->text_message();
 		$user = $pokemon->user($this->telegram->user->id);
