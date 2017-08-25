@@ -724,7 +724,14 @@ if(
 	($telegram->text_command("badgeocr") or $this->telegram->text_command("bocr") or $this->telegram->text_command("ocrb")) &&
 	$this->telegram->user->id == $this->config->item('creator') && $this->telegram->has_reply
 ){
-
+	$timeout = $this->pokemon->settings($this->telegram->user->id, 'badge_ocr');
+	if($timeout > time()){
+		$this->telegram->send
+			->text("<b>¡¡¡DE UNA EN UNA!!!</b>")
+		->send();
+		return -1;
+	}
+	$this->pokemon->settings($this->telegram->user->id, 'badge_ocr', time() + 30);
 	if(!isset($this->telegram->reply->photo)){ return; }
 	$photo = array_pop($this->telegram->reply->photo);
 	$url = $this->telegram->download($photo['file_id']);
@@ -754,6 +761,7 @@ if(
 
 	unlink($temp);
 	unlink("$temp.2");
+	$this->pokemon->settings($this->telegram->user->id, 'badge_ocr', 'DELETE');
 
 	if(!empty($num)){
 		$num = str_replace([".", ",", " "], "", $num); // HACK Revisar si es válido.
