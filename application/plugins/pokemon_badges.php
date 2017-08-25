@@ -485,6 +485,22 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 	}elseif($this->telegram->photo() && !$telegram->has_forward){
 		// Hacer OCR
 
+		usleep(mt_rand(2, 8) * 100000);
+		$timeout = NULL;
+		$query = $this->db
+		    ->select('value')
+		    ->where('type', 'badge_ocr')
+		    ->where('uid', $this->telegram->user->id)
+		->get('settings');
+		if($query->num_rows() == 1){ $timeout = $query->row()->value; }
+		if($timeout and $timeout > time()){
+		    $this->telegram->send
+				->text("<b>¡¡¡DE UNA EN UNA!!!</b>", 'HTML')
+		    ->send();
+		    return -1;
+		}
+		$this->pokemon->settings($this->telegram->user->id, 'badge_ocr', time() + 30);
+
 		if($this->pokemon->settings($telegram->user->id, 'badge_type')){ return -1; }
 
 		// HACK FIXME Arreglar método de acceso a última foto
@@ -502,6 +518,7 @@ if($pokemon->step($telegram->user->id) == "BADGE" && !$this->telegram->is_chat_g
 		$ocr = new TesseractOCR($temp);
 		$text = $ocr->lang('spa', 'eng')->run();
 		unlink($temp);
+		$this->pokemon->settings($this->telegram->user->id, 'badge_ocr', 'DELETE');
 
 		$badge = NULL;
 		foreach(explode("\n", $text) as $t){
@@ -724,14 +741,6 @@ if(
 	($telegram->text_command("badgeocr") or $this->telegram->text_command("bocr") or $this->telegram->text_command("ocrb")) &&
 	$this->telegram->user->id == $this->config->item('creator') && $this->telegram->has_reply
 ){
-	$timeout = $this->pokemon->settings($this->telegram->user->id, 'badge_ocr');
-	if($timeout > time()){
-		$this->telegram->send
-			->text("<b>¡¡¡DE UNA EN UNA!!!</b>")
-		->send();
-		return -1;
-	}
-	$this->pokemon->settings($this->telegram->user->id, 'badge_ocr', time() + 30);
 	if(!isset($this->telegram->reply->photo)){ return; }
 	$photo = array_pop($this->telegram->reply->photo);
 	$url = $this->telegram->download($photo['file_id']);
@@ -761,7 +770,6 @@ if(
 
 	unlink($temp);
 	unlink("$temp.2");
-	$this->pokemon->settings($this->telegram->user->id, 'badge_ocr', 'DELETE');
 
 	if(!empty($num)){
 		$num = str_replace([".", ",", " "], "", $num); // HACK Revisar si es válido.
