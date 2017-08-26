@@ -121,7 +121,7 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 		!$telegram->is_chat_group() and
 		$telegram->text() and
 		$telegram->words() == 2 and
-		$telegram->text_has("Nivel", TRUE)
+		$telegram->text_has("Nivel", TRUE) and
 		is_numeric($telegram->last_word())
 	){
 		$str = "¡Que me digas la frase bien!";
