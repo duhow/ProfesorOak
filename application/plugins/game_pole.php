@@ -140,11 +140,11 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
         $pole = 3;
         $action = "el *bronce*";
     }
+    else{ return -1; }
 
-	if(empty($pole)){ return -1; }
-    if($done = $this->cache->get('pole_done_' .$this->telegram->chat->id)){
-        if(in_array($pole, $done)){ return -1; } // Ya se ha hecho
-    }
+	$donekey = 'pole_done_' .$pole .'_' .$this->telegram->chat->id;
+    $done = $this->cache->get($donekey);
+    if($done){ return -1; } // Ya se ha hecho
 
 	// No varias veces (cid, uid, date);
 	// No misma posición (cid, type, date);
@@ -169,12 +169,7 @@ if($telegram->text_has(["pole", "subpole", "bronce"], TRUE) or $telegram->text_c
 
 	// "Lo siento " .$telegram->user->first_name .", pero hoy la *pole* es mía! :D"
 	if($query and $this->db->insert_id() > 0){
-        $done = $this->cache->get('pole_done_' .$this->telegram->chat->id);
-        if(empty($done)){
-            $done = array();
-        }
-        $done[] = $pole;
-        $this->cache->save('pole_done_'.$this->telegram->chat->id, $done, 7200);
+        $this->cache->save($donekey, TRUE, 300);
 
 		$this->telegram->send
 			->text($this->telegram->emoji(":medal-" .$pole .": ") .$this->telegram->user->first_name ." ha hecho $action!", TRUE)
