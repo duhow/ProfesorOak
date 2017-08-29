@@ -294,7 +294,6 @@ class Pokemon extends CI_Model{
 			foreach($query->result_array() as $r){
 				$final[$r['uid']][$r['type']] = $r['value'];
 			}
-			var_dump($final);
 			$this->settings_loaded = $final;
 		}
 		/* foreach($this->settings_loaded as $uid => $data){
@@ -303,8 +302,8 @@ class Pokemon extends CI_Model{
 	}
 
 	function settings($user, $key, $value = NULL){
-		$full = FALSE;
-		if(strtolower($value) == "fullinfo"){ $value = NULL; $full = TRUE; }
+		// $full = FALSE;
+		// if(strtolower($value) == "fullinfo"){ $value = NULL; $full = TRUE; }
 		if($value === NULL){
 			if(!is_array($key) && array_key_exists($user, $this->settings_loaded)){
 				// Si se ha cargado todo lo del usuario
@@ -315,7 +314,14 @@ class Pokemon extends CI_Model{
 				return NULL;
 			}
 
-			if(is_array($key)){
+			$this->load_settings($user);
+			if(array_key_exists($key, $this->settings_loaded[$user])){
+				return $this->settings_loaded[$user][$key];
+			}
+			// Si no existe
+			return NULL;
+
+			/* if(is_array($key)){
 				$this->db->where_in('type', $key);
 			}elseif(in_array($key, ["all", "*"])){
 				// NADA. Coje todo lo del UID.
@@ -338,20 +344,34 @@ class Pokemon extends CI_Model{
 				// Cache
 				/* $cache = $this->cache->get('settings_' .$user);
 				$cache[$key] = $value;
-				$this->cache->save('settings_' .$user, $cache, 300); */
+				$this->cache->save('settings_' .$user, $cache, 300); *-/
 				// --------
 				return ($full ? $query->row() : $value);
 			}
-			return NULL;
+			return NULL; */
 		}else{
-			if(in_array(strtolower($value), ["true", "on", "yes"])){ $value = TRUE; }
-			elseif(in_array(strtolower($value), ["false", "off", "no"])){ $value = FALSE; }
+			if(in_array(strtolower($value), ["true", "on", "yes"])){ $value = 1; }
+			elseif(in_array(strtolower($value), ["false", "off", "no"])){ $value = 0; }
 			elseif(in_array(strtolower($value), ["null", "none"])){ $value = NULL; }
 
-			unset($this->settings_loaded[$user][$key]);
+			if(strtoupper($value) == "DELETE"){
+				// DELETE
+				// Cache
+				/* $cache = $this->cache->get('settings_' .$user);
+				unset($cache[$key]);
+				$this->cache->save('settings_' .$user, $cache, 300); */
+				// ---------
+				if(array_key_exists($user, $this->settings_loaded)){
+					unset($this->settings_loaded[$user][$key]);
+				}
 
-			if($this->settings($user, $key) === NULL && strtoupper($value) !== "DELETE"){
-				// INSERT
+				return $this->db
+					->where('uid', $user)
+					->where('type', $key)
+					->where('hidden', FALSE)
+				->delete('settings');
+			}else{
+				// INSERT or UPDATE
 				// Cache
 				/* $cache = $this->cache->get('settings_' .$user);
 				$cache[$key] = $value;
@@ -362,34 +382,14 @@ class Pokemon extends CI_Model{
 					'type' => $key,
 					'value' => $value
 				];
-				$query = $this->db->insert_string('settings', $data) ." ON DUPLICATE KEY UPDATE value = '" .$this->db->escape_str($value) ."'";
+				$query = $this->db->insert_string('settings', $data) ." ON DUPLICATE KEY UPDATE value = " .$this->db->escape($value) ."";
 				$this->db->query($query);
-				return $this->db->insert_id();
-			}elseif(strtoupper($value) == "DELETE"){
-				// DELETE
-				// Cache
-				/* $cache = $this->cache->get('settings_' .$user);
-				unset($cache[$key]);
-				$this->cache->save('settings_' .$user, $cache, 300); */
-				// ---------
-				return $this->db
-					->where('uid', $user)
-					->where('type', $key)
-					->where('hidden', FALSE)
-				->delete('settings');
-			}else{
-				// UPDATE
-				// Cache
-				/* $cache = $this->cache->get('settings_' .$user);
-				$cache[$key] = $value;
-				$this->cache->save('settings_' .$user, $cache, 300); */
-				// ---------
-				return $this->db
-					->where('uid', $user)
-					->where('type', $key)
-					->where('hidden', FALSE)
-					->set('value', $value)
-				->update('settings');
+				$id = $this->db->insert_id();
+
+				$this->settings_loaded[$user][$key] = $value;
+				// ----------
+				// $this->load_settings($user);
+				return $id;
 			}
 		}
 	}
