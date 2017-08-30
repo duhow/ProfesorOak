@@ -186,10 +186,9 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 					->chat($adminchat)
 					->text($str)
 				->send();
-			}
-			else{
+			}else{
 				$telegram->send
-				->text($str)
+					->text($str)
 				->send();
 			}
             return -1;
