@@ -6,12 +6,7 @@ class Cleverbot extends TelegramApp\Module {
 
 	public function __construct(){
 		$file = 'libs/chatter-bot-api/php/chatterbotapi.php';
-		if(file_exists($file)){
-			require_once $file;
-			$factory = new ChatterBotFactory();
-			$bot1 = $factory->create(1); // Cleverbot
-			$this->chatter = $bot1->createSession();
-		}
+		if(file_exists($file)){ require_once $file; }
 	}
 
 	public function think($text, $ret = FALSE){
@@ -30,12 +25,17 @@ class Cleverbot extends TelegramApp\Module {
 		if(
 			$this->telegram->words() > 2 &&
 			(
-				$this->telegram->text_has("Oye", ["Oak", "profe"], TRUE) or
+				$this->telegram->text_regex("Oye (Oak|profe),? {S:question}") or
 				$this->telegram->text_command("cleverbot")
 			)
 		){
 			$lim = ($this->telegram->text_command("cleverbot") ? 1 : 2);
+			// $txt = $this->telegram->input->question;
 			$txt = $this->telegram->words($lim, 20);
+
+			$factory = new ChatterBotFactory();
+			$bot1 = $factory->create(1); // Cleverbot
+			$this->chatter = $bot1->createSession();
 
 			$this->think($txt);
 			$this->end();
