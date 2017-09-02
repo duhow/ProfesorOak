@@ -10,7 +10,12 @@ class Cleverbot extends TelegramApp\Module {
 	}
 
 	public function think($text, $ret = FALSE){
-		if($this->chatter === NULL){ return FALSE; }
+		if($this->chatter === NULL){
+			$factory = new ChatterBotFactory();
+			$bot1 = $factory->create(1); // Cleverbot
+			$this->chatter = $bot1->createSession();
+			if($this->chatter === NULL){ return FALSE; }
+		}
 		$this->telegram->send->chat_action("typing")->send();
 		$response = $this->chatter->think($text);
 		$q = $this->telegram->send
@@ -32,10 +37,6 @@ class Cleverbot extends TelegramApp\Module {
 			$lim = ($this->telegram->text_command("cleverbot") ? 1 : 2);
 			// $txt = $this->telegram->input->question;
 			$txt = $this->telegram->words($lim, 20);
-
-			$factory = new ChatterBotFactory();
-			$bot1 = $factory->create(1); // Cleverbot
-			$this->chatter = $bot1->createSession();
 
 			$this->think($txt);
 			$this->end();
