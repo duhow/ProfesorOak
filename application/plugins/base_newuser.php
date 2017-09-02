@@ -176,10 +176,6 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 				$pokemon->user_delgroup($new->id, $telegram->chat->id);
 				$str = "Usuario " .$new->first_name ." / " .$new->id ." kickeado por no estar verificado.";
 			}
-			$telegram->send
-				->text($str)
-			->send();
-
 			if($adminchat){
 				$str = ":warning: Usuario no validado.\n"
 						.":id: " .$new->id ."\n"
@@ -188,6 +184,10 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 				$telegram->send
 					->notification(TRUE)
 					->chat($adminchat)
+					->text($str)
+				->send();
+			}else{
+				$telegram->send
 					->text($str)
 				->send();
 			}
