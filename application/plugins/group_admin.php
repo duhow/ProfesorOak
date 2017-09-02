@@ -834,7 +834,7 @@ elseif(
 	];
 	$n = mt_rand(0, count($frases) - 1);
 
-	$warns = user_warns($this->telegram->reply_user->id);
+	$warns = user_warns($this->telegram->reply_user->id, $this->telegram->chat->id);
 	$str = $this->telegram->emoji(":warning:") ." Llevas ya <b>" .count($warns) ."</b> avisos.\n" .$frases[$n];
 
 	$this->telegram->send
