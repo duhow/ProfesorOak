@@ -16,13 +16,16 @@ if(!in_array(date("H"), range(8, 21))){
 if($this->telegram->is_chat_group() or $this->telegram->key == "channel_post"){
 
 	if(
-		$this->telegram->text_has(["montar", "monta", "crear", "organizar", "organiza"], ["raid", "incursión"]) and
+		$this->telegram->text_has(["montar", "monta", "crear", "organizar", "organiza", "nueva"], ["raid", "incursión", "#raid"]) and
 		$this->telegram->words() <= 20
 	){
 		$place = NULL;
 		if($this->telegram->text_has("en")){
 			$pos = strpos($this->telegram->text(), " en ") + strlen(" en ");
 			$place = substr($this->telegram->text(), $pos);
+			if(!$this->telegram->text_has(["termina", "acaba"], ["a las"])){
+				$place = preg_replace("/ a las \d\d[:.]\d\d$/", "", $place);
+			}
 		}
 		if(empty($place) and $this->telegram->words() > 5){ return; }
 

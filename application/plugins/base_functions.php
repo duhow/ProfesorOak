@@ -71,8 +71,8 @@ function time_parse($string){
         if(!isset($data['hour']) and in_array($w, ["la", "las"])){ $waiting_time = TRUE; }
         if(!isset($data['hour']) and $w == "en"){ $waiting_time_add = TRUE; }
 
-        if(is_numeric($w) or (in_array(strlen($w), [2,3]) && substr($w, -1) == "h")){
-            $number = (int) $w;
+        if(is_int($w) or (in_array(strlen($w), [2,3]) && substr($w, -1) == "h")){
+            $number = (int) abs($w);
             if($waiting_time){
                 if($number >= 24){ continue; }
                 if($number <= 6){ $number = $number + 12; }
@@ -82,7 +82,7 @@ function time_parse($string){
             continue;
         }
 
-        if(!isset($data['hour']) && preg_match("/(\d\d?):(\d\d)/", $w, $hour)){
+        if(!isset($data['hour']) && preg_match("/(\d\d?)[:.](\d\d)/", $w, $hour)){
             if($hour[1] >= 24){ $hour[1] = "00"; }
             if($hour[2] >= 60){ $hour[2] = "00"; }
             $data['hour'] = "$hour[1]:$hour[2]";
