@@ -48,7 +48,13 @@ if(
 	$can = $this->pokemon->settings($this->telegram->chat->id, 'play_games');
 	if($can != NULL && $can == FALSE){ return -1; }
 
-	$str = "Yo nunca " .game_never_text() .".";
+	if($telegram->words() >= 4){
+		$i = ($telegram->text_has("yo nunca", TRUE) ? 2 : 3);
+		$action = $telegram->words($i, 15);
+	}else{
+		$action = game_never_text();
+	}
+	$str = "Yo nunca $action.";
 
 	$telegram->send
 		->inline_keyboard()
