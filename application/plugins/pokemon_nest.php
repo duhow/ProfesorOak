@@ -53,10 +53,13 @@ function check_reset_nest(){
 // if(!$this->telegram->text_contains("nido")){ return; } // HACK TODO Cambiar frases para la gente?
 
 if(
-    (
-		$telegram->text_has(["donde", "conocéis", "sabéis", "sabe", "cual"]) &&
-	    $telegram->text_contains(["visto", "encontra", "encuentro", "está", "aparece", "hay", "salen", "sale", "nido"]) && $telegram->text_contains("?") &&
-	    $telegram->words() <= 10
+	(
+		(
+			$telegram->text_has(["donde", "conocéis", "sabéis", "sabe", "cual"]) &&
+			$telegram->text_contains(["visto", "encontra", "encuentro", "está", "aparece", "hay", "salen", "sale", "nido"])
+		) && (
+			($telegram->text_contains("?") && $telegram->words() <= 10) or $telegram->words() <= 5
+		)
 	) or (
 		$telegram->text_has("Y", TRUE) and
 		$telegram->text_contains("?") and
