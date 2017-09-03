@@ -139,7 +139,8 @@ if($telegram->text_command(["kick", "ban"])){
             }
 			if($q !== FALSE){
 				$pokemon->user_delgroup($kick, $chat);
-				$adminchat = $this->pokemon->settings($this->telegram->chat->id, 'admin_chat');
+				$adminchat = $pokemon->is_group_admin($chat);
+				if(empty($adminchat)){ $adminchat = $this->pokemon->settings($this->telegram->chat->id, 'admin_chat'); }
 				if($adminchat){
 					if($telegram->text_contains("kick")){
 						$str = ":forbid: Usuario kickeado\n";
