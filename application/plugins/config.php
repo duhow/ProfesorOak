@@ -6,6 +6,7 @@ if(
     $telegram->words() == 3 &&
     (
         ( $telegram->is_chat_group() && in_array($telegram->user->id, telegram_admins(TRUE)) ) or
+		( $this->pokemon->user_flags($this->telegram->user->id, 'helper') ) or
         ( !$telegram->is_chat_group() )
     )
 ){
