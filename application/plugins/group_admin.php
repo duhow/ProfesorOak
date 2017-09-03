@@ -111,8 +111,10 @@ if($step == "CUSTOM_COMMAND"){
 // Echar usuario del grupo
 if($telegram->text_command(["kick", "ban"])){
     $admins = $pokemon->telegram_admins(TRUE);
+    $chat = $pokemon->is_group_admin($this->telegram->chat->id);
+    if(empty($chat)){ $chat = $this->telegram->chat->id; }
 
-    if(in_array($telegram->user->id, $admins)){ // Tiene que ser admin
+    if($pokemon->is_group_admin($this->telegram->chat->id) or in_array($telegram->user->id, $admins)){ // Tiene que ser admin
         $kick = NULL;
         if($telegram->has_reply){
             $kick = $telegram->reply_user->id;
@@ -130,13 +132,13 @@ if($telegram->text_command(["kick", "ban"])){
 			$q = FALSE;
             if($telegram->text_contains("kick")){
                 $this->analytics->event('Telegram', 'Kick');
-                $q = $telegram->send->kick($kick, $telegram->chat->id);
+                $q = $telegram->send->kick($kick, $chat);
             }elseif($telegram->text_contains("ban")){
                 $this->analytics->event('Telegram', 'Ban');
-                $q = $telegram->send->ban($kick, $telegram->chat->id);
+                $q = $telegram->send->ban($kick, $chat);
             }
 			if($q !== FALSE){
-				$pokemon->user_delgroup($kick, $telegram->chat->id);
+				$pokemon->user_delgroup($kick, $chat);
 				$adminchat = $this->pokemon->settings($this->telegram->chat->id, 'admin_chat');
 				if($adminchat){
 					if($telegram->text_contains("kick")){
