@@ -22,10 +22,10 @@ if($this->telegram->is_chat_group() or $this->telegram->key == "channel_post"){
 		$place = NULL;
 		if($this->telegram->text_has("en")){
 			$pos = strpos($this->telegram->text(), " en ") + strlen(" en ");
-            $place = substr($this->telegram->text(), $pos);
-            if(!$this->telegram->text_has(["termina", "acaba"], ["a las"])){
-                $place = preg_replace("/ a las \d\d[:.]\d\d$/", "", $place);
-            }
+			$place = substr($this->telegram->text(), $pos);
+			if(!$this->telegram->text_has(["termina", "acaba"], ["a las"])){
+				$place = preg_replace("/ a las \d\d[:.]\d\d$/", "", $place);
+			}
 		}
 		if(empty($place) and $this->telegram->words() > 5){ return; }
 
