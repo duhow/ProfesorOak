@@ -88,7 +88,7 @@ if($this->telegram->callback){
 		$found = FALSE;
 
 		foreach($str as $k => $s){
-			if(strpos($s, $user->username) !== FALSE){
+			if(strpos($s, $user->username) !== FALSE && strpos($s, $user->username) < 10){
 				$found = TRUE;
 				unset($str[$k]);
 			}
