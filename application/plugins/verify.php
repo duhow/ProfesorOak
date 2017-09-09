@@ -294,7 +294,7 @@ elseif(
 			->text($this->telegram->emoji($text), 'HTML')
 		->send();
 
-		$this->pokemon->user_step($this->telegram->user->id, NULL);
+		$this->pokemon->step($this->telegram->user->id, NULL);
 		return -1;
 	}
 
