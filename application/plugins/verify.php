@@ -283,6 +283,21 @@ elseif(
         return;
     }
 
+	$date = strtotime("+7 days", strtotime($pokeuser->register_date));
+	if($date > time()){
+		$timer = round(($date - time()) / 86400);
+		$text = ":clock: Debido a que bastantes personas acaban abandonando Telegram (por motivos que desconozco, porque es muy guay, pero bueno), tendrás que esperar <b>$timer días</b> para poder validarte."
+				."\nTen paciencia. :)";
+		$this->telegram->send
+			->notification(TRUE)
+			->chat($this->telegram->user->id)
+			->text($this->telegram->emoji($text), 'HTML')
+		->send();
+
+		$this->pokemon->user_step($this->telegram->user->id, NULL);
+		return -1;
+	}
+
     $text = "Para validarte, necesito que me envies <b>UNA captura de tu PERFIL Pokémon GO.</b> "
             ."La captura tiene que cumplir las siguientes condiciones:\n\n"
             .":clock: Tiene que verse la <b>HORA</b> de tu móvil, y tienes que enviarlo en un márgen de <b>6 minutos</b>. No valen capturas antiguas.\n"
