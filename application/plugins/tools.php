@@ -154,6 +154,7 @@ if($telegram->text_command("avoice")){
 
         $telegram->send->file('sticker', 'CAADAgADQQEAAksODwABJlVW31Lsf6sC');
 		$telegram->send->text($text)->send();
+		$telegram->send->delete(TRUE);
         return -1;
     }
 
