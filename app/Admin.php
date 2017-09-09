@@ -225,6 +225,7 @@ class Admin extends TelegramApp\Module {
 			(in_array("video", $mute) and $this->telegram->video()) or
 			(in_array("game", $mute) and $this->telegram->game()) or
 			(in_array("document", $mute) and $this->telegram->document())
+			// + bot on NewUser
 		){
 			$q = $this->telegram->send->delete(TRUE);
 			if($q !== FALSE){ return -1; }
@@ -242,19 +243,29 @@ class Admin extends TelegramApp\Module {
 			return $c;
 		}
 		if($user instanceof User or $user instanceof \Telegram\User){ $user = $user->id; }
-		$this->ban($user, $chat);
-		return $this->unban($user, $chat);
+		if($user == $this->telegram->bot->id){ return FALSE; }
+
+		$q = $this->telegram->send->ban_until("+30 seconds", $u, $chat);
+		if($q !== FALSE){
+			$this->db
+				->where('uid', $u)
+				->where('cid', $chat)
+			->delete('user_inchat');
+		}
+		return $q;
 	}
 
 	public function ban($user, $chat = NULL){
 		if(empty($chat)){ $chat = $this->chat->id; }
 		// Evitar autoban del bot. Usar leave si es necesario.
 		if($user == $this->telegram->bot->id){ return FALSE; }
+
 		$q = $this->telegram->send->ban($user, $chat);
-
-		// TODO limpiar de DB para decir que el usuario no está ya en el grupo.
 		if($q !== FALSE){
-
+			$this->db
+				->where('uid', $u)
+				->where('cid', $chat)
+			->delete('user_inchat');
 		}
 		return $q;
 	}
