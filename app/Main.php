@@ -734,10 +734,10 @@ class Main extends TelegramApp\Module {
 				$this->telegram->has_reply and
 				$this->telegram->words() <= 3 and
 				$this->telegram->text_regex($this->strings->get('command_whois_reply'))
-			){
-				return $this->whois($this->telegram->input->username);
-			}
-		)
+			)
+		){
+			return $this->whois($this->telegram->input->username);
+		}
 
 		// LOAD
 		foreach($this->core->getLoaded() as $name){
