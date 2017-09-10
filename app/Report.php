@@ -7,7 +7,7 @@ class Report extends TelegramApp\Module {
 
 	}
 
-	public function get($name, $getAll = FALSE, $valid = TRUE){
+	public function get($name, $retall = FALSE, $valid = TRUE){
 		if($valid){ $this->db->where('valid', TRUE); }
 		$query = $this->db
 			->where('reported', $name)
