@@ -169,6 +169,169 @@ class Main extends TelegramApp\Module {
 		$this->end();
 	}
 
+	public function whois($username = NULL, $send = TRUE){
+		if(empty($username) and $this->telegram->has_reply){
+			$username = $this->telegram->reply_target('forward')->id;
+		}
+
+		$username = $this->telegram->clean('alphanumeric', $username);
+		if(strlen($username) < 4){ return NULL; }
+		if(in_array($text, ["creado", "creador", "creator"])){ $text = "duhow"; } // Quien es tu creador?
+		if(in_array($text, $this->strings->get('command_whois_blackword'))){ return NULL; } // Quien es quien?
+
+		/* $pk = pokemon_parse($text);
+		if(!empty($pk['pokemon'])){ /* $this->_pokedex($pk['pokemon']); *-/ return; } // TODO FIXME */
+
+		$str = "";
+		$offline = FALSE;
+
+		$info = $this->db
+			->where('(telegramid = ? OR username = ?)', $username)
+			->where('anonymous', FALSE)
+		->getOne('user');
+
+		// si el usuario por el que se pregunta es el bot
+		if($this->telegram->has_reply && $this->telegram->reply_user->id == $this->telegram->bot->id && !$this->telegram->reply_is_forward){
+			$str = $this->strings->get('whois_bot_self');
+		// si es un bot
+		}elseif(strtolower(substr($username, -3)) == "bot"){
+			$str = $this->strings->get('whois_is_bot'); // Yo no me hablo con los de mi especie.\nSi, queda muy raro, pero nos hicieron así...";
+		// si no se conoce
+		}elseif(empty($info)){
+			$str = $this->strings->parse('whois_unknown_username', $username);
+			// User offline
+			$info = $this->db
+				->where('username', $username)
+			->getOne('user_offline');
+
+			if(!empty($info)){
+				$offline = TRUE;
+				$str = ucwords($this->strings->get('whois_user')) .' <b>$team</b> $nivel. ' .$this->telegram->emoji(':question-red:');
+				$reps = $this->Report->get($username, TRUE);
+				if(!empty($reps)){
+					$reptype = array_column($reps, 'type');
+					$reptype = array_unique($reptype);
+
+					$str .= "\n" .$this->telegram->emoji(":name_badge: ")
+						.$this->strings->parse('whois_user_reports', [count($reps), implode(", ", $reptype)]);
+				}
+				$ma = $this->Report->multiaccount_exists($username, TRUE);
+				if(!empty($ma)){
+					$str .= "\n" .$this->telegram->emoji(":busts_in_silhouette: ")
+							.count($ma['usernames']) ." "
+							.$this->strings->get('whois_multiaccount_group') .". #"
+							.$ma['grouping'];
+				}
+			}
+		}else{
+			$info = (object) $info;
+			if(empty($info->username)){
+				$str = $this->strings->get('whois_user_noname');
+			}else{
+				$str = '$pokemon, ';
+			}
+			$str .= $this->strings->get('whois_user') .' <b>$team</b> $nivel. $valido' ."\n";
+
+			if(!empty($info->username)){
+				$reps = $this->Report->get($username, TRUE);
+				if(!empty($reps)){
+					$reptype = array_column($reps, 'type');
+					$reptype = array_unique($reptype);
+
+					$str .= "\n" .$this->telegram->emoji(":name_badge: ")
+						.$this->strings->parse('whois_user_reports', [count($reps), implode(", ", $reptype)]);
+				}
+				$ma = $this->Report->multiaccount_exists($username, TRUE);
+				if(!empty($ma)){
+					$str .= "\n" .$this->telegram->emoji(":busts_in_silhouette: ")
+							.count($ma['usernames']) ." "
+							.$this->strings->get('whois_multiaccount_group') .". #"
+							.$ma['grouping'];
+				}
+			}
+		}
+
+		if(!empty($info)){
+			$flags = $this->db
+				->where('user', $info->telegramid)
+			->getValue('user_flags', 'value');
+
+			// añadir emoticonos basado en los flags del usuario REPETIDO
+			// ----------------------
+			if($info->blocked){ $str .= $this->telegram->emoji(":no_entry: "); }
+			if($info->authorized){ $str .= $this->telegram->emoji(":star: "); }
+			$flageq = [
+				'ratkid' 		=> ":mouse:",
+				'multiaccount' 	=> ":busts_in_silhouette:",
+				// 'gps' 		=> ":satellite:",
+				// 'bot' 		=> ":robot:",
+				'fly' 			=> ":airplane:",
+				'rager' 		=> ":fire:",
+				'troll' 		=> ":black_joker:",
+				'spam' 			=> ":incoming_envelope:",
+				// 'hacks' 		=> ":computer:",
+				'enlightened' 	=> ":frog:",
+				'resistance' 	=> ":key2:",
+				'donator' 		=> ":euro:",
+				'helper' 		=> ":beginner:",
+				'gay' 			=> ":rainbow_flag:",
+				'unicorn'		=> ":unicorn: ",
+			];
+
+			if(!empty($flags)){
+				foreach($flageq as $f => $t){
+					if(in_array($f, $flags)){ $str .= $this->telegram->emoji($t ." "); }
+				}
+			}
+		}
+
+		if(!empty($str)){
+			// $chat = ($this->telegram->is_chat_group() && $this->is_shutup() && !in_array($this->telegram->user->id, $this->admins(TRUE)) ? $this->telegram->user->id : $this->telegram->chat->id);
+
+			$validicon = ":white_check_mark:";
+
+			if(!$info->verified){
+				$validicon = ":warning:";
+				$query = $this->db
+					->where('telegramid', $info->telegramid)
+				->getValue('user_verify', 'count(*)');
+				if($query > 0){ $validicon .= " :clock:"; }
+			}
+
+			$repl = [
+				// '$nombre'	=> $new->first_name,
+				// '$apellidos'	=> $new->last_name,
+				'$equipo'		=> $this->strings->get_multi('team_colors', $info->team),
+				'$team'			=> $this->strings->get_multi('team_colors', $info->team),
+				// '$usuario'	=> "@" .$new->username,
+				'$pokemon'		=> "@" .$info->username,
+				'$nivel'		=> "L" .$info->lvl,
+				'$valido'		=> $validicon
+			];
+
+			$str = str_replace(array_keys($repl), array_values($repl), $str);
+
+			if(!empty($info->username) && !$offline){
+				$this->telegram->send
+				->inline_keyboard()
+					->row_button($this->telegram->emoji(":memo: ") .$this->strings->get('view_profile'), "http://profoak.me/user/" .$info->username)
+				->show();
+			}
+
+			$this->user->settings('last_command', 'WHOIS');
+
+			if($send !== FALSE){
+				$this->telegram->send
+					// ->chat($chat)
+					// ->reply_to( (($chat == $this->telegram->chat->id && $this->telegram->has_reply) ? $this->telegram->reply->message_id : NULL) )
+					->notification(FALSE)
+					->text($this->telegram->emoji($str), 'HTML')
+				->send();
+			}
+		}
+		return $str;
+	}
+
 	private function forward_creator(){
 		return $this->telegram->send
 			->notification(FALSE)
@@ -182,10 +345,10 @@ class Main extends TelegramApp\Module {
 		/* if($this->telegram->user_in_chat($this->telegram->bot->id, $chat_forward)){ // Si el Oak está en el grupo forwarding
 			// $forward = new Chat($to);
 			$chat_accept = explode(",", $pokemon->settings($chat_forward, 'forwarding_accept'));
-			if(in_array($telegram->chat->id, $chat_accept)){ // Si el chat actual se acepta como forwarding...
-				$telegram->send
-					->message($telegram->message)
-					->chat($telegram->chat->id)
+			if(in_array($this->telegram->chat->id, $chat_accept)){ // Si el chat actual se acepta como forwarding...
+				$this->telegram->send
+					->message($this->telegram->message)
+					->chat($this->telegram->chat->id)
 					->forward_to($chat_forward)
 				->send();
 			}
@@ -236,14 +399,14 @@ class Main extends TelegramApp\Module {
 			$text = ":new: ¡Grupo nuevo!\n"
 					.":abc: %s\n"
 					.":id: %s\n"
-					."\ud83d\udec2 %s\n" // del principio de ejecución.
-					.":male: %s - %s";
+					.":passport_control: %s\n" // del principio de ejecución.
+					.":mens: %s - %s";
 			$text = $this->telegram->emoji($text);
 
 			$repl = [$this->chat->title,
 					$this->chat->id,
 					$count,
-					$this->user->id, $this->user->first_name];
+					$this->telegram->user->id, $this->telegram->user->first_name];
 
 			$this->telegram->send
 				->chat(CREATOR)
@@ -288,7 +451,7 @@ class Main extends TelegramApp\Module {
 			// $this->tracking->event('Telegram', 'Join limit users');
 			$this->Admin->kick($new->id);
 			$this->Admin->admin_chat_message($this->strings->parse('adminchat_newuser_limit_join', $new->id));
-			// $pokemon->user_delgroup($new->id, $telegram->chat->id);
+			// $pokemon->user_delgroup($new->id, $this->telegram->chat->id);
 			$this->end();
 		}
 
@@ -308,7 +471,7 @@ class Main extends TelegramApp\Module {
 			// ---------
 			$str = ":warning: " .$this->strings->get('adminchat_newuser_add_bot') ."\n"
 					.":id: @" .$new->username ." - " .$new->id ."\n"
-					.":male: " .$this->telegram->user->first_name ." - " . $this->telegram->user->id;
+					.":mens: " .$this->telegram->user->first_name ." - " . $this->telegram->user->id;
 
 			$str = $this->telegram->emoji($str);
 			// ---------
@@ -376,7 +539,7 @@ class Main extends TelegramApp\Module {
 					$str = $this->telegram->emoji($str);
 
 					$this->Admin->admin_chat_message($str);
-					// $pokemon->user_delgroup($new->id, $telegram->chat->id);
+					// $pokemon->user_delgroup($new->id, $this->telegram->chat->id);
 					$this->end();
 				}
 			}
@@ -394,7 +557,7 @@ class Main extends TelegramApp\Module {
 			if(!$this->chat->is_admin($this->user)){
 				$q = $this->Admin->kick($new->id);
 				if($q !== FALSE){
-					// $pokemon->user_delgroup($new->id, $telegram->chat->id);
+					// $pokemon->user_delgroup($new->id, $this->telegram->chat->id);
 					$str = $this->strings->get('admin_kicked_unverified');
 
 					$str2 = ":warning: " .$this->strings->get('adminchat_newuser_not_verified') ."\n"
@@ -443,7 +606,7 @@ class Main extends TelegramApp\Module {
 				}
 			}
 
-			// $pokemon->user_addgroup($new->id, $telegram->chat->id);
+			// $pokemon->user_addgroup($new->id, $this->telegram->chat->id);
 			// $this->tracking->event('Telegram', 'Join user');
 
 			$ingress = NULL;
@@ -491,7 +654,7 @@ class Main extends TelegramApp\Module {
 			$str = ":door: Me han echado :(\n"
 					.":id: " .$this->telegram->chat->id ."\n"
 					.":abc: " .$this->telegram->chat->title ."\n"
-					.":male: " .$this->telegram->user->id . " - " . $this->telegram->user->first_name;
+					.":mens: " .$this->telegram->user->id . " - " . $this->telegram->user->first_name;
 			$str = $this->telegram->emoji($str);
 
 			$this->db
@@ -516,14 +679,13 @@ class Main extends TelegramApp\Module {
 
 	protected function hooks(){
 		// iniciar variables
-		$telegram = $this->telegram;
 		// $pokemon = $this->pokemon;
 
 		// Cancelar pasos en general.
-		if($this->user->step != NULL && $telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
+		if($this->user->step != NULL && $this->telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
 			$this->user->step = NULL;
 			$this->user->update();
-			$telegram->send
+			$this->telegram->send
 				->notification(FALSE)
 				->keyboard()->selective(FALSE)->hide()
 				->text($this->strings->get('step_cancel'))
@@ -550,17 +712,34 @@ class Main extends TelegramApp\Module {
 			$this->end();
 		}
 
+		// LEVELUP
 		if(
-			$this->telegram->text_regex($this->strings->get("command_levelup")) and
-			$this->telegram->words() <= 6
+			$this->telegram->words() <= $this->strings->get('command_levelup_limit') and
+			$this->telegram->text_regex($this->strings->get("command_levelup"))
 		){
 			$this->levelup($this->telegram->input->level);
 		}
 
+		// LANGUAGE
 		if($this->telegram->callback and $this->telegram->text_regex("language {lang}")){
 			return $this->language($this->telegram->input->lang);
 		}
 
+		// WHOIS
+		if(
+			(
+				$this->telegram->words() <= $this->strings->get('command_whois_limit') and
+				$this->telegram->text_regex($this->strings->get('command_whois'))
+			) or (
+				$this->telegram->has_reply and
+				$this->telegram->words() <= 3 and
+				$this->telegram->text_regex($this->strings->get('command_whois_reply'))
+			){
+				return $this->whois($this->telegram->input->username);
+			}
+		)
+
+		// LOAD
 		foreach($this->core->getLoaded() as $name){
 			if(in_array($name, ["Main", "User", "Chat"])){ continue; }
 			$this->core->load($name, TRUE);
@@ -620,7 +799,7 @@ class Main extends TelegramApp\Module {
 			$old = $this->user->lvl;
 			$this->user->lvl = $level;
 			$this->user->exp = 0;
-			// $pokemon->log($telegram->user->id, 'levelup', $level);
+			// $pokemon->log($this->telegram->user->id, 'levelup', $level);
 
 			// Vale. Como me vuelvas a preguntar quien eres, te mando a la mierda. Que lo sepas.
 			$str = $this->strings->parse("levelup_ok_2", $level);
@@ -663,7 +842,7 @@ class Main extends TelegramApp\Module {
 	private function hooks_newuser(){
 		$color = Tools::Color($this->telegram->text());
 		if(
-			($this->telegram->text_regex("(Soy|Equipo|Team) {color}") && $color) or
+			($this->telegram->text_regex($this->strings->get('command_register_color')) && $color) or
 			($color && $this->telegram->words() == 1)
 		){
 			$this->register($color);

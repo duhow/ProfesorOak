@@ -13,6 +13,8 @@ return [
 	'team_instinct_color' => ['amarillo', 'amarillos'],
 	'team_instinct_leader' => 'Sparky',
 
+	'team_colors' => ['R' => 'Rojo', 'B' => 'Azul', 'Y' => 'Amarillo'],
+
 	'help' => 'Ayuda',
 	'help_text' => '¡Aquí tienes la <a href="%s">ayuda</a>!',
 	'help_url' => 'http://telegra.ph/Ayuda-11-30',
@@ -32,6 +34,7 @@ return [
 	'no' => 'No',
 	'register' => 'Registrar',
 	'verify' => 'Validar',
+	'view_profile' => 'Ver perfil',
 
 	'done' => 'Hecho',
 	'done_excl' => '¡Hecho!',
@@ -155,15 +158,21 @@ return [
 	'welcome_group_require_alias' => 'tener un @alias de Telegram',
 	'welcome_group_require_avatar' => 'tener una foto de perfil',
 
+	'command_register_color' => ['(Soy|Equipo|Team) {color}', 'Soy del color {color}'],
 	'command_register_username' => [
 		"Me llamo {name}", "Mi nombre es {name}", "Mi usuario es {name}",
 		"En el juego me llamo {name}", "Me llamo {name} en el juego"
 	],
 	'command_levelup' => ["Soy nivel {N:level}", "Soy L{N:level}", "Soy lvl {N:level}", "He subido al {N:level}", "Ya soy nivel {N:level}"],
+	'command_levelup_limit' => 6,
 	'command_verify' => [
 		["oak", "profe", "quiero", "como"],
 		["validame", "valida", "validarme", "validarse", "válido", "verificarme", "verifico"]
 	],
+	'command_whois' => ['quién es {username}', 'quién eres {username}', 'conoces a {username}'],
+	'command_whois_reply' => ['quien es'],
+	'command_whois_limit' => 5,
+	'command_whois_blackword' => ["quien", "quién", "quin", "este", "aqui", "aquí", "eres"],
 
 	'register_hello_start' => "¡Hola %s! ¿Puedes decirme qué color eres?\n<b>Di:</b> Soy...",
 	'register_hello_private' => "¡Hola %s! Ábreme por privado para registrate! :)",
@@ -204,6 +213,15 @@ return [
 	'verify_invalid' => 'La validación no es correcta. Revisa la captura de pantalla, y envíala tal y como se pide.',
 	'verify_successful' => '¡Enhorabuena, estás validado!',
 	'verify_already' => '¡Ya estás validado!',
+
+	'whois_bot_self' => '¡Pues ese soy yo mismo! ',
+	'whois_is_bot' => 'Es un bot.',
+	'whois_unknown' => 'No sé quién es.',
+	'whois_unknown_username' => 'No sé quién es %s.',
+	'whois_user_reports' => '<b>%s</b> reportes por %s.',
+	'whois_multiaccount_group' => 'cuentas agrupadas',
+	'whois_user_noname' => 'No sé como se llama, sólo sé que ',
+	'whois_user' => 'es',
 
 	'config_announce_welcome_on' => 'Saludaré a los nuevos usuarios',
 	'config_announce_welcome_off' => '<b>NO</b> saludaré a los nuevos usuarios',
