@@ -239,15 +239,17 @@ class Main extends TelegramApp\Module {
 					$reptype = array_column($reps, 'type');
 					$reptype = array_unique($reptype);
 
-					$str .= "\n" .$this->telegram->emoji(":name_badge: ")
-						.$this->strings->parse('whois_user_reports', [count($reps), implode(", ", $reptype)]);
+					$str .= $this->telegram->emoji(":name_badge: ")
+						.$this->strings->parse('whois_user_reports', [count($reps), implode(", ", $reptype)])
+						."\n";
 				}
 				$ma = $this->Report->multiaccount_exists($username, TRUE);
 				if(!empty($ma)){
-					$str .= "\n" .$this->telegram->emoji(":busts_in_silhouette: ")
+					$str .= $this->telegram->emoji(":busts_in_silhouette: ")
 							.count($ma['usernames']) ." "
 							.$this->strings->get('whois_multiaccount_group') .". #"
-							.$ma['grouping'];
+							.$ma['grouping']
+							."\n";
 				}
 			}
 		}
