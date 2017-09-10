@@ -186,8 +186,8 @@ class Main extends TelegramApp\Module {
 		$offline = FALSE;
 
 		$info = $this->db
-			->where('(telegramid = ? OR username = ?)', $username)
-			->where('anonymous', FALSE)
+			->where('(telegramid = ? OR username = ?)', [$username, $username])
+			->where('anonymous', 0)
 		->getOne('user');
 
 		// si el usuario por el que se pregunta es el bot
@@ -205,8 +205,9 @@ class Main extends TelegramApp\Module {
 			->getOne('user_offline');
 
 			if(!empty($info)){
+				$info = (object) $info; // HACK
 				$offline = TRUE;
-				$str = ucwords($this->strings->get('whois_user')) .' <b>$team</b> $nivel. ' .$this->telegram->emoji(':question-red:');
+				$str = ucwords($this->strings->get('whois_user')) .' <b>$team</b> $nivel. ' .$this->telegram->emoji(':question:');
 				$reps = $this->Report->get($username, TRUE);
 				if(!empty($reps)){
 					$reptype = array_column($reps, 'type');
@@ -224,7 +225,7 @@ class Main extends TelegramApp\Module {
 				}
 			}
 		}else{
-			$info = (object) $info;
+			$info = (object) $info; // HACK
 			if(empty($info->username)){
 				$str = $this->strings->get('whois_user_noname');
 			}else{
@@ -254,7 +255,7 @@ class Main extends TelegramApp\Module {
 		if(!empty($info)){
 			$flags = $this->db
 				->where('user', $info->telegramid)
-			->getValue('user_flags', 'value');
+			->getValue('user_flags', 'value', NULL);
 
 			// añadir emoticonos basado en los flags del usuario REPETIDO
 			// ----------------------
