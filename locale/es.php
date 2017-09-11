@@ -206,6 +206,7 @@ return [
 	'verify_before_send_concat' => ' y ',
 	'verify_before_send_ready' => 'Cuando lo hayas dicho, <b>vuelve a enviarme la captura.</b>',
 
+	'verify_disabled_newuser' => "¡Me alegra que quieras validarte! Muchos grupos tienen la norma de estar validado para poder confiar en los usuarios, así todos se conocen a todos. El problema es que últimamente hay mucha gente nueva que entra a Telegram y se va (por motivos que desconozco, porque es muy guay, pero bueno), entonces le valido en vano, porque luego no habla ni nada... Así que para poder validarte, tendrás que esperar <b>%s días</b>.\nTen paciencia. :)",
 	'verify_disabled_too_many' => "Lo siento, pero ahora mismo estoy muy saturado. Prueba dentro de unas horas.\n¡Y recuerda mandarme una captura nueva del perfil donde se vea la hora!",
 	'verify_disabled_cooldown' => '¡Para el carro! Ya me has mandado una foto. Esperate a que la compruebe, no me des más faena...',
 	'verify_disabled_repeat' => '¡Esta foto ya me la has mandado! Haz otra foto nueva, y asegúrate de que cumple los requisitos.',

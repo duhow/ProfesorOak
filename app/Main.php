@@ -631,7 +631,7 @@ class Main extends TelegramApp\Module {
 				'$usuario' => "@" .$new->telegram->username,
 				'$pokemon' => $pokename,
 				'$nivel' => $lvl,
-				'$valido' => $new->verified ? ':green-check:' : ':warning:',
+				'$valido' => $new->verified ? ':white_check_mark:' : ':warning:',
 				'$ingress' => $ingress
 			];
 			$text = str_replace(array_keys($repl), array_values($repl), $text);
