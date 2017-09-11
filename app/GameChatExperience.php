@@ -30,7 +30,7 @@ class GameChatExperience extends TelegramApp\Module {
 					if($nextlev > $curlev && $nextlev > 0){
 						$this->telegram->send
 							->notification(FALSE)
-							->text($this->telegram->emoji("\u2b06\ufe0f") ." *" .$this->telegram->user->first_name ."* ha subido al *nivel " .$nextlev ."*!", TRUE)
+							->text($this->telegram->emoji(":arrow_up:") ." *" .$this->telegram->user->first_name ."* ha subido al *nivel " .$nextlev ."*!", TRUE)
 						->send();
 					}
 					// La recompensa será el número de palabras que haya tocado, para hacer el factor diferencial.

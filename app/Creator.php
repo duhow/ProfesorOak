@@ -105,9 +105,9 @@ class Creator extends TelegramApp\Module {
 	        // $info = $this->chat->user_in_group($id, $chat);
 			$info = FALSE;
 	        if($info){
-	            $str .= "\n\ud83d\udcc5 " .date("d/m/Y H:i", strtotime($info->register_date))
-						."\n\ud83d\udcc6 " .date("d/m/Y H:i", strtotime($info->last_date))
-						."\n\ud83d\udcac " .$info->messages;
+	            $str .= "\n:calendar: " .date("d/m/Y H:i", strtotime($info->register_date))
+						."\n:date: " .date("d/m/Y H:i", strtotime($info->last_date))
+						."\n:speech_balloon: " .$info->messages;
 	        /* }elseif($this->telegram->user_in_chat($find['user']['id'])){
 	            $pokemon->user_addgroup($find['user']['id'], $telegram->chat->id);
 	        } */
@@ -125,11 +125,11 @@ class Creator extends TelegramApp\Module {
 		if($info != FALSE){
 			$str = ":id: " .$info['id'] ."\n"
 					.":abc: " .($info['title'] ?: $info['first_name']) ."\n"
-					."\ud83c\udf10 " .($info['username'] ? "@" .$info['username'] : "---") ."\n"
-					."\ud83d\udcf3 " .$info['type'] ."\n";
+					.":globe_with_meridians: " .($info['username'] ? "@" .$info['username'] : "---") ."\n"
+					.":vibration_mode: " .$info['type'] ."\n";
 			if($info['type'] != 'private'){
 				$info = $this->telegram->send->get_member_info($this->telegram->bot->id, $id);
-				$str .= "\ud83d\udebb " .$count ."\n"
+				$str .= ":restroom: " .$count ."\n"
 						.":info: " .$info['status'];
 			}
 

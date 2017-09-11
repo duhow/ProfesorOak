@@ -63,7 +63,7 @@ class Config extends TelegramApp\Module {
 			$value = $this->parse_value($value);
 			$target->settings($key, $value);
 
-			$str = "\ud83d\udcbe Config\n"
+			$str = ":floppy_disk: Config\n"
 					.":id: " .$this->telegram->user->id ." - @" .$this->telegram->user->username . " " .$this->telegram->user->first_name ."\n"
 					.":multiuser: " .$this->telegram->chat->id ." - " .(@$this->telegram->chat->title ?: @$this->telegram->chat->first_name) ."\n"
 					.":ok: $key -";

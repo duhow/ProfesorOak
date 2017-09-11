@@ -23,7 +23,7 @@ class Autobus extends TelegramApp\Module {
 		    }
 
 		    $q = $this->telegram->send
-		        ->text($this->telegram->emoji("\ud83d\udd51 ") ."Ejecutando...")
+		        ->text($this->telegram->emoji(":clock: ") ."Ejecutando...")
 		    ->send();
 
 			if($this->telegram->text_command("amb")){
