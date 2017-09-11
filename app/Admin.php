@@ -171,7 +171,7 @@ class Admin extends TelegramApp\Module {
 	            // $pokemon->user_delgroup($afk->uid, $this->telegram->chat->id);
 				$str = ":warning: AntiAFK Newbie\n"
 						.":id: " .$afk->uid ."\n"
-						."\ud83d\udcc5 " .$afk->register_date;
+						.":calendar_spiral: " .$afk->register_date;
 
 				$str = $this->telegram->emoji($str);
 				$this->admin_chat_message($str);
@@ -291,7 +291,7 @@ class Admin extends TelegramApp\Module {
 		$users = $this->db
 			->where('cid', $chat)
 			->where('(last_date <= ? OR last_date = ?)', [date("Y-m-d H:i:s", strtotime("-$days days")), "0000-00-00 00:00:00"])
-		->get('user_inchat');
+		->getValue('user_inchat', "uid", NULL);
 		if($this->db->count == 0 or $countonly){ return $this->db->count; }
 		return $this->multikick(array_column($users, 'uid'));
 	}
@@ -303,17 +303,17 @@ class Admin extends TelegramApp\Module {
 			->join('user_inchat c', 'u.telegramid = c.uid')
 			->where('c.cid', $chat)
 			->where('u.verified', FALSE)
-		->get("user u", null, "c.uid");
+		->get("user u", "c.uid", NULL);
 		if($this->db->count == 0 or $countonly){ return $this->db->count; }
 		return $this->multikick(array_column($users, 'uid'));
 	}
 
 	// List all users in group and kick those who haven't send minimum messages.
-	public function kick_messages($min = 6, $chat = NULL, $countonly = FALSE){
+	public function kick_messages($min = 3, $chat = NULL, $countonly = FALSE){
 		$users = $this->db
 			->where('cid', $chat)
-			->where('messages >=', $min)
-		->get('user_inchat');
+			->where('messages <=', $min)
+		->getValue('user_inchat', 'uid', NULL);
 		if($this->db->count == 0 or $countonly){ return $this->db->count; }
 		return $this->multikick(array_column($users, 'uid'));
 	}
@@ -323,7 +323,7 @@ class Admin extends TelegramApp\Module {
 			->join('user_inchat c', 'u.telegramid = c.uid')
 			->where('c.cid', $chat)
 			->where('u.team', $team)
-		->get("user u", null, "c.uid");
+		->getValue("user u", "c.uid", NULL);
 		if($this->db->count == 0 or $countonly){ return $this->db->count; }
 		return $this->multikick(array_column($users, 'uid'));
 	}
