@@ -80,6 +80,8 @@ class Verify extends TelegramApp\Module {
 	        $this->end();
 		}
 
+		if(!$this->verify_check()){ $this->end(); }
+
 		$str = implode("\n", $this->strings->get('verify_info'));
 
 		$this->telegram->send
@@ -92,7 +94,6 @@ class Verify extends TelegramApp\Module {
 	    ->send();
 
 		$this->user->step = 'SCREENSHOT_VERIFY';
-		$this->verify_check();
 
 		$this->end(); // Kill process for STEP
 	}
@@ -120,7 +121,7 @@ class Verify extends TelegramApp\Module {
 		// Si el usuario es nuevo
 		$date = strtotime("+7 days", strtotime($this->user->register_date));
 		if($date > time()){
-			$timer = round(($date - time()) / 86400);
+			$timer = max(round(($date - time()) / 86400), 1);
 			$text = $this->telegram->emoji(":clock: "). $this->strings->parse('verify_disabled_newuser', $timer);
 			$this->telegram->send
 				->notification(TRUE)

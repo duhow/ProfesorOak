@@ -5,7 +5,8 @@ class GameDubs extends TelegramApp\Module {
 
 	public function run(){
 		if(
-			$this->chat->settings('dubs') &&
+			$this->chat->is_group() and
+			$this->chat->settings('dubs') and
 			$this->telegram->key == "message"
 		){
 			$nums = array_merge(

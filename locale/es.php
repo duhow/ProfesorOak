@@ -174,6 +174,32 @@ return [
 	'command_whois_limit' => 5,
 	'command_whois_blackword' => ["quien", "quién", "quin", "este", "aqui", "aquí", "eres"],
 
+	'command_game_rolldice' => [
+		["tira", "lanza", "tirar", "roll"],
+		["el dado", "los dados", "the dice"]
+	],
+	'command_game_rps' => ['piedra', 'papel', 'tijera'],
+	'command_game_coin' => ['cara o cruz'],
+	'command_game_roulette' => ['apuesto al {bet}', 'apostar al {bet}', 'ruleta al {bet}'],
+
+	'command_is_admin' => ['(soy|es|eres) (admin|administrador)'],
+	'command_admin_count' => ['lista de (admin|admins|administradores)'],
+	'command_user_count' => ['lista de (miembros|usuarios|entrenadores)'],
+	'command_user_count_unverified' => ['sin validar', 'no validados'],
+
+	'game_coin_heads' => 'Cara',
+	'game_coin_tails' => 'Cruz',
+	'game_roulette_red' => ['rojo', 'rojas'],
+	'game_roulette_black' => ['negro', 'negras'],
+	'game_roulette_even' => ['par', 'pares'],
+	'game_roulette_odd' => ['impar', 'impares'],
+	'game_roulette_first' => ['primero', 'primeros'],
+	'game_roulette_second' => ['segundo', 'segundos'],
+	'game_roulette_third' => ['tercero', 'terceros'],
+	'game_roulette_beginning' => ['principio', 'principios'],
+	'game_roulette_ending' => ['final', 'finales'],
+
+
 	'register_hello_start' => "¡Hola %s! ¿Puedes decirme qué color eres?\n<b>Di:</b> Soy...",
 	'register_hello_private' => "¡Hola %s! Ábreme por privado para registrate! :)",
 	'register_hello_name' => 'Oye, ¿cómo te llamas <b>en el juego</b>? <b>Di:</b> Me llamo ...',
@@ -204,7 +230,7 @@ return [
 	'verify_before_send_username' => 'tu nombre',
 	'verify_before_send_level' => 'tu nivel actual',
 	'verify_before_send_concat' => ' y ',
-	'verify_before_send_ready' => 'Cuando lo hayas dicho, <b>vuelve a enviarme la captura.</b>',
+	'verify_before_send_ready' => 'Cuando lo hayas dicho, entonces te explicaré los pasos para validarte.',
 
 	'verify_disabled_newuser' => "¡Me alegra que quieras validarte! Muchos grupos tienen la norma de estar validado para poder confiar en los usuarios, así todos se conocen a todos. El problema es que últimamente hay mucha gente nueva que entra a Telegram y se va (por motivos que desconozco, porque es muy guay, pero bueno), entonces le valido en vano, porque luego no habla ni nada... Así que para poder validarte, tendrás que esperar <b>%s días</b>.\nTen paciencia. :)",
 	'verify_disabled_too_many' => "Lo siento, pero ahora mismo estoy muy saturado. Prueba dentro de unas horas.\n¡Y recuerda mandarme una captura nueva del perfil donde se vea la hora!",
