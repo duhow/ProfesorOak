@@ -2,7 +2,8 @@
 
 class User extends TelegramApp\User {
 	public function __construct($input = NULL, $db = NULL){
-		  parent::__construct($input, $db);
+		if(empty($db)){ $db = $GLOBALS["mysql"]; }
+		parent::__construct($input, $db);
 	}
 
 	// Custom Properties

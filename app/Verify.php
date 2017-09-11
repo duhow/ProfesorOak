@@ -74,7 +74,7 @@ class Verify extends TelegramApp\Module {
 			$this->telegram->send
 	            ->notification(TRUE)
 	            ->chat($this->telegram->user->id)
-	            ->text($this->telegram->emoji(":green-check: ") . $this->strings->get('verify_already') )
+	            ->text($this->telegram->emoji(":white_check_mark: ") . $this->strings->get('verify_already') )
 	        ->send();
 
 	        $this->end();
@@ -97,7 +97,41 @@ class Verify extends TelegramApp\Module {
 		$this->end(); // Kill process for STEP
 	}
 
+	public function is_disabled(){
+		$value = $this->db
+			->where('uid', CREATOR)
+			->where('type', 'disable_verify')
+		->getValue('settings', 'value');
+		return (bool) $value;
+	}
+
 	private function verify_check(){
+		// Desactivar validacioness en general
+		if($this->is_disabled()){
+			$this->telegram->send
+				->chat($this->telegram->user->id)
+				->text($this->telegram->emoji(":clock: ") .$this->strings->get('verify_disabled_too_many'))
+			->send();
+
+			$this->user->step = NULL;
+			return FALSE;
+		}
+
+		// Si el usuario es nuevo
+		$date = strtotime("+7 days", strtotime($this->user->register_date));
+		if($date > time()){
+			$timer = round(($date - time()) / 86400);
+			$text = $this->telegram->emoji(":clock: "). $this->strings->parse('verify_disabled_newuser', $timer);
+			$this->telegram->send
+				->notification(TRUE)
+				->chat($this->telegram->user->id)
+				->text($this->telegram->emoji($text), 'HTML')
+			->send();
+
+			$this->user->step = NULL;
+			return FALSE;
+		}
+
 		$notname = empty(strval($this->user->username));
 		$notlvl = ($this->user->lvl == 1);
 
@@ -134,13 +168,11 @@ class Verify extends TelegramApp\Module {
 
 	private function verify_send(){
 		if(!$this->verify_check()){ $this->end(); }
-		$Creator = new User(CREATOR, $this->db);
-		$Creator->load();
 
 		$str = NULL;
 		$icon = NULL;
 
-		if($Creator->settings('disable_verify')){
+		if($this->is_disabled()){
 			$this->user->step = NULL;
 
 			$str = 'verify_disabled_too_many';
