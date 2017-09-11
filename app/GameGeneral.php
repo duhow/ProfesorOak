@@ -100,11 +100,11 @@ class GameGeneral extends TelegramApp\Module {
 		}
 
 		$str = $num ." ";
-		if($num == 0){ $str .= ":ok:"; } // zero
-		elseif(in_array($num, $numbers)){ $str .= "\u26ab\ufe0f"; } // black
-		else{$str .= "\ud83d\udd34"; } // red
+		if($num == 0){ $str .= ":white_check_mark:"; } // zero
+		elseif(in_array($num, $numbers)){ $str .= ":black_circle:"; } // black
+		else{$str .= ":red_circle:"; } // red
 
-		$str .= " - " .($win ? ":ok:" : ":times:");
+		$str .= " - " .($win ? ":white_check_mark:" : ":times:");
 		$this->telegram->send
 			->notification(FALSE)
 			->text($this->telegram->emoji($str))
