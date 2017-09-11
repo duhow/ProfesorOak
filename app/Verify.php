@@ -144,11 +144,11 @@ class Verify extends TelegramApp\Module {
 
 			if($notname){
 				$cmd = trim(str_replace('{name}', '', $this->strings->get("command_register_username")[0]));
-				$text .= ":triangle-right: <b>$cmd ...</b>\n";
+				$text .= ":arrow_forward: <b>$cmd ...</b>\n";
 			}
 			if($notlvl){
-				$cmd = trim(str_replace('{level}', '', $this->strings->get("command_levelup")[0]));
-				$text .= ":triangle-right: <b>$cmd ...</b>\n";
+				$cmd = trim(str_replace(['{level}', '{N:level}'], '', $this->strings->get("command_levelup")[0]));
+				$text .= ":arrow_forward: <b>$cmd ...</b>\n";
 			}
 
 			$text .= $this->strings->get('verify_before_send_ready');
