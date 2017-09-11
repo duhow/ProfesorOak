@@ -49,8 +49,8 @@ class Group extends TelegramApp\Module {
 		}
 
 		elseif(
-			( $this->telegram->text_has("lista") and $this->telegram->text_has(["admins", "admin", "administradores"]) and $this->telegram->words() <= 8 ) or
-			( $this->telegram->text_command("adminlist") or $this->telegram->text_command("admins") )
+			( $this->telegram->text_regex($this->strings->get('command_admin_count')) and $this->telegram->words() <= 8 ) or
+			( $this->telegram->text_command(["adminlist", "admins"]) )
 		){
 			$this->adminlist();
 			$this->end();
@@ -59,9 +59,8 @@ class Group extends TelegramApp\Module {
 		elseif(
 			$this->telegram->text_command("uv") or
 		    (
-				$this->telegram->text_has("lista") &&
-				$this->telegram->text_has(["usuarios", "entrenadores"]) &&
-				$this->telegram->text_has(["sin", "no"], ["validar", "validados"])
+				$this->telegram->text_regex($this->strings->get('command_user_count')) and
+				$this->telegram->text_regex($this->strings->get('command_user_count_unverified'))
 			)
 		){
 			$this->userlist_verified();
@@ -69,7 +68,7 @@ class Group extends TelegramApp\Module {
 		}
 
 		elseif(
-			$this->telegram->text_has(["soy", "es", "eres"], ["admin", "administrador"], TRUE) &&
+			$this->telegram->text_regex($this->strings->get('command_is_admin')) &&
 			$this->telegram->words() <= 5
 		){
 			$target = ($this->telegram->has_reply ? $this->telegram->reply_target('forward') : $this->user->id);
@@ -79,7 +78,7 @@ class Group extends TelegramApp\Module {
 
 		elseif(
 			$this->telegram->text_command("count") or
-			$this->telegram->text_has("lista de", ["miembros", "usuarios", "entrenadores"])
+			$this->telegram->text_regex($this->strings->get('command_user_count'))
 		){
 			$this->count(TRUE);
 			$this->end();
