@@ -104,7 +104,10 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
             ->text("Bienvenido, jefe @duhow! Un placer tenerte aquí! :D")
         ->send();
         return;
-    }elseif(!empty($pknew)){
+    }elseif(
+		!empty($pknew) and
+		$new->id != $this->config->item('telegram_bot_id') // Que el bot no se autoexpulse en grupos configurados.
+	){
         // Si el grupo es exclusivo a un color y el usuario es de otro color
         $teamonly = $pokemon->settings($telegram->chat->id, 'team_exclusive');
         if(!empty($teamonly) && $teamonly != $pknew->team){
