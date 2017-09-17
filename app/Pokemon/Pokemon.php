@@ -5,7 +5,7 @@ namespace Pokemon;
 class Pokemon {
 	public $id;
 	public $name;
-	public $class = "normal";
+	public $class = "NORMAL";
 	public $types = array();
 	public $movements = array();
 	public $evolution_next = array();
@@ -13,7 +13,7 @@ class Pokemon {
 	public $egg = FALSE; // or number of KM
 
 	public function is_legendary(){
-		return ($this->class != "normal");
+		return ($this->class != "NORMAL");
 	}
 }
 
