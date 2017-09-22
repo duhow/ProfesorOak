@@ -24,7 +24,7 @@ if($step == "CUSTOM_COMMAND"){
 		if($telegram->text()){
 			$rm = ["^", "$", "'", "\"", "*"];
 			$command = str_replace($rm, "", strtolower($telegram->text()));
-			if($command == "crear comando"){
+			if($command == "crear comando" or strlen(trim($command)) == 1){
 				$this->telegram->send
 			        ->reply_to(TRUE)
 			        ->text("Dime el comando / frase a crear.")
