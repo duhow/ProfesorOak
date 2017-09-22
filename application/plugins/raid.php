@@ -1,8 +1,8 @@
 <?php
 
-// 8:00 -> 21:59
-if(!in_array(date("H"), range(8, 21))){
-	if(in_array($this->telegram->callback, ["raid apuntar", "raid estoy"])){
+// 7:00 -> 21:59
+if(!in_array(date("H"), range(7, 21))){
+	if(in_array($this->telegram->callback, ["raid apuntar", "raid estoy", "raid rewrite"])){
 		$this->telegram->answer_if_callback("");
 		// Remove button
 		$this->telegram->send
@@ -112,6 +112,9 @@ if($this->telegram->callback){
 					->button("¡Me apunto!", "raid apuntar")
 					->button("¡Ya estoy!", "raid estoy")
 				->end_row()
+				->row()
+					->button("Reflotar", "raid rewrite")
+				->end_row()
 			->show()
 		->edit('text');
 
@@ -148,10 +151,29 @@ if($this->telegram->callback){
 					->button("¡Me apunto!", "raid apuntar")
 					->button("¡Ya estoy!", "raid estoy")
 				->end_row()
+				->row()
+					->button("Reflotar", "raid rewrite")
+				->end_row()
 			->show()
 		->edit('text');
 
 		return -1;
+	}elseif($this->telegram->callback == "raid rewrite"){
+		$this->telegram->answer_if_callback("");
+		if(!in_array($telegram->user->id, telegram_admins(TRUE))){ return -1; }
+
+		$this->telegram->send
+			->text($this->telegram->text_message())
+			->inline_keyboard()
+				->row()
+					->button("¡Me apunto!", "raid apuntar")
+					->button("¡Ya estoy!", "raid estoy")
+				->end_row()
+				->row()
+					->button("Reflotar", "raid rewrite")
+				->end_row()
+			->show()
+		->send();
 	}
 }
 
