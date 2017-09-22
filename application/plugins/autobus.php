@@ -14,10 +14,10 @@ function autobus_barcelona($codigo, $last = FALSE){
     $get = curl_exec($ch);
     curl_close ($ch);
 
+	$lineas = array();
     if(!empty($get)){
         $get = substr($get, strpos($get, '<ul data-role='));
         $pos = 0;
-        $lineas = array();
         while( ($pos = strpos($get, '<li>', $pos)) !== FALSE){
             $pos = strpos($get, '<b>', $pos) + strlen('<b>');
             $last = strpos($get, '</b>', $pos) - $pos;
@@ -25,11 +25,10 @@ function autobus_barcelona($codigo, $last = FALSE){
             if(strpos($linea, "no disponible")){ return array(); } // HACK
             $lineas[] = $linea;
         }
-		// FIX La primera consulta devuelve valor nulo. Hacer segunda.
-		if(empty($lineas) && !$last){ return autobus_barcelona($codigo, TRUE); }
-        return $lineas;
     }
-    return array();
+    // FIX La primera consulta devuelve valor nulo. Hacer segunda.
+	if(empty($lineas) && !$last){ return autobus_barcelona($codigo, TRUE); }
+    return $lineas;
 }
 
 // AUCORSA
