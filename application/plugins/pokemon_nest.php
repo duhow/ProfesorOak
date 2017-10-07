@@ -71,6 +71,46 @@ if(
 		return -1;
 	}
 
+	$adminchat = $this->pokemon->settings($this->telegram->chat->id, 'admin_chat');
+	if(
+		$adminchat and
+		!$this->pokemon->settings($this->telegram->chat->id, 'disable_nest_log')
+	){
+		$chatinfo = $this->db
+			->where('uid', $this->telegram->user->id)
+			->where('cid', $this->telegram->chat->id)
+			->limit(1)
+		->get('user_inchat');
+
+		$chatinfo = $chatinfo->row();
+		$user = $this->pokemon->user($this->telegram->user->id);
+
+		if($chatinfo and $user){
+			$verified = $this->telegram->emoji($user->verified ? ":green-check:" : ":warning:");
+			$time = time() - strtotime($chatinfo->register_date);
+			$i = 0;
+			$timestr = "";
+			if($time >= 86400){
+				$i = floor($time / 86400);
+				$timestr .= $i ."d ";
+				$time = $time - ($i * 86400);
+			}
+			if($time >= 3600){
+				$i = floor($time / 3600);
+				$timestr .= $i ."h ";
+			}
+			$timestr = trim($timestr);
+			$str = $verified ." " .$user->telegramid ." @" .$user->username ." pide nidos.\n"
+					.$chatinfo->messages ." - " .$timestr;
+
+			$this->telegram->send
+				->notification(FALSE)
+				->chat($adminchat)
+				->text($str)
+			->send();
+		}
+	}
+
     if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return -1; }
     $text = str_replace("?", "", $telegram->text());
     $pk = pokemon_parse($text);
@@ -97,6 +137,46 @@ if(
         $telegram->send->text("No hay ningún nido registrado.")->send();
         return -1;
     }
+
+	$adminchat = $this->pokemon->settings($this->telegram->chat->id, 'admin_chat');
+	if(
+		$adminchat and
+		!$this->pokemon->settings($this->telegram->chat->id, 'disable_nest_log')
+	){
+		$chatinfo = $this->db
+			->where('uid', $this->telegram->user->id)
+			->where('cid', $this->telegram->chat->id)
+			->limit(1)
+		->get('user_inchat');
+
+		$chatinfo = $chatinfo->row();
+		$user = $this->pokemon->user($this->telegram->user->id);
+
+		if($chatinfo and $user){
+			$verified = $this->telegram->emoji($user->verified ? ":green-check:" : ":warning:");
+			$time = time() - strtotime($chatinfo->register_date);
+			$i = 0;
+			$timestr = "";
+			if($time >= 86400){
+				$i = floor($time / 86400);
+				$timestr .= $i ."d ";
+				$time = $time - ($i * 86400);
+			}
+			if($time >= 3600){
+				$i = floor($time / 3600);
+				$timestr .= $i ."h ";
+			}
+			$timestr = trim($timestr);
+			$str = $verified ." " .$user->telegramid ." @" .$user->username ." pide nidos.\n"
+					.$chatinfo->messages ." - " .$timestr;
+
+			$this->telegram->send
+				->notification(FALSE)
+				->chat($adminchat)
+				->text($str)
+			->send();
+		}
+	}
 
 	// Registrar el último comando, independientemente de su resultado.
 	$pokemon->settings($telegram->user->id, 'last_command', 'POKEMON_FIND_LOCATION');
@@ -319,6 +399,46 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
 	}
 	$uinfo = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
 	$utime = strtotime($uinfo->register_date);
+
+	$adminchat = $this->pokemon->settings($this->telegram->chat->id, 'admin_chat');
+	if(
+		$adminchat and
+		!$this->pokemon->settings($this->telegram->chat->id, 'disable_nest_log')
+	){
+		$chatinfo = $this->db
+			->where('uid', $this->telegram->user->id)
+			->where('cid', $this->telegram->chat->id)
+			->limit(1)
+		->get('user_inchat');
+
+		$chatinfo = $chatinfo->row();
+		$user = $this->pokemon->user($this->telegram->user->id);
+
+		if($chatinfo and $user){
+			$verified = $this->telegram->emoji($user->verified ? ":green-check:" : ":warning:");
+			$time = time() - strtotime($chatinfo->register_date);
+			$i = 0;
+			$timestr = "";
+			if($time >= 86400){
+				$i = floor($time / 86400);
+				$timestr .= $i ."d ";
+				$time = $time - ($i * 86400);
+			}
+			if($time >= 3600){
+				$i = floor($time / 3600);
+				$timestr .= $i ."h ";
+			}
+			$timestr = trim($timestr);
+			$str = $verified ." " .$user->telegramid ." @" .$user->username ." pide nidos.\n"
+					.$chatinfo->messages ." - " .$timestr;
+
+			$this->telegram->send
+				->notification(FALSE)
+				->chat($adminchat)
+				->text($str)
+			->send();
+		}
+	}
 
 	if($uinfo->messages <= 7 or strtotime("+4 days", $utime) > time() && $this->telegram->user->id != $this->config->item('creator')){
 		$str = "¿Acabas de llegar y ya estás pidiendo nidos? Te calmas.";
