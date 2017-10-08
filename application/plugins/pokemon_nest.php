@@ -112,6 +112,8 @@ if(
 	}
 
     if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return -1; }
+	$pkuser = $pokemon->user($telegram->user->id);
+	if(!$pkuser->verified){ return -1; }
     $text = str_replace("?", "", $telegram->text());
     $pk = pokemon_parse($text);
     if(empty($pk['pokemon'])){ return; }
@@ -261,6 +263,8 @@ elseif(
 	$telegram->words() >= 4
 ){
     if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return; }
+	$pkuser = $pokemon->user($telegram->user->id);
+	if(!$pkuser->verified){ return -1; }
 	$txt = $telegram->text(TRUE);
 	$txt = substr($txt, strpos($txt, " en ") + strlen(" en "));
 	$txt = trim($txt);
