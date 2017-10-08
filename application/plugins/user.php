@@ -178,7 +178,8 @@ if(
     $telegram->text_has("Soy", ["lvl", "nivel", "L", "level"]) or
     $telegram->text_has("Soy L", TRUE) or // HACK L junta
     $telegram->text_has(["Acabo de subir al", "He subido a nivel", "He subido al"]) &&
-	!$telegram->text_has("No") // Si, la gente es gilipollas.
+	!$telegram->text_has("No") and // Si, la gente es gilipollas.
+	!$telegram->text_contains("?") // Anda que preguntar qué nivel eres de esta forma...
 ){
 	if($this->telegram->has_forward){ return -1; }
     $level = filter_var($telegram->text(), FILTER_SANITIZE_NUMBER_INT);
