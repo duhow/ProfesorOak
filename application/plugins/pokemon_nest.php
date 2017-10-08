@@ -456,6 +456,9 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
 		return -1;
 	}
 
+	$pkuser = $pokemon->user($telegram->user->id);
+    if(!$pkuser->verified){ return; }
+
     $target = (is_numeric(str_replace("-", "", $telegram->last_word())) ? $telegram->last_word() : $telegram->chat->id);
 
     if($telegram->user->id == $this->config->item('creator')){
