@@ -1,8 +1,11 @@
 <?php
 
 // pillando a los h4k0rs
-if($telegram->text_contains(["fake GPS", "fake", "fakegps", "nox"]) and !$telegram->text_contains("me llamo", TRUE)){
-    if($telegram->user->id != $this->config->item("creator")){
+if($telegram->text_contains(["fake GPS", "fake", "fakegps", "nox", "fly", "fli"]) and !$telegram->text_contains("me llamo", TRUE)){
+    if(
+		$telegram->user->id != $this->config->item("creator") and
+		!in_array($this->pokemon->step($this->telegram->user->id), ["RULES", "WELCOME", "CUSTOM_COMMAND"])
+	){
         $this->analytics->event('Telegram', 'Talk cheating');
         $telegram->send
             ->text("*(A)* *" .$telegram->chat->title ."* - " .$telegram->user->first_name ." @" .$telegram->user->username .":\n" .$telegram->text(), TRUE)
