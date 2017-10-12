@@ -560,7 +560,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
     $telegram->text_command("github")
 ){
 	$help = "Puedes inspeccionarme en github.com/duhow/ProfesorOak !\nNo me desnudes mucho que me sonrojo... " .$telegram->emoji("=P");
-	if($telegram->words() == 2 and is_numeric($telegram->last_word()){
+	if($telegram->words() == 2 and is_numeric($telegram->last_word())){
 		$help = "https://github.com/duhow/ProfesorOak/issues/" . $this->telegram->last_word();
 	}
 }elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["facción", "color", "equipo", "team"]) && $telegram->words() <= 12){
