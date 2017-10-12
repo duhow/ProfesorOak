@@ -102,7 +102,12 @@ if($telegram->text_command("avoice")){
     ->send();
 
     return -1;
-}elseif($telegram->text_command("str") && $telegram->has_reply && $telegram->words() >= 2){
+}elseif(
+	$telegram->text_command("str") &&
+	$telegram->has_reply &&
+	$telegram->words() >= 2 &&
+	$this->telegram->user->id == $this->config->item('creator')
+){
     $cmd = strtolower($telegram->words(1, TRUE));
     $rtext = $telegram->reply->text;
     if(empty($rtext)){ return; }
@@ -146,7 +151,7 @@ if($telegram->text_command("avoice")){
         $tran = file_get_contents($web);
         $text = json_encode($tran);
     }elseif(in_array($cmd, ['got', 'nini', 'nininini'])){
-        if($telegram->user->id != $this->config->item('creator')){ return; }
+        // if($telegram->user->id != $this->config->item('creator')){ return; }
         $text = strtolower($rtext);
         $text = str_replace(['a','e','o','u','á','é','ó','ú'], 'i', $text);
         $text = str_replace("ii", 'i', $text);

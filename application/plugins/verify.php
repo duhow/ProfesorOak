@@ -285,7 +285,7 @@ elseif(
 
 	$date = strtotime("+7 days", strtotime($pokeuser->register_date));
 	if($date > time()){
-		$timer = round(($date - time()) / 86400);
+		$timer = max(round(($date - time()) / 86400), 1);
 		$text = ":clock: Debido a que bastantes personas acaban abandonando Telegram (por motivos que desconozco, porque es muy guay, pero bueno), tendrás que esperar <b>$timer días</b> para poder validarte."
 				."\nTen paciencia. :)";
 		$this->telegram->send
