@@ -3,6 +3,20 @@
 class Verify extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
+	const VERIFY_OK     = 1;
+	const VERIFY_CHECK  = 2;
+	const VERIFY_REJECT = 3;
+	const VERIFY_REPORT = 4;
+
+	public $icons = [
+		VERIFY_OK		=> ":ok:",
+		VERIFY_CHECK	=> ":warning:",
+		VERIFY_REJECT	=> ":times:",
+		VERIFY_REPORT	=> "\u203c\ufe0f",
+	];
+
+	const VERIFY_MIN_VOTE_AMOUNT = 5;
+
 	protected function hooks(){
 		// if($this->user->verified){ return; }
 
@@ -10,6 +24,7 @@ class Verify extends TelegramApp\Module {
 			!$this->telegram->is_chat_group() and
 			!$this->telegram->has_forward and
 			$this->user->step == "SCREENSHOT_VERIFY" and
+			!$this->user->verified and
 			$this->telegram->photo()
 		){
 			return $this->verify_send();
@@ -28,10 +43,176 @@ class Verify extends TelegramApp\Module {
 	}
 
 	/**
-	 * Lista de votaciones realizadas por los helpers.
+	 * Buscar votacion disponible
 	 */
-	public function verifylist(){
+	public function get_random_submit($current_user = NULL, $return_id = FALSE){
+		if(empty($current_user)){ $current_user = $this->user->id; }
 
+		$user = $this->db
+			->where('v.status IS NULL')
+			->where("v.id", "(SELECT photo FROM user_verify_vote WHERE telegramid = $current_user)", "NOT IN")
+			->where("v.id", "(SELECT photo FROM user_verify_vote GROUP BY photo HAVING count(*) >= " .VERIFY_MIN_VOTE_AMOUNT ." )", "NOT IN")
+			->where("v.telegramid", "(SELECT telegramid FROM user WHERE verified = TRUE)", "NOT IN")
+			->orderBy('RAND()')
+		->getOne('user_verify v', 'v.*');
+
+		if(!$user){ return FALSE; }
+		return($return_id ? $user['id'] : $user);
+	}
+
+	/**
+	 * Ver si el usuario ha enviado una foto para validarse
+	 * o buscar el ID de validación
+	 */
+	public function user_has_submited($id){
+		return $this->db
+			->where('id', $id)
+			->orWhere('telegramid', $id)
+			->orderBy('id DESC')
+		->getOne('user_verify');
+	}
+
+	/**
+	 * Ver el ID de Telegram segun el contenido
+	 */
+	public function get_user_telegram($search){
+		return $this->db
+			->where('id', $search)
+			->orWhere('photo', $search)
+		->getOne('user_verify', 'telegramid');
+	}
+
+	/**
+	 * Contar los usuarios que faltan por votar
+	 */
+	public function count_user_vote_remaining($user = NULL){
+		if($user === TRUE){ $user = $this->user->id; }
+
+		if(!empty($user)){
+			$this->db->where("id NOT IN (SELECT photo FROM user_verify_vote WHERE telegramid = $user)");
+		}
+
+		return $this->db
+			->where('status IS NULL')
+			->where('date_finish IS NULL')
+		->getValue('user_verify', 'count(*)');
+	}
+
+	/**
+	 * Lista de votaciones realizadas por los helpers.
+	 * Principalmente para el creador (?)
+	 */
+	public function vote_list($id, $return = FALSE){
+		$votes = $this->db
+			->join('user u', 'u.telegramid = v.telegramid')
+			->where('photo', $id)
+		->get('user_verify_vote v', NULL, ['u.username', 'v.status']);
+
+		if($return){ return $votes; }
+
+		$str = "\ud83d\udcdd #$id\n";
+		foreach($votes as $vote){
+			$str .= $this->icons[$vote['status']] ." " .$vote['username'] ."\n";
+		}
+
+		$req = $this->telegram->send
+			->text($this->telegram->emoji($str), "HTML")
+		->send();
+
+		$msgs = $this->user->settings('verify_messages');
+		$msgs .= "," .$req['message_id'];
+		$this->user->settings('verify_messages', $msgs);
+
+		$this->telegram->answer_if_callback("");
+	}
+
+	/**
+	 * Contar cuanta gente ha votado por esta foto
+	 */
+	public function vote_count($id, $full_array = FALSE, $retpercbase = FALSE){
+		$votes = $this->db
+			->where('photo', $id)
+			->groupBy('status')
+		->get('user_verify_vote', NULL, ['status', 'count(*) AS count']);
+		if(!$full_array){ return array_sum(array_column($votes, 'count')); }
+
+		$res = [
+			VERIFY_OK => 0,
+			VERIFY_CHECK => 0,
+			VERIFY_REJECT => 0,
+			VERIFY_REPORT => 0
+		];
+
+		foreach($votes as $row){
+			$res[intval($row['status'])] = intval($row['count']);
+		}
+
+		if($retpercbase === FALSE){ return $res; }
+
+		// Percentage base
+		$total = array_sum(array_values($res));
+		$totalvotes = array();
+
+		foreach($res as $status => $count){
+			$totalvotes[$status] = floor(($count / $retpercbase) * 100);
+		}
+		return $totalvotes;
+	}
+
+	/**
+	 * Establecer el estado final de la foto de validacion
+	 */
+	public function vote_set($vote_id, $status, $force = FALSE){
+		if(!$force){ $this->db->where('status IS NULL'); }
+
+		$data = [
+			'status' => $status,
+			'date_finish' => $this->db->now()
+		];
+
+		return $this->db
+			->where('id', $vote_id)
+		->update('user_verify', $data);
+	}
+
+	private function verify_text_generate($verifydata, $userdata, $left = NULL){
+		$str = "";
+
+		// Old time de registro Telegram
+		$old = (time() - strtotime($userdata->register_date));
+		if($old <= (86400*7)){
+			$str .= ":new: ";
+		}
+		// Old time de la captura
+		$old = (time() - strtotime($verifydata->date_add));
+		if($old >= (86400*2)){
+			$old = round($old / 86400) ." d";
+		}elseif($old >= 3600){
+			$old = round($old / 3600) ." h";
+		}elseif($old >= 60){
+			$old = round($old / 60) ." m";
+		}else{
+			$old .= " s";
+		}
+
+		$teamico = [
+			'Y' => ":thunder:",
+			'R' => ":fire:",
+			'B' => ":water:"
+		];
+
+		$str .= $old ."  ";
+		if(!empty($left)){ $str .= "<code>          </code>$left :triangle-left: "; }
+		$str .= "<code>          </code>" .date("H:i", strtotime($verifydata->date_add)) ." :clock:";
+
+		$str .= "\n" .":arrow-up: <b>L" .$userdata->lvl ." </b>"
+			.$teamico[$userdata->team] ."<code>          </code>@" .$userdata->username;
+
+		/* if(strtolower($userdata->username) == strtolower($userdata->telegramuser)){
+			$str .= " :ok:";
+		} */
+
+		return $str;
 	}
 
 	/**
