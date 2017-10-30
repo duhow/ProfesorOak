@@ -76,6 +76,10 @@ if(
 		$adminchat and
 		!$this->pokemon->settings($this->telegram->chat->id, 'disable_nest_log')
 	){
+		$text = $telegram->text();
+		$pk = pokemon_parse($text);
+		if(empty($pk['pokemon'])){ return; }
+
 		$chatinfo = $this->db
 			->where('uid', $this->telegram->user->id)
 			->where('cid', $this->telegram->chat->id)
@@ -145,6 +149,10 @@ if(
 		$adminchat and
 		!$this->pokemon->settings($this->telegram->chat->id, 'disable_nest_log')
 	){
+		$text = $telegram->text();
+		$pk = pokemon_parse($text);
+		if(empty($pk['pokemon'])){ return; }
+
 		$chatinfo = $this->db
 			->where('uid', $this->telegram->user->id)
 			->where('cid', $this->telegram->chat->id)
