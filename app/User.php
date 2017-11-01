@@ -178,8 +178,18 @@ class User extends TelegramApp\User {
 				$chats[$chat['cid']] = (object) $chatobj;
 			}
 			$this->chats = $chats;
+			$this->cache->set('user_inchat_' .$this->id, $chats, 120);
 		}
 		return $this->chats;
+	}
+
+	private function load_cache_chats(){
+		$res = $this->cache->get('user_inchat_' .$this->id);
+		if($res){
+			$this->chats = $res;
+			return $this->chats;
+		}
+		return $this->load_chats();
 	}
 
 	private function load_settings(){
@@ -196,8 +206,18 @@ class User extends TelegramApp\User {
 				elseif(is_numeric($v) && $v == 0){ $settings[$k] = FALSE; }
 			}
 			$this->settings = $settings;
+			$this->cache->set('settings_' .$this->id, $settings, 60);
 		}
 		return $this->settings;
+	}
+
+	private function load_cache_settings(){
+		$res = $this->cache->get('settings_' .$this->id);
+		if($res){
+			$this->settings = $res;
+			return $this->settings;
+		}
+		return $this->load_settings();
 	}
 
 	function in_chat($chat = NULL, $check_telegram = FALSE){
