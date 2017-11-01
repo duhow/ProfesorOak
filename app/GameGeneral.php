@@ -18,9 +18,9 @@ class GameGeneral extends TelegramApp\Module {
 			$this->dado($num);
 			$this->end();
 		}elseif(
-			( $this->telegram->text_has($this->strings->get_multi('command_game_rps', 0) and // Piedra
-		    $this->telegram->text_has($this->strings->get_multi('command_game_rps', 1) and   // Papel
-		    $this->telegram->text_contains($this->strings->get_multi('command_game_rps', 2) ) or // Tijera
+			( $this->telegram->text_has($this->strings->get_multi('command_game_rps', 0)) and // Piedra
+		    $this->telegram->text_has($this->strings->get_multi('command_game_rps', 1)) and   // Papel
+		    $this->telegram->text_contains($this->strings->get_multi('command_game_rps', 2)) ) or // Tijera
 		    $this->telegram->text_command(["rps", "rpsls"])
 		){
 			$this->rps();

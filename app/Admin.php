@@ -31,7 +31,7 @@ class Admin extends TelegramApp\Module {
 				'BQADBAADqAADl4mhCVMHew7buZpwAg',
 		    ];
 			if(in_array($this->telegram->sticker(), $palmeras)){
-				if($this->chat->is_admin($this->user) or $this->user->id == CREATOR){ return NULL; }
+				if($this->user->id == CREATOR or $this->chat->is_admin($this->user)){ return NULL; }
 				if(!$this->chat->is_admin($this->telegram->bot->id)){ return NULL; }
 				$this->telegram->send
 					->text("¡¡PALMERAS NO!!")
@@ -112,13 +112,13 @@ class Admin extends TelegramApp\Module {
 	}
 
 	public function antispam(){
-	    if($this->user->messages > 5 or $this->chat->settings('antispam') == FALSE){ return FALSE; }
+	    if($this->user->messages > 5 or $this->chat->settings('antispam') === FALSE){ return FALSE; }
 
         if(
-			!$this->telegram->text_contains(["http", "www", ".com", ".es", ".net"]) &&
-            !$this->telegram->text_contains("telegram.me") or
+			!$this->telegram->text_contains(["http", "www", ".com", ".es", ".net"]) and
+            !$this->telegram->text_contains(["telegram.me", "t.me"]) or
             $this->telegram->text_contains(["PokéTrack", "PokeTrack"]) or
-            $this->telegram->text_contains(["maps.google", "google.com/maps"])
+            $this->telegram->text_contains(["maps.google", "google.com/maps", "goo.gl/maps"])
         ){ return FALSE; } // HACK Falsos positivos.
 		if(stripos($this->telegram->text_url(), "pokemon") !== FALSE){ return FALSE; } // HACK cosas de Pokemon oficiales u otros.
 
@@ -141,7 +141,7 @@ class Admin extends TelegramApp\Module {
 		$this->user->update();
 
         $this->telegram->send
-            ->text("¡*SPAM* detectado!", TRUE)
+            ->text($this->strings->get('admin_spam_detected'), 'HTML')
         ->send();
 
         $this->ban($this->user);
@@ -287,7 +287,7 @@ class Admin extends TelegramApp\Module {
 	}
 
 	// Kick all users who didn't say anything during X days.
-	public function kick_old($days = 30, $chat = NULL, $countonly = FALSE){
+	public function count_users_old($days = 30, $chat = NULL, $countonly = FALSE){
 		$users = $this->db
 			->where('cid', $chat)
 			->where('(last_date <= ? OR last_date = ?)', [date("Y-m-d H:i:s", strtotime("-$days days")), "0000-00-00 00:00:00"])
@@ -297,7 +297,7 @@ class Admin extends TelegramApp\Module {
 	}
 
 	// List all users in group and kick those who are unverified.
-	public function kick_unverified($chat = NULL, $countonly = FALSE){
+	public function count_users_unverified($chat = NULL, $countonly = FALSE){
 		// TODO Comprobar que los que no estén registrados, también los eche. LEFT/RIGHT ?
 		$users = $this->db
 			->join('user_inchat c', 'u.telegramid = c.uid')
@@ -305,27 +305,27 @@ class Admin extends TelegramApp\Module {
 			->where('u.verified', FALSE)
 		->get("user u", "c.uid", NULL);
 		if($this->db->count == 0 or $countonly){ return $this->db->count; }
-		return $this->multikick(array_column($users, 'uid'));
+		return array_column($users, 'uid');
 	}
 
 	// List all users in group and kick those who haven't send minimum messages.
-	public function kick_messages($min = 3, $chat = NULL, $countonly = FALSE){
+	public function count_users_messages($min = 3, $chat = NULL, $countonly = FALSE){
 		$users = $this->db
 			->where('cid', $chat)
 			->where('messages <=', $min)
 		->getValue('user_inchat', 'uid', NULL);
 		if($this->db->count == 0 or $countonly){ return $this->db->count; }
-		return $this->multikick(array_column($users, 'uid'));
+		return array_column($users, 'uid');
 	}
 
-	function kick_team($team){
+	public function count_users_team($team, $chat = NULL, $countonly = FALSE){
 		$users = $this->db
 			->join('user_inchat c', 'u.telegramid = c.uid')
 			->where('c.cid', $chat)
 			->where('u.team', $team)
 		->getValue("user u", "c.uid", NULL);
 		if($this->db->count == 0 or $countonly){ return $this->db->count; }
-		return $this->multikick(array_column($users, 'uid'));
+		return array_column($users, 'uid');
 	}
 
 	// Migrate settings from old chat to new chat.

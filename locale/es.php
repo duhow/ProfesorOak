@@ -35,6 +35,7 @@ return [
 	'register' => 'Registrar',
 	'verify' => 'Validar',
 	'view_profile' => 'Ver perfil',
+	'bye' => 'Adiós',
 
 	'done' => 'Hecho',
 	'done_excl' => '¡Hecho!',
@@ -52,6 +53,7 @@ return [
 	'admin_kicked' => ['Kickeado', 'Kickeados'],
 
 	'admin_kicked_flood' => 'Usuario kickeado por flood.',
+	'admin_spam_detected' => '¡<b>SPAM</b> detectado!',
 	'admin_kicked_unverified' => 'Usuario kickeado por no estar verificado.',
 
 	'adminchat_newuser_limit_join' => '%s ha intentado entrar.',
@@ -105,9 +107,17 @@ return [
 	'custom_command_answer' => '¡De acuerdo! Ahora envíame la respuesta que quieres enviar.',
 	'custom_command_created' => '¡Comando creado correctamente!',
 
+	'command_rules' => ['reglas del grupo', 'normas del grupo', 'ver las normas', 'ver las reglas', 'ver normas', 'ver reglas', 'dime las normas', 'dime las reglas'],
+	'command_rules_write' => ['poner', 'actualizar', 'redactar', 'escribir', 'cambiar'],
+	'command_rules_limit' => 6,
+	'group_rules_please_send' => 'De acuerdo, envíame el texto que quieres que ponga de normas.',
+	'group_rules_too_much' => 'Buah, demasiado texto! Relájate un poco anda ;)',
 	'group_rules_empty' => 'No hay reglas escritas.',
 	'group_rules_sent' => 'Te las envío por privado, %s.',
 
+	'command_is_here' => ['{username} está aquí?', 'está aquí {username}?', 'está {username} aquí?'],
+	'command_is_here_limit' => 6,
+	'command_is_here_black' => ['alguno', 'alguien', 'que', 'es', 'ha', 'como', 'está', 'desde'],
 	'group_user_here_unknown' => 'No sé quien es. (%s)',
 	'group_user_here_no' => 'No, no está.',
 	'group_user_here_yes' => 'Si, %s está aquí.',
@@ -198,6 +208,7 @@ return [
 	'game_roulette_third' => ['tercero', 'terceros'],
 	'game_roulette_beginning' => ['principio', 'principios'],
 	'game_roulette_ending' => ['final', 'finales'],
+	'game_exp_levelup' => '<b>%s</b> ha subido al <b>nivel %s</b>!',
 
 
 	'register_hello_start' => "¡Hola %s! ¿Puedes decirme qué color eres?\n<b>Di:</b> Soy...",
@@ -250,6 +261,11 @@ return [
 	'whois_user_noname' => 'No sé como se llama, sólo sé que ',
 	'whois_user' => 'es',
 
+	'command_raid_create' => [
+		["montar", "monta", "crear", "organizar", "organiza", "nueva"],
+		["raid", "incursión", "#raid"]
+	],
+
 	'config_announce_welcome_on' => 'Saludaré a los nuevos usuarios',
 	'config_announce_welcome_off' => '<b>NO</b> saludaré a los nuevos usuarios',
 	'config_announce_welcome_custom' => ' con un mensaje personalizado',
@@ -291,6 +307,34 @@ return [
 	'config_linkloc_01' => 'No conozco el link del grupo, pero sí su ubicación.',
 	'config_linkloc_10' => 'Conozco el link del grupo, pero no su ubicación.',
 	'config_linkloc_11' => 'Conozco el link del grupo y su ubicación.',
+
+	'raid_new_raid' => 'Nueva #raid',
+	'raid_pokemon' => 'de %s',
+	'raid_time' => 'a las %s',
+	'raid_time_end' => 'termina a las %s',
+	'raid_place' => 'en %s',
+	'raid_button_join' => '¡Me apunto!',
+	'raid_button_here' => '¡Ya estoy!',
+
+	'donate_text' => [
+		"\ud83d\udcc6 He dedicado <b>más de %s dias</b> en ayudar a todos los entrenadores.",
+		":male: Cada día aparecen entre 100 y 200 entrenadores nuevos que exploran este mundo Pokémon.",
+		"Y mientras tanto, yo estoy aquí estudiando en el laboratorio, nuevas herramientas para agregar al PokéNav de Telegram.",
+		"Si llevas tiempo aquí, estoy seguro de que las conocerás de sobras. Incluso hay algunas que son secretas, y que son divertidas.",
+		"",
+		"Dedico tiempo a ésto porque me gusta, porque quiero ofrecer una herramienta útil y de calidad para todos los entrenadores.",
+		"Pero lo cierto es que no recibo nada a cambio. Es más, vivo alimentándome de las bayas Pokémon que caen del árbol, y de los restos de Carameloraros que me da el <b>Profesor Willow</b>.",
+		"No sé de donde los saca, pero saben a rayos. \ud83d\ude14",
+		"",
+		"Pero tú tienes la oportunidad de ayudarme, si quieres, por supuesto... \ud83d\ude33",
+		"Si no tienes ningún problema, puedes donarme dinero para poder mantener el proyecto vivo, ya que tiene un coste mensual para mi y los usuarios.",
+		"Aunque sea tan solo 1€, ya es una ayuda, créeme. \ud83d\udcb6",
+		"A cambio y para agradecertelo, recibirás una medalla y unos cuantos objetos. \ud83e\udd17",
+		"",
+		"<i>Nota:</i> PayPal cobra tarifas por cargos con tarjeta. Asegúrate de enviar desde saldo PayPal o cuenta bancaria, y <b>para un amigo</b>.",
+		"",
+		"¡Muchísimas gracias, de verdad! <3"
+	],
 
 	'levelup_same' => 'Si, ya lo sé.',
 	'levelup_ok' => 'Ah, ya veo, así que %s ... ¡Guay!',

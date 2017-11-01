@@ -25,6 +25,7 @@ class Main extends TelegramApp\Module {
 				$this->end();
 			}
 
+			$this->alarm_cheats();
 			if($this->chat->settings('forwarding_to')){ $this->Admin->forward_to_groups(); }
 			if($this->chat->settings('antiflood')){ $this->Admin->antiflood(); }
 			if($this->chat->settings('antispam') != FALSE && $this->telegram->text_url()){ $this->Admin->antispam(); }
@@ -114,6 +115,61 @@ class Main extends TelegramApp\Module {
 				->end_row()
 			->show()
 			->text($str)
+		->send();
+
+		$this->end();
+	}
+
+	private function alarm_cheats(){
+		if(
+			$this->telegram->text_contains(["fake GPS", "fake", "fakegps", "soy fly"]) and
+			!$this->telegram->text_contains("me llamo", TRUE)
+		){
+		    if(
+				$this->user->id != CREATOR and
+				!in_array($this->user->step, ["RULES", "WELCOME", "CUSTOM_COMMAND"])
+			){
+		        // $this->analytics->event('Telegram', 'Talk cheating');
+				$str = "<b>(A) " .$this->telegram->chat->title ."</b> - " .$this->telegram->user->first_name ." @" .$this->telegram->user->username .":\n"
+						.$this->telegram->text();
+		        $this->telegram->send
+					->chat("-226115807")
+		            ->text($str, 'HTML')
+		        ->send();
+				// $bw = $pokemon->settings($telegram->chat->id, 'blackword');
+				// if(!$bw or stripos($bw, "fake") === FALSE){ return -1; }
+		    }
+		}
+	}
+
+	public function donate(){
+		// if($pokemon->command_limit("donate", $telegram->chat->id, $telegram->message, 7)){ return -1; }
+		if($this->user->settings('mute')){ $this->end(); }
+
+		if($this->chat->is_group()){
+			$str = "Si quieres ayudarme, puedes contribuir con la cantidad que quieras, aunque sea un 1€. Te prometo que merecerá la pena. <3";
+
+			$this->telegram->send
+				->inline_keyboard()
+				->row()
+					->button("Más info", "donate", "COMMAND")
+					->button("Donar", "http://donar.profoak.me/")
+				->end_row()
+			->show();
+		}else{
+			$release = strtotime("2016-07-16 14:27");
+		    $days = round((strtotime("now") - $release) / 3600 / 24);
+			$str = implode("\n", $this->strings->get('donate_text'));
+
+			$this->telegram->send
+				->inline_keyboard()
+				->row_button("Donar", "http://donar.profoak.me/")
+			->show();
+		}
+
+		$str = $this->telegram->emoji($str);
+		$this->telegram->send
+			->text_replace($str, $days, "HTML")
 		->send();
 
 		$this->end();

@@ -21,14 +21,14 @@ class Group extends TelegramApp\Module {
 			if(strlen($text) < 4){ $this->end(); }
 			if(strlen($text) > 4000){
 				$this->telegram->send
-					->text("Buah, demasiado texto! Relájate un poco anda ;)")
+					->text($this->strings->get('group_rules_too_much'))
 				->send();
 				$this->end();
 			}
 			// $this->analytics->event('Telegram', 'Set rules');
 			// $this->analytics->event('Telegram', 'Set welcome');
 
-			$this->chat->settings[strtolower($step)] = $text;
+			$this->chat->settings(strtolower($step), $text);
 			$this->user->step = NULL;
 
 			$this->telegram->send
@@ -93,25 +93,22 @@ class Group extends TelegramApp\Module {
 
 		elseif(
 			(
-				$this->telegram->text_has(["reglas", "normas"], "del grupo") or
-		        $this->telegram->text_has(['dime', 'ver'], ["las reglas", "las normas", "reglas", "normas"], TRUE) or
-		        $this->telegram->text_has(["/rules", "/normas"], TRUE)
-		    ) and
-	    	!$this->telegram->text_has(["poner", "actualizar", "redactar", "escribir", "cambiar"])
+				$this->telegram->text_has($this->strings->get('command_rules_limit')) or
+		        $this->telegram->text_command(["rules", "normas"]) and
+				$this->telegram->words() <= $this->strings->get('command_rules_limit')
+		    )
 		){
 			$this->rules();
 			$this->end();
 		}
 
 		elseif(
-			$this->telegram->words() <= 6 &&
-		    (
-		        ( $this->telegram->text_has("está") and $this->telegram->text_has("aquí") ) and
-		        ( !$this->telegram->text_has(["alguno", "alguien", "que"], ["es", "ha", "como", "está"]) ) and // Alguien está aquí? - Alguno es....
-		        ( !$this->telegram->text_contains(["desde"]) ) // , "este"
-		    )
+			$this->telegram->text_regex($this->strings->get('command_is_here')) and
+			$this->telegram->words() <= $this->strings->get('command_is_here_limit') and
+			!in_array($this->telegram->input->username, $this->strings->get('command_is_here_black'))
 		){
-
+			$this->ishere($this->telegram->input->username);
+			$this->end();
 		}
 	}
 
@@ -165,8 +162,7 @@ class Group extends TelegramApp\Module {
 		if($this->telegram->text_has("bomba de humo") and $this->user->id == CREATOR){
 			$this->telegram->send->file('sticker', 'CAADBAADFQgAAjbFNAABxSRoqJmT9U8C');
 		}
-		global $Admin;
-		return $Admin->kick($this->user->id);
+		return $this->Admin->kick($this->user->id);
 	}
 
 	public function adminlist($chat = NULL){
@@ -216,6 +212,46 @@ class Group extends TelegramApp\Module {
 	}
 
 	public function rules(){
+		if($this->telegram->text_has($this->strings->get('command_rules_write'))){
+			// Si es admin, cambiar las normas
+			if($this->chat->is_admin($this->user)){
+				$this->user->step = "RULES";
+				$this->telegram->send
+					->reply_to(TRUE)
+					->text($this->strings->get('group_rules_please_send'))
+				->send();
+				$this->end();
+			}
+		}else{
+		// Show rules
+		}
+	}
+
+	public function ishere($user = NULL){
+		if(!$this->chat->is_group()){ return NULL; }
+		if(in_array($user, $this->strings->get('command_is_here_black'))){ return NULL; }
+
+		if(is_string($user)){
+			$user = str_replace("@", "", $user);
+			$username = $this->db
+				->where('username', $user)
+			->getValue('user', 'telegramid');
+			if(!$username){
+				$this->telegram->send
+					->notification(FALSE)
+					->text($this->strings->parse('group_user_here_unknown', $user))
+				->send();
+				$this->end();
+			}
+			$user = $username;
+		}
+
+		$look = $this->telegram->user_in_chat($user, $this->chat->id);
+		$here = ($look ? "yes" : "no");
+		$this->telegram->send
+			->notification(FALSE)
+			->text($this->strings->parse('group_user_here_' .$here, '<a href="tg://user?id=' .$user .'">el usuario</a>'))
+		->send();
 
 	}
 

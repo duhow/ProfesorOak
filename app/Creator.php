@@ -29,8 +29,8 @@ class Creator extends TelegramApp\Module {
 		}
 
 		// Salir de un grupo.
-		if($this->telegram->text_has("salte de", TRUE) and $this->telegram->words() == 3){
-			$id = $this->telegram->last_word();
+		if($this->telegram->text_regex("^salte de {chatid}$")){
+			$id = $this->telegram->input->chatid;
 		    $this->telegram->send->leave_chat($id);
 			$chat = new Chat($id);
 			$chat->disable();
@@ -163,25 +163,26 @@ class Creator extends TelegramApp\Module {
 		$this->end();
 	}
 
-	// TODO
-	public function whereis(){
-		$find = $this->get_user(TRUE);
+	public function whereis($find = NULL){
+		if(empty($find)){ $find = $this->get_user(FALSE); }
+		$user = $find;
 
-		$text = "No sé quién es.";
-	    if(is_numeric($find)){
-			$groups = $this->db
-				->where('uid', $find)
-			->get('user_inchat');
-	        if($this->db->count == 0){ $text = "No lo veo por ningún lado."; }
-	        else{
-	            $text = $find;
-	            // $text .= ($pkfind ? " @" .$pkfind->telegramuser ." - " .$pkfind->username ." " .$pkfind->team ."\n" : "\n");
-	            foreach($groups as $g){
-					// $info = $pokemon->group($g);
-	                $text .= $g ."\n"; // $info->title
-	            }
-	        }
-	    }
+		if(!is_numeric($find)){
+			$user = $this->db->subQuery();
+			$user
+				->orWhere('username', $find)
+			->get('user', NULL, 'telegramid');
+		}
+
+		$groups = $this->db
+			->join('chats c', 'c.id = u.cid')
+			->where('u.uid', $user)
+		->getValue('user_inchat u', 'c.title', NULL);
+		if($this->db->count == 0){ $text = "No lo veo por ningún lado."; }
+		else{
+			$text = $find ."\n";
+			$text .= implode("\n", $groups);
+		}
 
 		$this->telegram->send
 			->text($text)
@@ -190,7 +191,7 @@ class Creator extends TelegramApp\Module {
 		$this->end();
 	}
 
-	public function flags(){
+	public function flags($user = NULL){
 		$user = $this->get_user();
 
 		$str = "No tiene.";
