@@ -459,17 +459,17 @@ class Main extends TelegramApp\Module {
 					.":abc: %s\n"
 					.":id: %s\n"
 					.":passport_control: %s\n" // del principio de ejecución.
-					.":mens: %s - %s";
+					.':mens: <a href="tg://user?id=%s">%s</a> - %s';
 			$text = $this->telegram->emoji($text);
 
 			$repl = [$this->chat->title,
 					$this->chat->id,
 					$count,
-					$this->telegram->user->id, $this->telegram->user->first_name];
+					$this->telegram->user->id, $this->telegram->user->id, $this->telegram->user->first_name];
 
 			$this->telegram->send
 				->chat(CREATOR)
-				->text_replace($text, $repl)
+				->text_replace($text, $repl, 'HTML')
 			->send();
 
 			// -----------------
@@ -713,7 +713,7 @@ class Main extends TelegramApp\Module {
 			$str = ":door: Me han echado :(\n"
 					.":id: " .$this->telegram->chat->id ."\n"
 					.":abc: " .$this->telegram->chat->title ."\n"
-					.":mens: " .$this->telegram->user->id . " - " . $this->telegram->user->first_name;
+					.":mens: " .'<a href="tg://user?id=' .$this->telegram->user->id .'">' .$this->telegram->user->id . "</a> - " . $this->telegram->user->first_name;
 			$str = $this->telegram->emoji($str);
 
 			$this->db
@@ -723,7 +723,7 @@ class Main extends TelegramApp\Module {
 			$this->telegram->send
 				->notification(TRUE)
 				->chat(CREATOR)
-				->text($str)
+				->text($str, 'HTML')
 			->send();
 
 			$this->chat->disable();
