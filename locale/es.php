@@ -356,6 +356,7 @@ return [
 	'error_chat_abandoned' => 'Este chat ha sido abandonado.',
 	'error_candy_as_stardust' => '¿Caramelos? Querrás decir polvos...',
 	'error_pokemon_does_not_exist' => 'El Pokémon mencionado no existe.',
+	'error_user_does_not_exist' => 'El usuario no existe.',
 	'error_pokemon_not_found' => 'No se han encontrado Pokemon.',
 	'error_wait_too_soon' => 'Aún no ha pasado suficiente tiempo. Espera un poco, anda. :)',
 	'error_pokestop_not_near' => 'No hay Pokeparadas por ahí cerca, o no están registradas. Pregúntalo más adelante.',

@@ -99,7 +99,7 @@ class Creator extends TelegramApp\Module {
 	}
 
 	private function user_info($id, $chat){
-		$find = $telegram->send->get_member_info($id, $chat);
+		$find = $this->telegram->send->get_member_info($id, $chat);
 
 	    $str = "Desconocido.";
 	    if($find !== FALSE){
@@ -127,7 +127,7 @@ class Creator extends TelegramApp\Module {
 	        } */
 			}
 
-			$str = $telegram->emoji($str);
+			$str = $this->telegram->emoji($str);
 	    }
 		return $str;
 	}
@@ -436,21 +436,32 @@ class Creator extends TelegramApp\Module {
 
 	    if(empty($user)){ $this->end(); }
 
-		$ret = $this->db
+		$user = $this->db
 			->where('telegramid', $user)
 			->orWhere('username', $user)
-		->update('user', ['blocked' => $value], 1);
+		->getOne('user');
+
+		if(!$user){
+			$this->telegram->send
+				->text(":x: " .$this->strings->get('error_user_does_not_exist'))
+			->send();
+			$this->end();
+		}
+
+		$ret = $this->db
+			->where('telegramid', $user['telegramid'])
+		->update('user', ['blocked' => $value]);
 
 		// Si se bloquea, especificar motivo.
 		if($value){
 			$this->user->step = "BLOCK_REASON";
-			$this->user->settings('block_user_reason', $user);
+			$this->user->settings('block_user_reason', $user['telegramid']);
 			$this->telegram->send
 				->chat($this->user->id)
 				->keyboard()
-					->button(":floppy_disk: Guardar")
+					->row_button($this->telegram->emoji(":floppy_disk:") ." Guardar")
 				->show(TRUE, TRUE)
-				->text(":question: ¿Motivo del block a $user?")
+				->text(":no_entry: ¿Motivo del block a " .$user['username'] ." - " .$user['telegramid'] ."?")
 			->send();
 		}
 
@@ -601,7 +612,7 @@ class Creator extends TelegramApp\Module {
 		$data['telegramid'] = $this->telegram->reply_target('forward')->id;
 		$data['telegramuser'] = @$this->telegram->reply_target('forward')->username;
 
-		foreach($telegram->words(TRUE) as $w){
+		foreach($this->telegram->words(TRUE) as $w){
 	        $w = trim($w);
 	        if($w[0] == "/"){ continue; }
 	        if(is_numeric($w) && $w >= 5 && $w <= 40){ $data['lvl'] = $w; }
@@ -621,7 +632,7 @@ class Creator extends TelegramApp\Module {
 
 		$check = $this->db
 			->orWhere('telegramid', $data['telegramid'])
-		->getValue('user', ['telegramid', 'username']);
+		->get('user', NULL, ['telegramid', 'username']);
 
 		// Crear objeto del usuario.
 		$newUser = new User($data['telegramid']);
@@ -680,12 +691,15 @@ class Creator extends TelegramApp\Module {
 			if(isset($data['exp']) && $newUser->exp != $data['exp']){ $changes[] = "experiencia"; }
 	        if(isset($data['team']) && $newUser->team != $data['team'] ){ $changes[] = "equipo"; }
 	        if(isset($data['username']) && $newUser->username != $data['username']){ $changes[] = "nombre"; }
-	        $str = ":ok: Cambio <b>" .implode(", ", $changes) .(isset($data['verified']) ? "</b> y <b>valido</b>!" : "</b>!");
+			$str = ":warning: Nada que cambiar.";
+			if(!empty($changes) or isset($data['verified'])){
+				$str = ":ok: Cambio <b>" .implode(", ", $changes) .(isset($data['verified']) ? "</b> y <b>valido</b>!" : "</b>!");
+			}
 	    }
 
 	    $this->telegram->send
 	        ->notification(FALSE)
-	        ->text($this->telegram->emoji($str), TRUE)
+	        ->text($this->telegram->emoji($str), 'HTML')
 	    ->send();
 	    $this->end();
 	}
