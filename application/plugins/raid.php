@@ -95,7 +95,11 @@ if($this->telegram->callback){
 		}
 		// Agregar
 		if(!$found){
-			$str[] = "- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." " .$user->username;
+			$fly = $this->pokemon->user_flags($user->telegramid, ['fly', 'gps', 'hacks']);
+			if($fly){ $fly = $this->telegram->emoji("\ud83d\udd79 "); }
+			else{ $fly = ""; }
+
+			$str[] = "- $fly" . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." " .$user->username;
 		}
 
 		$str[1] = "Hay " .(count($str) - 2) ." entrenadores:";
