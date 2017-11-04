@@ -131,10 +131,13 @@ if($this->telegram->callback){
 			$str = explode("\n", $str);
 			foreach($str as $k => $s){
 				if(strpos($s, $user->username) !== FALSE){
+					$fly = $this->pokemon->user_flags($user->telegramid, ['fly', 'gps', 'hacks']);
+					if($fly){ $fly = $this->telegram->emoji("\ud83d\udd79 "); }
+					else{ $fly = ""; }
 					if(strpos($s, $this->telegram->emoji(":ok:")) !== FALSE){
-						$str[$k] = "- " . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." " .$user->username;
+						$str[$k] = "- $fly" . $this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." " .$user->username;
 					}else{
-						$str[$k] = "- " .$this->telegram->emoji(":ok: ")  .$this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." " .$user->username;
+						$str[$k] = "- $fly" .$this->telegram->emoji(":ok: ")  .$this->telegram->emoji(":heart-" .$team[$user->team] .":") ." L" .$user->lvl ." " .$user->username;
 					}
 				}
 			}
