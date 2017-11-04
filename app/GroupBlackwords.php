@@ -32,22 +32,22 @@ class GroupBlackwords extends TelegramApp\Module {
 		if(!$this->telegram->text_contains($this->words)){ return; }
 
 		$adminchat = $this->chat->settings('admin_chat');
-	    if(!empty($adminchat)){
-	        $this->telegram->send
-	            ->message(TRUE)
-	            ->chat(TRUE)
-	            ->forward_to($adminchat)
-	        ->send();
+		if(!empty($adminchat)){
+			$this->telegram->send
+				->message(TRUE)
+				->chat(TRUE)
+				->forward_to($adminchat)
+			->send();
 
-	        /* $this->telegram->send
-	            ->chat($adminchat)
-	            ->text("Ha dicho algo malo :(")
-	        ->send(); */
-	    }else{
-	        $this->telegram->send
-	            ->text("Eh, te calmas.")
-	        ->send();
-	    }
+			/* $this->telegram->send
+				->chat($adminchat)
+				->text("Ha dicho algo malo :(")
+			->send(); */
+		}else{
+			$this->telegram->send
+				->text("Eh, te calmas.")
+			->send();
+		}
 
 		$this->end();
 	}

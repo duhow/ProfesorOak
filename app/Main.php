@@ -125,20 +125,20 @@ class Main extends TelegramApp\Module {
 			$this->telegram->text_contains(["fake GPS", "fake", "fakegps", "soy fly"]) and
 			!$this->telegram->text_contains("me llamo", TRUE)
 		){
-		    if(
+			if(
 				$this->user->id != CREATOR and
 				!in_array($this->user->step, ["RULES", "WELCOME", "CUSTOM_COMMAND"])
 			){
-		        // $this->analytics->event('Telegram', 'Talk cheating');
+				// $this->analytics->event('Telegram', 'Talk cheating');
 				$str = "<b>(A) " .$this->telegram->chat->title ."</b> - " .$this->telegram->user->first_name ." @" .$this->telegram->user->username .":\n"
 						.$this->telegram->text();
-		        $this->telegram->send
+				$this->telegram->send
 					->chat("-226115807")
-		            ->text($str, 'HTML')
-		        ->send();
+					->text($str, 'HTML')
+				->send();
 				// $bw = $pokemon->settings($telegram->chat->id, 'blackword');
 				// if(!$bw or stripos($bw, "fake") === FALSE){ return -1; }
-		    }
+			}
 		}
 	}
 
@@ -158,7 +158,7 @@ class Main extends TelegramApp\Module {
 			->show();
 		}else{
 			$release = strtotime("2016-07-16 14:27");
-		    $days = round((strtotime("now") - $release) / 3600 / 24);
+			$days = round((strtotime("now") - $release) / 3600 / 24);
 			$str = implode("\n", $this->strings->get('donate_text'));
 
 			$this->telegram->send
@@ -212,9 +212,9 @@ class Main extends TelegramApp\Module {
 		}elseif(!$this->user->verified){
 			$str = $this->telegram->emoji(":warning:") .$this->strings->get('register_hello_verify');
 			$this->telegram->send
-	        ->inline_keyboard()
-	            ->row_button($this->strings->get('verify'), "verify", TRUE)
-	        ->show();
+			->inline_keyboard()
+				->row_button($this->strings->get('verify'), "verify", TRUE)
+			->show();
 		}
 		if(!empty($str)){
 			$this->telegram->send

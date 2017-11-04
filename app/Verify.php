@@ -3,13 +3,13 @@
 class Verify extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
-	const VERIFY_OK     = 1;
+	const VERIFY_OK	 = 1;
 	const VERIFY_CHECK  = 2;
 	const VERIFY_REJECT = 3;
 	const VERIFY_REPORT = 4;
 
 	public $icons = [
-		VERIFY_OK		=> ":ok:",
+		VERIFY_OK	=> ":ok:",
 		VERIFY_CHECK	=> ":warning:",
 		VERIFY_REJECT	=> ":times:",
 		VERIFY_REPORT	=> "\u203c\ufe0f",
@@ -202,11 +202,11 @@ class Verify extends TelegramApp\Module {
 		];
 
 		$str .= $old ."  ";
-		if(!empty($left)){ $str .= "<code>          </code>$left :triangle-left: "; }
-		$str .= "<code>          </code>" .date("H:i", strtotime($verifydata->date_add)) ." :clock:";
+		if(!empty($left)){ $str .= "<code>		  </code>$left :triangle-left: "; }
+		$str .= "<code>		  </code>" .date("H:i", strtotime($verifydata->date_add)) ." :clock:";
 
 		$str .= "\n" .":arrow-up: <b>L" .$userdata->lvl ." </b>"
-			.$teamico[$userdata->team] ."<code>          </code>@" .$userdata->username;
+			.$teamico[$userdata->team] ."<code>		  </code>@" .$userdata->username;
 
 		/* if(strtolower($userdata->username) == strtolower($userdata->telegramuser)){
 			$str .= " :ok:";
@@ -232,33 +232,33 @@ class Verify extends TelegramApp\Module {
 
 			// Intentar dar un toque para hablarle por privado
 			$res = $this->telegram->send
-	            ->notification(TRUE)
-	            ->chat($this->telegram->user->id)
-	            ->text($this->strings->parse('verify_register_touch', $this->telegram->user->first_name))
-	        ->send();
+				->notification(TRUE)
+				->chat($this->telegram->user->id)
+				->text($this->strings->parse('verify_register_touch', $this->telegram->user->first_name))
+			->send();
 
-	        if(!$res){
-	            $this->telegram->send
-	                ->notification(FALSE)
-	                // ->reply_to(TRUE)
-	                ->text($this->telegram->emoji(":times: ") . $this->strings->get('verify_register_private') )
-	                ->inline_keyboard()
-	                    ->row_button($this->strings->get('verify_register_button'), "verify", TRUE)
-	                ->show()
-	            ->send();
+			if(!$res){
+				$this->telegram->send
+					->notification(FALSE)
+					// ->reply_to(TRUE)
+					->text($this->telegram->emoji(":times: ") . $this->strings->get('verify_register_private') )
+					->inline_keyboard()
+						->row_button($this->strings->get('verify_register_button'), "verify", TRUE)
+					->show()
+				->send();
 
 				$this->end();
-	        }
+			}
 		}
 
 		if($this->user->verified){
 			$this->telegram->send
-	            ->notification(TRUE)
-	            ->chat($this->telegram->user->id)
-	            ->text($this->telegram->emoji(":white_check_mark: ") . $this->strings->get('verify_already') )
-	        ->send();
+				->notification(TRUE)
+				->chat($this->telegram->user->id)
+				->text($this->telegram->emoji(":white_check_mark: ") . $this->strings->get('verify_already') )
+			->send();
 
-	        $this->end();
+			$this->end();
 		}
 
 		if(!$this->verify_check()){ $this->end(); }
@@ -266,13 +266,13 @@ class Verify extends TelegramApp\Module {
 		$str = implode("\n", $this->strings->get('verify_info'));
 
 		$this->telegram->send
-	        ->notification(TRUE)
-	        ->chat($this->telegram->user->id)
-	        ->text($this->telegram->emoji($str), "HTML")
-	        ->keyboard()
-	            ->row_button($this->strings->get("cancel"))
-	        ->show(TRUE, TRUE)
-	    ->send();
+			->notification(TRUE)
+			->chat($this->telegram->user->id)
+			->text($this->telegram->emoji($str), "HTML")
+			->keyboard()
+				->row_button($this->strings->get("cancel"))
+			->show(TRUE, TRUE)
+		->send();
 
 		$this->user->step = 'SCREENSHOT_VERIFY';
 
@@ -335,16 +335,16 @@ class Verify extends TelegramApp\Module {
 
 			$text .= $this->strings->get('verify_before_send_ready');
 
-	        $this->telegram->send
-	            ->notification(TRUE)
-	            ->chat($this->telegram->user->id)
-	            ->text($this->telegram->emoji($text), "HTML")
-	            ->keyboard()->hide(TRUE)
-	        ->send();
+			$this->telegram->send
+				->notification(TRUE)
+				->chat($this->telegram->user->id)
+				->text($this->telegram->emoji($text), "HTML")
+				->keyboard()->hide(TRUE)
+			->send();
 
 			return FALSE; // CHECK
 			// $pokemon->step($this->telegram->user->id, NULL);
-	    }
+		}
 		return TRUE; // PASS
 	}
 

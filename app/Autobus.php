@@ -14,17 +14,17 @@ class Autobus extends TelegramApp\Module {
 				$this->telegram->text_command("emtval")
 			)
 		){
-		    $num = $this->telegram->last_word(TRUE);
-		    if(!is_numeric($num)){
-		        $this->telegram->send
-		            ->text($this->telegram->emoji(":times: ") ."No has puesto el código de parada correcto!")
-		        ->send();
-		        return -1;
-		    }
+			$num = $this->telegram->last_word(TRUE);
+			if(!is_numeric($num)){
+				$this->telegram->send
+					->text($this->telegram->emoji(":times: ") ."No has puesto el código de parada correcto!")
+				->send();
+				return -1;
+			}
 
-		    $q = $this->telegram->send
-		        ->text($this->telegram->emoji(":clock: ") ."Ejecutando...")
-		    ->send();
+			$q = $this->telegram->send
+				->text($this->telegram->emoji(":clock: ") ."Ejecutando...")
+			->send();
 
 			if($this->telegram->text_command("amb")){
 				$paradas = $this->barcelona($num);
@@ -38,17 +38,17 @@ class Autobus extends TelegramApp\Module {
 				$paradas = $this->valencia($num);
 			}
 
-		    $str = "No encuentro paradas.";
-		    if(!empty($paradas)){
-		        $str = "";
-		        foreach($paradas as $parada){ $str .= $parada ."\n"; }
-		    }
-		    $this->telegram->send
-		        ->message($q['message_id'])
-		        ->chat(TRUE)
-		        ->text($str)
-		    ->edit('text');
-		    $this->end();
+			$str = "No encuentro paradas.";
+			if(!empty($paradas)){
+				$str = "";
+				foreach($paradas as $parada){ $str .= $parada ."\n"; }
+			}
+			$this->telegram->send
+				->message($q['message_id'])
+				->chat(TRUE)
+				->text($str)
+			->edit('text');
+			$this->end();
 		}
 	}
 
@@ -72,47 +72,47 @@ class Autobus extends TelegramApp\Module {
 
 	// AMBTempsBus
 	public function barcelona($codigo, $last = FALSE){
-	    $url = "http://www.ambmobilitat.cat/AMBtempsbus";
-	    $data = ['codi' => str_pad($codigo, 6, '0', STR_PAD_LEFT)];
+		$url = "http://www.ambmobilitat.cat/AMBtempsbus";
+		$data = ['codi' => str_pad($codigo, 6, '0', STR_PAD_LEFT)];
 
 		$get = $this->curlear($url, $data);
 
-	    if(!empty($get)){
-	        $get = substr($get, strpos($get, '<ul data-role='));
-	        $pos = 0;
-	        $lineas = array();
-	        while( ($pos = strpos($get, '<li>', $pos)) !== FALSE){
-	            $pos = strpos($get, '<b>', $pos) + strlen('<b>');
-	            $last = strpos($get, '</b>', $pos) - $pos;
-	            $linea = strip_tags(substr($get, $pos, $last));
-	            if(strpos($linea, "no disponible")){ return array(); } // HACK
-	            $lineas[] = $linea;
-	        }
+		if(!empty($get)){
+			$get = substr($get, strpos($get, '<ul data-role='));
+			$pos = 0;
+			$lineas = array();
+			while( ($pos = strpos($get, '<li>', $pos)) !== FALSE){
+				$pos = strpos($get, '<b>', $pos) + strlen('<b>');
+				$last = strpos($get, '</b>', $pos) - $pos;
+				$linea = strip_tags(substr($get, $pos, $last));
+				if(strpos($linea, "no disponible")){ return array(); } // HACK
+				$lineas[] = $linea;
+			}
 			// FIX La primera consulta devuelve valor nulo. Hacer segunda.
 			if(empty($lineas) && !$last){ return $this->barcelona($codigo, TRUE); }
-	        return $lineas;
-	    }
-	    return array();
+			return $lineas;
+		}
+		return array();
 	}
 
 	// AUCORSA
 	public function cordoba($codigo){
-	    $url = "http://m.aucorsa.es/action.admin_operaciones.php";
-	    $data = ['op' => 'tiempos', 'parada' => $codigo];
+		$url = "http://m.aucorsa.es/action.admin_operaciones.php";
+		$data = ['op' => 'tiempos', 'parada' => $codigo];
 		$url = $url ."?" .http_build_query($data);
 
 		$get = $this->curlear($url);
 
-	    if(!empty($get)){
-	        $json = json_decode($get, TRUE);
+		if(!empty($get)){
+			$json = json_decode($get, TRUE);
 			if($json['res'] == FALSE){ return array(); }
 			$lineas = array();
 			foreach($json['estimaciones'] as $r){
 				$lineas[] = "Linea " .$r['linea'] ." - en " .$r['minutos1'] ." min y " .$r['minutos2'] ." min.";
 			}
 			return $lineas;
-	    }
-	    return array();
+		}
+		return array();
 	}
 
 	// Titsa - Tenerife
@@ -123,8 +123,8 @@ class Autobus extends TelegramApp\Module {
 
 		$get = $this->curlear($url);
 
-	    if(!empty($get)){
-	        $json = json_decode($get, TRUE);
+		if(!empty($get)){
+			$json = json_decode($get, TRUE);
 			if($json['success'] == FALSE){ return array(); }
 			if(empty($json['lineas'])){ return array(); }
 			if($json['parada'] == FALSE){ return array(); }
@@ -133,8 +133,8 @@ class Autobus extends TelegramApp\Module {
 				$lineas[] = "Linea " .$r['id'] ." - en " .$r['tiempo'] ." min - " .$r['descripcion'];
 			}
 			return $lineas;
-	    }
-	    return array();
+		}
+		return array();
 	}
 
 	// EMT - Málaga
@@ -148,18 +148,18 @@ class Autobus extends TelegramApp\Module {
 		if(!empty($get)){
 			if(strpos($get, 'No se encontr') !== FALSE){ return array(); } // 404 Parada
 			$get = substr($get, strpos($get, '<ul data-role='));
-	        $pos = 0;
-	        $lineas = array();
-	        while( ($pos = strpos($get, '<li', $pos)) !== FALSE){
-	            $pos = strpos($get, '<span', $pos);
-	            $last = strpos($get, '</li>', $pos) - $pos;
-	            $linea = trim(strip_tags(substr($get, $pos, $last)));
+			$pos = 0;
+			$lineas = array();
+			while( ($pos = strpos($get, '<li', $pos)) !== FALSE){
+				$pos = strpos($get, '<span', $pos);
+				$last = strpos($get, '</li>', $pos) - $pos;
+				$linea = trim(strip_tags(substr($get, $pos, $last)));
 				$linea = preg_replace('/\s+/', ' ', $linea); // Remove space between
-	            $lineas[] = "Línea " .$linea;
-	        }
-	        return $lineas;
-	    }
-	    return array();
+				$lineas[] = "Línea " .$linea;
+			}
+			return $lineas;
+		}
+		return array();
 	}
 
 	// EMT - Valencia

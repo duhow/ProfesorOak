@@ -18,18 +18,18 @@ class Admin extends TelegramApp\Module {
 	public function antipalmera(){
 		if($this->telegram->is_chat_group() && $this->telegram->sticker()){
 			$palmeras = [
-		        'BQADBAADzw0AAu7oRgABumTXtan23SUC',
-		        'BQADBAAD0Q0AAu7oRgABXE1L0Qpaf_sC',
-		        'BQADBAAD0w0AAu7oRgABq22PAgABeiCcAg',
-		        // GATO
-		        'BQADBAAD4wEAAqKYZgABGO27mNGhdSUC',
-		        'BQADBAAD5QEAAqKYZgABe9jp1bTT8jcC',
-		        'BQADBAAD5wEAAqKYZgABiX1O201m5X0C',
+				'BQADBAADzw0AAu7oRgABumTXtan23SUC',
+				'BQADBAAD0Q0AAu7oRgABXE1L0Qpaf_sC',
+				'BQADBAAD0w0AAu7oRgABq22PAgABeiCcAg',
+				// GATO
+				'BQADBAAD4wEAAqKYZgABGO27mNGhdSUC',
+				'BQADBAAD5QEAAqKYZgABe9jp1bTT8jcC',
+				'BQADBAAD5wEAAqKYZgABiX1O201m5X0C',
 				// Puke Rainbow
 				'BQADBAADjAADl4mhCRp2GRnaNZ2EAg',
 				'BQADBAADpgADl4mhCfVfg6PMDlAyAg',
 				'BQADBAADqAADl4mhCVMHew7buZpwAg',
-		    ];
+			];
 			if(in_array($this->telegram->sticker(), $palmeras)){
 				if($this->user->id == CREATOR or $this->chat->is_admin($this->user)){ return NULL; }
 				if(!$this->chat->is_admin($this->telegram->bot->id)){ return NULL; }
@@ -37,7 +37,7 @@ class Admin extends TelegramApp\Module {
 					->text("¡¡PALMERAS NO!!")
 				->send();
 				return $this->kick($this->user);
-		    }
+			}
 		}
 		return FALSE;
 	}
@@ -101,8 +101,8 @@ class Admin extends TelegramApp\Module {
 
 				// TODO forward del mensaje afectado
 				$str = ":forbid: Expulsión por flood.\n"
-						.":id: " .$this->user->id ."\n"
-						.":abc: " .$this->telegram->user->first_name ." - @" .$this->user->username;
+					.":id: " .$this->user->id ."\n"
+					.":abc: " .$this->telegram->user->first_name ." - @" .$this->user->username;
 				$this->admin_chat_message($str);
 				$this->end(); // No realizar la acción ya que se ha explusado.
 			}
@@ -112,71 +112,71 @@ class Admin extends TelegramApp\Module {
 	}
 
 	public function antispam(){
-	    if($this->user->messages > 5 or $this->chat->settings('antispam') === FALSE){ return FALSE; }
+		if($this->user->messages > 5 or $this->chat->settings('antispam') === FALSE){ return FALSE; }
 
-        if(
+		if(
 			!$this->telegram->text_contains(["http", "www", ".com", ".es", ".net"]) and
-            !$this->telegram->text_contains(["telegram.me", "t.me"]) or
-            $this->telegram->text_contains(["PokéTrack", "PokeTrack"]) or
-            $this->telegram->text_contains(["maps.google", "google.com/maps", "goo.gl/maps"])
-        ){ return FALSE; } // HACK Falsos positivos.
+			!$this->telegram->text_contains(["telegram.me", "t.me"]) or
+			$this->telegram->text_contains(["PokéTrack", "PokeTrack"]) or
+			$this->telegram->text_contains(["maps.google", "google.com/maps", "goo.gl/maps"])
+		){ return FALSE; } // HACK Falsos positivos.
 		if(stripos($this->telegram->text_url(), "pokemon") !== FALSE){ return FALSE; } // HACK cosas de Pokemon oficiales u otros.
 
-        // TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
-        $this->telegram->send
-            ->message(TRUE)
-            ->chat(TRUE)
-            ->forward_to(CREATOR)
-        ->send();
+		// TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
+		$this->telegram->send
+			->message(TRUE)
+			->chat(TRUE)
+			->forward_to(CREATOR)
+		->send();
 
-        $this->telegram->send
-            ->chat(CREATOR)
-            ->text("*SPAM* del grupo " .$this->chat->id .".", TRUE)
-            ->inline_keyboard()
-                ->row_button("No es spam", "/nospam " .$this->user->id ." " .$this->chat->id, "TEXT")
-            ->show()
-        ->send();
+		$this->telegram->send
+			->chat(CREATOR)
+			->text("*SPAM* del grupo " .$this->chat->id .".", TRUE)
+			->inline_keyboard()
+				->row_button("No es spam", "/nospam " .$this->user->id ." " .$this->chat->id, "TEXT")
+			->show()
+		->send();
 
 		$this->user->flags[] = 'spam';
 		$this->user->update();
 
-        $this->telegram->send
-            ->text($this->strings->get('admin_spam_detected'), 'HTML')
-        ->send();
+		$this->telegram->send
+			->text($this->strings->get('admin_spam_detected'), 'HTML')
+		->send();
 
-        $this->ban($this->user);
+		$this->ban($this->user);
 		$this->end();
 	}
 
 	public function antiafk(){
 		$antiafk = $this->chat->settings('antiafk');
 		if(!is_numeric($antiafk) or $antiafk <= 1){ $antiafk = 5; }
-	    $except = [$this->telegram->bot->id, $this->telegram->user->id];
+		$except = [$this->telegram->bot->id, $this->telegram->user->id];
 
-	    $query = $this->db
-	        // ->select(['uid', 'register_date'])
-	        ->where('cid', $this->chat->id)
-	        ->where('messages', 0)
-	        ->where('register_date = last_date')
-	        ->where('register_date IS NOT NULL')
-	        ->where("DATE_ADD(register_date, INTERVAL $antiafk MINUTE) < NOW()")
-	        ->where('uid', $except, 'NOT IN')
-	    ->getOne('user_inchat');
+		$query = $this->db
+			// ->select(['uid', 'register_date'])
+			->where('cid', $this->chat->id)
+			->where('messages', 0)
+			->where('register_date = last_date')
+			->where('register_date IS NOT NULL')
+			->where("DATE_ADD(register_date, INTERVAL $antiafk MINUTE) < NOW()")
+			->where('uid', $except, 'NOT IN')
+		->getOne('user_inchat');
 
-	    if(!empty($query)){
-	        $afk = (object) $query;
+		if(!empty($query)){
+			$afk = (object) $query;
 
-	        $q = $this->kick($afk->uid);
-	        if($q !== FALSE){
-	            // $pokemon->user_delgroup($afk->uid, $this->telegram->chat->id);
+			$q = $this->kick($afk->uid);
+			if($q !== FALSE){
+				// $pokemon->user_delgroup($afk->uid, $this->telegram->chat->id);
 				$str = ":warning: AntiAFK Newbie\n"
 						.":id: " .$afk->uid ."\n"
 						.":calendar_spiral: " .$afk->register_date;
 
 				$str = $this->telegram->emoji($str);
 				$this->admin_chat_message($str);
-	        }
-	    }
+			}
+		}
 	}
 
 	public function antinoavatar(){

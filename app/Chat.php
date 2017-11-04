@@ -202,7 +202,7 @@ class Chat extends TelegramApp\Chat {
 			$ids = $this->db->insertMulti('user_admins', $data);
 			if(!$ids) {
 				// TODO DEBUG
-    			echo 'insert failed: ' . $this->db->getLastError();
+				echo 'insert failed: ' . $this->db->getLastError();
 			}
 		}else{
 			$admins = array_column($query, 'uid');

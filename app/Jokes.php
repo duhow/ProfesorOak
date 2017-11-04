@@ -108,7 +108,7 @@ class Jokes extends TelegramApp\Module {
 
 		elseif(
 			( $this->telegram->text_has(["necesitas", "necesitáis"], ["novio", "un novio", "novia", "una novia", "pareja", "una pareja", "follar"]) ) or
-		    ( $this->telegram->text_has("Tengo", TRUE) && $this->telegram->words() == 2 && !is_numeric($this->telegram->last_word()) )
+			( $this->telegram->text_has("Tengo", TRUE) && $this->telegram->words() == 2 && !is_numeric($this->telegram->last_word()) )
 		){
 			$word = "Novia";
 			if($this->telegram->text_has("Tengo", TRUE)){ $word = $this->telegram->last_word(); }
@@ -351,12 +351,12 @@ class Jokes extends TelegramApp\Module {
 
 	public function drama_spanish(){
 		$drama = [
-	        'BQADAwADXgADVC-4BxFsybPmJZnnAg', // Judges you in Spanish
-	        'BQADAwADWAADVC-4B-5sJxB9W3QUAg', // Cries in Spanish
-	        'BQADAwADaAADVC-4B-Sq7oqcxWkyAg', // Screams in Spanish
-	        'BQADAwADxwADVC-4BxbymhHL_2iYAg', // Gets nervous in Spanish
-	    ];
-	    $n = mt_rand(0, count($drama) - 1);
+			'BQADAwADXgADVC-4BxFsybPmJZnnAg', // Judges you in Spanish
+			'BQADAwADWAADVC-4B-5sJxB9W3QUAg', // Cries in Spanish
+			'BQADAwADaAADVC-4B-Sq7oqcxWkyAg', // Screams in Spanish
+			'BQADAwADxwADVC-4BxbymhHL_2iYAg', // Gets nervous in Spanish
+		];
+		$n = mt_rand(0, count($drama) - 1);
 		return $this->send_sticker($drama[$n], 'Drama');
 	}
 

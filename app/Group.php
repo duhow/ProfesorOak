@@ -58,7 +58,7 @@ class Group extends TelegramApp\Module {
 
 		elseif(
 			$this->telegram->text_command("uv") or
-		    (
+			(
 				$this->telegram->text_regex($this->strings->get('command_user_count')) and
 				$this->telegram->text_regex($this->strings->get('command_user_count_unverified'))
 			)
@@ -94,9 +94,9 @@ class Group extends TelegramApp\Module {
 		elseif(
 			(
 				$this->telegram->text_has($this->strings->get('command_rules_limit')) or
-		        $this->telegram->text_command(["rules", "normas"]) and
+				$this->telegram->text_command(["rules", "normas"]) and
 				$this->telegram->words() <= $this->strings->get('command_rules_limit')
-		    )
+			)
 		){
 			$this->rules();
 			$this->end();
@@ -145,17 +145,17 @@ class Group extends TelegramApp\Module {
 
 		// if($pokemon->command_limit("count", $telegram->chat->id, $telegram->message, 10)){ return FALSE; }
 
-	    $str = "Veo a $members ($total) y conozco " .array_sum($users) ." (" .round((array_sum($users) / $total) * 100)  ."%) :\n"
-	            .":heart-yellow: " .$users["Y"] ." "
-	            .":heart-red: " .$users["R"] ." "
-	            .":heart-blue: " .$users["B"] ."\n"
-	            ."Faltan: " .($total - array_sum($users));
-	    $str = $this->telegram->emoji($str);
+		$str = "Veo a $members ($total) y conozco " .array_sum($users) ." (" .round((array_sum($users) / $total) * 100)  ."%) :\n"
+				.":heart-yellow: " .$users["Y"] ." "
+				.":heart-red: " .$users["R"] ." "
+				.":heart-blue: " .$users["B"] ."\n"
+				."Faltan: " .($total - array_sum($users));
+		$str = $this->telegram->emoji($str);
 
-	    return $this->telegram->send
-	        ->notification(FALSE)
-	        ->text($str)
-	    ->send();
+		return $this->telegram->send
+			->notification(FALSE)
+			->text($str)
+		->send();
 	}
 
 	public function autokick(){
@@ -179,12 +179,12 @@ class Group extends TelegramApp\Module {
 	public function abandon(){
 		$abandon = $this->chat->settings('abandon');
 		if($abandon){
-		    if(json_decode($abandon) != NULL){ $abandon = json_decode($abandon); }
-		    $str = ($abandon == TRUE ? "Este chat ha sido abandonado." : $abandon);
+			if(json_decode($abandon) != NULL){ $abandon = json_decode($abandon); }
+			$str = ($abandon == TRUE ? "Este chat ha sido abandonado." : $abandon);
 
-		    $this->telegram->send
-		        ->text($str)
-		    ->send();
+			$this->telegram->send
+				->text($str)
+			->send();
 
 			$this->end();
 		}
@@ -280,20 +280,20 @@ class Group extends TelegramApp\Module {
 
 		$commands = $this->chat->settings('custom_commands');
 		if(!$commands or !empty($this->user->step)){ return FALSE; }
-	    // $commands = unserialize($commands);
-	    if(is_array($commands)){
-	        foreach($commands as $word => $action){
-	            if($this->telegram->text_has($word, TRUE)){
-	                $content = current($action);
-	                $action = key($action);
-	                if($action == "text"){
-	                    $this->telegram->send->text(json_decode($content))->send();
-	                }else{
-	                    $this->telegram->send->file($action, $content);
-	                }
-	                $this->end();
-	            }
-	        }
-	    }
+		// $commands = unserialize($commands);
+		if(is_array($commands)){
+			foreach($commands as $word => $action){
+				if($this->telegram->text_has($word, TRUE)){
+					$content = current($action);
+					$action = key($action);
+					if($action == "text"){
+						$this->telegram->send->text(json_decode($content))->send();
+					}else{
+						$this->telegram->send->file($action, $content);
+					}
+					$this->end();
+				}
+			}
+		}
 	}
 }
