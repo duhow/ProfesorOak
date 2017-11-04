@@ -19,9 +19,9 @@ class GameGeneral extends TelegramApp\Module {
 			$this->end();
 		}elseif(
 			( $this->telegram->text_has($this->strings->get_multi('command_game_rps', 0)) and // Piedra
-		    $this->telegram->text_has($this->strings->get_multi('command_game_rps', 1)) and   // Papel
-		    $this->telegram->text_contains($this->strings->get_multi('command_game_rps', 2)) ) or // Tijera
-		    $this->telegram->text_command(["rps", "rpsls"])
+			$this->telegram->text_has($this->strings->get_multi('command_game_rps', 1)) and   // Papel
+			$this->telegram->text_contains($this->strings->get_multi('command_game_rps', 2)) ) or // Tijera
+			$this->telegram->text_command(["rps", "rpsls"])
 		){
 			$this->rps();
 			$this->end();
@@ -40,7 +40,7 @@ class GameGeneral extends TelegramApp\Module {
 	public function dado($num = 6, $display = TRUE){
 		// $this->tracking->event('Telegram', 'Games', 'Dice');
 
-	    if(!is_numeric($num) or ($num < 0 or $num > 1000)){ $num = 6; } // default MAX
+		if(!is_numeric($num) or ($num < 0 or $num > 1000)){ $num = 6; } // default MAX
 		$dice = mt_rand(1,$num);
 		if($display){
 			$this->telegram->send
@@ -54,9 +54,9 @@ class GameGeneral extends TelegramApp\Module {
 	public function rps($ls = FALSE){
 		// $this->tracking->event('Telegram', 'Games', 'RPS');
 
-	    $rps = ["Piedra", "Papel", "Tijera"];
-	    if($this->telegram->text_contains(["lagarto", "/rpsls"]) or $ls === TRUE){ $rps[] = "Lagarto"; }
-	    if($this->telegram->text_contains(["spock", "/rpsls"]) or $ls === TRUE){ $rps[] = "Spock"; }
+		$rps = ["Piedra", "Papel", "Tijera"];
+		if($this->telegram->text_contains(["lagarto", "/rpsls"]) or $ls === TRUE){ $rps[] = "Lagarto"; }
+		if($this->telegram->text_contains(["spock", "/rpsls"]) or $ls === TRUE){ $rps[] = "Spock"; }
 		$this->telegram->send
 			->text("*" .$rps[mt_rand(0, count($rps) - 1)] ."!*")
 		->send();
@@ -67,8 +67,8 @@ class GameGeneral extends TelegramApp\Module {
 	public function coin(){
 		// $this->tracking->event('Telegram', 'Games', 'Coin');
 
-	    $n = mt_rand(0, 99);
-	    $flip = ["heads", "tails"];
+		$n = mt_rand(0, 99);
+		$flip = ["heads", "tails"];
 
 		$coin = ($n % 2);
 		$this->telegram->send

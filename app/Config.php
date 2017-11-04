@@ -69,10 +69,10 @@ class Config extends TelegramApp\Module {
 					.":ok: $key -";
 			$str = $this->telegram->emoji($str);
 			$str .= " " .json_encode($value);
-		    $this->telegram->send
-		        ->chat(CREATOR)
-		        ->text($str)
-		    ->send();
+			$this->telegram->send
+				->chat(CREATOR)
+				->text($str)
+			->send();
 		}
 	}
 
@@ -172,116 +172,116 @@ class Config extends TelegramApp\Module {
 			else{ $can[] = $this->strings->get('config_' .$set); }
 		}
 
-	    if(empty($can)){
-	        $last = array_pop($cant);
+		if(empty($can)){
+			$last = array_pop($cant);
 			$str = $this->strings->parse('config_cant_all', [implode(", ", $cant), $last]);
-	    }elseif(empty($cant)){
-	        $last = array_pop($can);
+		}elseif(empty($cant)){
+			$last = array_pop($can);
 			$str = $this->strings->parse('config_can_all', [implode(", ", $can), $last]);
-	    }else{
-	        $last = NULL;
-	        if(count($can) > 1){ $last = array_pop($can); }
-	        $str = "Se puede " .implode(", ", $can) .($last ? " y $last, " : ", ");
+		}else{
+			$last = NULL;
+			if(count($can) > 1){ $last = array_pop($can); }
+			$str = "Se puede " .implode(", ", $can) .($last ? " y $last, " : ", ");
 
-	        $last = NULL;
-	        if(count($cant) > 1){ $last = array_pop($cant); }
-	        $str .= "pero no " .implode(", ", $cant) .($last ? " ni $last." : ".");
-	    }
+			$last = NULL;
+			if(count($cant) > 1){ $last = array_pop($cant); }
+			$str .= "pero no " .implode(", ", $cant) .($last ? " ni $last." : ".");
+		}
 
 		$opts[] = $str;
-	    // ----------------
-	    $s = $chat->settings('antispam');
-	    if($s === NULL){ $s = TRUE; }
-	    $str = $this->strings->get('config_antispam_' .($s ? "on" : "off"));
-
-	    $s = $chat->settings('antiflood');
-	    if($s > 0){
-	        $str .= $this->strings->parse('config_antiflood', $s);
-	        if($chat->settings('antiflood_ban') and $admin){
-	            $str .= $this->strings->parse('config_antiflood_ban');
-	        }
-	    }
-
-	    $str .= ".";
-
-	    $opts[] = $str;
-	    // ----------------
-	    $s = $chat->settings('custom_commands');
-	    $str = $this->strings->get('config_custom_commands_off');
-
-	    if($s){
-	        $s = unserialize($s);
-	        $str = $this->strings->parse('config_custom_commands_on', count($s));
-	        if(count($s) > 9){
-	            $str .= $this->strings->get('config_custom_commands_too_much');
-	        }
-	    }
-
-	    $opts[] = $str;
-	    // ----------------
-	    $s = $chat->settings('blackword');
-	    $str = $this->strings->get('config_blackword_off');
-
-	    if($s){
-	        $s = explode(",", $s);
-	        $str = $this->strings->parse('config_blackword_on', count($s));
-	    }
-
-	    $opts[] = $str;
 		// ----------------
-	    $str = "";
+		$s = $chat->settings('antispam');
+		if($s === NULL){ $s = TRUE; }
+		$str = $this->strings->get('config_antispam_' .($s ? "on" : "off"));
 
-	    if($chat->settings('shutup')){
-	        $str = $this->strings->get('config_shutup');
-	    }
-	    $opts[] = $str;
+		$s = $chat->settings('antiflood');
+		if($s > 0){
+			$str .= $this->strings->parse('config_antiflood', $s);
+			if($chat->settings('antiflood_ban') and $admin){
+				$str .= $this->strings->parse('config_antiflood_ban');
+			}
+		}
+
+		$str .= ".";
+
+		$opts[] = $str;
 		// ----------------
-	    $str = $this->strings->get('config_pole_off');
+		$s = $chat->settings('custom_commands');
+		$str = $this->strings->get('config_custom_commands_off');
 
-	    if($chat->settings('pole')){
-	        // $members = $pokemon->group_users_active($chat, TRUE);
+		if($s){
+			$s = unserialize($s);
+			$str = $this->strings->parse('config_custom_commands_on', count($s));
+			if(count($s) > 9){
+				$str .= $this->strings->get('config_custom_commands_too_much');
+			}
+		}
+
+		$opts[] = $str;
+		// ----------------
+		$s = $chat->settings('blackword');
+		$str = $this->strings->get('config_blackword_off');
+
+		if($s){
+			$s = explode(",", $s);
+			$str = $this->strings->parse('config_blackword_on', count($s));
+		}
+
+		$opts[] = $str;
+		// ----------------
+		$str = "";
+
+		if($chat->settings('shutup')){
+			$str = $this->strings->get('config_shutup');
+		}
+		$opts[] = $str;
+		// ----------------
+		$str = $this->strings->get('config_pole_off');
+
+		if($chat->settings('pole')){
+			// $members = $pokemon->group_users_active($chat, TRUE);
 			$members = 11; // TODO
-	        $str = $this->strings->get('config_pole_unavailable');
-	        if($members > 6){
-	            $str = $this->strings->get('config_pole_on');
-	        }
-	    }
-	    $opts[] = $str;
-	    // ----------------
-	    $str = $this->strings->get('config_related_groups_none');
-	    $can = array();
+			$str = $this->strings->get('config_pole_unavailable');
+			if($members > 6){
+				$str = $this->strings->get('config_pole_on');
+			}
+		}
+		$opts[] = $str;
+		// ----------------
+		$str = $this->strings->get('config_related_groups_none');
+		$can = array();
 
-	    if($chat->settings('admin_chat')){ $can[] = "administrativo"; }
-	    if($chat->settings('offtopic_chat')){ $can[] = "offtopic"; }
-	    if($chat->settings('pair_team_Y')){ $can[] = $this->strings->get('team_instinct_color'); }
-	    if($chat->settings('pair_team_R')){ $can[] = $this->strings->get('team_valor_color'); }
-	    if($chat->settings('pair_team_B')){ $can[] = $this->strings->get('team_mystic_color'); }
+		if($chat->settings('admin_chat')){ $can[] = "administrativo"; }
+		if($chat->settings('offtopic_chat')){ $can[] = "offtopic"; }
+		if($chat->settings('pair_team_Y')){ $can[] = $this->strings->get('team_instinct_color'); }
+		if($chat->settings('pair_team_R')){ $can[] = $this->strings->get('team_valor_color'); }
+		if($chat->settings('pair_team_B')){ $can[] = $this->strings->get('team_mystic_color'); }
 
-	    if(count($can) == 1){
-	        $str = $this->strings->parse('config_related_groups_one', $can[0]);
-	    }elseif(count($can) > 1){
-	        $last = array_pop($can);
-	        for($i = 0; $i < count($can); $i++){ $can[$i] = $this->strings->parse('config_related_group', $can[$i]); }
+		if(count($can) == 1){
+			$str = $this->strings->parse('config_related_groups_one', $can[0]);
+		}elseif(count($can) > 1){
+			$last = array_pop($can);
+			for($i = 0; $i < count($can); $i++){ $can[$i] = $this->strings->parse('config_related_group', $can[$i]); }
 
-	        $str = $this->strings->parse('config_related_groups_many', [implode(", ", $can), $last]);
-	    }
+			$str = $this->strings->parse('config_related_groups_many', [implode(", ", $can), $last]);
+		}
 
-	    $opts[] = $str;
-	    // ----------------
-	    $str = "";
+		$opts[] = $str;
+		// ----------------
+		$str = "";
 
-	    $link = ($chat->settings('link_chat') ? "1" : "0");
-	    $loc = ($chat->settings('location') ? "1" : "0");
+		$link = ($chat->settings('link_chat') ? "1" : "0");
+		$loc = ($chat->settings('location') ? "1" : "0");
 
 		$str = $this->strings->get('config_linkloc_' .$link.$loc);
 
-	    $opts[] = $str;
+		$opts[] = $str;
 		// ----------------
 
 
 		$str = "";
 		foreach($opts as $t){
-	        if(empty(trim($t))){ continue; }
+			if(empty(trim($t))){ continue; }
 			$str .= "$t\n";
 		}
 

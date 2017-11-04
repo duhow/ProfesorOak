@@ -70,37 +70,37 @@ class GamePole extends TelegramApp\Module {
 
 	public function polerank(){
 		$poleuser = $this->chat->settings('pole_user');
-	    $pole = $this->chat->settings('pole');
+		$pole = $this->chat->settings('pole');
 
-	    if($pole == FALSE){ return; }
-	    if($pole == NULL or ($pole === TRUE or $pole === 1)){
-	        $this->telegram->send
-	            ->text("Nadie ha hecho la *pole*.", TRUE)
-	        ->send();
-	        $this->end();
-	    }
+		if($pole == FALSE){ return; }
+		if($pole == NULL or ($pole === TRUE or $pole === 1)){
+			$this->telegram->send
+				->text("Nadie ha hecho la *pole*.", TRUE)
+			->send();
+			$this->end();
+		}
 
-	    // $pole = unserialize($pole);
-	    // $poleuser = unserialize($poleuser);
+		// $pole = unserialize($pole);
+		// $poleuser = unserialize($poleuser);
 
-	    $str = $this->telegram->emoji(":warning:") ." *Pole ";
-	    $str .= ($this->chat->settings('pole_hardcore') ? "de las " .date("H", $pole[0]) ."h" : "del " .date("d", $pole[0])) ."*:\n\n";
+		$str = $this->telegram->emoji(":warning:") ." *Pole ";
+		$str .= ($this->chat->settings('pole_hardcore') ? "de las " .date("H", $pole[0]) ."h" : "del " .date("d", $pole[0])) ."*:\n\n";
 
 		$users = $this->points(array_values($poleuser), FALSE);
-	    foreach($users as $n => $u){
-	        $ut = $this->telegram->emoji(":question-red:");
-	        $points = NULL;
-	        if(!empty($u)){
-	            $ut = (!empty($u->username) ? $u->username : $u->telegramuser);
-	            $points = $u->pole;
-	        }
+		foreach($users as $n => $u){
+			$ut = $this->telegram->emoji(":question-red:");
+			$points = NULL;
+			if(!empty($u)){
+				$ut = (!empty($u->username) ? $u->username : $u->telegramuser);
+				$points = $u->pole;
+			}
 
-	        $str .= $this->telegram->emoji(":" .($n + 1) .": ") .$ut .($points ? " (*$points*)" : "") ."\n";
-	    }
+			$str .= $this->telegram->emoji(":" .($n + 1) .": ") .$ut .($points ? " (*$points*)" : "") ."\n";
+		}
 
-	    $this->telegram->send
-	        ->text($str, TRUE)
-	    ->send();
+		$this->telegram->send
+			->text($str, TRUE)
+		->send();
 		$this->end();
 	}
 
