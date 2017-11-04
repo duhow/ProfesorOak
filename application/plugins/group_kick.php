@@ -221,8 +221,8 @@ if(
 			$this->config->item('telegram_bot_id')]
 		)){ continue; }
 
-		// $q = $this->telegram->send->ban_until("+1 minute", $user, $chat);
-		$q = $this->telegram->send->kick($user, $chat);
+		$q = $this->telegram->send->ban_until("+1 minute", $user, $chat);
+		// $q = $this->telegram->send->kick($user, $chat);
 		if($q !== FALSE){
 			$this->pokemon->user_delgroup($user, $chat);
 			$c++;
