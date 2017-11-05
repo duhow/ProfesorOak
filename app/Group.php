@@ -5,37 +5,41 @@ class Group extends TelegramApp\Module {
 
 	public function run(){
 		if(!$this->chat->is_group()){ return; }
-		if($this->user->step != NULL){ $this->step(); }
+		if($this->user->step){
+			$method = "step_" .strtolower($this->user->step);
+			if(method_exists($this, $method) and is_callable([$this, $method])){
+				$this->$method();
+			}
+		}
 		parent::run();
 	}
 
-	protected function step(){
-		$step = $this->user->step;
-		if($step == "RULES" or $step == "WELCOME"){
-			if(!$this->chat->is_admin($this->user->id)){
-				$this->user->step = NULL;
-				$this->end();
-			}
-
-			$text = $this->telegram->text_encoded();
-			if(strlen($text) < 4){ $this->end(); }
-			if(strlen($text) > 4000){
-				$this->telegram->send
-					->text($this->strings->get('group_rules_too_much'))
-				->send();
-				$this->end();
-			}
-			// $this->analytics->event('Telegram', 'Set rules');
-			// $this->analytics->event('Telegram', 'Set welcome');
-
-			$this->chat->settings(strtolower($step), $text);
+	// ALIAS
+	private function step_rules(){ return $this->step_welcome(); }
+	private function step_welcome(){
+		if(!$this->chat->is_admin($this->user->id)){
 			$this->user->step = NULL;
+			$this->end();
+		}
 
+		$text = $this->telegram->text_encoded();
+		if(strlen($text) < 4){ $this->end(); }
+		if(strlen($text) > 4000){
 			$this->telegram->send
-				->text("Hecho!")
+				->text($this->strings->get('group_rules_too_much'))
 			->send();
 			$this->end();
 		}
+		// $this->analytics->event('Telegram', 'Set rules');
+		// $this->analytics->event('Telegram', 'Set welcome');
+
+		$this->chat->settings(strtolower($this->user->step), $text);
+		$this->user->step = NULL;
+
+		$this->telegram->send
+			->text("Hecho!")
+		->send();
+		$this->end();
 	}
 
 	protected function hooks(){
@@ -117,23 +121,21 @@ class Group extends TelegramApp\Module {
 		if(empty($chat)){ $chat = $this->chat->id; }
 
 		$total = $this->telegram->send->get_members_count($chat);
-		$query = $this->db
+		$members = $this->db
 			->where('cid', $chat)
-		->get('user_inchat');
-		$members = $this->db->count;
+		->getValue('user_inchat', 'count(*)');
 
-		$sels = [
-			"SUM(if(team = 'Y', 1, 0)) AS 'Y'",
-			"SUM(if(team = 'R', 1, 0)) AS 'R'",
-			"SUM(if(team = 'B', 1, 0)) AS 'B'",
-			// "COUNT(team) AS 'Total'"
-		];
+		$sels = array();
+		foreach(['Y', 'B', 'R'] as $team){
+			$sels[] = "SUM(IF(team = '$team', 1, 0)) AS '$team'";
+		}
 
 		$users = $this->db
-			->join("user_inchat", "user.telegramid = user_inchat.uid")
-			->where('user_inchat.cid', $chat)
-			->where('user.telegramid', ['NOT IN' => [$this->telegram->bot->id]])
-		->get('user', implode(", ", $sels)); // TODO check
+			->join("user_inchat c", "u.telegramid = c.uid")
+			->where('c.cid', $chat)
+			->where('u.telegramid', [$this->telegram->bot->id], 'NOT IN')
+		->get('user u', NULL, $sels);
+		$users = current($users); // Seleccionar primera row [0].
 
 		if(!$say){
 			return (object) [
@@ -145,16 +147,15 @@ class Group extends TelegramApp\Module {
 
 		// if($pokemon->command_limit("count", $telegram->chat->id, $telegram->message, 10)){ return FALSE; }
 
-		$str = "Veo a $members ($total) y conozco " .array_sum($users) ." (" .round((array_sum($users) / $total) * 100)  ."%) :\n"
+		$str = $this->strings->parse('group_count_result', [$members, $total, array_sum($users), round((array_sum($users) / $total) * 100)]) ."\n"
 				.":heart-yellow: " .$users["Y"] ." "
-				.":heart-red: " .$users["R"] ." "
-				.":heart-blue: " .$users["B"] ."\n"
-				."Faltan: " .($total - array_sum($users));
-		$str = $this->telegram->emoji($str);
+				.":heart-red: "    .$users["R"] ." "
+				.":heart-blue: "   .$users["B"] ."\n"
+				.$this->strings->parse('group_count_result_left', ($total - array_sum($users)));
 
 		return $this->telegram->send
 			->notification(FALSE)
-			->text($str)
+			->text($this->telegram->emoji($str))
 		->send();
 	}
 
@@ -180,7 +181,7 @@ class Group extends TelegramApp\Module {
 		$abandon = $this->chat->settings('abandon');
 		if($abandon){
 			if(json_decode($abandon) != NULL){ $abandon = json_decode($abandon); }
-			$str = ($abandon == TRUE ? "Este chat ha sido abandonado." : $abandon);
+			$str = ($abandon == TRUE ? $this->strings->get('error_chat_abandoned') : $abandon);
 
 			$this->telegram->send
 				->text($str)
@@ -246,11 +247,12 @@ class Group extends TelegramApp\Module {
 			$user = $username;
 		}
 
-		$look = $this->telegram->user_in_chat($user, $this->chat->id);
+		$look = $this->telegram->user_in_chat($user, $this->chat->id, TRUE);
 		$here = ($look ? "yes" : "no");
+		$linkname = ($here ? '<a href="tg://user?id=' .$look->user->id .'">' .strval($look->user) .'</a>' : "");
 		$this->telegram->send
 			->notification(FALSE)
-			->text($this->strings->parse('group_user_here_' .$here, '<a href="tg://user?id=' .$user .'">el usuario</a>'))
+			->text($this->strings->parse('group_user_here_' .$here, $linkname))
 		->send();
 
 	}
