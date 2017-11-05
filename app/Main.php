@@ -122,15 +122,20 @@ class Main extends TelegramApp\Module {
 
 	private function alarm_cheats(){
 		if(
-			$this->telegram->text_contains(["fake GPS", "fake", "fakegps", "soy fly"]) and
+			$this->telegram->text_contains(["fake GPS", "fake", "fakegps", "soy fly", "voy volando", "con fly", "con el fly"]) and
 			!$this->telegram->text_contains("me llamo", TRUE)
 		){
 			if(
 				$this->user->id != CREATOR and
 				!in_array($this->user->step, ["RULES", "WELCOME", "CUSTOM_COMMAND"])
 			){
+				$link = $this->db
+					->where('uid', $this->chat->id)
+					->where('type', 'link_chat')
+				->getValue('settings', 'value');
 				// $this->analytics->event('Telegram', 'Talk cheating');
-				$str = "<b>(A) " .$this->telegram->chat->title ."</b> - " .$this->telegram->user->first_name ." @" .$this->telegram->user->username .":\n"
+				$str = $this->telegram->emoji(":bangbang: ") .'<a href="' .$this->telegram->grouplink($link, TRUE) .'">' .$this->telegram->chat->title ."</a> - "
+						.'<a href="tg://user?id=' .$this->telegram->user->id .'">' .strval($this->telegram->user) .'</a>' .":\n"
 						.$this->telegram->text();
 				$this->telegram->send
 					->chat("-226115807")

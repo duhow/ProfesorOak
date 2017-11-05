@@ -58,6 +58,10 @@ class Creator extends TelegramApp\Module {
 		if($this->telegram->text_command("r")){
 			$this->register();
 		}
+
+		if($this->telegram->text_command("ui")){
+			$this->uinfo();
+		}
 	}
 
 	private function get_user($onlyid = FALSE, $wordpos = 2){
@@ -83,7 +87,6 @@ class Creator extends TelegramApp\Module {
 		$this->end();
 	}
 
-	public function ui(){ return $this->uinfo(); }
 	public function uinfo(){
 		$u = $this->get_user(FALSE);
 
@@ -106,7 +109,7 @@ class Creator extends TelegramApp\Module {
 	        $str = $find['user']['id'] . " - " .$find['user']['first_name'] ." " .$find['user']['last_name'] ." ";
 	        if(in_array($find['status'], ["administrator", "creator"])){ $str .= ":star:"; }
 	        elseif(in_array($find['status'], ["left"])){ $str .= ":door:"; }
-	        elseif(in_array($find['status'], ["kicked"])){ $str .= ":forbid:"; }
+	        elseif(in_array($find['status'], ["kicked"])){ $str .= ":no_entry:"; }
 	        else{ $str .= ":multiuser:"; }
 
 	        if(!$pk){ $str .= " :question-red:"; }
@@ -184,7 +187,7 @@ class Creator extends TelegramApp\Module {
 	}
 
 	public function whereis($find = NULL){
-		if(empty($find)){ $find = $this->get_user(FALSE); }
+		if(empty($find)){ $find = $this->get_user(TRUE); }
 		$user = $find;
 
 		if(!is_numeric($find)){
@@ -197,15 +200,32 @@ class Creator extends TelegramApp\Module {
 		$groups = $this->db
 			->join('chats c', 'c.id = u.cid')
 			->where('u.uid', $user)
-		->getValue('user_inchat u', 'c.title', NULL);
+		->get('user_inchat u', NULL, 'c.id, c.title');
 		if($this->db->count == 0){ $text = "No lo veo por ningún lado."; }
 		else{
+			$groups = array_column($groups, 'title', 'id');
+			$links = $this->db
+				->where('uid', array_keys($groups), 'IN')
+				->where('type', 'link_chat')
+			->get('settings', NULL, 'uid, value');
+			if($links){ $links = array_column($links, 'value', 'uid'); }
+			$user = $this->telegram->send->get_chat($find);
+
 			$text = $find ."\n";
-			$text .= implode("\n", $groups);
+			if($user){
+				$user = new \Telegram\User($user);
+				$text = '<a href="tg://user?id=' .$user->id .'">' .$user->id .'</a> - ' .strval($user) .' ' .($user->username ? '@' .$user->username : '') ."\n";
+			}
+			foreach($groups as $id => $name){
+				if(isset($links[$id])){ $text .= '<a href="' .$this->telegram->grouplink($links[$id], TRUE) .'">' .$name .'</a>'; }
+				else{ $text .= $name; }
+				$text .= "\n";
+			}
 		}
 
 		$this->telegram->send
-			->text($text)
+			->disable_web_page_preview(TRUE)
+			->text($text, 'HTML')
 		->send();
 
 		$this->end();
@@ -456,6 +476,7 @@ class Creator extends TelegramApp\Module {
 		if($value){
 			$this->user->step = "BLOCK_REASON";
 			$this->user->settings('block_user_reason', $user['telegramid']);
+			$this->user->settings('block_user_reason_waiting', TRUE);
 			$this->telegram->send
 				->chat($this->user->id)
 				->keyboard()
@@ -476,12 +497,18 @@ class Creator extends TelegramApp\Module {
 		if(empty($target) or in_array(strtolower($target), ["stop", "off", "false"])){
 			// Ver si estaba en modo de hablar.
 			if($this->user->settings('speak')){
-				$this->user->settings('speak_last', $this->user->settings('speak'));
+				// Eliminar forwarding.
+				$target = $this->user->settings('speak');
+				$targetchat = new Chat($target);
+				$targetchat->settings('forward_interactive', "DELETE");
+
+				$this->user->settings('speak_last', $target);
 				$this->user->settings('speak', "DELETE");
 				$this->user->step = NULL;
 		        $this->telegram->send
-		            ->text($this->telegram->emoji(":forbid: Chat detenido."))
+		            ->text($this->telegram->emoji(":no_entry: Chat detenido."))
 		        ->send();
+				$this->end();
 			}elseif($this->user->settings('speak_last') and empty($target)){
 				// Hablar con el último que estaba.
 				return $this->speak($this->user->settings('speak_last'));
@@ -490,7 +517,10 @@ class Creator extends TelegramApp\Module {
 
 		// Vale, pues vamos a hablar!
 		// Si es supergrupo pero le falta el negativo.
-		if(is_numeric($target) and strlen($target) > 11 and $target < 0){
+		if(
+			is_numeric($target) and
+			strlen($target) > 11 and $target > 0
+		){
 			$target = "-" .$target;
 		}
 
@@ -516,7 +546,7 @@ class Creator extends TelegramApp\Module {
 
 			if(!$find){
 				$this->telegram->send
-					->text($this->telegram->emoji(":forbid: No encuentro ese grupo o persona."))
+					->text($this->telegram->emoji(":no_entry: No encuentro ese grupo o persona."))
 				->send();
 				$this->end();
 			}
@@ -544,7 +574,7 @@ class Creator extends TelegramApp\Module {
 	    }
 
 		// Titulo del chat.
-		$title = (isset($chat['title']) ? $chat['title'] : $chat['first_name'] ." " .$chat['last_name']);
+		$title = (isset($info['title']) ? $info['title'] : $info['first_name'] ." " .$info['last_name']);
 
 		// Envia acción de escribiendo...
 		$q = $this->telegram->send
@@ -751,11 +781,19 @@ class Creator extends TelegramApp\Module {
 			!$blocked_user or
 			($this->telegram->text_has("Guardar") and $this->telegram->words() <= 3)
 		){
+			if($this->user->settings('block_user_reason_waiting')){
+				$this->user->settings('block_user_reason_waiting', "DELETE");
+				$this->telegram->send
+					->text($this->telegram->emoji(":warning: ") ."¿No quieres especificar motivo?")
+				->send();
+				$this->end();
+			}
 			$this->user->settings('block_user_reason', "DELETE");
 			$this->user->step = NULL;
 			if($this->telegram->text_has("Guardar")){
 				$this->telegram->send
-					->text($this->telegram->emoji(":floppy_disk:") ." Razones guardadas.")
+					->keyboard()->hide(TRUE)
+					->text($this->telegram->emoji(":floppy_disk:") ." Motivos guardados.")
 				->send();
 			}
 			$this->end();
@@ -770,6 +808,10 @@ class Creator extends TelegramApp\Module {
 		}
 
 		if(empty($reason)){ return; }
+
+		if($this->user->settings('block_user_reason_waiting')){
+			$this->user->settings('block_user_reason_waiting', "DELETE");
+		}
 
 		$data = [
 			'uid' => $blocked_user,
