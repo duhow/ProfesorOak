@@ -195,9 +195,10 @@ return [
 	'command_game_roulette' => ['apuesto al {bet}', 'apostar al {bet}', 'ruleta al {bet}'],
 
 	'command_is_admin' => ['(soy|es|eres) (admin|administrador)'],
-	'command_admin_count' => ['lista de (admin|admins|administradores)'],
-	'command_user_count' => ['lista de (miembros|usuarios|entrenadores)'],
-	'command_user_count_unverified' => ['sin validar', 'no validados'],
+	'command_admin_list' => ['lista de (admin|admins|administradores)'],
+	'command_user_count' => ['contar (miembros|usuarios|entrenadores)'],
+	'command_user_list' => ['lista de (miembros|usuarios|entrenadores)'],
+	'command_user_list_unverified' => ['sin validar', 'no validados'],
 
 	'game_coin_heads' => 'Cara',
 	'game_coin_tails' => 'Cruz',
