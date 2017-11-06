@@ -54,7 +54,7 @@ class Group extends TelegramApp\Module {
 		}
 
 		elseif(
-			( $this->telegram->text_regex($this->strings->get('command_admin_count')) and $this->telegram->words() <= 8 ) or
+			( $this->telegram->text_regex($this->strings->get('command_admin_list')) and $this->telegram->words() <= 8 ) or
 			( $this->telegram->text_command(["adminlist", "admins"]) )
 		){
 			$this->adminlist();
@@ -64,11 +64,27 @@ class Group extends TelegramApp\Module {
 		elseif(
 			$this->telegram->text_command("uv") or
 			(
-				$this->telegram->text_regex($this->strings->get('command_user_count')) and
-				$this->telegram->text_regex($this->strings->get('command_user_count_unverified'))
+				$this->telegram->text_regex($this->strings->get('command_user_list')) and
+				$this->telegram->text_regex($this->strings->get('command_user_list_unverified'))
 			)
 		){
 			$this->userlist_verified();
+			$this->end();
+		}
+
+		elseif(
+			$this->telegram->text_command("ul") or
+			(
+				$this->telegram->text_regex($this->strings->get('command_user_list')) and
+				$this->telegram->words() <= $this->strings->get('command_user_list_limit')
+			) or (
+				$this->telegram->callback and
+				$this->telegram->text_regex('userlist {N:offset}')
+			) and $this->user->is_admin()
+		){
+			$offset = 0;
+			if($this->telegram->input->offset){ $offset = $this->telegram->input->offset; }
+			$this->userlist(TRUE, $offset);
 			$this->end();
 		}
 
@@ -206,6 +222,57 @@ class Group extends TelegramApp\Module {
 
 	public function userlist_verified($chat = NULL){
 
+	}
+
+	public function userlist($chat = NULL, $offset = 0, $retstr = FALSE){
+		// TODO limitar repeticion - cooldown de boton
+		if($offset < 0){ $offset = 0; }
+		if($chat === TRUE){ $chat = $this->chat->id; }
+
+		$this->db->pageLimit = 25;
+		$users = $this->db
+			->join("user_inchat c", "u.telegramid = c.uid")
+			->where("c.cid", $chat)
+			->where("u.anonymous", FALSE)
+		->paginate('user u', $offset);
+		$str = "";
+		foreach($users as $user){
+			$str .= ":heart-" .$user['team'] .": L" .$user['lvl'] ." - " .$this->telegram->userlink($user['telegramid'], $user['username']) ."\n";
+		}
+		$str = $this->telegram->emoji($str);
+		if($retstr){ return $str; }
+		
+		// Anterior - final
+		if($offset >= $this->db->totalPages){
+			$this->telegram->send
+				->inline_keyboard()
+					->row_button('<<', 'userlist ' .($this->db->totalPages - 1))
+				->show();
+		// Anterior y siguiente - hay mas
+		}elseif($offset > 0 and $offset < $this->db->totalPages){
+			$this->telegram->send
+				->inline_keyboard()
+					->row()
+						->button('<<', 'userlist ' .($offset - 1))
+						->button('>>', 'userlist ' .($offset + 1))
+					->end_row()
+				->show();
+		// Siguiente - principio y hay mas
+		}elseif($offset == 0 and $this->db->totalPages > $offset){
+			$this->telegram->send
+				->inline_keyboard()
+					->row_button('>>', 'userlist 1')
+				->show();
+		}
+
+		$this->telegram->send->text($str, 'HTML');
+		if($this->telegram->callback){
+			$this->telegram->send->edit('text');
+		}else{
+			$this->telegram->send->send();
+		}
+
+		$this->end();
 	}
 
 	public function check_admin($user = NULL){
