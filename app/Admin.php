@@ -353,4 +353,38 @@ class Admin extends TelegramApp\Module {
 		}
 		return FALSE;
 	}
+
+	// WIP VERIFY
+	public function cache_admin_list($group, $timeout = "+1 hour", $add = FALSE){
+		if(is_array($add)){
+			$addid = array();
+			foreach($add as $u){
+				if($u instanceof User){ $addid[] = $u->id; }
+				elseif(is_numeric($u)){ $addid[] = $u; }
+			}
+			if(empty($addid)){ return FALSE; }
+			$data = array();
+			foreach($addid as $id){
+				$data[] = [
+					'timeout' => date("Y-m-d H:i:s", strtotime($timeout)),
+					'gid' => $group,
+					'uid' => $id
+				];
+
+				return $this->db->insertMulti($data);
+			}
+		}
+		$admins = $this->db
+			->where('gid', $group)
+			->where('timeout >=', $this->db->now())
+		->getValue('user_admins', 'DISTINCT uid', NULL);
+		if(!empty($admins)){
+			// !!!!!
+			if($this->chat->id == $group){
+				$this->chat->admins = $admins;
+			}
+			return $admins;
+		}
+		return $this->cache_admin_list($group, $timeout, $this->telegram->send->get_admin_list($group));
+	}
 }

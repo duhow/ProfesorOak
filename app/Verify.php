@@ -9,10 +9,10 @@ class Verify extends TelegramApp\Module {
 	const VERIFY_REPORT = 4;
 
 	public $icons = [
-		VERIFY_OK	=> ":ok:",
-		VERIFY_CHECK	=> ":warning:",
-		VERIFY_REJECT	=> ":times:",
-		VERIFY_REPORT	=> "\u203c\ufe0f",
+		self::VERIFY_OK     => ":ok:",
+		self::VERIFY_CHECK  => ":warning:",
+		self::VERIFY_REJECT => ":times:",
+		self::VERIFY_REPORT => ":bangbang:",
 	];
 
 	const VERIFY_MIN_VOTE_AMOUNT = 5;
