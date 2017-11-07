@@ -26,7 +26,7 @@ class Group extends TelegramApp\Module {
 		if(strlen($text) < 4){ $this->end(); }
 		if(strlen($text) > 4000){
 			$this->telegram->send
-				->text($this->strings->get('group_rules_too_much'))
+				->text($this->strings->get('group_text_too_much'))
 			->send();
 			$this->end();
 		}
@@ -37,10 +37,11 @@ class Group extends TelegramApp\Module {
 		$this->user->step = NULL;
 
 		$this->telegram->send
-			->text("Hecho!")
+			->text($this->strings->get('group_text_done'))
 		->send();
 		$this->end();
 	}
+	private function step_custom_command(){ return $this->custom_command_create(); }
 
 	protected function hooks(){
 		if(
@@ -89,7 +90,9 @@ class Group extends TelegramApp\Module {
 		}
 
 		elseif(
-			$this->telegram->text_has(["grupo offtopic", "/offtopic"])
+			// WIP
+			// $this->telegram->text_has("offtopic") or
+			$this->telegram->text_command("offtopic", FALSE)
 		){
 			$this->offtopic();
 			$this->end();
@@ -112,6 +115,16 @@ class Group extends TelegramApp\Module {
 			!in_array($this->telegram->input->username, $this->strings->get('command_is_here_black'))
 		){
 			$this->ishere($this->telegram->input->username);
+			$this->end();
+		}
+
+		elseif(
+			$this->telegram->text_has($this->strings->get('command_custom_command_create'), TRUE) and
+			$this->telegram->words() <= $this->strings->get('command_custom_command_create_limit') and
+			!$this->user->step and $this->user->is_admin()
+		){
+			$this->user->settings('command_name', "DELETE");
+			$this->custom_command_create();
 			$this->end();
 		}
 	}
@@ -212,6 +225,13 @@ class Group extends TelegramApp\Module {
 
 	}
 
+	public function rules_agreement(){
+		// Para pertener a este grupo, debes leer y aceptar las normas.
+		// Se establece un tiempo minimo de lectura de 1 minuto
+		// Variable en funcion de las palabras / letras que haya en las normas.
+		// Tabla user_chat_agreements (uid, cid, type, OK 1/0/NULL)
+	}
+
 	public function rules(){
 		if($this->telegram->text_has($this->strings->get('command_rules_write'))){
 			// Si es admin, cambiar las normas
@@ -221,11 +241,24 @@ class Group extends TelegramApp\Module {
 					->reply_to(TRUE)
 					->text($this->strings->get('group_rules_please_send'))
 				->send();
-				$this->end();
 			}
 		}else{
-		// Show rules
+			$rules = $this->chat->settings('rules');
+			$str = ($rules ? json_decode($rules) : $this->strings->get('group_rules_empty');
+			// TODO: "Además de cumplir el TCC, este grupo tiene las siguientes normas:"
+			if(strlen($str) >= 1000 or count(explode(" ", $str)) >= 100){
+				$this->telegram->send
+					->notification(FALSE)
+					->text($this->strings->get('group_rules_private'))
+				->send();
+				// Para enviar las normas por privado.
+				$this->telegram->send->chat($this->user->id);
+			}
+			$this->telegram->send
+				->text($str)
+			->send();
 		}
+		$this->end();
 	}
 
 	public function ishere($user = NULL){
@@ -258,11 +291,28 @@ class Group extends TelegramApp\Module {
 	}
 
 	public function welcome(){
-
+		if(!$this->chat->is_group()){ return NULL; }
+		if($this->telegram->text_has($this->strings->get('command_rules_write'))){
+			// Si es admin, cambiar las normas
+			if($this->chat->is_admin($this->user)){
+				$this->user->step = "WELCOME";
+				$this->telegram->send
+					->reply_to(TRUE)
+					->text($this->strings->get('group_welcome_please_send'))
+				->send();
+			}
+		}
+		$this->end();
 	}
 
 	public function offtopic(){
-
+		// TODO Limitar repeticion de comando.
+		$offtopic = $this->chat->settings('offtopic_chat');
+		if($offtopic){
+			$this->telegram->send
+				->text($this->telegram->grouplink($offtopic, TRUE))
+			->send();
+		}
 	}
 
 	// Dar name y devolver ID
@@ -285,16 +335,78 @@ class Group extends TelegramApp\Module {
 		// $commands = unserialize($commands);
 		if(is_array($commands)){
 			foreach($commands as $word => $action){
+				// FIX Regex
+				$word = str_replace(['.', '?'], ['\.', '\?'], $word);
 				if($this->telegram->text_has($word, TRUE)){
 					$content = current($action);
 					$action = key($action);
 					if($action == "text"){
 						$this->telegram->send->text(json_decode($content))->send();
+					}elseif($action == "location"){
+						$this->telegram->send->location($content)->send();
 					}else{
 						$this->telegram->send->file($action, $content);
 					}
 					$this->end();
 				}
+			}
+		}
+	}
+
+	public function custom_command_create(){
+		$this->user->step = 'CUSTOM_COMMAND';
+		if($this->user->settings('command_name')){
+			// Ver el contenido que ha enviado, y guardarlo en DB.
+			$commands = $this->chat->settings('custom_commands');
+			$cname = $this->chat->settings('command_name');
+
+			$content = array();
+			foreach(['text', 'photo', 'sticker', 'document', 'location', 'video'] as $elm){
+				if($this->telegram->$elm()){
+					$content = [$elm => $this->telegram->$elm()];
+					break;
+				}
+			}
+
+			if(empty($content)){
+				$this->telegram->send
+					->text($this->strings->get_random('custom_command_unknown_content'))
+				->send();
+				$this->end();
+			}
+
+			$commands[$cname] = $content;
+			$this->chat->settings('custom_commands', $commands);
+
+			$this->user->step = NULL;
+			$this->telegram->send
+				->text($this->strings->get('custom_command_created'))
+			->send();
+			$this->end();
+		}else{
+			if($this->telegram->text_has($this->strings->get('command_custom_command_create'), TRUE)){
+				$this->telegram->send
+					->text($this->strings->get('custom_command_create'))
+				->send();
+				$this->end();
+			}elseif($this->telegram->text()){
+				$text = strtolower(trim($this->telegram->text(TRUE)));
+				if(
+					strlen($text) <= 2 or
+					strlen($text) >= 30 or
+					$this->telegram->text_has_emoji or
+					$this->telegram->words() > 6
+				){
+					$str = "";
+					$this->end();
+				}else{
+					$this->user->settings('command_name', $text);
+					$str = $this->strings->get('custom_command_answer');
+				}
+				$this->telegram->send
+					->text($str)
+				->send();
+				$this->end();
 			}
 		}
 	}

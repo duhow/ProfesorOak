@@ -220,6 +220,18 @@ class User extends TelegramApp\User {
 		return $this->load_settings();
 	}
 
+	public function warns($chat = NULL, $full = FALSE){
+		if($chat === TRUE){ $chat = $this->chat->id; }
+		if(!empty($chat)){ $this->db->where('chat', $chat); }
+		$this->db->where('user', $this->id);
+		if(!$full){
+			$warns = $this->db->getValue('user_warns', 'count(*)');
+		}else{
+			$warns = $this->db->get('user_warns');
+		}
+		return $warns;
+	}
+
 	function in_chat($chat = NULL, $check_telegram = FALSE){
 		$chat = $this->set_chat($chat);
 		if($check_telegram == FALSE){
@@ -236,6 +248,7 @@ class User extends TelegramApp\User {
 		$query = $this->db
 			->where('uid', $this->id)
 			->where('gid', $chat)
+			->where('timeout >=', $this->db->now())
 		->getOne('user_admins');
 		return ($this->db->count == 1);
 	}
