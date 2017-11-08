@@ -68,7 +68,7 @@ class Group extends TelegramApp\Module {
 				$this->telegram->text_regex($this->strings->get('command_user_list_unverified'))
 			)
 		){
-			$this->userlist_verified();
+			$this->user_list_verified();
 			$this->end();
 		}
 
@@ -84,7 +84,7 @@ class Group extends TelegramApp\Module {
 		){
 			$offset = 0;
 			if($this->telegram->input->offset){ $offset = $this->telegram->input->offset; }
-			$this->userlist(TRUE, $offset);
+			$this->user_list(TRUE, $offset);
 			$this->end();
 		}
 
@@ -101,7 +101,7 @@ class Group extends TelegramApp\Module {
 			$this->telegram->text_command("count") or
 			$this->telegram->text_regex($this->strings->get('command_user_count'))
 		){
-			$this->count(TRUE);
+			$this->user_count(TRUE);
 			$this->end();
 		}
 
@@ -116,7 +116,7 @@ class Group extends TelegramApp\Module {
 
 		elseif(
 			(
-				$this->telegram->text_has($this->strings->get('command_rules_limit')) or
+				$this->telegram->text_has($this->strings->get('command_rules')) or
 				$this->telegram->text_command(["rules", "normas"]) and
 				$this->telegram->words() <= $this->strings->get('command_rules_limit')
 			)
@@ -145,7 +145,7 @@ class Group extends TelegramApp\Module {
 		}
 	}
 
-	public function count($chat = NULL, $say = FALSE){
+	public function user_count($chat = NULL, $say = FALSE){
 		if(is_bool($chat)){ $say = $chat; $chat = NULL; }
 		if(empty($chat)){ $chat = $this->chat->id; }
 
@@ -220,11 +220,11 @@ class Group extends TelegramApp\Module {
 		}
 	}
 
-	public function userlist_verified($chat = NULL){
+	public function user_count_verified($chat = NULL){
 
 	}
 
-	public function userlist($chat = NULL, $offset = 0, $retstr = FALSE){
+	public function user_list($chat = NULL, $offset = 0, $retstr = FALSE){
 		// TODO limitar repeticion - cooldown de boton
 		if($offset < 0){ $offset = 0; }
 		if($chat === TRUE){ $chat = $this->chat->id; }
@@ -311,7 +311,7 @@ class Group extends TelegramApp\Module {
 			}
 		}else{
 			$rules = $this->chat->settings('rules');
-			$str = ($rules ? json_decode($rules) : $this->strings->get('group_rules_empty');
+			$str = ($rules ? json_decode($rules) : $this->strings->get('group_rules_empty'));
 			// TODO: "Además de cumplir el TCC, este grupo tiene las siguientes normas:"
 			if(strlen($str) >= 1000 or count(explode(" ", $str)) >= 100){
 				$this->telegram->send
