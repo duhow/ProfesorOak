@@ -13,20 +13,63 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 	// A excepción de que lo agregue el creador
     if($new->id == $this->config->item("telegram_bot_id") && $telegram->user->id != $this->config->item('creator')){
         $count = $telegram->send->get_members_count();
+		$end = FALSE;
         // Si el grupo tiene <= 5 usuarios, el bot abandona el grupo
-        if(is_numeric($count) && $count <= 5){
+        if(
+			(is_numeric($count) && $count <= 5) or
+			$pokemon->settings($telegram->chat->id, 'die') == TRUE
+		){
             $this->analytics->event('Telegram', 'Join low group');
             $telegram->send->text("Nope.")->send();
-            $telegram->send->leave_chat();
-            return -1;
+            $end = TRUE;
         }
 
-		if($pokemon->settings($telegram->chat->id, 'die') == TRUE){
-			$telegram->send->leave_chat();
-            return -1;
+		$pkuser = $pokemon->user($telegram->user->id);
+		if(
+			($pkuser && $pkuser->blocked) or
+			$pokemon->user_flags($telegram->user->id, ['hacks', 'ratkid', 'poketelegram_cheat'])
+		){
+			$end = TRUE;
 		}
 
-    // Bot agregado al grupo. Yo no saludo bots :(
+		if($end){
+			$telegram->send->leave_chat();
+			return -1;
+		}
+	}
+
+	if($new->id == $this->config->item("telegram_bot_id")){
+		$text = ":new: ¡Grupo nuevo!\n"
+				.":abc: " .$telegram->chat->title ."\n"
+				.":id: " .$telegram->chat->id ."\n"
+				.":guard: " .$count ."\n" // del principio de ejecución.
+				.":man: " .$telegram->user->id ." - " .$telegram->user->first_name;
+		$telegram->send
+			->chat($this->config->item('creator'))
+			->text($telegram->emoji($text))
+		->send();
+
+		$text = "¡Buenas a todos, entrenadores!\n¡Un placer estar con todos vosotros! :D";
+
+		$group = $pokemon->group($telegram->chat->id);
+		if($group->messages == 0){
+			$text .= "\nVeo que este grupo es nuevo, así que voy a buscar cuánta gente conozco.";
+			// TODO si el Oak es nuevo en un grupo de más de X personas,
+			// Realizar investigate sólo una vez.
+
+			// Esto se puede hacer con el count de mensajes de un grupo, si es > 0.
+			// Teniendo en cuenta que el grupo no se borre de la DB para que
+			// no vuelva a ejecutarse este método.
+		}
+
+		$this->telegram->send
+			->notification(FALSE)
+			->reply_to(TRUE)
+			->text($text)
+		->send();
+
+		return -1;
+    // Otro bot agregado al grupo. Yo no saludo bots :(
     }elseif($new->id != $this->config->item('telegram_bot_id') && isset($new->username) and $telegram->is_bot($new->username)){
 		if(in_array($this->telegram->user->id, telegram_admins(TRUE))){ return -1; } // Lo agrega un admin, no pasa na.
 		$mute = $pokemon->settings($telegram->chat->id, 'mute_content');
@@ -110,7 +153,7 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 	){
         // Si el grupo es exclusivo a un color y el usuario es de otro color
         $teamonly = $pokemon->settings($telegram->chat->id, 'team_exclusive');
-        if(!empty($teamonly) && $teamonly != $pknew->team){
+        if(!empty($teamonly) && $teamonly != $pknew->team and $new->id != $this->config->item('telegram_bot_id')){
             $this->analytics->event('Telegram', 'Spy enter group');
             $telegram->send
                 ->notification(TRUE)
@@ -225,38 +268,6 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
             }
         }
 
-        if($new->id == $this->config->item("telegram_bot_id")){
-			$text = ":new: ¡Grupo nuevo!\n"
-					.":abc: " .$telegram->chat->title ."\n"
-					.":id: " .$telegram->chat->id ."\n"
-					.":guard: " .$count ."\n" // del principio de ejecución.
-					.":man: " .$telegram->user->id ." - " .$telegram->user->first_name;
-			$telegram->send
-				->chat($this->config->item('creator'))
-				->text($telegram->emoji($text))
-			->send();
-            $pkuser = $pokemon->user($telegram->user->id);
-            if(
-                ($pkuser && $pkuser->blocked) or
-                $pokemon->user_flags($telegram->user->id, ['hacks', 'ratkid', 'poketelegram_cheat'])
-            ){
-                $telegram->send->leave_chat();
-                return -1;
-            }
-            $text = "¡Buenas a todos, entrenadores!\n¡Un placer estar con todos vosotros! :D";
-
-			$group = $pokemon->group($telegram->chat->id);
-			if($group->messages == 0){
-				$text .= "\nVeo que este grupo es nuevo, así que voy a buscar cuánta gente conozco.";
-				// TODO si el Oak es nuevo en un grupo de más de X personas,
-				// Realizar investigate sólo una vez.
-
-				// Esto se puede hacer con el count de mensajes de un grupo, si es > 0.
-				// Teniendo en cuenta que el grupo no se borre de la DB para que
-				// no vuelva a ejecutarse este método.
-			}
-        }
-
         $pokemon->user_addgroup($new->id, $telegram->chat->id);
         $this->analytics->event('Telegram', 'Join user');
 
@@ -282,8 +293,6 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
             ->reply_to(TRUE)
             ->text( $text , TRUE)
         ->send();
-
-		if($new->id == $this->config->item('telegram_bot_id')){ return -1; } // HACK Stop processing.
 
 		if($adminchat){
 			$str = ":new: Entra al grupo\n"
@@ -351,7 +360,17 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
                 }
             }
         }
-    }
+    }elseif($adminchat and $pokemon->settings($adminchat, 'announce_welcome_admin')){
+		$str = ":new: Entra al grupo\n"
+				.":id: " .$new->id ."\n"
+				.":abc: " .$new->first_name ." - @" .($pknew->username ?: $new->username);
+		$str = $telegram->emoji($str);
+		$telegram->send
+			->notification(TRUE)
+			->chat($adminchat)
+			->text($str)
+		->send();
+	}
     return -1;
 }elseif($telegram->is_chat_group() && $telegram->data_received("left_chat_participant")){
 	$left = $telegram->new_user; // HACK nombre confunde.
