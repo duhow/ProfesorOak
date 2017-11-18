@@ -554,7 +554,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
     $telegram->send
         ->notification(FALSE)
         ->file('photo', 'AgADBAADhKsxG2l-2VORkrpsJDz7Mhu-4RkABM9ClXHxnic-oRMEAAEC');
-    return -1;	
+    return -1;
 }elseif($this->telegram->text_has(["Alfabeto", "Abedeario"], ["Pokémon", "Unown", "Uknown"]) && $telegram->words() <= 8){
 	$this->analytics->event('Telegram', 'Unown Alphabet');
     $this->telegram->send
@@ -571,7 +571,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
 	}
 }elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["facción", "color", "equipo", "team"]) && $telegram->words() <= 12){
     $help = "Según la página oficial de Niantic, aún no es posible cambiarse de equipo. Tendrás que esperar o hacerte una cuenta nueva, pero *procura no jugar con multicuentas, está prohibido.*";
-}elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["usuario", "nombre", "apodo", "llamo"]) && $telegram->words() <= 15){
+}elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["usuario", "nombre", "apodo", "llamo"]) && $telegram->words() <= 15 and !$telegram->has_forward){
     $help = "Si quieres cambiarte de nombre, puedes hacerlo en los *Ajustes de Pokemon GO.*\n";
 	if(!$pokemon->user_verified($this->telegram->user->id)){
 		$help .= "Si te has equivocado de nombre al registrarte, *valídate* conmigo siguiendo las indicaciones que te diré, y si lo haces correctamente, te cambiaré el nombre.";
