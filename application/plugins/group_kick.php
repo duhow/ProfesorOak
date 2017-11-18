@@ -42,7 +42,16 @@ function get_user_kick_filter($chat, $action, $filter = NULL){
 			->where('team', $filter)
 		->get();
 	}elseif($action == "blacklist"){
-		if(empty($filter)){ return FALSE; }
+		if(empty($filter)){
+			$query = $CI->db
+				->select('value')
+				->from('settings')
+				->where('uid', $chat)
+				->where('type', 'blacklist')
+			->get();
+			if($query->num_rows() != 1){ return FALSE; }
+			$filter = $query->row()->value;
+		}
 		if(is_string($filter)){ $filter = explode(",", $filter); }
 
 		$query = $CI->db
@@ -55,7 +64,13 @@ function get_user_kick_filter($chat, $action, $filter = NULL){
 	}
 
 	if(empty($query) or $query->num_rows() == 0){ return FALSE; }
-	return array_column($query->result_array(), 'uid');
+	$users = array_column($query->result_array(), 'uid');
+	// Cleanup
+	foreach([$this->config->item('telegram_bot_id'), $this->config->item('creator')] as $user){
+		$ks = array_search($user, $users);
+		if($ks){ unset($users[$ks]); }
+	}
+	return array_values($users);
 }
 
 if(!$this->telegram->is_chat_group()){ return; }
@@ -119,6 +134,11 @@ if($this->telegram->text_command([
 		$action = "verified";
 	}elseif($this->telegram->text_command("kickblack")){
 		$action = "blacklist";
+		if($this->telegram->words() == 1){
+			$filter = $this->pokemon->settings($chat, 'blacklist');
+		}elseif($this->telegram->words() == 2){
+			$filter = $this->telegram->last_word();
+		}
 	}
 
 	if(empty($action)){ return -1; } // HACK
@@ -216,10 +236,10 @@ if(
 	$c = 0;
 
 	foreach($users as $user){
-		if(in_array($user, [
+		/* if(in_array($user, [
 			$this->config->item('creator'),
 			$this->config->item('telegram_bot_id')]
-		)){ continue; }
+		)){ continue; } */
 
 		$q = $this->telegram->send->ban_until("+1 minute", $user, $chat);
 		// $q = $this->telegram->send->kick($user, $chat);
@@ -227,7 +247,7 @@ if(
 			$this->pokemon->user_delgroup($user, $chat);
 			$c++;
 		}
-		usleep(500000);
+		usleep(300000);
 	}
 
 	$str = ":ok: $c usuarios expulsados.";
