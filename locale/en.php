@@ -170,7 +170,7 @@ return [
 	'welcome_group_require_alias' => 'have a Telegram @alias',
 	'welcome_group_require_avatar' => 'have a profile picture',
 
-	'command_register_color' => ['(I\'m|I am|Team|Color) {color}'],
+	'command_register_color' => ['(I\'m|I am|Team|Color) {color}', '{color} (team|color)'],
 	'command_register_username' => [
 		"My name's {name}", "My username is {name}", "My name is {name}",
 		"The username is {name}", "The name is {name}"

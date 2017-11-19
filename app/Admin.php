@@ -100,7 +100,7 @@ class Admin extends TelegramApp\Module {
 				->send();
 
 				// TODO forward del mensaje afectado
-				$str = ":forbid: Expulsión por flood.\n"
+				$str = ":forbid: " .$this->strings->get('admin_kicked_reason_flood') ."\n"
 					.":id: " .$this->user->id ."\n"
 					.":abc: " .$this->telegram->user->first_name ." - @" .$this->user->username;
 				$this->admin_chat_message($str);
@@ -123,6 +123,8 @@ class Admin extends TelegramApp\Module {
 		if(stripos($this->telegram->text_url(), "pokemon") !== FALSE){ return FALSE; } // HACK cosas de Pokemon oficiales u otros.
 
 		// TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
+		if($this->user->is_admin()){ return FALSE; }
+
 		$this->telegram->send
 			->message(TRUE)
 			->chat(TRUE)
@@ -131,7 +133,7 @@ class Admin extends TelegramApp\Module {
 
 		$this->telegram->send
 			->chat(CREATOR)
-			->text("*SPAM* del grupo " .$this->chat->id .".", TRUE)
+			->text("<b>SPAM</b> del grupo " .$this->chat->id .".", 'HTML')
 			->inline_keyboard()
 				->row_button("No es spam", "/nospam " .$this->user->id ." " .$this->chat->id, "TEXT")
 			->show()

@@ -47,7 +47,27 @@ class Pokemon extends TelegramApp\Module {
 	}
 
 	public function pokedex($search){
+		if($search === TRUE){
+			$pkdx = $this->db->get('pokedex');
+			$final = array();
+			foreach($pkdx as $pkmn){
+				$final[$pkmn['id']] = (object) $pkmn;
+				// TODO Add skills, set evolutions and more.
+				// Funcion universal para agregar contenido a cualquier elemento.
+			}
+			return $final;
+		}
 
+		$misspell = $this->db->subQuery(); // TODO CHECK es asi?
+		$misspell->where('word', $search)->getValue('pokemon_misspell', 'pokemon');
+
+		$pokemon = $this->db
+			->where('name', $search)
+			->orWhere('id', $search)
+			->orWhere('id', $misspell)
+		->getOne('pokedex');
+
+		if($pokemon){ return $pokemon; } // TODO Check
 	}
 
 	public function evolution($pokemon){
@@ -94,7 +114,7 @@ class Pokemon extends TelegramApp\Module {
 
 	private function load_misspells(){
 		$load = array();
-		$file = dirname(__FILE__) ."/Pokemon/misspells.csv";
+		/* $file = dirname(__FILE__) ."/Pokemon/misspells.csv";
 		if(file_exists($file) and is_readable($file)){
 			$fp = fopen($file, "r");
 			while(!feof($fp)){
@@ -102,7 +122,10 @@ class Pokemon extends TelegramApp\Module {
 				$load[trim($row[0])] = intval($row[1]);
 			}
 			fclose($fp);
-		}
+		} */
+		$load = $this->db->get('pokemon_misspell', NULL, 'word, pokemon');
+		$load = array_column($load, 'pokemon', 'word');
+
 		$this->misspells = $load;
 		return $load;
 	}
@@ -345,7 +368,7 @@ class Pokemon extends TelegramApp\Module {
 			if($this->telegram->words() < 5){
 				$this->telegram->send
 					->notification(FALSE)
-					->text('/iv *[Pokémon] [CP] [HP] [Polvos] <Mejorado> <Ataque | Defensa | Salud>*', TRUE)
+					->text($this->strings->get('pokemon_calc_command_help'), 'HTML')
 				->send();
 				$this->end();
 			}else{

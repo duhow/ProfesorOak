@@ -25,7 +25,7 @@ class Ingress extends TelegramApp\Module {
 	private function register($team, $user = NULL){
 		if(empty($user)){ $user = $this->user; }
 
-		$text = "Bienvenido, agente! ";
+		$text = $this->strings->get('ingress_welcome_agent') ." ";
 		if($team == 'resistance'){
 			$this->user->flags[] = 'resistance';
 			$text .= $this->telegram->emoji(":key:");
@@ -68,7 +68,7 @@ class Ingress extends TelegramApp\Module {
 					->button($this->telegram->emoji(":heart-green:"), "soy enl", "TEXT")
 				->end_row()
 			->show()
-			->text("Si juegas a Ingress, ¿eres de la Resistencia o Iluminado?")
+			->text($this->strings->get('ingress_register'))
 		->send();
 	}
 }

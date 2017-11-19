@@ -356,10 +356,11 @@ class Main extends TelegramApp\Module {
 
 			if(!$info->verified){
 				$validicon = ":warning:";
-				$query = $this->db
+				$is_verifying = $this->db
 					->where('telegramid', $info->telegramid)
+					->where('status IS NULL')
 				->getValue('user_verify', 'count(*)');
-				if($query > 0){ $validicon .= " :clock:"; }
+				if($is_verifying > 0){ $validicon .= " :clock:"; }
 			}
 
 			$repl = [

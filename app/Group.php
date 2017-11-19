@@ -200,9 +200,42 @@ class Group extends TelegramApp\Module {
 		// If empty or expired, get from telegram
 		if(empty($chat)){ $chat = $this->chat->id; }
 		$admins = $this->telegram->send->get_admins($chat);
-		$str = "No hay admins! :o";
-		if(!empty($admins)){
+		if(empty($admins)){
+			$str = "No hay admins! :o";
+			$this->telegram->send
+				->text($this->strings->get('group_no_admin'))
+			->send();
+			$this->end();
+		}
 
+		$creator = NULL;
+		$self = FALSE;
+		$adminlist = array();
+		$uidlist = array();
+		foreach($admins as $user){
+			if($user['status'] == "creator"){
+				$creator = $user['user'];
+				$uidlist[] = $user['user']->id;
+			}elseif($user['user']->id == $this->telegram->bot->id){
+				$self = TRUE;
+			}else{
+				$adminlist[] = $user['user'];
+				$uidlist[] = $user['user']->id;
+			}
+		}
+
+		$users = $this->db
+			->where('telegramid', $uidlist, 'IN')
+			->where('anonymous', FALSE)
+		->get('user');
+
+		$str = "";
+		foreach($adminlist as $user){
+			$pokeuser = array_search($user->id, array_column($users, 'telegramid'));
+			$str .= $users[$pokeuser]['team']
+				.' L' .$users[$pokeuser]['lvl']
+				.' ' .$this->telegram->userlink($user->id, $users[$pokeuser]['username'])
+				.' - ' .strval($user) ."\n";
 		}
 	}
 
@@ -241,7 +274,7 @@ class Group extends TelegramApp\Module {
 		}
 		$str = $this->telegram->emoji($str);
 		if($retstr){ return $str; }
-		
+
 		// Anterior - final
 		if($offset >= $this->db->totalPages){
 			$this->telegram->send

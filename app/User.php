@@ -71,6 +71,12 @@ class User extends TelegramApp\User {
 		return $ret;
 	}
 
+	public function settings_incr($key, $amount = 1){ return $this->settings_numberchange($key, max($amount, 1), "+"); }
+	public function settings_decr($key, $amount = 1){ return $this->settings_numberchange($key, max($amount, 1), "-"); }
+	private function settings_numberchange($key, $amount, $sign){
+
+	}
+
 	public function settings_delete($key){
 		if(array_key_exists($key, $this->settings)){ unset($this->settings[$key]); }
 		return $this->db
