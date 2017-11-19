@@ -16,7 +16,7 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 		$end = FALSE;
         // Si el grupo tiene <= 5 usuarios, el bot abandona el grupo
         if(
-			(is_numeric($count) && $count <= 5) or
+			// (is_numeric($count) && $count <= 5) or
 			$pokemon->settings($telegram->chat->id, 'die') == TRUE
 		){
             $this->analytics->event('Telegram', 'Join low group');
@@ -27,7 +27,7 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 		$pkuser = $pokemon->user($telegram->user->id);
 		if(
 			($pkuser && $pkuser->blocked) or
-			$pokemon->user_flags($telegram->user->id, ['hacks', 'ratkid', 'poketelegram_cheat'])
+			$pokemon->user_flags($telegram->user->id, ['fly', 'ratkid', 'poketelegram_cheat'])
 		){
 			$end = TRUE;
 		}
@@ -45,6 +45,9 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 				.":guard: " .$count ."\n" // del principio de ejecución.
 				.":man: " .$telegram->user->id ." - " .$telegram->user->first_name;
 		$telegram->send
+			->inline_keyboard()
+				->row_button("Permitir", "alch " .$this->telegram->chat->id,  "TEXT")
+			->show()
 			->chat($this->config->item('creator'))
 			->text($telegram->emoji($text))
 		->send();
@@ -53,13 +56,18 @@ if($telegram->is_chat_group() && $telegram->data_received() == "new_chat_partici
 
 		$group = $pokemon->group($telegram->chat->id);
 		if($group->messages == 0){
-			$text .= "\nVeo que este grupo es nuevo, así que voy a buscar cuánta gente conozco.";
+			// $text .= "\nVeo que este grupo es nuevo, así que voy a buscar cuánta gente conozco.";
+			$text .= "\n" ."Veo que este grupo es nuevo, no sé si ya me conoceréis de antes. "
+					."Hasta que no vea actividad en el grupo, no os responderé aquí. "
+					."Tener en cuenta que no haré caso en ningún grupo de prueba. Es más, no me gustan. Para probar cosas, me podéis hablar por privado."
 			// TODO si el Oak es nuevo en un grupo de más de X personas,
 			// Realizar investigate sólo una vez.
 
 			// Esto se puede hacer con el count de mensajes de un grupo, si es > 0.
 			// Teniendo en cuenta que el grupo no se borre de la DB para que
 			// no vuelva a ejecutarse este método.
+			$this->pokemon->settings($this->telegram->chat->id, 'die', TRUE);
+			$this->pokemon->settings($this->telegram->chat->id, 'newgroup', TRUE);
 		}
 
 		$this->telegram->send
