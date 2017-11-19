@@ -283,7 +283,8 @@ class Pokegram extends TelegramApp\Module {
 			->text("¡Ha aparecido un <b>" .$poke->name ."</b> de <b>" .$data->cp ." PC</b>!", 'HTML')
 		->send();
 
-		$this->chat->settings['pokemon_summon'] = $id .":" .$q['message_id'];
+		$sid = $id .":" .$q['message_id'];
+		$this->chat->settings('pokemon_summon', $sid);
 	}
 
 	public function pokemon_find_last($pokemon, $chat){
@@ -429,7 +430,7 @@ class Pokegram extends TelegramApp\Module {
 
 	public function delay_can_continue($chat, $amount = 2) {
 		// $pokemon = new Pokemon();
-		$last_throw = $this->chat->settings['pokegame_lastthrow'];
+		$last_throw = $this->chat->settings('pokegame_lastthrow');
 		if(!empty($last_throw)){
 			$last_throw = (float) $last_throw;
 			if(microtime(TRUE) < ($last_throw + $amount)){
@@ -437,7 +438,7 @@ class Pokegram extends TelegramApp\Module {
 			}
 		}
 
-		$this->chat->settings['pokegame_lastthrow'] = microtime(TRUE);
+		$this->chat->settings('pokegame_lastthrow', microtime(TRUE));
 		return TRUE;
 	}
 

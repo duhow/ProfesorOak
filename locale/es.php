@@ -53,6 +53,7 @@ return [
 	'admin_kicked' => ['Kickeado', 'Kickeados'],
 
 	'admin_kicked_flood' => 'Usuario kickeado por flood.',
+	'admin_kicked_reason_flood' => 'Expulsión por flood.',
 	'admin_spam_detected' => '¡<b>SPAM</b> detectado!',
 	'admin_kicked_unverified' => 'Usuario kickeado por no estar verificado.',
 
@@ -155,6 +156,12 @@ return [
 		'Oye, ¡pues mola!',
 		'Menuda suerte que tienes, cabrón...'
 	],
+	'pokemon_calc_command_help' => '/iv <b>[Pokémon] [CP] [HP] [Polvos] <Mejorado> <Ataque | Defensa | Salud></b>',
+	'pokemon_calc_stardust' => ['Polvo', 'Polvos'],
+	'pokemon_calc_powered' => 'Mejorado',
+	'pokemon_calc_attack' => 'Ataque',
+	'pokemon_calc_defense' => 'Defensa',
+	'pokemon_calc_health' => 'Salud',
 
 	'report_only_old_members' => 'Sólo pueden reportar los usuarios validados de hace tiempo.',
 	'report_error_self' => '¿Porqué ibas a reportarte a ti mismo?',
@@ -356,6 +363,11 @@ return [
 	'levelup_screenshot_ok' => '¡Guay! La miro en un rato.',
 	'levelup_screenshot_tomorrow' => '¡Guay! Te la miro cuando me despierte mañana...',
 	'levelup_screenshot_early' => '¡Guay! Te la miro cuando esté despierto...',
+
+	'ingress_register' => 'Si juegas a Ingress, ¿eres de la Resistencia o Iluminado?',
+	'ingress_resistance' => 'Resistencia',
+	'ingress_enlightened' => 'Iluminados',
+	'ingress_welcome_agent' => 'Bienvenido, agente!',
 
 	'lure_seen_place' => 'Cebo en <b>%s</b>, gracias por avisar! ^3^',
 	'pokemon_found_position' => 'Tienes a <b>%s</b> a %s, ve a por él!',

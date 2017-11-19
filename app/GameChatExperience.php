@@ -44,12 +44,21 @@ class GameChatExperience extends TelegramApp\Module {
 		}
 
 		if($this->telegram->text_has("mi experiencia")){
-			$this->view_experience($this->telegram->user);
+			$this->view_experience($this->user);
 		}
 	}
 
 	public function view_experience($user){
+		if($user instanceof \Telegram\User){
+			$user = $user->id;
+		}
+		if(is_numeric($user)){
+			$user = new User($user);
+			$user->load();
+		}
 		$points = $this->get_experience($user);
+		if(empty($points)){ $points = 0; }
+
 		$level = $this->get_level($points);
 		$this->telegram->send
 			->text("<b>L$level</b> / $points EXP", 'HTML')
