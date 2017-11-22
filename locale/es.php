@@ -178,6 +178,8 @@ return [
 	'ticket_writing_closed' => 'El ticket tiene el estado <b>%s</b> y no se puede escribir más.',
 	'ticket_writing_too_much' => 'Buah, creo que te has pasado de mensajes. Voy a enviar esto de momento.',
 	'ticket_writing_nothing' => 'No me has escrito nada...',
+	'ticket_notify_new' => '¡Hay un nuevo ticket disponible!',
+	'ticket_notify_reply' => 'Tienes una respuesta para el Ticket <b>#%s</b>:',
 	'ticket_not_exists' => 'El ticket indicado no existe.',
 	'ticket_not_belong_user' => 'Ese ticket no te pertenece.',
 	'ticket_status' => ['Redactando', 'Nuevo', 'En progreso', 'Esperando', 'En cola', 'Rechazado', 'Completado', 'Archivado'],
