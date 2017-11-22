@@ -285,6 +285,42 @@ class Tools extends TelegramApp\Functions {
 		return $data;
 	}
 
+	public function DateParser($dt, $from = "now"){
+		if(is_string($dt)){ $dt = strtotime($dt); }
+		if(is_string($from)){ $from = strtotime($from); }
+
+		$final = ($from - $dt);
+		$negative = ($final < 0);
+		$final = abs($final);
+
+		if($final >= 3600*24){
+			$number = floor($final / (3600*24));
+			$final = $final % (3600*24);
+			$str["d"] = $number;
+		}
+		if($final >= 3600){
+			$number = floor($final / (3600));
+			$final = $final % 3600;
+			$str["h"] = $number;
+		}
+		if($final >= 60){
+			$number = floor($final / 60);
+			$final = $final % 60;
+			$str["m"] = $number;
+		}
+		if($final > 0){
+			$str["s"] = $final;
+		}
+
+		// TODO Negative (time ago or future)
+		// Parse final array
+		$final = array();
+		foreach($str as $k => $v){
+			$final[] = "$v$k";
+		}
+		return implode(" ", $final);
+	}
+
 	function Color($string, $retkey = TRUE){
 		if(substr($string, 0, 1) != '"'){
 			$string = json_encode($string);
