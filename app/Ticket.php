@@ -25,20 +25,104 @@ class Ticket extends TelegramApp\Module {
 	}
 
 	protected function hooks(){
+		$ticketId = $this->user->settings('ticket_writing');
+		if($this->telegram->text_regex("ticket {action} {N:ticket}$")){
+			$ticketId = $this->telegram->input->ticket;
+		}
+
 		if($this->telegram->text_command("ticket", "new")){
 			$this->ticket_new();
 			$this->end();
-		}
-		if(in_array('ticketer', $this->user->flags)){
-			$ticketId = $this->user->settings('ticket_writing');
-			if($this->telegram->text_regex("ticket {action} {N:ticket}$")){
-				$ticketId = $this->telegram->input->ticket;
+		}elseif(
+			$this->telegram->text_command("ticket", "show") and
+			!in_array("ticketer", $this->user->flags) and
+			$ticketId
+		){
+			$ticket = $this->get($ticketId);
+			if($this->user->id != $ticket->uid){
+				$this->telegram->send
+					->text($this->telegram->emoji(":x: ") .$this->strings->get('ticket_not_belong_user'), 'HTML')
+				->send();
+				$this->end();
 			}
 
+			// TODO Check Date parser
+			$date = Tools::DateParser($ticket->date_create);
+			$str = "Ticket <b>#" .$ticket->id ."</b>\n"
+				.$this->strings->parse('ticket_show_created', $date) ."\n"
+				.$this->strings->parse('ticket_show_status', $this->strings->get_multi('ticket_status', $ticket->status)) ."\n";
+
+			$this->telegram->send
+				->text($str, 'HTML')
+			->send();
+			$this->end();
+		}elseif($this->telegram->callback and $this->telegram->input->action == "close" and $ticketId){
+			$ticket = $this->get($ticketId);
+			$this->telegram->answer_if_callback("");
+			if($this->user->id == $ticket->uid){
+				$this->status($ticketId, self::TICKET_ARCHIVED, $this->user->id);
+
+				// Remove buttons
+				$this->telegram->send
+					->message(TRUE)
+					->chat(TRUE)
+					->text($this->telegram->text_message())
+				->edit('text');
+
+				// Avisar al usuario
+				$this->telegram->send
+					->text($this->strings->get('ticket_status_closed'), 'HTML')
+				->send();
+
+				$str = $this->strings->parse('ticket_status_change', [
+					$ticket->id,
+					$this->strings->get_multi('ticket_status', self::TICKET_ARCHIVED)
+				]);
+
+				// Avisar al asignado
+				if($ticket->assigned){
+					$this->telegram->send
+						->notification(TRUE)
+						->chat($ticket->assigned)
+						->text($str, 'HTML')
+					->send();
+				}
+
+				// Chat de avisos
+				$this->telegram->send
+					->notification(FALSE)
+					->chat(self::CHAT_TICKETS)
+					->text($str, 'HTML')
+				->send();
+			}
+		}elseif($this->telegram->callback and $this->telegram->input->action == "reply" and $ticketId){
+			$ticket = $this->get($ticketId);
+			$this->telegram->answer_if_callback("");
+			if($this->user->id == $ticket->uid){
+				$this->user->settings('ticket_writing', $ticketId);
+				$this->telegram->send
+					->keyboard()
+						->row_button($this->telegram->emoji(":arrow_forward: ") .$this->strings->get('ticket_action_send'))
+					->show(TRUE, TRUE)
+					->text($this->strings->get('ticket_writing_answer_user'))
+				->send();
+				$this->user->step = "TICKET_WRITING";
+				$this->end();
+			}
+		}
+		if(in_array('ticketer', $this->user->flags)){
 			if($this->telegram->text_command("ticket", "list")){
 
-			}elseif($this->telegram->text_command("ticket", "close")){
-
+			}elseif($this->telegram->text_command("ticket", "show")){
+				$ticket = $this->get($ticketId);
+				if(!$ticket){
+					if(!$ticket){
+						$this->telegram->send
+							->text($this->telegram->emoji(":x: ") .$this->strings->get('ticket_not_exists'))
+						->send();
+						$this->end();
+					}
+				}
 			}elseif($this->telegram->text_command("ticket", "reply")){
 				$ticket = $this->precheck($ticketId);
 				$this->user->settings('ticket_writing', $ticketId);
@@ -47,6 +131,18 @@ class Ticket extends TelegramApp\Module {
 						->row_button($this->telegram->emoji(":arrow_forward: ") .$this->strings->get('ticket_action_send'))
 					->show(TRUE, TRUE)
 					->text($this->strings->get('ticket_writing_answer'))
+				->send();
+				$this->user->step = "TICKET_WRITING";
+				$this->end();
+			}elseif($this->telegram->text_command("ticket", "note")){
+				$ticket = $this->precheck($ticketId, FALSE);
+				$this->user->settings('ticket_writing', $ticketId);
+				$this->user->settings('ticket_private', TRUE);
+				$this->telegram->send
+					->keyboard()
+						->row_button($this->telegram->emoji(":arrow_forward: ") .$this->strings->get('ticket_action_send'))
+					->show(TRUE, TRUE)
+					->text($this->strings->get('ticket_writing_note'))
 				->send();
 				$this->user->step = "TICKET_WRITING";
 				$this->end();
@@ -83,7 +179,7 @@ class Ticket extends TelegramApp\Module {
 		}
 	}
 
-	private function precheck($ticketId){
+	private function precheck($ticketId, $lock = TRUE){
 		if(!$ticketId){ $this->end(); }
 		$ticket = $this->get($ticketId);
 		if(!$ticket){
@@ -92,6 +188,7 @@ class Ticket extends TelegramApp\Module {
 			->send();
 			$this->end();
 		}
+		if(!$lock){ return $ticket; }
 		if(strtotime($ticket->locked) >= time()){
 			if(!in_array($this->user->id, [CREATOR, $ticket->assigned])){
 				$this->telegram->send
@@ -117,6 +214,21 @@ class Ticket extends TelegramApp\Module {
 
 		if(!$ticket){ return FALSE; }
 		return (object) $ticket;
+	}
+
+	public function messages($ticketId, $filter = NULL, $private = FALSE){
+		if(!in_array($filter, [NULL, TRUE, "any", "*"])){
+			if(is_numeric($filter)){ $filter = [$filter]; }
+			if(is_array($filter)){
+				$this->db->where('uid', $filter, 'IN');
+			}
+		}
+		if(!$private){ $this->db->where('private', FALSE); }
+		$messages = $this->db
+			->where('tid', $ticketId)
+		->get('ticket_messages');
+		if(!$messages){ return FALSE; }
+		return $messages;
 	}
 
 	public function assign($ticketId, $toUser = NULL, $lock = TRUE){
@@ -158,7 +270,7 @@ class Ticket extends TelegramApp\Module {
 		if($user instanceof User){ $user = $user->id; }
 
 		$lock = ((bool) $lock ? date("Y-m-d H:i:s", strtotime("+2 hours")) : "0000-00-00 00:00:00");
-		if($user != CREATOR){ $this->db->where('assigned', $user); }
+		// if($user != CREATOR){ $this->db->where('assigned', $user); }
 		$q = $this->db
 			->where('id', $ticketId)
 		->update('ticket', ['locked' => $lock]);
@@ -172,7 +284,7 @@ class Ticket extends TelegramApp\Module {
 		if($user instanceof User){ $user = $user->id; }
 
 		if($status !== NULL){
-			if($user != CREATOR or $user !== TRUE){ $this->db->where('assigned', $user); }
+			// if($user != CREATOR or $user !== TRUE){ $this->db->where('assigned', $user); }
 			$this->db
 				->where('id', $ticketId)
 			->update('ticket', ['status' => $status]);
@@ -245,7 +357,8 @@ class Ticket extends TelegramApp\Module {
 		]);
 	}
 
-	public function add_message($ticket, $message, $user = NULL){
+	// TODO Add type default text
+	public function add_message($ticket, $message, $user = NULL, $private = FALSE){
 		if(empty($user)){ $user = $this->user; }
 		if($user instanceof User){ $user = $user->id; }
 
@@ -255,6 +368,8 @@ class Ticket extends TelegramApp\Module {
 			'cid' => $this->chat->id,
 			'mid' => $this->telegram->message_id,
 			'message' => $message,
+			'type' => $type, // TODO text/photo/document
+			'private' => (bool) $private,
 			'date' => $this->db->now()
 		];
 
@@ -262,6 +377,9 @@ class Ticket extends TelegramApp\Module {
 	}
 
 	public function count_last_messages($ticketId, $getUser = NULL, $amount = 10){
+		// TODO Esto solo busca los ultimos 10 mensajes totales
+		// Como segundo parametro por si acaso, habria que indicar si son
+		//     despues del cambio de usuario (AA-BBBB-AAA-BB-A)
 		$messages = $this->db
 			->where('tid', $ticketId)
 			->orderBy('date', 'DESC')
@@ -330,14 +448,19 @@ class Ticket extends TelegramApp\Module {
 		if($this->chat->is_group()){ $this->end(); }
 
 		$data = NULL;
+		$type = NULL;
+		$ref = NULL;
 		if($this->telegram->text()){
 			$data = $this->telegram->text();
+			$type = "text";
 		}elseif($this->telegram->photo()){
 			$data = "PHOTO:" .$this->telegram->photo();
+			$type = "photo";
 		}elseif($this->telegram->document()){
 			$data = "DOC:" .$this->telegram->document();
+			$type = "document";
 		}
-		if(empty($data)){
+		if(empty($data) or empty($type)){
 			$this->telegram->send
 				->text("Eing? " .$this->telegram->emoji(":kissing:"))
 			->send();
@@ -347,6 +470,7 @@ class Ticket extends TelegramApp\Module {
 		if($this->telegram->has_forward){
 			// TODO CHECK forward not getting.
 			$data .= ";ref:" .$this->telegram->forward_from->id;
+			$ref = $this->telegram->forward_from->id;
 		}
 
 		$error = FALSE;
@@ -374,7 +498,8 @@ class Ticket extends TelegramApp\Module {
 		}
 
 		if(!($this->telegram->text() and $this->telegram->words() <= 2)){
-			$this->add_message($ticketId, $data, $this->user->id);
+			$private = $this->user->settings('ticket_private');
+			$this->add_message($ticketId, $data, $this->user->id, $private);
 		}
 		// Si ya hay mas de 10 elementos desde la ultima persona que lo haya enviado, mata.
 		if($this->count_last_messages($ticketId, $this->user->id) >= 10){
@@ -414,6 +539,7 @@ class Ticket extends TelegramApp\Module {
 		if(!$ticket){
 			$this->user->settings('ticket_new', 'DELETE');
 			$this->user->settings('ticket_writing', 'DELETE');
+			$this->user->settings('ticket_private', 'DELETE');
 			$this->user->step = NULL;
 
 			$this->end();
@@ -435,12 +561,42 @@ class Ticket extends TelegramApp\Module {
 			$this->user->step = NULL;
 			$this->user->settings('ticket_writing', 'DELETE');
 		}else{ // From assigner
-			$this->status($ticketId, self::TICKET_PROGRESS);
-			// Show keyboard change status
-			$this->user->step = "TICKET_SETSTATUS";
-			$this->ticket_status_keyboard($this->user->id);
+			if($this->user->settings('ticket_private')){
+				$this->user->settings('ticket_private', 'DELETE'); // TODO CHECK
+				// No es necesario cambiar el estado despues de agregar notas
+				// Ni avisar al usuario
+			}else{
+				$this->status($ticketId, self::TICKET_PROGRESS);
+				// Show keyboard change status
+				$this->user->step = "TICKET_SETSTATUS";
+				$this->ticket_status_keyboard($this->user->id);
 
-			// Enviar las respuetas al usuario.
+				// Enviar las respuetas al usuario.
+				$messages = $this->messages($ticketId);
+				if($messages){
+					$messages = array_reverse($messages);
+					$new = array();
+					$k = key($messages);
+					while($messages[$k]['uid'] != $ticket->uid){
+						$new[] = $messages[$k];
+						$k++;
+					}
+					$new = array_reverse($new);
+					$msnd = array();
+					foreach($new as $msg){
+						$msnd[] = $this->telegram->send
+							->chat($ticket->uid)
+							->notification(FALSE)
+							->text($msg['message'])
+						->send();
+						usleep(mt_rand(100, 200) * 100);
+					}
+					// WIP Guardar los MID del bot por si hace reply a estos.
+					$msnd = array_column($msnd, 'message_id');
+					$utarget = new User($ticket->uid);
+					$utarget->settings('ticket_reply_id', implode(',', $msnd));
+				}
+			}
 		}
 
 		$str = $this->telegram->emoji(":warning: ") ."El usuario %s - %s ha enviado mensajes al ticket #%s";
