@@ -285,7 +285,7 @@ class Tools extends TelegramApp\Functions {
 		return $data;
 	}
 
-	public function DateParser($dt, $from = "now"){
+	public function DateParser($dt, $parser = "dhms", $from = "now"){
 		if(is_string($dt)){ $dt = strtotime($dt); }
 		if(is_string($from)){ $from = strtotime($from); }
 
@@ -293,25 +293,33 @@ class Tools extends TelegramApp\Functions {
 		$negative = ($final < 0);
 		$final = abs($final);
 
-		if($final >= 3600*24){
-			$number = floor($final / (3600*24));
-			$final = $final % (3600*24);
-			$str["d"] = $number;
-		}
-		if($final >= 3600){
-			$number = floor($final / (3600));
-			$final = $final % 3600;
-			$str["h"] = $number;
-		}
-		if($final >= 60){
-			$number = floor($final / 60);
-			$final = $final % 60;
-			$str["m"] = $number;
-		}
-		if($final > 0){
-			$str["s"] = $final;
+		if(is_string($parser)){
+			$parser = str_split($parser);
 		}
 
+		$str = array();
+		foreach($parser as $char){
+			if($char == "d" and $final >= 3600*24){
+				$number = floor($final / (3600*24));
+				$final = $final % (3600*24);
+				$str["d"] = $number;
+			}
+			if($char == "h" and $final >= 3600){
+				$number = floor($final / (3600));
+				$final = $final % 3600;
+				$str["h"] = $number;
+			}
+			if($char == "m" and $final >= 60){
+				$number = floor($final / 60);
+				$final = $final % 60;
+				$str["m"] = $number;
+			}
+			if($char == "s" and $final > 0){
+				$str["s"] = $final;
+			}
+		}
+
+		if(empty($str)){ return NULL; }
 		// TODO Negative (time ago or future)
 		// Parse final array
 		$final = array();
