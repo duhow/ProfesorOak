@@ -254,7 +254,7 @@ class User extends TelegramApp\User {
 		$query = $this->db
 			->where('uid', $this->id)
 			->where('gid', $chat)
-			->where('timeout >=', $this->db->now())
+			->where('expires >= NOW()')
 		->getOne('user_admins');
 		return ($this->db->count == 1);
 	}

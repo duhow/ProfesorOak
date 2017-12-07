@@ -123,7 +123,7 @@ return [
 	'group_count_result' => 'Vedo e %s (%s) so %s (%s%):',
 	'group_count_result_left' => 'Mancano: %s',
 
-	'command_is_here' => ['{username} c\'è qui\?', 'c\'è qui {username}\?', 'c\'è {username} qui\?'],
+	'command_is_here' => ['{username} c\'?e qui\?', 'c\'?e qui {username}\?', 'c\'e? {username} qui\?'],
 	'command_is_here_limit' => 6,
 	'command_is_here_black' => ['qualche', 'qualcuno', 'cosa', 'è', 'ha', 'come', 'questo', 'da'],
 	'group_user_here_unknown' => 'Non so chi sia. (%s)',
@@ -231,14 +231,14 @@ return [
 		"Me chiamo {name}", "Il mio nome è {name}", "Il nome utente è {name}",
 		"Nel gioco mi chiamo {name}", "Mi chiamo {name} nel gioco"
 	],
-	'command_levelup' => ["Sono livello {N:level}", "Sono L{N:level}", "Sono lvl {N:level}", "Sono salito al {N:level}", "Sono già livello {N:level}"],
+	'command_levelup' => ["Sono livello {N:level}", "Sono L{N:level}", "Sono lvl {N:level}", "Sono salito al {N:level}", "Sono gia livello {N:level}"],
 	'command_levelup_limit' => 6,
 	'command_verify' => [
 		["oak", "prof", "vorrei", "come"],
 		["convalidami", "verificami",  "convalida", "convalidarmi", "convalidare", "verifico", "verificarmi", "mi verifico"]
 	],
-	'command_whois' => ['Chi è {username}', 'Conoscete {username}', 'Conosci {username}'],
-	'command_whois_reply' => ['Chi è'],
+	'command_whois' => ['Chi e {username}', 'Conoscete {username}', 'Conosci {username}'],
+	'command_whois_reply' => ['Chi e'],
 	'command_whois_limit' => 5,
 	'command_whois_blackword' => ["chi è", "chi e", "chi", "conosciete", "ki è"],
 
