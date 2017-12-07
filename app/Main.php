@@ -58,6 +58,9 @@ class Main extends TelegramApp\Module {
 		if($this->user->settings('language')){
 			$this->strings->language = $this->user->settings('language');
 			$this->strings->load();
+		}elseif($this->chat->settings('language')){
+			$this->strings->language = $this->chat->settings('language');
+			$this->strings->load();
 		}
 
 		parent::run();
