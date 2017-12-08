@@ -219,7 +219,7 @@ return [
 	'register_hello_verify' => 'Do you mean you want to <b>verify</b>?',
 	'register_error_color' => "I didn't understand you...\nCan you just say <b>I'm red, I'm blue</b> or <b>I'm yellow</b>?",
 	'register_error_duplicated_name' => "That's impossible! There's someone already that is called <b>@%s</b> :(\nTalk with @duhow to fix it.",
-	'register_ok_name' => "Thank you %s! By the way, what's your <b>ingame username</b>? \n<i>(My name is...)</i>",
+	'register_ok_name' => "Thank you %s! By the way, what's your <b>ingame username</b>? \n<i> (My name is...) </i>",
 	'register_error_name_shln' => "No creo que te llames realmente así... Va, en serio. ¿Cómo te llamas?",
 	'register_error_name_real' => "Me refería a tu <b>NOMBRE DE JUEGO</b>, no el de verdad. Prueba de nuevo.",
 	'register_successful' => "All right, <b>@%s</b>!\nRemember to <b>verify</b> in order to access the color groups!",

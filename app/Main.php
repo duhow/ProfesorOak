@@ -46,14 +46,6 @@ class Main extends TelegramApp\Module {
 			if($this->telegram->has_forward && $this->telegram->forward_type("channel")){ $this->end(); }
 		}
 
-		if($this->user->load() !== TRUE){
-			// Solo puede registrarse o pedir ayuda por privado.
-			$this->hooks_newuser();
-		}
-
-		// TODO Tiene que pasar TODOS los filtros (aparte de Admin).
-		if($this->user->blocked){ $this->end(); }
-
 		// Change language for user.
 		if($this->user->settings('language')){
 			$this->strings->language = $this->user->settings('language');
@@ -62,6 +54,14 @@ class Main extends TelegramApp\Module {
 			$this->strings->language = $this->chat->settings('language');
 			$this->strings->load();
 		}
+
+		if($this->user->load() !== TRUE){
+			// Solo puede registrarse o pedir ayuda por privado.
+			$this->hooks_newuser();
+		}
+
+		// TODO Tiene que pasar TODOS los filtros (aparte de Admin).
+		if($this->user->blocked){ $this->end(); }
 
 		parent::run();
 	}
@@ -102,20 +102,20 @@ class Main extends TelegramApp\Module {
 			}
 		}
 
-		$str = "This new version has translations, but currently there is Spanish and a bit of English." ."\n"
+		$str = "You can choose the language you want me to talk." ."\n"
 			."If you want to contribute or improve them, please contact @duhow. Thank you!";
 
 		$this->telegram->send
 			->inline_keyboard()
 				->row()
-					->button($this->telegram->emoji(':es:'), "language es", "TEXT")
-					->button($this->telegram->emoji(':us:'), "language en", "TEXT")
+					->button($this->telegram->emoji(':flag_es:'), "language es", "TEXT")
+					->button($this->telegram->emoji(':flag_us:'), "language en", "TEXT")
+					->button($this->telegram->emoji(':flag_it:'), "language it", "TEXT")
 				->end_row()
-				->row()
-					->button($this->telegram->emoji(':fr:'), "language fr", "TEXT")
-					->button($this->telegram->emoji(':it:'), "language it", "TEXT")
-					->button($this->telegram->emoji(':de:'), "language de", "TEXT")
-				->end_row()
+				/* ->row()
+					->button($this->telegram->emoji(':flag_fr:'), "language fr", "TEXT")
+					->button($this->telegram->emoji(':flag_de:'), "language de", "TEXT")
+				->end_row() */
 			->show()
 			->text($str)
 		->send();
@@ -198,7 +198,7 @@ class Main extends TelegramApp\Module {
 			}elseif($team === FALSE){
 				$this->telegram->send->reply_to(TRUE);
 				$str = $this->strings->get('error_register');
-			}else{
+			}elseif(strlen($team) == 1 and in_array(strtoupper($team), ['R', 'B', 'Y'])){
 				// Intentar registrar, ignorar si es anonymous.
 				if($this->user->register($team) === FALSE){
 					$this->telegram->send
@@ -214,6 +214,8 @@ class Main extends TelegramApp\Module {
 					}
 					$str = $this->strings->parse('register_ok_name', $this->telegram->user->first_name);
 				}
+			}else{
+				$str = $this->strings->get('register_error_color');
 			}
 		}elseif(!$this->user->username){
 			$str = $this->strings->get('register_hello_name');
@@ -224,6 +226,7 @@ class Main extends TelegramApp\Module {
 				->row_button($this->strings->get('verify'), "verify", TRUE)
 			->show();
 		}
+
 		if(!empty($str)){
 			$this->telegram->send
 				->notification(FALSE)
@@ -908,11 +911,50 @@ class Main extends TelegramApp\Module {
 	}
 
 	private function hooks_newuser(){
-		$color = Tools::Color($this->telegram->text());
-		if(
-			($this->telegram->text_regex($this->strings->get('command_register_color')) && $color) or
-			($color && $this->telegram->words() == 1)
-		){
+		// TODO HACK WIP Get all translations
+		$langs = ['es', 'en', 'it'];
+		$langsel = NULL;
+		$teams = ['B' => 'mystic', 'R' => 'valor', 'Y' => 'instinct'];
+		$color = NULL;
+
+		foreach($langs as $lang){
+			// -------------
+			// Buscar si sólo ha dicho el color
+			foreach($teams as $code => $team){
+				if($this->telegram->text_has($this->strings->get("team_{$team}_color", $lang), TRUE)){
+					$color = $code;
+					$langsel = $lang;
+					break;
+				}
+			}
+			if(strlen($color) == 1){ break; }
+			// -------------
+			// Soy color/equipo ...
+			$reg = $this->telegram->text_regex($this->strings->get('command_register_color', $lang));
+			if(!$reg){ continue; } // or !$this->telegram->input->color
+
+			$color = strtolower($this->telegram->input->color);
+			$langsel = $lang;
+			foreach($teams as $code => $team){
+				if(
+					($color == strtolower($this->strings->get("team_$team", $lang))) or
+					(in_array($color, $this->strings->get("team_{$team}_color", $lang)))
+				){
+					$color = $code;
+					break;
+				}
+			}
+			if(strlen($color) == 1){ break; }
+		}
+
+		if(!empty($langsel)){
+			$this->user->settings('language', $langsel);
+			$this->strings->language = $langsel;
+			$this->strings->load();
+		}
+
+		// Registrar con frase
+		if(!empty($color)){
 			$this->register($color);
 		}elseif(
 			$this->telegram->text_command("register") or
