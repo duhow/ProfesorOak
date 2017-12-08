@@ -183,6 +183,7 @@ return [
 		["verify", "verified", "validate", "validated", "valid"]
 	],
 	'command_whois' => ['who is {username}', 'who are you {username}', 'whois {username}'],
+	'command_whoami' => ['who am I', 'who I am'],
 	'command_whois_reply' => ['who is', 'who are you'],
 	'command_whois_limit' => 5,
 	'command_whois_blackword' => ['are', 'is', 'who', 'this', 'that', 'they'],

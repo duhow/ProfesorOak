@@ -239,6 +239,7 @@ return [
 		["convalidami", "verificami",  "convalida", "convalidarmi", "convalidare", "verifico", "verificarmi", "mi verifico"]
 	],
 	'command_whois' => ['Chi e {username}', 'Conoscete {username}', 'Conosci {username}'],
+	'command_whoami' => ['chi sono io'],
 	'command_whois_reply' => ['Chi e'],
 	'command_whois_limit' => 5,
 	'command_whois_blackword' => ["chi è", "chi e", "chi", "conosciete", "ki è"],
