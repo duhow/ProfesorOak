@@ -109,6 +109,9 @@ class Main extends TelegramApp\Module {
 			->inline_keyboard()
 				->row()
 					->button($this->telegram->emoji(':flag_es:'), "language es", "TEXT")
+					->button($this->telegram->emoji(':flag_es:') . " CAT", "language ca", "TEXT")
+				->end_row()
+				->row()
 					->button($this->telegram->emoji(':flag_us:'), "language en", "TEXT")
 					->button($this->telegram->emoji(':flag_it:'), "language it", "TEXT")
 				->end_row()
@@ -763,7 +766,7 @@ class Main extends TelegramApp\Module {
 		// Cancelar pasos en general.
 		if(
 			$this->user->step != NULL and
-			$this->telegram->text_has($this->strings->get('cancel'), TRUE) //  and 
+			$this->telegram->text_has($this->strings->get('cancel'), TRUE) //  and
 			// $this->telegram->words() <= 2
 		){
 			$this->user->step = NULL;
