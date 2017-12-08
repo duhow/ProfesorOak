@@ -30,6 +30,7 @@ class User extends TelegramApp\User {
 
 	public function settings($key, $value = NULL){
 		if($value === NULL){
+			if(empty($this->settings)){ $this->load_settings(); }
 			return (array_key_exists($key, $this->settings) ? $this->settings[$key] : NULL);
 		}elseif(strtoupper($value) == "DELETE"){
 			$settings = $this->settings;

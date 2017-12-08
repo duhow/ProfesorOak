@@ -120,7 +120,7 @@ return [
 	'group_text_done' => 'Fatto!',
 	'group_rules_empty' => 'Non c\'è alcuna regola.',
 	'group_rules_private' => 'Te la invio in privato, %s.',
-	'group_count_result' => 'Vedo e %s (%s) so %s (%s%):',
+	'group_count_result' => 'Ne vedo %s (%s) e ne conosco %s (%s%):',
 	'group_count_result_left' => 'Mancano: %s',
 
 	'command_is_here' => ['{username} c\'?e qui\?', 'c\'?e qui {username}\?', 'c\'e? {username} qui\?'],
@@ -228,7 +228,7 @@ return [
 
 	'command_register_color' => ['(Sono|Squadra|Team) {color}', 'Sono del colore {color}'],
 	'command_register_username' => [
-		"Me chiamo {name}", "Il mio nome è {name}", "Il nome utente è {name}",
+		"M[ei] chiamo {name}", "Il mio nome e {name}", "Il nome utente e {name}",
 		"Nel gioco mi chiamo {name}", "Mi chiamo {name} nel gioco"
 	],
 	'command_levelup' => ["Sono livello {N:level}", "Sono L{N:level}", "Sono lvl {N:level}", "Sono salito al {N:level}", "Sono gia livello {N:level}"],
@@ -276,7 +276,7 @@ return [
 	'register_hello_verify' => 'Mi sembra che tu voglia <b>convalidarti</b>?',
 	'register_error_color' => "Non ho capito bene...\nPuoi solamente scrivermi <b>sono rosso, sono blu</b> o <b>sono giallo</b>?",
 	'register_error_duplicated_name' => "Non può essere c'è già qualcuno che si chiama <b>@%s</b> :(\nParla con @duhow per risolvere il problema. (scrivi in inglese)",
-	'register_ok_name' => "Grazie mille %s! A proposito, come ti chiami <b>nel gioco</b>? \n<i>(Mi chiamo...)</i>",
+	'register_ok_name' => "Grazie mille %s! A proposito, come ti chiami <b>nel gioco</b>? \n<i> (Mi chiamo...) </i>",
 	'register_error_name_shln' => "Non penso tu ti sia chiamato veramente così... Dai, sul serio. Come ti chiami?",
 	'register_error_name_real' => "Stavo parlando del tuo <b>NOME DI GIOCO</b>, non a quello vero. Prova di nuovo.",
 	'register_successful' => "Okay, <b>@%s</b>!\n¡Ricorda di <b>convalidarti</b> per poter essere inserito nella lista del gruppo del tuo colore!",
