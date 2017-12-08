@@ -111,9 +111,10 @@ return [
 	'custom_command_unknown_content' => ['No lo entiendo.', 'Prueba con otra cosa.', '¿Que es eso?'],
 	'custom_command_created' => '¡Comando creado correctamente!',
 
-	'command_rules' => ['reglas del grupo', 'normas del grupo', 'ver las normas', 'ver las reglas', 'ver normas', 'ver reglas', 'dime las normas', 'dime las reglas'],
-	'command_rules_write' => ['poner', 'actualizar', 'redactar', 'escribir', 'cambiar'],
+	'command_rules' => ['(reglas|normas) del grupo', 'ver (las )?(reglas|normas)', 'dime las (reglas|normas)'],
+	'command_rules_write' => ['poner', 'actualizar', 'redactar', 'escribir', 'editar', 'cambiar'],
 	'command_rules_limit' => 6,
+	'command_welcome_message' => ['mensaje de (bienvenida|entrada)', '(bienvenida|entrada) al grupo'],
 	'group_rules_please_send' => 'De acuerdo, envíame el texto que quieres que ponga de normas.',
 	'group_welcome_please_send' => 'De acuerdo, dime cómo quieres que salude a la gente al entrar. Usa <b>$name</b> si quieres que les diga por su nombre.',
 	'group_text_too_much' => 'Buah, demasiado texto! Relájate un poco anda ;)',

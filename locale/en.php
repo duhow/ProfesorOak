@@ -107,9 +107,10 @@ return [
 	'custom_command_answer' => 'Right! Now send me the answer that you want to reply.',
 	'custom_command_created' => 'Command created successfully!',
 
-	'command_rules' => ['group rules', 'view the rules', 'read the rules'],
+	'command_rules' => ['group rules', '(view|read) the (group )?rules'],
 	'command_rules_write' => ['write', 'edit', 'change', 'add'],
 	'command_rules_limit' => 6,
+	'command_welcome_message' => ['(welcome|entrance) (group |chat )?(message|text)'],
 	'group_rules_please_send' => 'Ok, send me the text you want to add as rules.',
 	'group_rules_too_much' => 'Wow, that\'s too much! Can you resume it? :)',
 	'group_rules_empty' => 'There are no rules.',

@@ -167,10 +167,10 @@ class Ticket extends TelegramApp\Module {
 		}
 		if(in_array('ticketer', $this->user->flags)){
 			if($this->telegram->text_command("ticket", "list")){
-				if($this->telegram->text_contains("all")){
-					$tickets = $this->list_all();
-				}else{
+				if($this->telegram->text_contains("lock")){
 					$tickets = $this->list(TRUE);
+				}else{
+					$tickets = $this->list_all();
 				}
 				if(!$tickets){
 					$this->telegram->send
@@ -397,10 +397,29 @@ class Ticket extends TelegramApp\Module {
 		return $rets;
 	}
 
+	private function resolve_usernames($users){
+		if($users instanceof User){ $users = $users->id; }
+		if(is_numeric($users) or is_string($users)){ $users = [$users]; }
+
+		$query = $this->db
+			->where('(telegramid IN ("' .implode('", "', $users) .'") OR username IN ("' .implode('", "', $users) .'") )')
+			->where('username IS NOT NULL')
+			->where('anonymous', FALSE)
+		->get('user', NULL, 'telegramid, username');
+		if(!$query){ return FALSE; }
+		return array_column($query, 'username', 'telegramid');
+	}
+
 	private function send_messages_advanced($messages, $ticket, $toUser, $sleep = 100){
 		$rets = array();
 		$str = "";
 		if(is_numeric($ticket)){ $ticket = $this->get($ticket); }
+		$userids = array();
+		foreach($messages as $msg){
+			$userids[] = $msg['uid'];
+			if(!empty($msg['ref'])){ $userids[] = $msg['ref']; }
+		}
+		$users = $this->resolve_usernames(array_unique($userids));
 		foreach($messages as $msg){
 			if($msg['type'] != "text"){
 				if(!empty($str)){
@@ -413,11 +432,17 @@ class Ticket extends TelegramApp\Module {
 				}
 				$str = "";
 				// Agregar caption de quien lo envia
+				$arrow = ($msg['ref'] ? ':fast_forward:' : ':arrow_right:');
 				$uicon = ($msg['uid'] == $ticket->uid ?
-				       	":man_frowning: :arrow_right: :man_in_tuxedo:" : // U > H
-				       	":man_in_tuxedo: :arrow_right: :man_frowning:"); // H > U
-				$str .= "$uicon - " .$this->telegram->userlink($msg['uid'], $msg['uid']);
-				if($msg['private']){ $str .= " :eyes:"; } // TODO CHECK
+				       	":man_frowning: $arrow :man_in_tuxedo:" : // U > H
+				       	":man_in_tuxedo: $arrow :man_frowning:"); // H > U
+				$str .= "$uicon - " .$msg['uid'];
+				if(in_array($msg['uid'], $users)){ error_log("entra"); $str .= ' ' .$users[$msg['uid']]; }
+				// TODO si el usuario no habla con Oak, no se puede linkar
+				// Asi que poner sólo ID numerico.
+				if($msg['ref']){ $str .= ' // ' .$msg['ref']; }
+				if($msg['private']){ $str .= ' :eyes:'; }
+				$str = $this->telegram->emoji($str);
 
 				$rets[] = $this->telegram->send
 					->caption($str)
@@ -437,11 +462,20 @@ class Ticket extends TelegramApp\Module {
 					usleep($sleep * 100);
 					$str = "";
 				}
+				$arrow = ($msg['ref'] ? ':fast_forward:' : ':arrow_right:');
 				$uicon = ($msg['uid'] == $ticket->uid ?
-				       	":man_frowning: :arrow_right: :man_in_tuxedo:" :
-				       	":man_in_tuxedo: :arrow_right: :man_frowning:");
-				$str .= "$uicon - " .$this->telegram->userlink($msg['uid'], $msg['uid']);
-				if($msg['private']){ $str .= " :eyes:"; } // TODO CHECK
+						":man_frowning: $arrow :man_in_tuxedo:" : // U > H
+						":man_in_tuxedo: $arrow :man_frowning:"); // H > U
+				$str .= "$uicon - <code>" .$msg['uid'] .'</code>';
+				if(in_array($msg['uid'], $users)){  error_log("entra"); $str .= ' ' .$this->telegram->userlink($msg['uid'], $users[$msg['uid']]); }
+				if($msg['ref']){
+					$str .= ' // <code>' .$msg['ref'] .'</code>';
+					if(in_array($msg['ref'], $users)){
+						// $str .= ' '. $this->telegram->userlink($msg['ref'], $users[$msg['ref']]);
+						$str .= ' '. $users[$msg['ref']];
+					}
+				}
+				if($msg['private']){ $str .= ' :eyes:'; }
 
 				$str .= "\n" .Tools::DateParser($msg['date'], "dh") . " (" .date("d/m H:i", strtotime($msg['date'])) .")\n";
 				$str .= $msg['message'] ."\n\n";
@@ -651,10 +685,21 @@ class Ticket extends TelegramApp\Module {
 	}
 
 	public function add_message($ticket, $message, $user = NULL, $private = FALSE){
+		$ref = NULL;
+		$type = "text";
+
 		if(empty($user)){ $user = $this->user; }
+		if(is_array($user)){
+			if(count($user) == 2){
+				$ref = array_pop($user);
+				$user = array_shift($user);
+				if($ref instanceof User){ $ref = $ref->id; }
+			}else{
+				$user = current($user);
+			}
+		}
 		if($user instanceof User){ $user = $user->id; }
 
-		$type = "text";
 		if(is_array($message) and count($message) == 1){
 			$type = key($message);
 			$message = current($message);
@@ -665,6 +710,7 @@ class Ticket extends TelegramApp\Module {
 			'tid' => $ticket,
 			'cid' => $this->chat->id,
 			'mid' => $this->telegram->message_id,
+			'ref' => $ref,
 			'message' => $message,
 			'type' => $type,
 			'private' => (bool) $private,
@@ -767,9 +813,8 @@ class Ticket extends TelegramApp\Module {
 		}
 
 		if($this->telegram->has_forward){
-			// TODO CHECK forward not getting.
-			$data .= ";ref:" .$this->telegram->forward_from->id;
-			$ref = $this->telegram->forward_from->id;
+			$ref = $this->telegram->forward_user->id;
+			if($ref == $this->user->id){ $ref = NULL; } // No poner forward si es él mismo.
 		}
 
 		$error = FALSE;
@@ -799,7 +844,8 @@ class Ticket extends TelegramApp\Module {
 		if(!($this->telegram->text() and $this->telegram->words() <= 2) and !$this->telegram->callback){
 			$private = $this->user->settings('ticket_private');
 			$message = [$type => $data];
-			$this->add_message($ticketId, $message, $this->user->id, $private);
+			$users = [$this->user->id, $ref];
+			$this->add_message($ticketId, $message, $users, $private);
 		}
 		// Si ya hay mas de 10 elementos desde la ultima persona que lo haya enviado, mata.
 		if($this->count_last_messages($ticketId, $this->user->id) >= 10){
@@ -828,6 +874,7 @@ class Ticket extends TelegramApp\Module {
 				->text($this->strings->get('ticket_writing_delete'))
 			->send();
 
+			$this->status($ticketId, self::TICKET_ARCHIVED);
 			$this->user->settings('ticket_new', 'DELETE');
 			$this->user->settings('ticket_writing', 'DELETE');
 			$this->user->step = NULL;
@@ -859,7 +906,7 @@ class Ticket extends TelegramApp\Module {
 				$str = $this->strings->parse('ticket_writing_finished_ticketid', $ticket->id);
 			}else{
 				$this->status($ticketId, self::TICKET_DELAYED, TRUE);
-				
+
 				// Enviar las respuestas al asignado.
 				if($ticket->assigned){
 					$messages = $this->messages($ticketId);

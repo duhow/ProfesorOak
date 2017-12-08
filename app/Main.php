@@ -431,6 +431,14 @@ class Main extends TelegramApp\Module {
 		// $this->user = El que le invita (puede ser el mismo)
 
 		$this->chat->load();
+		// Cargar idioma acorde a la persona o al grupo
+		if($this->user->settings('language')){
+			$this->strings->language = $this->user->settings('language');
+			$this->strings->load();
+		}elseif($this->chat->settings('language')){
+			$this->strings->language = $this->chat->settings('language');
+			$this->strings->load();
+		}
 
 		$new = new User($this->telegram->new_user, $this->db);
 		$adminchat = $this->chat->settings('admin_chat');
@@ -753,7 +761,11 @@ class Main extends TelegramApp\Module {
 		// $pokemon = $this->pokemon;
 
 		// Cancelar pasos en general.
-		if($this->user->step != NULL && $this->telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
+		if(
+			$this->user->step != NULL and
+			$this->telegram->text_has($this->strings->get('cancel'), TRUE) //  and 
+			// $this->telegram->words() <= 2
+		){
 			$this->user->step = NULL;
 			$this->user->update();
 			$this->telegram->send
