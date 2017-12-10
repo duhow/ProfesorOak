@@ -442,7 +442,7 @@ class Group extends TelegramApp\Module {
 		){ $this->end(); }
 
 		$commands = $this->chat->settings('custom_commands');
-		if(!$commands or !empty($this->user->step)){ return FALSE; }
+		if(!$commands or ($this->user->step)){ return FALSE; }
 		// $commands = unserialize($commands);
 		if(is_array($commands)){
 			foreach($commands as $word => $action){
@@ -474,7 +474,12 @@ class Group extends TelegramApp\Module {
 			$content = array();
 			foreach(['text', 'photo', 'sticker', 'document', 'location', 'video'] as $elm){
 				if($this->telegram->$elm()){
-					$content = [$elm => $this->telegram->$elm()];
+					$data = $this->telegram->$elm();
+					if($elm == "text"){ $data = $this->telegram->text_encoded(); }
+					elseif($elm == "location"){
+						$data = implode(",", [$this->telegram->location()->latitude, $this->telegram->location()->longitude]);
+					}
+					$content = [$elm => $data];
 					break;
 				}
 			}

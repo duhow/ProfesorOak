@@ -31,20 +31,21 @@ class Main extends TelegramApp\Module {
 			if($this->chat->settings('antispam') != FALSE && $this->telegram->text_url()){ $this->Admin->antispam(); }
 			if($this->chat->settings('mute_content')){ $this->Admin->mute_content(); }
 			if($this->chat->settings('antiafk') and $this->telegram->key == 'message'){ $this->Admin->antiafk(); }
-			// if($this->user->settings('mute')){ /* TODO Mute User */ }
-			// if($this->chat->settings('require_avatar')){ $this->Admin->antinoavatar(); }
 			if($this->chat->settings('die') && $this->user->id != CREATOR){ $this->end(); }
 			if($this->chat->settings('abandon')){ $this->Group->abandon(); }
-
-			if($this->user->blocked){ $this->end(); }
-
-			if($this->chat->settings('custom_commands')){ $this->Group->custom_commands(); }
 			// if($this->chat->settings('blackwords')){ $this->Admin->blackwords(); }
-			if($this->chat->settings('dubs')){ $this->core->load('GameDubs', TRUE); }
 
 			// Cancelar acciones sobre comandos provenientes de mensajes de channels. STOP SPAM.
 			if($this->telegram->has_forward && $this->telegram->forward_type("channel")){ $this->end(); }
 		}
+
+		// Solo puede registrarse o pedir ayuda por privado.
+		if($this->user->load() !== TRUE){
+			$this->hooks_newuser();
+		}
+
+		// Tras haber pasado los filtros de grupo (aparte de Admin).
+		if($this->user->blocked){ $this->end(); }
 
 		// Change language for user.
 		if($this->user->settings('language')){
@@ -55,13 +56,13 @@ class Main extends TelegramApp\Module {
 			$this->strings->load();
 		}
 
-		if($this->user->load() !== TRUE){
-			// Solo puede registrarse o pedir ayuda por privado.
-			$this->hooks_newuser();
+		// POST Load user in group
+		if($this->telegram->is_chat_group()){
+			// if($this->user->settings('mute')){ /* TODO Mute User */ }
+			// if($this->chat->settings('require_avatar')){ $this->Admin->antinoavatar(); }
+			if($this->chat->settings('dubs')){ $this->core->load('GameDubs', TRUE); }
+			if($this->chat->settings('custom_commands')){ $this->Group->custom_commands(); }
 		}
-
-		// TODO Tiene que pasar TODOS los filtros (aparte de Admin).
-		if($this->user->blocked){ $this->end(); }
 
 		parent::run();
 	}
