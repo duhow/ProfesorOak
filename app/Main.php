@@ -145,7 +145,14 @@ class Main extends TelegramApp\Module {
 						.'<a href="tg://user?id=' .$this->telegram->user->id .'">' .strval($this->telegram->user) .'</a>' .":\n"
 						.$this->telegram->text();
 				$this->telegram->send
+					->notification(FALSE)
 					->chat("-226115807")
+					->inline_keyboard()
+						->row()
+							->button($this->telegram->emoji(":speaking_head_in_silhouette: Hablar"), "aspeak " .$this->chat->id, "TEXT")
+							->button($this->telegram->emoji(":bangbang: Fly"), "aflag fly " .$this->telegram->user->id, "TEXT")
+						->end_row()
+					->show()
 					->text($str, 'HTML')
 				->send();
 				// $bw = $pokemon->settings($telegram->chat->id, 'blackword');

@@ -105,11 +105,14 @@ return [
 	'roulette_lose' => 'Has perdut :(',
 
 	'command_custom_command_create' => ['Crear (nova )?(ordre|comanda)'],
+	'command_custom_command_delete' => ['(esborra|borra|elimina) (ordre|comanda) {S:command}'],
+	'command_custom_command_list' => ['Llistat? (de |d\'\s?)?(comandes|ordres)'],
 	'command_custom_command_create_limit' => 3,
 	'custom_command_create' => 'Digue\'m l\'ordre / frase a crear.',
 	'custom_command_answer' => 'D\'acord! Ara envia\'m la resposta que vols enviar.',
 	'custom_command_unknown_content' => ['No ho entenc.', 'Prova-ho amb una altra cosa.', 'Què és això?'],
 	'custom_command_created' => 'Ordre creada correctament!',
+	'custom_command_deleted' => 'Ordre "%s" esborrada.',
 
 	'command_rules' => ['(normes|regles) del grup', 'veure (les )?(normes|regles)', 'digue\'m les (normes|regles)'],
 	'command_rules_write' => ['posar', 'actualitzar', 'redactar', 'escriure', 'afegir', 'canviar'],

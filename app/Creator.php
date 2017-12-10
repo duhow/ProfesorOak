@@ -15,6 +15,14 @@ class Creator extends TelegramApp\Module {
 	}
 
 	protected function hooks(){
+		if($this->telegram->callback){
+			if($this->telegram->text_regex('^aspeak {chat}')){
+				return $this->speak($this->telegram->input->chat);
+			}elseif($this->telegram->text_regex('^aflag {flag} {user}')){
+				return $this->setflag($this->telegram->input->flag, $this->telegram->input->user);
+			}
+		}
+
 		if($this->telegram->text_has("mal") && $this->telegram->words() < 4 && $this->telegram->has_reply){
 			$this->hide_message(TRUE, TRUE);
 			$this->end();
@@ -55,13 +63,8 @@ class Creator extends TelegramApp\Module {
 			$this->setflag(TRUE);
 		}
 
-		if($this->telegram->text_command("r")){
-			$this->register();
-		}
-
-		if($this->telegram->text_command("ui")){
-			$this->uinfo();
-		}
+		if($this->telegram->text_command("r")){ $this->register(); }
+		if($this->telegram->text_command("ui")){ $this->uinfo(); }
 	}
 
 	private function get_user($onlyid = FALSE, $wordpos = 2){
@@ -429,6 +432,39 @@ class Creator extends TelegramApp\Module {
 				->send();
 			}
 		} */
+	}
+
+	public function linkat($search = NULL){
+		if(strlen($search) <= 2 or $this->chat->is_group()){ $this->end(); }
+
+		$chats = $this->db
+			->join('settings s', 'c.id = s.uid')
+			->where('c.title', "%{$search}%", 'LIKE')
+			->where('c.active', TRUE)
+			->where('s.type', 'link_chat')
+			->where('LENGTH(s.value) > 1')
+			->orderBy('c.last_date', 'DESC')
+		->get('chats c', NULL, 'c.title, s.value AS link');
+
+		if($this->db->count == 0){
+			$this->telegram->send
+				->text(":x: No encuentro nada.")
+			->send();
+			$this->end();
+		}
+
+		$str = "";
+		foreach($chats as $chat){
+			$str .= '<a href="' .$this->telegram->grouplink($chat['link'], TRUE) .'">'
+					.$chat['title'] .'</a>' ."\n";
+		}
+
+		$this->telegram->send->convert_emoji = FALSE; // HACK
+		$this->telegram->send
+			->disable_web_page_preview(TRUE)
+			->text($str, 'HTML')
+		->send();
+		$this->end();
 	}
 
 	private function hide_message($message = TRUE, $chat = TRUE){
