@@ -469,7 +469,7 @@ class Group extends TelegramApp\Module {
 		if($this->user->settings('command_name')){
 			// Ver el contenido que ha enviado, y guardarlo en DB.
 			$commands = $this->chat->settings('custom_commands');
-			$cname = $this->chat->settings('command_name');
+			$cname = $this->user->settings('command_name');
 
 			$content = array();
 			foreach(['text', 'photo', 'sticker', 'document', 'location', 'video'] as $elm){
@@ -495,7 +495,7 @@ class Group extends TelegramApp\Module {
 			->send();
 			$this->end();
 		}else{
-			if($this->telegram->text_has($this->strings->get('command_custom_command_create'), TRUE)){
+			if($this->telegram->text_regex($this->strings->get('command_custom_command_create'))){
 				$this->telegram->send
 					->text($this->strings->get('custom_command_create'))
 				->send();

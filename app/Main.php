@@ -770,7 +770,7 @@ class Main extends TelegramApp\Module {
 			// $this->telegram->words() <= 2
 		){
 			$this->user->step = NULL;
-			$this->user->update();
+			// $this->user->update();
 			$this->telegram->send
 				->notification(FALSE)
 				->keyboard()->selective(FALSE)->hide()
