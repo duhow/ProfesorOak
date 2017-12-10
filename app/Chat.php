@@ -188,16 +188,16 @@ class Chat extends TelegramApp\Chat {
 			->where('gid', $this->id)
 			->where('expires', date("Y-m-d H:i:s"), ">=")
 		->get('user_admins', NULL, 'uid');
-		if(count($query) == 0){
+		if($this->db->count == 0){
 			// Load and insert
-			$admins = $this->telegram->get_admins();
+			$admins = $this->telegram->get_admins($this->id);
 			$timeout = 3600;
 			$data = array();
 			foreach($admins as $admin){
 				$data[] = [
 					'gid' => $this->id,
 					'uid' => $admin,
-					'expires' => time() + $timeout,
+					'expires' => date("Y-m-d H:i:s", (time() + $timeout)),
 				];
 			}
 			$ids = $this->db->insertMulti('user_admins', $data);
@@ -225,6 +225,7 @@ class Chat extends TelegramApp\Chat {
 		$query = $this->db
 			->where('gid', $this->id)
 			->where('uid', $user)
+			->where('expires', date("Y-m-d H:i:s"), ">=")
 		->getOne('user_admins');
 		return ($this->db->count == 1);
 	}
