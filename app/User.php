@@ -9,10 +9,12 @@ class User extends TelegramApp\User {
 	// Custom Properties
 	// Flags
 	// Settings
+	private $chat = NULL;
 
-	private function set_chat($chat = NULL){
+	private function set_chat($chat = NULL, $asint = TRUE){
 		if($chat !== NULL){ $this->chat = $chat; }
 		else{ $chat = $this->chat; }
+		if($asint and is_object($chat)){ return $chat->id; }
 		return $chat;
 	}
 

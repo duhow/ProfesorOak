@@ -104,7 +104,7 @@ return [
 	'roulette_win' => '¡Acertaste!',
 	'roulette_lose' => 'Has perdido :(',
 
-	'command_custom_command_create' => 'Crear comando',
+	'command_custom_command_create' => ['Crear comando'],
 	'command_custom_command_create_limit' => 3,
 	'custom_command_create' => 'Dime el comando / frase a crear.',
 	'custom_command_answer' => '¡De acuerdo! Ahora envíame la respuesta que quieres enviar.',

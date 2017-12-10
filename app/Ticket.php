@@ -880,6 +880,7 @@ class Ticket extends TelegramApp\Module {
 			$this->ticket_writing_finish();
 		}elseif($this->telegram->text_has($this->strings->get('ticket_action_delete')) and $this->telegram->words() <= 2){
 			$this->telegram->send
+				->keyboard()->hide(TRUE)
 				->text($this->strings->get('ticket_writing_delete'))
 			->send();
 

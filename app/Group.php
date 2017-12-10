@@ -17,7 +17,7 @@ class Group extends TelegramApp\Module {
 	// ALIAS
 	private function step_rules(){ return $this->step_welcome(); }
 	private function step_welcome(){
-		if(!$this->chat->is_admin($this->user->id)){
+		if(!$this->chat->is_admin($this->user)){
 			$this->user->step = NULL;
 			$this->end();
 		}
@@ -80,7 +80,7 @@ class Group extends TelegramApp\Module {
 			) or (
 				$this->telegram->callback and
 				$this->telegram->text_regex('userlist {N:offset}')
-			) and $this->user->is_admin()
+			) and $this->chat->is_admin($this->user)
 		){
 			$offset = 0;
 			if($this->telegram->input->offset){ $offset = $this->telegram->input->offset; }
@@ -146,9 +146,9 @@ class Group extends TelegramApp\Module {
 		}
 
 		elseif(
-			$this->telegram->text_has($this->strings->get('command_custom_command_create'), TRUE) and
+			$this->telegram->text_regex($this->strings->get('command_custom_command_create')) and
 			$this->telegram->words() <= $this->strings->get('command_custom_command_create_limit') and
-			!$this->user->step and $this->user->is_admin()
+			!$this->user->step and $this->chat->is_admin($this->user)
 		){
 			$this->user->settings('command_name', "DELETE");
 			$this->custom_command_create();

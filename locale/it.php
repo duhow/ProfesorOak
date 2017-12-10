@@ -104,12 +104,12 @@ return [
 	'roulette_win' => 'Hai vinto! Sei sopravvissuto!',
 	'roulette_lose' => 'Hai perso :(',
 
-	'command_custom_command_create' => 'Creare comando',
+	'command_custom_command_create' => ['Crea(re)? comando'],
 	'command_custom_command_create_limit' => 3,
-	'custom_command_create' => 'Dime il comando / frase da creare.',
+	'custom_command_create' => 'Dimmi il comando / frase da creare.',
 	'custom_command_answer' => '¡D\'accordo! Ora inviami la risposta che devo inviare.',
 	'custom_command_unknown_content' => ['Non capisco.', 'Prova con un altra cosa.', 'Che cos\'è questo?'],
-	'custom_command_created' => 'Comando creato correctamente!',
+	'custom_command_created' => 'Comando creato correttamente!',
 
 	'command_rules' => ['(regole|regolamento|norme) del gruppo', 'vedere (le )?(norme|regole)', 'dimmi le (norme|regole)'],
 	'command_rules_write' => ['aggiungi', 'aggiorna', 'redigi', 'scrivi', 'cambia', 'crea', 'modifica', 'imposta', 'inserisci', 'nuovo', 'nuove'],

@@ -103,6 +103,8 @@ return [
 	'roulette_win' => 'You win!',
 	'roulette_lose' => 'You lose :(',
 
+	'command_custom_command_create' => ['Create (new )?command'],
+	'command_custom_command_create_limit' => 3,
 	'custom_command_create' => 'Tell me the command or sentence to create.',
 	'custom_command_answer' => 'Right! Now send me the answer that you want to reply.',
 	'custom_command_created' => 'Command created successfully!',

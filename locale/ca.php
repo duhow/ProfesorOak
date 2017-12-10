@@ -104,7 +104,7 @@ return [
 	'roulette_win' => 'Has encertat!',
 	'roulette_lose' => 'Has perdut :(',
 
-	'command_custom_command_create' => 'Crear ordre',
+	'command_custom_command_create' => ['Crear (nova )?(ordre|comanda)'],
 	'command_custom_command_create_limit' => 3,
 	'custom_command_create' => 'Digue\'m l\'ordre / frase a crear.',
 	'custom_command_answer' => 'D\'acord! Ara envia\'m la resposta que vols enviar.',
