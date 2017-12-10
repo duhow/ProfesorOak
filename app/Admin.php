@@ -274,6 +274,7 @@ class Admin extends TelegramApp\Module {
 
 	public function unban($user, $chat = NULL){
 		if(empty($chat)){ $chat = $this->chat->id; }
+		if($user instanceof User){ $user = $user->id; }
 		return $this->telegram->send->unban($user, $chat);
 	}
 

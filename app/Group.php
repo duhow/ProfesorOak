@@ -154,6 +154,26 @@ class Group extends TelegramApp\Module {
 			$this->custom_command_create();
 			$this->end();
 		}
+
+		elseif(
+			$this->telegram->text_regex($this->strings->get('command_custom_command_delete')) and
+			!$this->user->step and $this->chat->is_admin($this->user)
+		){
+			$this->custom_command_delete($this->telegram->input->command);
+			$this->end();
+		}
+
+		elseif(
+			$this->telegram->text_regex($this->strings->get('command_custom_command_list')) and
+			!$this->user->step
+		){
+			if(
+				!$this->chat->settings('custom_command_list_user') and
+				!$this->chat->is_admin($this->user)
+			){ $this->end(); }
+			$this->custom_command_list();
+			$this->end();
+		}
 	}
 
 	public function user_count($chat = NULL, $say = FALSE){
@@ -472,16 +492,21 @@ class Group extends TelegramApp\Module {
 			$cname = $this->user->settings('command_name');
 
 			$content = array();
-			foreach(['text', 'photo', 'sticker', 'document', 'location', 'video'] as $elm){
-				if($this->telegram->$elm()){
-					$data = $this->telegram->$elm();
-					if($elm == "text"){ $data = $this->telegram->text_encoded(); }
-					elseif($elm == "location"){
-						$data = implode(",", [$this->telegram->location()->latitude, $this->telegram->location()->longitude]);
-					}
-					$content = [$elm => $data];
-					break;
-				}
+			if($this->telegram->text()){
+				if(strlen(trim($this->telegram->text())) < 4){ $this->end(); }
+				$content = ["text" => $this->telegram->text_encoded()];
+			}elseif($this->telegram->photo()){
+				$content = ["photo" => $this->telegram->photo()];
+			}elseif($this->telegram->video()){
+				$content = ["video" => $this->telegram->video()];
+			}elseif($this->telegram->voice()){
+				$content = ["voice" => $this->telegram->voice()];
+			}elseif($this->telegram->gif()){
+				$content = ["document" => $this->telegram->gif()];
+			}elseif($this->telegram->sticker()){
+				$content = ["sticker" => $this->telegram->sticker()];
+			}elseif($this->telegram->location()){
+				$content = ["location" => implode(",", [$this->telegram->location()->latitude, $this->telegram->location()->longitude])];
 			}
 
 			if(empty($content)){
@@ -506,7 +531,7 @@ class Group extends TelegramApp\Module {
 				->send();
 				$this->end();
 			}elseif($this->telegram->text()){
-				$text = strtolower(trim($this->telegram->text(TRUE)));
+				$text = strtolower(trim($this->telegram->text()));
 				if(
 					strlen($text) <= 2 or
 					strlen($text) >= 30 or
@@ -525,5 +550,50 @@ class Group extends TelegramApp\Module {
 				$this->end();
 			}
 		}
+	}
+
+	public function custom_command_delete($command){
+		$commands = $this->chat->settings('custom_commands');
+		if(!$commands){
+			$this->telegram->send
+				->notification(FALSE)
+				->text($this->strings->get('config_custom_commands_off'))
+			->send();
+			return FALSE;
+		}
+
+		if(array_key_exists($command, $commands)){
+			unset($commands[$command]);
+			$this->chat->settings('custom_commands', $commands);
+
+			$this->telegram->send
+				->text($this->strings->parse('custom_command_deleted', $command))
+			->send();
+		}
+
+		return TRUE;
+	}
+
+	public function custom_command_list(){
+		$commands = $this->chat->settings('custom_commands');
+		if(!$commands){
+			$this->telegram->send
+				->notification(FALSE)
+				->text($this->strings->get('config_custom_commands_off'))
+			->send();
+			return FALSE;
+		}
+
+		$str = $this->strings->parse('config_custom_commands_on', count($commands)) ."\n";
+		foreach($commands as $command => $data){
+			$str .= $command ."\n";
+		}
+
+		$this->telegram->send
+			->notification(FALSE)
+			->text($str)
+		->send();
+
+		return TRUE;
 	}
 }
