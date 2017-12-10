@@ -37,7 +37,7 @@ class Creator extends TelegramApp\Module {
 		// Salir de un grupo.
 		if($this->telegram->text_regex("^salte de {chatid}$")){
 			$id = $this->telegram->input->chatid;
-		    $this->telegram->send->leave_chat($id);
+			$this->telegram->send->leave_chat($id);
 			$chat = new Chat($id);
 			$chat->disable();
 			$this->end();
@@ -67,14 +67,14 @@ class Creator extends TelegramApp\Module {
 	private function get_user($onlyid = FALSE, $wordpos = 2){
 		$user = NULL;
 		if($this->telegram->has_reply){
-	        $user = $this->telegram->reply_target('forward')->id;
-	    }elseif($this->telegram->text_mention()){
-	        $user = $this->telegram->text_mention();
-	        if(is_array($user)){ $user = key($user); }
-	    }elseif($this->telegram->words() == $wordpos){
-	        $user = $this->telegram->last_word();
-	        if(!is_numeric($user)){ return NULL; }
-	    }
+			$user = $this->telegram->reply_target('forward')->id;
+		}elseif($this->telegram->text_mention()){
+			$user = $this->telegram->text_mention();
+			if(is_array($user)){ $user = key($user); }
+		}elseif($this->telegram->words() == $wordpos){
+			$user = $this->telegram->last_word();
+			if(!is_numeric($user)){ return NULL; }
+		}
 
 		if($onlyid){ return $user; }
 		return new User($user);
@@ -104,40 +104,40 @@ class Creator extends TelegramApp\Module {
 	private function user_info($id, $chat){
 		$find = $this->telegram->send->get_member_info($id, $chat);
 
-	    $str = "Desconocido.";
-	    if($find !== FALSE){
-	        $str = $find['user']['id'] . " - " .$find['user']['first_name'] ." " .$find['user']['last_name'] ." ";
-	        if(in_array($find['status'], ["administrator", "creator"])){ $str .= ":star:"; }
-	        elseif(in_array($find['status'], ["left"])){ $str .= ":door:"; }
-	        elseif(in_array($find['status'], ["kicked"])){ $str .= ":no_entry:"; }
-	        else{ $str .= ":multiuser:"; }
+		$str = "Desconocido.";
+		if($find !== FALSE){
+			$str = $find['user']['id'] . " - " .$find['user']['first_name'] ." " .$find['user']['last_name'] ." ";
+			if(in_array($find['status'], ["administrator", "creator"])){ $str .= ":star:"; }
+			elseif(in_array($find['status'], ["left"])){ $str .= ":door:"; }
+			elseif(in_array($find['status'], ["kicked"])){ $str .= ":no_entry:"; }
+			else{ $str .= ":multiuser:"; }
 
-	        if(!$pk){ $str .= " :question-red:"; }
-	        else{
-	            $colors = ["Y" => "yellow", "R" => "red", "B" => "blue"];
-	            $str .= " :heart-" .$colors[$pk->team] .":";
-	        }
+			if(!$pk){ $str .= " :question-red:"; }
+			else{
+				$colors = ["Y" => "yellow", "R" => "red", "B" => "blue"];
+				$str .= " :heart-" .$colors[$pk->team] .":";
+			}
 
 			// TODO
-	        // $info = $this->chat->user_in_group($id, $chat);
+			// $info = $this->chat->user_in_group($id, $chat);
 			$info = FALSE;
-	        if($info){
-	            $str .= "\n:calendar: " .date("d/m/Y H:i", strtotime($info->register_date))
+			if($info){
+				$str .= "\n:calendar: " .date("d/m/Y H:i", strtotime($info->register_date))
 						."\n:date: " .date("d/m/Y H:i", strtotime($info->last_date))
 						."\n:speech_balloon: " .$info->messages;
-	        /* }elseif($this->telegram->user_in_chat($find['user']['id'])){
-	            $pokemon->user_addgroup($find['user']['id'], $telegram->chat->id);
-	        } */
+			/* }elseif($this->telegram->user_in_chat($find['user']['id'])){
+				$pokemon->user_addgroup($find['user']['id'], $telegram->chat->id);
+			} */
 			}
 
 			$str = $this->telegram->emoji($str);
-	    }
+		}
 		return $str;
 	}
 
 	private function chat_info($id){
 		$info = $this->telegram->send->get_chat($id);
-	    $count = $this->telegram->send->get_members_count($id);
+		$count = $this->telegram->send->get_members_count($id);
 		$str = "Nope.";
 		if($info != FALSE){
 			$str = ":id: " .$info['id'] ."\n"
@@ -403,32 +403,32 @@ class Creator extends TelegramApp\Module {
 
 	public function nospam($user, $chat = NULL){
 		// HACK text_has porque comandos no se parsean en INLINE_keyboard.
-	    /* $target = NULL;
-	    $target_chat = NULL;
-	    if($telegram->has_reply){
-	        // si reply forward
-	        $target = $telegram->reply_user->id;
-	        if($telegram->is_chat_group()){ $target_chat = $telegram->chat->id; }
-	    }elseif($telegram->words() >= 2){
-	        $target = $telegram->words(1);
-	        $target_chat = $telegram->words(2);
-	    }
+		/* $target = NULL;
+		$target_chat = NULL;
+		if($telegram->has_reply){
+			// si reply forward
+			$target = $telegram->reply_user->id;
+			if($telegram->is_chat_group()){ $target_chat = $telegram->chat->id; }
+		}elseif($telegram->words() >= 2){
+			$target = $telegram->words(1);
+			$target_chat = $telegram->words(2);
+		}
 
-	    if($target != NULL){
-	        $pokemon->user_flags($target, 'spam', FALSE);
+		if($target != NULL){
+			$pokemon->user_flags($target, 'spam', FALSE);
 
-	        if($telegram->callback){
-	            $telegram->send
-	                ->chat(TRUE)
-	                ->message(TRUE)
-	                ->text("Flag *SPAM* quitado del grupo $target_chat.", TRUE)
-	            ->edit('text');
-	        }elseif($telegram->is_chat_group()){
-	            $telegram->send
-	                ->text("Flag *SPAM* de $target quitado.", TRUE)
-	            ->send();
-	        }
-	    } */
+			if($telegram->callback){
+				$telegram->send
+					->chat(TRUE)
+					->message(TRUE)
+					->text("Flag *SPAM* quitado del grupo $target_chat.", TRUE)
+				->edit('text');
+			}elseif($telegram->is_chat_group()){
+				$telegram->send
+					->text("Flag *SPAM* de $target quitado.", TRUE)
+				->send();
+			}
+		} */
 	}
 
 	private function hide_message($message = TRUE, $chat = TRUE){
@@ -447,14 +447,14 @@ class Creator extends TelegramApp\Module {
 		if(empty($user)){
 			if($this->telegram->has_reply){
 				$user = $this->telegram->reply_target('forward')->id;
-		    }elseif($this->telegram->words() == 2 && $this->telegram->text_mention()){
-		        // $user = $this->telegram->text_mention(); // --> to UID.
-		    }elseif($this->telegram->words() == 2){
+			}elseif($this->telegram->words() == 2 && $this->telegram->text_mention()){
+				// $user = $this->telegram->text_mention(); // --> to UID.
+			}elseif($this->telegram->words() == 2){
 				$user = $this->telegram->last_word(TRUE);
 			}
 		}
 
-	    if(empty($user)){ $this->end(); }
+		if(empty($user)){ $this->end(); }
 
 		$user = $this->db
 			->where('telegramid', $user)
@@ -505,9 +505,9 @@ class Creator extends TelegramApp\Module {
 				$this->user->settings('speak_last', $target);
 				$this->user->settings('speak', "DELETE");
 				$this->user->step = NULL;
-		        $this->telegram->send
-		            ->text($this->telegram->emoji(":no_entry: Chat detenido."))
-		        ->send();
+				$this->telegram->send
+					->text($this->telegram->emoji(":no_entry: Chat detenido."))
+				->send();
 				$this->end();
 			}elseif($this->user->settings('speak_last') and empty($target)){
 				// Hablar con el último que estaba.
@@ -556,11 +556,11 @@ class Creator extends TelegramApp\Module {
 
 		// Listo! Entonces... Estoy ahi?
 		if(!$this->telegram->user_in_chat($this->telegram->bot->id, $target)){
-	        $this->telegram->send
-	            ->text($this->telegram->emoji(":times: No estoy :("))
-	        ->send();
-	        $this->end();
-	    }
+			$this->telegram->send
+				->text($this->telegram->emoji(":times: No estoy :("))
+			->send();
+			$this->end();
+		}
 
 		// Parece que si. Voy a sacar la info.
 		$info = $this->telegram->send->get_chat($target);
@@ -570,8 +570,8 @@ class Creator extends TelegramApp\Module {
 		if($info['type'] == "private" or !$this->telegram->user_in_chat($this->user->id, $target)){
 			$targetchat = new Chat($target);
 			$targetchat->settings('forward_interactive', TRUE);
-	        $forward = TRUE;
-	    }
+			$forward = TRUE;
+		}
 
 		// Titulo del chat.
 		$title = (isset($info['title']) ? $info['title'] : $info['first_name'] ." " .$info['last_name']);
@@ -590,10 +590,10 @@ class Creator extends TelegramApp\Module {
 			$this->user->step = 'SPEAK';
 		}
 
-	    $this->telegram->send
-	        ->text($str)
-	    ->send();
-	    $this->end();
+		$this->telegram->send
+			->text($str)
+		->send();
+		$this->end();
 	}
 
 	public function banall($user = NULL){ return $this->ban_user_all($user, FALSE); }
@@ -602,9 +602,9 @@ class Creator extends TelegramApp\Module {
 		if(empty($user)){
 			if($this->telegram->has_reply){
 				$user = $this->telegram->reply_target('forward')->id;
-		    }elseif($this->telegram->words() == 2 && $this->telegram->text_mention()){
-		        // $user = $this->telegram->text_mention(); // --> to UID.
-		    }elseif($this->telegram->words() == 2){
+			}elseif($this->telegram->words() == 2 && $this->telegram->text_mention()){
+				// $user = $this->telegram->text_mention(); // --> to UID.
+			}elseif($this->telegram->words() == 2){
 				$user = $this->telegram->last_word(TRUE);
 				$user = $this->db
 					->where('username', $user)
@@ -614,7 +614,7 @@ class Creator extends TelegramApp\Module {
 			}
 		}
 
-	    if(empty($user)){ return -1; }
+		if(empty($user)){ return -1; }
 
 		// lista de grupos del usuario
 		$groups = $this->db
@@ -643,17 +643,17 @@ class Creator extends TelegramApp\Module {
 		$data['telegramuser'] = @$this->telegram->reply_target('forward')->username;
 
 		foreach($this->telegram->words(TRUE) as $w){
-	        $w = trim($w);
-	        if($w[0] == "/"){ continue; }
-	        if(is_numeric($w) && $w >= 5 && $w <= 40){ $data['lvl'] = $w; }
+			$w = trim($w);
+			if($w[0] == "/"){ continue; }
+			if(is_numeric($w) && $w >= 5 && $w <= 40){ $data['lvl'] = $w; }
 			if(is_numeric($w) && $w > 40){ $data['exp'] = (int) $w; }
-	        if(in_array(strtoupper($w), ['R','B','Y'])){ $data['team'] = strtoupper($w); }
-	        if($w[0] == "@" or strlen($w) >= 4 && !is_numeric($w)){ $data['username'] = $w; }
-	        if(strtoupper($w) == "V"){ $data['verified'] = TRUE; }
-	    }
+			if(in_array(strtoupper($w), ['R','B','Y'])){ $data['team'] = strtoupper($w); }
+			if($w[0] == "@" or strlen($w) >= 4 && !is_numeric($w)){ $data['username'] = $w; }
+			if(strtoupper($w) == "V"){ $data['verified'] = TRUE; }
+		}
 
 		// No ha habido registro.
-	    $register = FALSE;
+		$register = FALSE;
 
 		// Cargar info de usuario + nombre por si hay duplicado
 		if(isset($data['username'])){
@@ -671,12 +671,12 @@ class Creator extends TelegramApp\Module {
 		if(!in_array($data['telegramid'], array_column($check, 'telegramid'))){
 			// Minimo tiene que haber team.
 			if(!isset($data['team'])){
-	            $this->telegram->send
-	                ->notification(FALSE)
-	                ->text($this->telegram->emoji(":times: Falta team."))
-	            ->send();
-	            $this->end();
-	        }
+				$this->telegram->send
+					->notification(FALSE)
+					->text($this->telegram->emoji(":times: Falta team."))
+				->send();
+				$this->end();
+			}
 			// Si el registro falla...
 			if($newUser->register($team) === FALSE){
 				$this->telegram->send
@@ -685,7 +685,7 @@ class Creator extends TelegramApp\Module {
 				$this->end();
 			}
 
-	        $register = TRUE;
+			$register = TRUE;
 		}
 
 		// Cargar datos del usuario.
@@ -715,23 +715,23 @@ class Creator extends TelegramApp\Module {
 		// Anunciar el registro
 		$str = ":ok: Hecho" .(isset($data['verified']) ? " y validado!" : "!");
 		// Si no se ha registrado, anunciar los cambios.
-	    if($register === FALSE){
-	        $changes = array();
-	        if(isset($data['lvl']) && $newUser->lvl != $data['lvl'] ){ $changes[] = "nivel"; }
+		if($register === FALSE){
+			$changes = array();
+			if(isset($data['lvl']) && $newUser->lvl != $data['lvl'] ){ $changes[] = "nivel"; }
 			if(isset($data['exp']) && $newUser->exp != $data['exp']){ $changes[] = "experiencia"; }
-	        if(isset($data['team']) && $newUser->team != $data['team'] ){ $changes[] = "equipo"; }
-	        if(isset($data['username']) && $newUser->username != $data['username']){ $changes[] = "nombre"; }
+			if(isset($data['team']) && $newUser->team != $data['team'] ){ $changes[] = "equipo"; }
+			if(isset($data['username']) && $newUser->username != $data['username']){ $changes[] = "nombre"; }
 			$str = ":warning: Nada que cambiar.";
 			if(!empty($changes) or isset($data['verified'])){
 				$str = ":ok: Cambio <b>" .implode(", ", $changes) .(isset($data['verified']) ? "</b> y <b>valido</b>!" : "</b>!");
 			}
-	    }
+		}
 
-	    $this->telegram->send
-	        ->notification(FALSE)
-	        ->text($this->telegram->emoji($str), 'HTML')
-	    ->send();
-	    $this->end();
+		$this->telegram->send
+			->notification(FALSE)
+			->text($this->telegram->emoji($str), 'HTML')
+		->send();
+		$this->end();
 	}
 
 	private function step_speak(){
