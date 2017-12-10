@@ -26,11 +26,14 @@ class Ticket extends TelegramApp\Module {
 
 	protected function hooks(){
 		$ticketId = $this->user->settings('ticket_writing');
-		if($this->telegram->text_regex("ticket {action} {N:ticket}$")){
+		if($this->telegram->text_regex(["ticket {action} {N:ticket}$", "t{action} {N:ticket}$"])){
 			$ticketId = $this->telegram->input->ticket;
 		}
 
-		if($this->telegram->text_command("ticket", "new")){
+		if(
+			$this->telegram->text_command("ticket", "new") or
+			$this->telegram->text_command("tn")
+		){
 			$this->ticket_new();
 			$this->end();
 		}elseif(
@@ -137,36 +140,17 @@ class Ticket extends TelegramApp\Module {
 
 				$this->ticket_writing_finish();
 			}
-		}elseif(
-			$this->telegram->callback and
-			$this->telegram->input->action == "list" and
-			$ticketId and
-			in_array($this->user->flags, "ticketer")
-		){
-			// Siguiente pagina, TODO
-		}elseif(
-			$this->telegram->callback and
-			$this->telegram->input->action == "show" and
-			$ticketId and
-			in_array($this->user->flags, "ticketer")
-		){
-			$ticket = $this->get($ticketId);
-			if(!$ticket){
-				$this->telegram->send
-					->text($this->telegram->emoji(":x: ") .$this->strings->get('ticket_not_belong_user'), 'HTML')
-				->send();
-				$this->end();
-			}
-
-			$this->telegram->send
-				->text($this->ticket_text_info($ticket, TRUE), 'HTML')
-			->send();
-			// --------
-			$msg = $this->messages($ticket, NULL, TRUE);
-			$this->send_messages_advanced($msg, $ticket, $this->user->id);
 		}
 		if(in_array('ticketer', $this->user->flags)){
-			if($this->telegram->text_command("ticket", "list")){
+			if(
+				$this->telegram->text_command("ticket", "list") or
+				$this->telegram->text_command("tls") or
+				($this->telegram->callback and $this->telegram->text_has("ticket list", TRUE))
+			){
+				if($this->telegram->callback){
+					// TODO Siguiente pagina
+				}
+
 				if($this->telegram->text_contains("lock")){
 					$tickets = $this->list(TRUE);
 				}else{
@@ -182,8 +166,13 @@ class Ticket extends TelegramApp\Module {
 					->send();
 				}
 				$this->end();
-			}elseif($this->telegram->text_command("ticket", "show")){
+			}elseif(
+				$this->telegram->text_command("ticket", "show") or
+				$this->telegram->text_command("tcat") or
+				($this->telegram->callback and $this->telegram->text_has("ticket show", TRUE))
+			){
 				$ticket = $this->get($ticketId);
+				$this->telegram->answer_if_callback("");
 				if(!$ticket){
 					$this->telegram->send
 						->text($this->telegram->emoji(":x: ") .$this->strings->get('ticket_not_exists'))
@@ -199,7 +188,10 @@ class Ticket extends TelegramApp\Module {
 				$this->send_messages_advanced($msg, $ticket, $this->user->id);
 				// ------
 				$this->end();
-			}elseif($this->telegram->text_command("ticket", "reply")){
+			}elseif(
+				$this->telegram->text_command("ticket", "reply") or
+				$this->telegram->text_command("tr")
+			){
 				$ticket = $this->precheck($ticketId);
 				$this->user->settings('ticket_writing', $ticketId);
 				$this->telegram->send
@@ -210,7 +202,10 @@ class Ticket extends TelegramApp\Module {
 				->send();
 				$this->user->step = "TICKET_WRITING";
 				$this->end();
-			}elseif($this->telegram->text_command("ticket", "note")){
+			}elseif(
+				$this->telegram->text_command("ticket", "note") or
+				$this->telegram->text_command("trn")
+			){
 				$ticket = $this->precheck($ticketId, FALSE);
 				$this->user->settings('ticket_writing', $ticketId);
 				$this->user->settings('ticket_private', TRUE);
@@ -222,7 +217,10 @@ class Ticket extends TelegramApp\Module {
 				->send();
 				$this->user->step = "TICKET_WRITING";
 				$this->end();
-			}elseif($this->telegram->text_command("ticket", "status")){
+			}elseif(
+				$this->telegram->text_command("ticket", "status") or
+				$this->telegram->text_command("tstat")
+			){
 				$ticket = $this->precheck($ticketId);
 				if($this->is_closed($ticket->status)){
 					$this->telegram->send
@@ -235,12 +233,18 @@ class Ticket extends TelegramApp\Module {
 				$this->ticket_status_keyboard();
 				$this->user->step = "TICKET_SETSTATUS";
 				$this->end();
-			}elseif($this->telegram->text_command("ticket", "lock")){
+			}elseif(
+				$this->telegram->text_command("ticket", "lock") or
+				$this->telegram->text_command("tlk")
+			){
 				$ticket = $this->precheck($ticketId);
 				$this->lock($ticketId, TRUE, $this->user->id);
 				$this->user->settings('ticket_writing', $ticketId);
 				$this->end();
-			}elseif($this->telegram->text_command("ticket", "unlock")){
+			}elseif(
+				$this->telegram->text_command("ticket", "unlock") or
+				$this->telegram->text_command("tuk")
+			){
 				$ticket = $this->precheck($ticketId);
 				$this->lock($ticketId, FALSE, $this->user->id);
 				$this->telegram->send
@@ -248,12 +252,14 @@ class Ticket extends TelegramApp\Module {
 				->send();
 				$this->user->settings('ticket_writing', 'DELETE');
 				$this->end();
-			}elseif($this->telegram->text_command("ticket", "assign")){
+			}elseif(
+				$this->telegram->text_command("ticket", "assign") or
+				$this->telegram->text_command("tchown")
+			){
 				$ticket = $this->precheck($ticketId);
 				$this->user->settings('ticket_writing', $ticketId);
 			}
 		}
-
 
 		if($this->telegram->text_command("ticket") and $this->telegram->words() == 1){
 			// TODO limit en chat.
@@ -744,7 +750,10 @@ class Ticket extends TelegramApp\Module {
 	}
 
 	public function ticket_new(){
-		if(in_array(['troll', 'rager', 'troll_ticket'], $this->user->flags)){ $this->end(); }
+		if(
+			in_array(['troll', 'rager', 'troll_ticket'], $this->user->flags) or
+			$this->user->settings('ticket_new')
+		){ $this->end(); }
 		if($this->chat->is_group()){
 			$this->telegram->send
 				->text($this->strings->get('ticket_not_in_group'))
