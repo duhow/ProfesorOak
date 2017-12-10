@@ -330,6 +330,7 @@ if($telegram->text_url() && $telegram->text_contains("//goo.gl/maps/")){
 
     $url = urldecode($data['url']);
     if(preg_match("/([+-]?)(\d+.\d+)[,;]\s?([+-]?)(\d+.\d+)/", $url, $loc)){
+		if($this->pokemon->user_flags($this->telegram->user->id, ['fly', 'gps', 'hacks'. 'troll', 'spam'])){ return -1; }
         $loc = $loc[0];
         if(strpos($loc, ";") !== FALSE){ $loc = explode(";", $loc); }
         elseif(strpos($loc, ",") !== FALSE){ $loc = explode(",", $loc); }
@@ -345,6 +346,7 @@ if($telegram->text_url() && $telegram->text_contains("//goo.gl/maps/")){
 
 if(preg_match("/([+-]?)(\d+.\d+)[,;]\s?([+-]?)(\d+.\d+)/", $telegram->text(), $loc)){
 	if($telegram->text_contains(["PokéTrack", "Encontré un", "I found a"])){ return; }
+	if($this->pokemon->user_flags($this->telegram->user->id, ['fly', 'gps', 'hacks'. 'troll', 'spam'])){ return -1; }
     $loc = $loc[0];
     if(strpos($loc, ";") !== FALSE){ $loc = explode(";", $loc); }
     elseif(strpos($loc, ",") !== FALSE){ $loc = explode(",", $loc); }
@@ -395,7 +397,7 @@ if(
     $telegram->text_has(["ubicación", "mapa de"], TRUE) or
     ($telegram->text_command("map") && $telegram->has_reply)
 ){
-    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam'])){ return -1; }
+    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam', 'fly', 'gps', 'hacks'])){ return -1; }
 
     $text = $telegram->text();
     if($telegram->text_command("map") && $telegram->has_reply){ $text = $telegram->reply->text; }
@@ -451,6 +453,7 @@ if(
     $telegram->has_reply &&
     isset($telegram->reply->location)
 ){
+	if($this->pokemon->user_flags($this->telegram->user->id, ['fly', 'gps', 'hacks'. 'troll', 'spam'])){ return -1; }
     $loc = (object) $telegram->reply->location;
     $telegram->send
         ->notification(FALSE)

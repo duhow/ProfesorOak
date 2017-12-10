@@ -353,6 +353,9 @@ if($telegram->data_received("migrate_to_chat_id")){
 
 $die = $pokemon->settings($telegram->chat->id, 'die');
 if($die && $telegram->user->id != $this->config->item('creator')){
+	if($this->telegram->new_user and $this->telegram->new_user->id == $this->config->item('telegram_bot_id')){
+		$this->telegram->send->leave_chat();
+	}
     die();
 }
 
