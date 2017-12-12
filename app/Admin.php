@@ -335,9 +335,18 @@ class Admin extends TelegramApp\Module {
 	public function migrate_settings($to, $from = NULL){
 		if(empty($from)){ $from = $this->chat->id; }
 
-		return $this->db
-			->where('uid', $from)
-		->update('settings', ['uid' => $to]);
+		$changes = [
+			'settings' => 'uid',
+			'user_inchat' => 'cid',
+			'user_warns' => 'chat',
+			'user_admins' => 'gid',
+		];
+
+		foreach($changes as $table => $column){
+			$this->db
+				->where($column, $from)
+			->update($table, [$column => $to]);
+		}
 	}
 
 	// Forward the current message to the groups set.

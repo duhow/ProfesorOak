@@ -137,10 +137,10 @@ class Verify extends TelegramApp\Module {
 		if(!$full_array){ return array_sum(array_column($votes, 'count')); }
 
 		$res = [
-			VERIFY_OK => 0,
-			VERIFY_CHECK => 0,
-			VERIFY_REJECT => 0,
-			VERIFY_REPORT => 0
+			self::VERIFY_OK => 0,
+			self::VERIFY_CHECK => 0,
+			self::VERIFY_REJECT => 0,
+			self::VERIFY_REPORT => 0
 		];
 
 		foreach($votes as $row){
