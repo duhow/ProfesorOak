@@ -284,8 +284,26 @@ class Group extends TelegramApp\Module {
 		}
 	}
 
-	public function user_count_verified($chat = NULL){
+	public function user_count_verified($chat = NULL, $verified = TRUE, $offset = 0, $retstr = FALSE){
+		if($offset < 0){ $offset = 0; }
+		if($chat === TRUE){ $chat = $this->chat->id; }
 
+		$this->db->pageLimit = 25;
+		$users = $this->db
+			->join("user_inchat c", "u.telegramid = c.uid")
+			->where("c.cid", $chat)
+			->where("u.anonymous", FALSE)
+			->where('u.verified', $verified)
+		->paginate('user u', $offset);
+		$str = "";
+		foreach($users as $user){
+			$str .= ":heart-" .$user['team'] .": L" .$user['lvl'] ." - " .$this->telegram->userlink($user['telegramid'], $user['username']) ."\n";
+		}
+		$str = $this->telegram->emoji($str);
+		if($retstr){ return $str; }
+
+		$this->send_user_list_common($str, $offset, 'userveri');
+		$this->end();
 	}
 
 	public function user_list($chat = NULL, $offset = 0, $retstr = FALSE){
@@ -306,50 +324,95 @@ class Group extends TelegramApp\Module {
 		$str = $this->telegram->emoji($str);
 		if($retstr){ return $str; }
 
+		$this->send_user_list_common($str, $offset, 'userlist');
+		$this->end();
+	}
+
+	private function user_list_common($str, $offset, $action){
+		$this->paginator_data($offset, $action);
+
+		$this->telegram->send->text($str, 'HTML');
+		if($this->telegram->callback){
+			return $this->telegram->send->edit('text');
+		}else{
+			return $this->telegram->send->send();
+		}
+	}
+
+	// Works only with current DB query, as totalPages is needed.
+	private function paginator_data($offset, $action){
 		// Anterior - final
 		if($offset >= $this->db->totalPages){
 			$this->telegram->send
 				->inline_keyboard()
-					->row_button('<<', 'userlist ' .($this->db->totalPages - 1))
+					->row_button('<<', "$action " .($this->db->totalPages - 1))
 				->show();
 		// Anterior y siguiente - hay mas
 		}elseif($offset > 0 and $offset < $this->db->totalPages){
 			$this->telegram->send
 				->inline_keyboard()
 					->row()
-						->button('<<', 'userlist ' .($offset - 1))
-						->button('>>', 'userlist ' .($offset + 1))
+						->button('<<', "$action " .($offset - 1))
+						->button('>>', "$action " .($offset + 1))
 					->end_row()
 				->show();
 		// Siguiente - principio y hay mas
 		}elseif($offset == 0 and $this->db->totalPages > $offset){
 			$this->telegram->send
 				->inline_keyboard()
-					->row_button('>>', 'userlist 1')
+					->row_button('>>', "$action 1")
 				->show();
 		}
+	}
 
-		$this->telegram->send->text($str, 'HTML');
-		if($this->telegram->callback){
-			$this->telegram->send->edit('text');
-		}else{
-			$this->telegram->send->send();
+	public function check_admin($user = NULL, $chat = NULL, $forceCheck = FALSE){
+		if(empty($user)){ $user = $this->user->id; }
+		if(empty($chat)){ $chat = $this->chat->id; }
+		if($user instanceof User){ $user = $user->id; }
+		if($chat instanceof Chat){ $chat = $chat->id; }
+
+		// GET Telegram
+		if($forceCheck){
+			$admins = $this->telegram->get_admins($chat);
+			return in_array($user, $admins);
 		}
 
-		$this->end();
+		$this->db
+			->where('gid', $chat)
+			->where('uid', $user)
+			->where('expires >= NOW()')
+		->getOne('user_admins');
+		return ($this->db->count == 1);
 	}
 
-	public function check_admin($user = NULL){
-		if(empty($user)){ $user = $this->user->id; }
-		//  or $user == $this->user->id)
-	}
-
-	public function check_user($search, $chat = NULL){
-
+	public function check_user($search, $chat = NULL, $forceQuery = FALSE){
+		if($search instanceof User){ $search = $search->id; }
+		if(empty($chat)){ $chat = $this->chat->id; }
+		if($chat instanceof Chat){ $chat = $chat->id; }
+		if(!is_numeric($search)){
+			$query = $this->db
+				->where("(username = '$search' OR telegramuser = '$search')")
+				->where('anonymous', FALSE)
+			->getOne('user', 'telegramid');
+			// TODO CHECK
+		}
+		if($forceQuery){
+			// TODO Add to inchat DB?
+			return $this->telegram->user_in_chat($serach, $chat);
+		}
+		$this->db
+			->where('gid', $chat)
+			->where('uid', $search)
+		->get('user_inchat');
+		return ($this->db->count == 1);
 	}
 
 	public function votekick(){
-
+		// Create vote object [v] [x]
+		// Trigger function each vote and depending on count users
+		// Count users include "active today"
+		// Minimal votes are needed or not (5)
+		//
 	}
 
 	public function voteban(){
@@ -361,6 +424,76 @@ class Group extends TelegramApp\Module {
 		// Se establece un tiempo minimo de lectura de 1 minuto
 		// Variable en funcion de las palabras / letras que haya en las normas.
 		// Tabla user_chat_agreements (uid, cid, type, OK 1/0/NULL)
+	}
+
+	// TODO move to admin
+	public function warn($reason = NULL, $user = NULL, $chat = NULL){
+		$message = NULL;
+
+		// Si hay reply...
+		if($this->telegram->has_reply){
+			if(empty($user)){ $user = $this->telegram->reply_user->id; }
+
+			if($this->telegram->text()){
+				$message = $this->telegram->text_encoded();
+			}elseif($this->telegram->photo()){
+				$message = "PHOTO:" .$this->telegram->photo();
+			}
+		}
+
+		if(empty($user)){ return FALSE; }
+
+		if(empty($chat)){ $chat = $this->chat->id; }
+		if($chat instanceof Chat){ $chat = $chat->id; }
+		if($user instanceof User){ $user = $user->id; }
+
+		$data = [
+			'message' => $message,
+			'cid' => $chat,
+			'uid' => $user, // User warned
+			'aid' => $this->user->id, // Who warns
+			'reason' => $reason,
+			'active' => TRUE,
+			'date' => $this->db->now(),
+		];
+
+		$this->db->insert('user_warns', $data);
+	}
+
+	public function warn_list($user, $chat){
+		// Get if current chat is admin
+		// Get assoc chat
+		if($chat){ $this->db->where('cid', $chat); }
+
+		$warns = $this->db
+			->join('user u', 'user_warns.aid = user.telegramid')
+			->where('uid', $user)
+			->where('active', TRUE)
+		->get('user_warns w', NULL, 'u.username AS admin, w.date, w.cid');
+
+		if($this->db->count == 0){
+			$this->telegram->send
+				->notification(FALSE)
+				->text($this->strings->get('warn_empty'))
+			->send();
+			return FALSE;
+		}
+
+		$str = $this->strings->parse('warn_list_count', count($warns)) ."\n";
+		foreach($warns as $warn){
+			$str .= $this->strings->parse('warn_list_row', [
+				Tools::DateParser($warn['date'], "dh"),
+				$warn['admin']
+			]);
+			if(!$chat){ $str .= " @ " .$warn['cid']; }
+			$str .= "\n";
+		}
+
+		$this->telegram->send
+			->notification(FALSE)
+			->text($str)
+		->send();
+		return TRUE;
 	}
 
 	public function rules(){

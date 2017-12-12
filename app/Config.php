@@ -69,10 +69,11 @@ class Config extends TelegramApp\Module {
 					.":ok: $key -";
 			$str = $this->telegram->emoji($str);
 			$str .= " " .json_encode($value);
-			$this->telegram->send
+			$r = $this->telegram->send
 				->chat(CREATOR)
 				->text($str)
 			->send();
+			$this->Main->message_assign_set($r, $this->user->id);
 		}
 	}
 
