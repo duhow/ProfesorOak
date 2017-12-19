@@ -261,6 +261,9 @@ return [
 	'command_user_list' => ['lista de (miembros|usuarios|entrenadores)'],
 	'command_user_list_unverified' => ['sin validar', 'no validados'],
 
+	'command_user_trust' => ['confio en {target}', 'conozco a {target}'],
+	'command_user_trust_limit' => 4,
+
 	'game_coin_heads' => 'Cara',
 	'game_coin_tails' => 'Cruz',
 	'game_roulette_red' => ['rojo', 'rojas'],

@@ -261,6 +261,9 @@ return [
 	'command_user_list' => ['elenco (membri|utenti|allenatori)'],
 	'command_user_list_unverified' => ['senza convalida', 'non convalidati'],
 
+	'command_user_trust' => ['conosco {target}', 'mi fido di {target}'],
+	'command_user_trust_limit' => 4,
+
 	'game_coin_heads' => 'Testa',
 	'game_coin_tails' => 'Croce',
 	'game_roulette_red' => ['rosso', 'rossi'],

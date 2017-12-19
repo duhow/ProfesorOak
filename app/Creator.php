@@ -70,7 +70,10 @@ class Creator extends TelegramApp\Module {
 	private function get_user($onlyid = FALSE, $wordpos = 2){
 		$user = NULL;
 		if($this->telegram->has_reply){
-			$user = $this->telegram->reply_target('forward')->id;
+			$user = $this->Main->message_assign_get();
+			if(!$user){
+				$user = $this->telegram->reply_target('forward')->id;
+			}
 		}elseif($this->telegram->text_mention()){
 			$user = $this->telegram->text_mention();
 			if(is_array($user)){ $user = key($user); }
@@ -432,6 +435,28 @@ class Creator extends TelegramApp\Module {
 				->send();
 			}
 		} */
+	}
+
+	public function trust($search = NULL){
+		if(empty($search)){
+			$search = $this->user->id; // ?
+			if($this->telegram->has_reply){
+				$search = $this->telegram->reply_target('forward')->id;
+			}
+		}
+
+		if($search instanceof User){ $search = $search->id; }
+
+		$userTrust = new User($search);
+		$userTrust->load();
+
+		$chat = ($this->telegram->is_chat_group() ? $this->chat->id : NULL);
+		$points = $userTrust->trust($chat);
+
+		$this->telegram->send
+			->text($points)
+		->send();
+		$this->end();
 	}
 
 	public function linkat($search = NULL){

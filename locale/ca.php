@@ -261,6 +261,9 @@ return [
 	'command_user_list' => ['llista de (membres|usuaris|entrenadors)'],
 	'command_user_list_unverified' => ['sense validar', 'no validats'],
 
+	'command_user_trust' => ['confio amb {target}', 'conec a {target}'],
+	'command_user_trust_limit' => 4,
+
 	'game_coin_heads' => 'Cara',
 	'game_coin_tails' => 'Creu',
 	'game_roulette_red' => ['vermell', 'vermelles'],
