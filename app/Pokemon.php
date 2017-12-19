@@ -38,6 +38,17 @@ class Pokemon extends TelegramApp\Module {
 		return TRUE;
 	}
 
+	public function load_full($id){
+		$pokemon = $this->db
+			->where('id', $id)
+		->getOne('pokedex');
+		if(!$pokemon){ return FALSE; }
+		$movements = $this->db
+			->where('pokemon', $id)
+		->get('pokedex_attacks');
+		if($movements){ $pokedex['movements'] = $movements; }
+	}
+
 	public function name($id){
 		$res = $this->db
 			->where('id', $id)
@@ -77,6 +88,15 @@ class Pokemon extends TelegramApp\Module {
 
 	public function movements($pokemon){
 		$pokemon = $this->load($pokemon);
+	}
+
+	public function movement_info($movement){
+		$load = $this->db
+			->where('id', $movement)
+			->orWhere('name', $movement)
+		->getOne('pokedex_movements_info');
+		// Id, CodeName, MT/MO, Type, Attack, Bars, TimeRun, TImeDelay
+		return $load;
 	}
 
 	public function movement_best($pokemon, $str = FALSE){
@@ -375,6 +395,32 @@ class Pokemon extends TelegramApp\Module {
 				$args = $this->telegram->words(TRUE);
 				array_shift($args); // Remove command
 				$ivs = $this->iv($args);
+			}
+		}
+
+		elseif(
+			$this->telegram->text_regex("^confirm(o|ar) nido (de )?{pokemon} (en )?{S:location}") and
+			!$this->telegram->has_forward
+		){
+			$pokemon = $this->load($this->telegram->input->pokemon);
+			if(!$pokemon){
+				$this->telegram->send
+					->text(":question: ¿Qué Pokémon?")
+				->send();
+				$this->end();
+			}
+			if(in_array($this->user->flags, ['fly'])){
+				// TODO Log.
+				// TODO Send to Admin chat - once?
+				$this->end();
+			}
+			if(!$this->user->verified){
+
+				$this->end();
+			}
+			$trustlvl = $this->chat->settings('trust');
+			if($trustlvl and $this->user->trust($this->chat) < $trustlvl){
+				$this->end();
 			}
 		}
 	}

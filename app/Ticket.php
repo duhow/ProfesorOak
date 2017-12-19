@@ -426,6 +426,7 @@ class Ticket extends TelegramApp\Module {
 			if(!empty($msg['ref'])){ $userids[] = $msg['ref']; }
 		}
 		$users = $this->resolve_usernames(array_unique($userids));
+		$latestuid = NULL;
 		foreach($messages as $msg){
 			if($msg['type'] != "text"){
 				if(!empty($str)){
@@ -443,17 +444,24 @@ class Ticket extends TelegramApp\Module {
 				       	":man_frowning: $arrow :man_in_tuxedo:" : // U > H
 				       	":man_in_tuxedo: $arrow :man_frowning:"); // H > U
 				$str .= "$uicon - " .$msg['uid'];
+				$latestuid = $msg['uid'];
 				if(in_array($msg['uid'], $users)){ error_log("entra"); $str .= ' ' .$users[$msg['uid']]; }
 				// TODO si el usuario no habla con Oak, no se puede linkar
 				// Asi que poner sólo ID numerico.
-				if($msg['ref']){ $str .= ' // ' .$msg['ref']; }
+				if($msg['ref']){
+					$str .= ' // ' .$msg['ref'];
+					$latestuid = $msg['ref'];
+				}
 				if($msg['private']){ $str .= ' :eyes:'; }
 				$str = $this->telegram->emoji($str);
 
-				$rets[] = $this->telegram->send
+				$r = $this->telegram->send
 					->caption($str)
 					->chat($toUser)
 				->file($msg['type'], $msg['message']);
+				// Assign to reply
+				$this->Main->message_assign_set($r, $latestuid);
+				$rets[] = $r;
 
 				$str = "";
 				usleep($sleep * 100);
@@ -461,10 +469,12 @@ class Ticket extends TelegramApp\Module {
 			}else{
 				if(strlen($str) >= 3500){
 					$str = $this->telegram->emoji($str);
-					$rets[] = $this->telegram->send
+					$r = $this->telegram->send
 						->chat($toUser)
 						->text($str, 'HTML')
-					->send();
+						->send();
+					$this->Main->message_assign_set($r, $latestuid);
+					$rets[] = $r;
 					usleep($sleep * 100);
 					$str = "";
 				}
@@ -473,8 +483,10 @@ class Ticket extends TelegramApp\Module {
 						":man_frowning: $arrow :man_in_tuxedo:" : // U > H
 						":man_in_tuxedo: $arrow :man_frowning:"); // H > U
 				$str .= "$uicon - <code>" .$msg['uid'] .'</code>';
+				$latestuid = $msg['uid'];
 				if(in_array($msg['uid'], $users)){  error_log("entra"); $str .= ' ' .$this->telegram->userlink($msg['uid'], $users[$msg['uid']]); }
 				if($msg['ref']){
+					$latestuid = $msg['ref'];
 					$str .= ' // <code>' .$msg['ref'] .'</code>';
 					if(in_array($msg['ref'], $users)){
 						// $str .= ' '. $this->telegram->userlink($msg['ref'], $users[$msg['ref']]);
@@ -489,10 +501,11 @@ class Ticket extends TelegramApp\Module {
 		}
 		if(!empty($str)){
 			$str = $this->telegram->emoji($str);
-			$rets[] = $this->telegram->send
+			$r = $this->telegram->send
 				->chat($toUser)
 				->text($str, 'HTML')
 			->send();
+			$rets[] = $r;
 			usleep($sleep * 100);
 		}
 		return $rets;
@@ -804,6 +817,7 @@ class Ticket extends TelegramApp\Module {
 		$data = NULL;
 		$type = NULL;
 		$ref = NULL;
+		$user = $this->user->id; // Quien envia el mensaje.
 		if($this->telegram->text()){
 			$data = $this->telegram->text();
 			$type = "text";
@@ -824,6 +838,10 @@ class Ticket extends TelegramApp\Module {
 		if($this->telegram->has_forward){
 			$ref = $this->telegram->forward_user->id;
 			if($ref == $this->user->id){ $ref = NULL; } // No poner forward si es él mismo.
+			elseif($ref == $this->telegram->bot->id){ // Si es Oak...
+				$user = $this->telegram->bot->id;
+				$ref = NULL;
+			}
 		}
 
 		$error = FALSE;
@@ -853,7 +871,7 @@ class Ticket extends TelegramApp\Module {
 		if(!($this->telegram->text() and $this->telegram->words() <= 2) and !$this->telegram->callback){
 			$private = $this->user->settings('ticket_private');
 			$message = [$type => $data];
-			$users = [$this->user->id, $ref];
+			$users = [$user, $ref];
 			$this->add_message($ticketId, $message, $users, $private);
 		}
 		// Si ya hay mas de 10 elementos desde la ultima persona que lo haya enviado, mata.

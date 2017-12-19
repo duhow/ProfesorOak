@@ -144,7 +144,7 @@ class Main extends TelegramApp\Module {
 				$str = $this->telegram->emoji(":bangbang: ") .'<a href="' .$this->telegram->grouplink($link, TRUE) .'">' .$this->telegram->chat->title ."</a> - "
 						.'<a href="tg://user?id=' .$this->telegram->user->id .'">' .strval($this->telegram->user) .'</a>' .":\n"
 						.$this->telegram->text();
-				$this->telegram->send
+				$r = $this->telegram->send
 					->notification(FALSE)
 					->chat("-226115807")
 					->inline_keyboard()
@@ -155,6 +155,7 @@ class Main extends TelegramApp\Module {
 					->show()
 					->text($str, 'HTML')
 				->send();
+				$this->message_assign_set($r, $this->user->id);
 				// $bw = $pokemon->settings($telegram->chat->id, 'blackword');
 				// if(!$bw or stripos($bw, "fake") === FALSE){ return -1; }
 			}
@@ -249,7 +250,10 @@ class Main extends TelegramApp\Module {
 
 	public function whois($username = NULL, $send = TRUE){
 		if(empty($username) and $this->telegram->has_reply){
-			$username = $this->telegram->reply_target('forward')->id;
+			$username = $this->message_assign_get();
+			if($username == FALSE){
+				$username = $this->telegram->reply_target('forward')->id;
+			}
 		}
 
 		$username = $this->telegram->clean('alphanumeric', $username);
@@ -269,7 +273,8 @@ class Main extends TelegramApp\Module {
 		->getOne('user');
 
 		// si el usuario por el que se pregunta es el bot
-		if($this->telegram->has_reply && $this->telegram->reply_user->id == $this->telegram->bot->id && !$this->telegram->reply_is_forward){
+		// HACK: $username es el UID sacad de MID Assign si hay, o su propio Reply->ID.
+		if($this->telegram->has_reply and $username == $this->telegram->bot->id and !$this->telegram->reply_is_forward){
 			$str = $this->strings->get('whois_bot_self');
 		// si es un bot
 		}elseif(strtolower(substr($username, -3)) == "bot"){
@@ -394,10 +399,11 @@ class Main extends TelegramApp\Module {
 			$str = str_replace(array_keys($repl), array_values($repl), $str);
 
 			if(!empty($info->username) && !$offline){
-				$this->telegram->send
+				$r = $this->telegram->send
 				->inline_keyboard()
 					->row_button($this->telegram->emoji(":memo: ") .$this->strings->get('view_profile'), "http://profoak.me/user/" .$info->username)
 				->show();
+				$this->message_assign_set($r, $info->telegramid);
 			}
 
 			$this->user->settings('last_command', 'WHOIS');
@@ -435,6 +441,39 @@ class Main extends TelegramApp\Module {
 				->send();
 			}
 		} */
+	}
+
+	private function trust_user($member){
+		if(!is_numeric($member)){
+			$member = str_replace(['!', '@', '.', ','], '', $member);
+			$uid = $this->db
+				->where('username', $member)
+			->getValue('user', 'telegramid');
+			if(!$uid){
+				$this->telegram->send
+					->chat($this->user->id)
+					->text(':question:')
+				->send();
+				return FALSE;
+			}
+			$member = $uid;
+		}
+
+		$data = [
+			'user' => $this->user->id,
+			'target' => $member
+		];
+		$query = $this->db
+			->setQueryOption('IGNORE')
+		->insert('user_trust', $data);
+
+		$result = ($query ? ":thumbup:" : ":x:");
+		$this->telegram->send
+			->chat($this->user->id)
+			->text($this->telegram->emoji($result))
+		->send();
+
+		// TODO: Log to chat / table.
 	}
 
 	public function new_member(){
@@ -770,10 +809,14 @@ class Main extends TelegramApp\Module {
 
 			$this->chat->disable();
 		}else{
+			// TODO not delete, disable and record new entrances.
+			// TODO update latest record order by date limit 1
 			$this->db
 				->where('uid', $this->telegram->user->id)
 				->where('cid', $this->telegram->chat->id)
 			->delete('user_inchat');
+
+			// TODO Admin message user left for > 50 members group.
 		}
 		$this->end();
 	}
@@ -842,6 +885,20 @@ class Main extends TelegramApp\Module {
 			)
 		){
 			return $this->whois($this->telegram->input->username);
+		}
+
+		if(
+			$this->telegram->text_regex($this->strings->get('command_user_trust')) and
+			$this->telegram->words() <= $this->strings->get('command_user_trust_limit')
+		){
+			$target = NULL;
+			if($this->telegram->has_reply){
+				$target = $this->telegram->reply_target('forward')->id;
+			}elseif($this->telegram->input->target){
+				$target = $this->telegram->input->target;
+			}
+			if(empty($target)){ $this->end(); }
+			return $this->trust_user($target);
 		}
 
 		// LOAD
@@ -966,6 +1023,9 @@ class Main extends TelegramApp\Module {
 		];
 
 		$id = $this->db->insert('user_message_id', $data);
+		// TODO Cache
+		// $key = 'message_assign_' .md5($mid .$chat);
+		// $this->cache->save($key, $user, 3600*24);
 		return $id;
 	}
 
@@ -978,10 +1038,14 @@ class Main extends TelegramApp\Module {
 		}
 
 		if($chat instanceof Chat){ $chat = $chat->id; }
+		// TODO Cache
+		// $key = 'message_assign_' .md5($mid .$chat);
+		// $cache = $this->cache->get($key);
+		// if($cache){ return $cache; }
 		$uid = $this->db
 			->where('mid', $mid)
 			->where('cid', $chat)
-		->getValue('user_message_id', 'uid');
+		->getValue('user_message_id', 'target');
 		return $uid;
 	}
 

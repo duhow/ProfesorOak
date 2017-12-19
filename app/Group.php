@@ -165,6 +165,7 @@ class Group extends TelegramApp\Module {
 
 		elseif(
 			$this->telegram->text_regex($this->strings->get('command_custom_command_list')) and
+			$this->telegram->words() <= ($this->strings->get('command_custom_command_create_limit') + 1) and
 			!$this->user->step
 		){
 			if(
@@ -220,10 +221,15 @@ class Group extends TelegramApp\Module {
 	}
 
 	public function autokick(){
-		if($this->telegram->text_has("bomba de humo") and $this->user->id == CREATOR){
+		$ret = $this->Admin->kick($this->user->id);
+		if(
+			$this->telegram->text_has("bomba de humo") and
+			$this->user->id == CREATOR and
+			$ret
+		){
 			$this->telegram->send->file('sticker', 'CAADBAADFQgAAjbFNAABxSRoqJmT9U8C');
 		}
-		return $this->Admin->kick($this->user->id);
+		return $ret;
 	}
 
 	public function adminlist($chat = NULL){
@@ -268,6 +274,10 @@ class Group extends TelegramApp\Module {
 				.' ' .$this->telegram->userlink($user->id, $users[$pokeuser]['username'])
 				.' - ' .strval($user) ."\n";
 		}
+
+		$this->telegram->send
+			->text($str, 'HTML')
+		->send();
 	}
 
 	public function abandon(){
@@ -547,17 +557,19 @@ class Group extends TelegramApp\Module {
 		$look = $this->telegram->user_in_chat($user, $this->chat->id, TRUE);
 		$here = ($look ? "yes" : "no");
 		$linkname = ($here ? '<a href="tg://user?id=' .$look->user->id .'">' .strval($look->user) .'</a>' : "");
-		$this->telegram->send
+		$r = $this->telegram->send
 			->notification(FALSE)
 			->text($this->strings->parse('group_user_here_' .$here, $linkname))
 		->send();
-
+		if($here){
+			$this->Main->message_assign_set($r, $look->user->id);
+		}
 	}
 
 	public function welcome(){
 		if(!$this->chat->is_group()){ return NULL; }
 		if($this->telegram->text_has($this->strings->get('command_rules_write'))){
-			// Si es admin, cambiar las normas
+			// Si es admin, cambiar la bienvenida
 			if($this->chat->is_admin($this->user)){
 				$this->user->step = "WELCOME";
 				$this->telegram->send

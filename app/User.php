@@ -262,6 +262,175 @@ class User extends TelegramApp\User {
 		return ($this->db->count == 1);
 	}
 
+	public function trust($chat = NULL){
+		// $cachekey = 'trust_' . md5($this->id . ($chat ? '_' .$chat : ''));
+		// $cache = $this->cache->get($cachekey);
+		// if($cache){ return $cache; }
+
+		$points = 0;
+		if(in_array('untrusted', $this->flags)){ return -1; }
+
+		$badflags = ['fly', 'multiaccount', 'ratkid', 'spam', 'untrusted', 'troll_nest'];
+
+		foreach($badflags as $flag){
+			if(in_array($flag, $this->flags)){
+				$points = $points - 2;
+			}
+		}
+
+		$helpers = $this->db
+			->where('value', 'helper')
+			->where('user', CREATOR, '!=')
+		->get('user_flags', NULL, 'user');
+		$helpers = array_column($helpers, 'user');
+
+		// If group, load admin users.
+		$admins = array();
+		if($chat){
+			// TODO Cache
+			// TODO Check WIP
+			$admins = $this->db
+				->where('expires', date("Y-m-d H:i:s"), '>=')
+				->where('chat', $chat)
+			->get('user_admins', NULL, 'uid');
+			if($this->db->count > 0){
+				$admins = array_column($admins, 'uid');
+			}
+		}
+
+		// ----------------------
+
+		$flaged_users = $this->db->subQuery();
+		$flaged_users
+			->where('value', $badflags, 'IN')
+		->get('user_flags', NULL, 'user');
+
+		$old_users = $this->db->subQuery();
+		$old_users
+			->where('register_date', date("Y-m-d H:i:s", strtotime("-60 days")) ,'<=')
+			->where('last_action', date("Y-m-d H:i:s", strtotime("-15 days")), '>=')
+			->where('verified', TRUE)
+			->where('blocked', FALSE)
+			->where('anonymous', FALSE)
+		->get('user', NULL, 'telegramid');
+
+		if($chat){
+			$inchat_users = $this->db->subQuery();
+			$inchat_users
+				->where('cid', $chat)
+				->where('messages', 10, '>=')
+				->where('last_date', date("Y-m-d H:i:s", strtotime('-15 days')), '>=')
+			->get('user_inchat', NULL, 'uid');
+			$this->db->where('user', $inchat_users, 'IN');
+		}
+
+		$inlinks = $this->db
+			->where('target', $this->id)
+			->where('valid', TRUE)
+			->where('date', date("Y-m-d H:i:s", strtotime("-3 days")) , '>=')
+			->where('user', $flaged_users, 'NOT IN')
+			->where('user', $old_users, 'IN')
+		->get('user_trust', NULL, 'user');
+
+		if($this->db->count > 0){
+			$inlinks = array_column($inlinks, 'user');
+			if(in_array(CREATOR, $inlinks)){
+				$points = $points + 3;
+			}
+			// SUM Helpers
+			$husers = 0;
+			foreach($helpers as $helper){
+				if(in_array($helper, $inlinks) and $husers <= 3){
+					$points = $points + 0.9;
+					$husers++;
+				}
+			}
+
+			// SUM Admins from group
+			if($admins){
+				$husers = 0;
+				foreach($admins as $admin){
+					if(in_array($admin, $inlinks) and $husers <= 3){
+						$points = $points + 0.8;
+						$husers++;
+					}
+				}
+			}
+
+			if($chat){
+				$points = $points + (count($inlinks) / 5);
+			}else{
+				// (x*0.3)^0.4
+				$points = $points + ((count($inlinks) / 3) ** 0.4);
+			}
+		}
+
+		// ----------------------
+
+		if($chat){
+			$inchat_users = $this->db->subQuery();
+			$inchat_users
+				->where('cid', $chat)
+				->where('messages', 10, '>=')
+				->where('last_date', date("Y-m-d H:i:s", strtotime('-15 days')), '>=')
+			->get('user_inchat', NULL, 'uid');
+			$this->db->where('user', $inchat_users, 'IN');
+		}
+		$incount = $this->db
+			->where('valid', TRUE)
+			->where('target', $this->id)
+		->getValue('user_trust', 'COUNT(*)');
+
+		if($chat){
+			$inchat_users = $this->db->subQuery();
+			$inchat_users
+				->where('cid', $chat)
+				->where('messages', 10, '>=')
+				->where('last_date', date("Y-m-d H:i:s", strtotime('-15 days')), '>=')
+			->get('user_inchat', NULL, 'uid');
+			$this->db->where('target', $inchat_users, 'IN');
+		}
+		$outcount = $this->db
+			->where('valid', TRUE)
+			->where('user', $this->id)
+		->getValue('user_trust', 'COUNT(*)');
+
+		if($chat){
+			$inchat_users = $this->db->subQuery();
+			$inchat_users
+				->where('cid', $chat)
+				->where('messages', 10, '>=')
+				->where('last_date', date("Y-m-d H:i:s", strtotime('-15 days')), '>=')
+			->get('user_inchat', NULL, 'uid');
+			$this->db->where('A.target', $inchat_users, 'IN');
+		}
+		$common = $this->db
+			->join('user_trust B', 'A.target = B.user')
+			->where('A.user', $this->id)
+			->where('B.target', $this->id)
+			->where('A.valid', TRUE)
+			->where('B.valid', TRUE)
+		->getValue('user_trust A', 'COUNT(*)');
+
+		$incount = $incount - $common;
+		$outcount = $outcount - $common;
+
+		$diff = abs($incount - $outcount);
+		if($chat){
+			$points = $points - ($diff / 8);
+		}else{
+			$points = $points - ($diff / 20);
+		}
+
+		// ----------------------
+
+		// TODO Ratio + Add Nests - Ask nests
+		// TODO Help points.
+
+		// $this->cache->save($cachekey, $points, 3600*24);
+		return min($points, 10);
+	}
+
 	function log($key, $value){
 		// level -> 5 + timestamp
 	}
