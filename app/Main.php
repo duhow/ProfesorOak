@@ -141,12 +141,14 @@ class Main extends TelegramApp\Module {
 					->where('type', 'link_chat')
 				->getValue('settings', 'value');
 				// $this->analytics->event('Telegram', 'Talk cheating');
-				$str = $this->telegram->emoji(":bangbang: ") .'<a href="' .$this->telegram->grouplink($link, TRUE) .'">' .$this->telegram->chat->title ."</a> - "
-						.'<a href="tg://user?id=' .$this->telegram->user->id .'">' .strval($this->telegram->user) .'</a>' .":\n"
+				$str = $this->telegram->emoji(":bangbang: ")
+						.'<a href="' .$this->telegram->grouplink($link, TRUE) .'">' .$this->telegram->chat->title ."</a> - "
+						.$this->telegram->userlink($this->telegram->user->id, strval($this->telegram->user)) .":\n"
 						.$this->telegram->text();
 				$r = $this->telegram->send
 					->notification(FALSE)
 					->chat("-226115807")
+					->disable_web_page_preview(TRUE)
 					->inline_keyboard()
 						->row()
 							->button($this->telegram->emoji(":speaking_head_in_silhouette: Hablar"), "aspeak " .$this->chat->id, "TEXT")

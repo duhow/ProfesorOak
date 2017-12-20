@@ -82,8 +82,7 @@ class Group extends TelegramApp\Module {
 				$this->telegram->text_regex('userlist {N:offset}')
 			) and $this->chat->is_admin($this->user)
 		){
-			$offset = 0;
-			if($this->telegram->input->offset){ $offset = $this->telegram->input->offset; }
+			$offset = (isset($this->telegram->input->offset) ? $this->telegram->input->offset : 1);
 			$this->user_list(TRUE, $offset);
 			$this->end();
 		}
@@ -294,11 +293,11 @@ class Group extends TelegramApp\Module {
 		}
 	}
 
-	public function user_count_verified($chat = NULL, $verified = TRUE, $offset = 0, $retstr = FALSE){
-		if($offset < 0){ $offset = 0; }
+	public function user_count_verified($chat = NULL, $verified = TRUE, $offset = 1, $retstr = FALSE){
+		if($offset < 1){ $offset = 1; }
 		if($chat === TRUE){ $chat = $this->chat->id; }
 
-		$this->db->pageLimit = 25;
+		$this->db->pageLimit = 20;
 		$users = $this->db
 			->join("user_inchat c", "u.telegramid = c.uid")
 			->where("c.cid", $chat)
@@ -306,46 +305,76 @@ class Group extends TelegramApp\Module {
 			->where('u.verified', $verified)
 		->paginate('user u', $offset);
 		$str = "";
+
+		$icons = [
+			'B' => $this->telegram->emoji(':blue_heart:'),
+			'R' => $this->telegram->emoji(':heart:'),
+			'Y' => $this->telegram->emoji(':yellow_heart:'),
+		];
+
 		foreach($users as $user){
-			$str .= ":heart-" .$user['team'] .": L" .$user['lvl'] ." - " .$this->telegram->userlink($user['telegramid'], $user['username']) ."\n";
+			$str .= $icons[$user['team']] .' L' .$user['lvl'] .' ' .$this->telegram->userlink($user['telegramid'], ($user['username'] ?: '-------')) ."\n";
 		}
 		$str = $this->telegram->emoji($str);
 		if($retstr){ return $str; }
 
 		$this->send_user_list_common($str, $offset, 'userveri');
+		$this->telegram->answer_if_callback("");
 		$this->end();
 	}
 
-	public function user_list($chat = NULL, $offset = 0, $retstr = FALSE){
-		// TODO limitar repeticion - cooldown de boton
-		if($offset < 0){ $offset = 0; }
+	public function user_list_verified(){
+
+	}
+
+	public function user_list($chat = NULL, $offset = 1, $retstr = FALSE){
+		if($offset < 1){ $offset = 1; }
 		if($chat === TRUE){ $chat = $this->chat->id; }
 
-		$this->db->pageLimit = 25;
+		$this->db->pageLimit = 20;
 		$users = $this->db
 			->join("user_inchat c", "u.telegramid = c.uid")
 			->where("c.cid", $chat)
 			->where("u.anonymous", FALSE)
+			->orderBy('u.team', 'ASC')
+			->orderBy('u.lvl', 'DESC')
 		->paginate('user u', $offset);
 		$str = "";
+
+		$icons = [
+			'B' => $this->telegram->emoji(':blue_heart:'),
+			'R' => $this->telegram->emoji(':heart:'),
+			'Y' => $this->telegram->emoji(':yellow_heart:'),
+		];
+
 		foreach($users as $user){
-			$str .= ":heart-" .$user['team'] .": L" .$user['lvl'] ." - " .$this->telegram->userlink($user['telegramid'], $user['username']) ."\n";
+			$str .= $icons[$user['team']] .' L' .$user['lvl'] .' ' .$this->telegram->userlink($user['telegramid'], ($user['username'] ?: '-------')) ."\n";
 		}
 		$str = $this->telegram->emoji($str);
 		if($retstr){ return $str; }
 
 		$this->send_user_list_common($str, $offset, 'userlist');
+		$this->telegram->answer_if_callback("");
 		$this->end();
 	}
 
-	private function user_list_common($str, $offset, $action){
-		$this->paginator_data($offset, $action);
+	private function send_user_list_common($str, $offset, $action){
+		// REVIEW: Si es primera pagina y somos pocos, no pongas boton.
+		if(!($offset == 1 and count(explode("\n", $str)) <= 19)){
+			$this->paginator_data($offset, $action);
+		}
 
+		$this->telegram->send->convert_emoji = FALSE;
 		$this->telegram->send->text($str, 'HTML');
 		if($this->telegram->callback){
-			return $this->telegram->send->edit('text');
+			return $this->telegram->send
+				->chat(TRUE)
+				->message(TRUE)
+			->edit('text');
 		}else{
-			return $this->telegram->send->send();
+			return $this->telegram->send
+				->notification(FALSE)
+			->send();
 		}
 	}
 
@@ -355,22 +384,23 @@ class Group extends TelegramApp\Module {
 		if($offset >= $this->db->totalPages){
 			$this->telegram->send
 				->inline_keyboard()
-					->row_button('<<', "$action " .($this->db->totalPages - 1))
+					->row_button('<<', "$action " .($this->db->totalPages - 1), 'TEXT')
+				->show();
+		// Siguiente - principio y hay mas
+		}elseif($offset == 1 and $this->db->totalPages > $offset){
+			$this->telegram->send
+				->inline_keyboard()
+					->row_button('>>', "$action 2", 'TEXT')
 				->show();
 		// Anterior y siguiente - hay mas
-		}elseif($offset > 0 and $offset < $this->db->totalPages){
+		}elseif($offset > 1 and $offset < $this->db->totalPages){
 			$this->telegram->send
 				->inline_keyboard()
 					->row()
-						->button('<<', "$action " .($offset - 1))
-						->button('>>', "$action " .($offset + 1))
+						->button('<<', "$action " .($offset - 1), 'TEXT')
+						->button($offset, "$action $offset", 'TEXT')
+						->button('>>', "$action " .($offset + 1), 'TEXT')
 					->end_row()
-				->show();
-		// Siguiente - principio y hay mas
-		}elseif($offset == 0 and $this->db->totalPages > $offset){
-			$this->telegram->send
-				->inline_keyboard()
-					->row_button('>>', "$action 1")
 				->show();
 		}
 	}
