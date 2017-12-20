@@ -1108,6 +1108,18 @@ class Main extends TelegramApp\Module {
 			!$this->telegram->is_chat_group()
 		){
 			$this->help();
+		}elseif(
+			$this->telegram->text_command("start") and
+			!$this->chat->is_group()
+		){
+			$this->telegram->send
+				->text($this->strings->parse('register_hello_start', $this->telegram->user->first_name))
+			->send();
+		}elseif(
+			$this->telegram->text_command("start") and
+			$this->chat->is_group()
+		){
+			// TODO FUTURE: Start group command for join groups w/ user not registered.
 		}
 		$this->end();
 	}
