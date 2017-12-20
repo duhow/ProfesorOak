@@ -260,8 +260,8 @@ class Main extends TelegramApp\Module {
 
 		$username = $this->telegram->clean('alphanumeric', $username);
 		if(strlen($username) < 4){ return NULL; }
-		if(in_array($text, ["creado", "creador", "creator"])){ $text = "duhow"; } // Quien es tu creador?
-		if(in_array($text, $this->strings->get('command_whois_blackword'))){ return NULL; } // Quien es quien?
+		if(in_array($username, ["creado", "creador", "creator"])){ $username = "duhow"; } // Quien es tu creador?
+		if(in_array($username, $this->strings->get('command_whois_blackword'))){ return NULL; } // Quien es quien?
 
 		/* $pk = pokemon_parse($text);
 		if(!empty($pk['pokemon'])){ /* $this->_pokedex($pk['pokemon']); *-/ return; } // TODO FIXME */
@@ -339,7 +339,7 @@ class Main extends TelegramApp\Module {
 			}
 		}
 
-		if(!empty($info)){
+		if($info){
 			$flags = $this->db
 				->where('user', $info->telegramid)
 			->getValue('user_flags', 'value', NULL);
@@ -371,10 +371,6 @@ class Main extends TelegramApp\Module {
 					if(in_array($f, $flags)){ $str .= $this->telegram->emoji($t ." "); }
 				}
 			}
-		}
-
-		if(!empty($str)){
-			// $chat = ($this->telegram->is_chat_group() && $this->is_shutup() && !in_array($this->telegram->user->id, $this->admins(TRUE)) ? $this->telegram->user->id : $this->telegram->chat->id);
 
 			$validicon = ":white_check_mark:";
 
@@ -401,23 +397,26 @@ class Main extends TelegramApp\Module {
 			$str = str_replace(array_keys($repl), array_values($repl), $str);
 
 			if(!empty($info->username) && !$offline){
-				$r = $this->telegram->send
-				->inline_keyboard()
+				$this->telegram->send
+					->inline_keyboard()
 					->row_button($this->telegram->emoji(":memo: ") .$this->strings->get('view_profile'), "http://profoak.me/user/" .$info->username)
 				->show();
-				$this->message_assign_set($r, $info->telegramid);
 			}
+		}
 
-			$this->user->settings('last_command', 'WHOIS');
+		$this->user->settings('last_command', 'WHOIS');
+		if($send !== FALSE){
+			$r = $this->telegram->send
+				// ->chat($chat)
+				// ->reply_to( (($chat == $this->telegram->chat->id && $this->telegram->has_reply) ? $this->telegram->reply->message_id : NULL) )
+				->notification(FALSE)
+				->text($this->telegram->emoji($str), 'HTML')
+			->send();
+			$target = NULL;
+			if($info){ $target = $info->telegramid; }
+			elseif(is_numeric($username)){ $target = $username; }
 
-			if($send !== FALSE){
-				$this->telegram->send
-					// ->chat($chat)
-					// ->reply_to( (($chat == $this->telegram->chat->id && $this->telegram->has_reply) ? $this->telegram->reply->message_id : NULL) )
-					->notification(FALSE)
-					->text($this->telegram->emoji($str), 'HTML')
-				->send();
-			}
+			$this->message_assign_set($r, $target);
 		}
 		return $str;
 	}
@@ -886,7 +885,8 @@ class Main extends TelegramApp\Module {
 				$this->telegram->text_regex($this->strings->get('command_whois_reply'))
 			)
 		){
-			return $this->whois($this->telegram->input->username);
+			$username = (isset($this->telegram->input->username) ? $this->telegram->input->username : NULL);
+			return $this->whois($username);
 		}
 
 		if(
