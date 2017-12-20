@@ -123,7 +123,7 @@ class Admin extends TelegramApp\Module {
 		if(stripos($this->telegram->text_url(), "pokemon") !== FALSE){ return FALSE; } // HACK cosas de Pokemon oficiales u otros.
 
 		// TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
-		if($this->user->is_admin()){ return FALSE; }
+		if($this->chat->is_admin($this->user)){ return FALSE; }
 
 		$this->telegram->send
 			->message(TRUE)
@@ -140,13 +140,29 @@ class Admin extends TelegramApp\Module {
 		->send();
 
 		$this->user->flags[] = 'spam';
-		$this->user->update();
+		// $this->user->update();
 
 		$this->telegram->send
 			->text($this->strings->get('admin_spam_detected'), 'HTML')
 		->send();
 
-		$this->ban($this->user);
+		$ban = $this->ban($this->user);
+
+		$icon = ($ban ? ':x:' : ':white_check_green:');
+		$str = "$icon Antispam\n" . ':id: ' . $this->user->id;
+
+		$r = $this->admin_chat_message($str, FALSE);
+		if($r){
+			$this->Main->message_assign_set($r, $this->user->id);
+
+			$adminchat = $this->chat->settings('admin_chat');
+			$this->telegram->send
+				->chat(TRUE)
+				->message(TRUE)
+				->forward_to($adminchat)
+				->notification(TRUE)
+			->send();
+		}
 		$this->end();
 	}
 
