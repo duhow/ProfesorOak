@@ -247,10 +247,10 @@ class Admin extends TelegramApp\Module {
 		if($user instanceof User or $user instanceof \Telegram\User){ $user = $user->id; }
 		if($user == $this->telegram->bot->id){ return FALSE; }
 
-		$q = $this->telegram->send->ban_until("+30 seconds", $u, $chat);
+		$q = $this->telegram->send->ban_until("+30 seconds", $user, $chat);
 		if($q !== FALSE){
 			$this->db
-				->where('uid', $u)
+				->where('uid', $user)
 				->where('cid', $chat)
 			->delete('user_inchat');
 		}

@@ -32,7 +32,7 @@ class User extends TelegramApp\User {
 
 	public function settings($key, $value = NULL){
 		if($value === NULL){
-			if(empty($this->settings)){ $this->load_settings(); }
+			if(!$this->settings){ $this->load_settings(); }
 			return (array_key_exists($key, $this->settings) ? $this->settings[$key] : NULL);
 		}elseif(strtoupper($value) == "DELETE"){
 			$settings = $this->settings;
@@ -70,6 +70,7 @@ class User extends TelegramApp\User {
 		$settings[$key] = $value;
 		$this->settings = $settings;
 		// ---------
+		$this->cache->set('settings_' .$this->id, $settings, 60);
 
 		return $ret;
 	}
@@ -82,6 +83,7 @@ class User extends TelegramApp\User {
 
 	public function settings_delete($key){
 		if(array_key_exists($key, $this->settings)){ unset($this->settings[$key]); }
+		$this->cache->delete('settings_' .$this->id);
 		return $this->db
 			->where('uid', $this->id)
 			->where('type', $key)
@@ -102,7 +104,7 @@ class User extends TelegramApp\User {
 	}
 
 	public function register($team){
-		if(!empty($this->team)){ return FALSE; }
+		if(!$this->team){ return FALSE; }
 		$data = [
 			'telegramid' => $this->id,
 			'telegramuser' => @$this->telegram->username,
@@ -150,7 +152,7 @@ class User extends TelegramApp\User {
 			->where('anonymous', FALSE)
 			// ->orWhere('username', $this->username)
 		->getOne('user');
-		if(empty($query)){ return NULL; }
+		if(!$query){ return NULL; }
 		foreach($query as $k => $v){
 			$this->$k = $v;
 		}
@@ -175,6 +177,11 @@ class User extends TelegramApp\User {
 	}
 
 	private function load_chats(){
+		$cache = $this->cache->get('user_inchat_' .$this->id);
+		if($cache){
+			$this->chats = $cache;
+			return $this->chats;
+		}
 		$this->chats = array();
 		$chats = array();
 		$query = $this->db
@@ -205,7 +212,7 @@ class User extends TelegramApp\User {
 		$this->settings = array();
 		$settings = array();
 		$query = $this->db
-			->where('uid', $this->id)
+			->where('uid', (string) $this->id)
 		->get('settings', NULL, ['type', 'value']);
 		if(count($query) > 0){
 			$settings = array_column($query, 'value', 'type');
@@ -263,9 +270,9 @@ class User extends TelegramApp\User {
 	}
 
 	public function trust($chat = NULL){
-		// $cachekey = 'trust_' . md5($this->id . ($chat ? '_' .$chat : ''));
-		// $cache = $this->cache->get($cachekey);
-		// if($cache){ return $cache; }
+		$cachekey = 'trust_' . md5($this->id . ($chat ? '_' .$chat : ''));
+		$cache = $this->cache->get($cachekey);
+		if($cache){ return $cache; }
 
 		$points = 0;
 		if(in_array('untrusted', $this->flags)){ return -1; }
@@ -287,14 +294,15 @@ class User extends TelegramApp\User {
 		// If group, load admin users.
 		$admins = array();
 		if($chat){
-			// TODO Cache
-			// TODO Check WIP
-			$admins = $this->db
-				->where('expires', date("Y-m-d H:i:s"), '>=')
-				->where('chat', $chat)
-			->get('user_admins', NULL, 'uid');
-			if($this->db->count > 0){
-				$admins = array_column($admins, 'uid');
+			$admins = $this->cache->get('user_admins_' .$chat);
+			if(!$admins){
+				$admins = $this->db
+					->where('expires', date("Y-m-d H:i:s"), '>=')
+					->where('gid', $chat)
+				->get('user_admins', NULL, 'uid');
+				if($this->db->count > 0){
+					$admins = array_column($admins, 'uid');
+				}
 			}
 		}
 
@@ -427,7 +435,7 @@ class User extends TelegramApp\User {
 		// TODO Ratio + Add Nests - Ask nests
 		// TODO Help points.
 
-		// $this->cache->save($cachekey, $points, 3600*24);
+		$this->cache->set($cachekey, $points, 3600*24);
 		return min($points, 10);
 	}
 

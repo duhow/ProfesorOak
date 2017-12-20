@@ -40,7 +40,7 @@ class Chat extends TelegramApp\Chat {
 
 	public function settings($key, $value = NULL){
 		if($value === NULL){
-			if(empty($this->settings)){ $this->load_settings(); }
+			if(!$this->settings){ $this->load_settings(); }
 			return (array_key_exists($key, $this->settings) ? $this->settings[$key] : NULL);
 		}elseif(strtoupper($value) == "DELETE"){
 			$settings = $this->settings;
@@ -167,7 +167,7 @@ class Chat extends TelegramApp\Chat {
 		$this->settings = array();
 		$settings = array();
 		$query = $this->db
-			->where('uid', $this->id)
+			->where('uid', (string) $this->id)
 		->get('settings', NULL, ['type', 'value']);
 		if(count($query) > 0){
 			$settings = array_column($query, 'value', 'type');
@@ -221,7 +221,7 @@ class Chat extends TelegramApp\Chat {
 
 	public function is_admin($user, $forcequery = FALSE){
 		$user = $this->get_userid($user);
-		if(!empty($this->admins) && !$forcequery){ return in_array($user, $this->admins); }
+		if($this->admins and !$forcequery){ return in_array($user, $this->admins); }
 		$query = $this->db
 			->where('gid', $this->id)
 			->where('uid', $user)
