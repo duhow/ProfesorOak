@@ -863,8 +863,17 @@ class Main extends TelegramApp\Module {
 
 		// LEVELUP
 		if(
-			$this->telegram->words() <= $this->strings->get('command_levelup_limit') and
-			$this->telegram->text_regex($this->strings->get("command_levelup"))
+			(
+				$this->telegram->words() <= $this->strings->get('command_levelup_limit') and
+				$this->telegram->text_regex($this->strings->get("command_levelup"))
+			) or (
+				$this->user->step == "CHANGE_LEVEL" and
+				$this->telegram->has_reply and
+				!$this->telegram->has_forward and
+				$this->telegram->reply_user->id == $this->telegram->bot->id and
+				$this->telegram->words() <= 4 and
+				$this->telegram->text_regex("{N:level}") // CHECK
+			)
 		){
 			$this->levelup($this->telegram->input->level);
 		}
@@ -957,6 +966,9 @@ class Main extends TelegramApp\Module {
 		}
 
 		$this->tracking->track("Change level $level");
+		if($this->user->step == "CHANGE_LEVEL"){
+			$this->user->step = NULL;
+		}
 		$this->user->settings('last_command', 'LEVELUP');
 		if($level >= 5 && $level <= 35){
 			if($level < $this->user->lvl){ $this->end(); } // No volver atrás.
