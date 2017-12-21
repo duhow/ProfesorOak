@@ -332,7 +332,7 @@ if($telegram->text_command("kickmsg") && $telegram->words() == 2){
 
 	$messages = $telegram->words(1);
 	if(intval($messages) <= 1){
-		$messages = 6;
+		$messages = 1;
 	}
 
 	$query = $this->db
@@ -646,7 +646,8 @@ elseif($telegram->text_command("uinfo") or $telegram->text_command("ui")){
 
     $str = "Desconocido.";
     if($find !== FALSE){
-        $str = $find['user']['id'] . " - " .$find['user']['first_name'] ." " .$find['user']['last_name'] ." ";
+        $str = '<a href="tg://user?id=' .$find['user']['id'] .'">' .$find['user']['id'] .'</a>'
+                . " - " .$find['user']['first_name'] ." " .$find['user']['last_name'] ." ";
         if(in_array($find['status'], ["administrator", "creator"])){ $str .= ":star:"; }
         elseif(in_array($find['status'], ["left"])){ $str .= ":door:"; }
         elseif(in_array($find['status'], ["kicked"])){ $str .= ":forbid:"; }
@@ -1303,6 +1304,23 @@ elseif($telegram->text_command("upar")){
 	->send();
 
 	return -1;
+}
+
+elseif($this->telegram->callback and $this->telegram->text_has("alch", TRUE)){
+	$id = $this->telegram->last_word();
+	$this->pokemon->settings($id, 'die', FALSE);
+	$this->pokemon->settings($id, 'newgroup', FALSE);
+
+    $this->telegram->send
+        ->chat($id)
+        ->text("De acuerdo, soy todo oidos. Portaos bien igualmente eh :)")
+    ->send();
+
+    $this->telegram->send
+        ->text($this->telegram->text_message())
+    ->edit('text');
+
+    return -1;
 }
 
 elseif($telegram->text_command("pokerecalc")){

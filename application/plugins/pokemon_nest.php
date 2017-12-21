@@ -53,10 +53,10 @@ function check_reset_nest(){
 // if(!$this->telegram->text_contains("nido")){ return; } // HACK TODO Cambiar frases para la gente?
 
 if(
-    (
+	(
 		$telegram->text_has(["donde", "conocéis", "sabéis", "sabe", "cual"]) &&
-	    $telegram->text_contains(["visto", "encontra", "encuentro", "está", "aparece", "hay", "salen", "sale", "nido"]) && $telegram->text_contains("?") &&
-	    $telegram->words() <= 10
+		$telegram->text_contains(["visto", "encontra", "encuentro", "está", "aparece", "hay", "salen", "sale", "nido"]) && $telegram->text_contains("?") &&
+		$telegram->words() <= 10
 	) or (
 		$telegram->text_has("Y", TRUE) and
 		$telegram->text_contains("?") and
@@ -64,6 +64,10 @@ if(
 		$pokemon->settings($telegram->user->id, 'last_command') == "POKEMON_FIND_LOCATION"
 	)
 ){
+	$text = str_replace("?", "", $telegram->text());
+	$pk = pokemon_parse($text);
+	if(empty($pk['pokemon'])){ return; }
+
 	if(!$telegram->is_chat_group()){
 		$this->telegram->send
 			->text("Pregúntalo en un grupo.")
@@ -111,73 +115,31 @@ if(
 		}
 	}
 
-    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return -1; }
+	if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return -1; }
 	$pkuser = $pokemon->user($telegram->user->id);
 	if(!$pkuser->verified){ return -1; }
-    $text = str_replace("?", "", $telegram->text());
-    $pk = pokemon_parse($text);
-    if(empty($pk['pokemon'])){ return; }
 
-    $groups = $pokemon->settings($telegram->chat->id, 'pair_groups');
-    $target = array();
-    if($groups){
-        $target = get_paired_groups($groups);
-    }
-    $target[] = $this->telegram->chat->id;
-    $target = array_unique($target);
+	$groups = $pokemon->settings($telegram->chat->id, 'pair_groups');
+	$target = array();
+	if($groups){
+		$target = get_paired_groups($groups);
+	}
+	$target[] = $this->telegram->chat->id;
+	$target = array_unique($target);
 
-    $query = $this->db
-        ->where_in('chat', $target)
+	$query = $this->db
+		->where_in('chat', $target)
 		->where('active', TRUE)
-    ->get('pokemon_nests');
+	->get('pokemon_nests');
 
-    if($query->num_rows() == 0){
+	if($query->num_rows() == 0){
+		$str = "No hay ningún nido registrado.";
 		if(!empty($telegram->callback)){
-			$telegram->answer_if_callback("No hay ningún nido registrado.", TRUE);
-			return -1;
+			$telegram->answer_if_callback($str, TRUE);
+		}else{
+			$telegram->send->text($str)->send();
 		}
-        $telegram->send->text("No hay ningún nido registrado.")->send();
-        return -1;
-    }
-
-	$adminchat = $this->pokemon->settings($this->telegram->chat->id, 'admin_chat');
-	if(
-		$adminchat and
-		!$this->pokemon->settings($this->telegram->chat->id, 'disable_nest_log')
-	){
-		$chatinfo = $this->db
-			->where('uid', $this->telegram->user->id)
-			->where('cid', $this->telegram->chat->id)
-			->limit(1)
-		->get('user_inchat');
-
-		$chatinfo = $chatinfo->row();
-		$user = $this->pokemon->user($this->telegram->user->id);
-
-		if($chatinfo and $user){
-			$verified = $this->telegram->emoji($user->verified ? ":green-check:" : ":warning:");
-			$time = time() - strtotime($chatinfo->register_date);
-			$i = 0;
-			$timestr = "";
-			if($time >= 86400){
-				$i = floor($time / 86400);
-				$timestr .= $i ."d ";
-				$time = $time - ($i * 86400);
-			}
-			if($time >= 3600){
-				$i = floor($time / 3600);
-				$timestr .= $i ."h ";
-			}
-			$timestr = trim($timestr);
-			$str = $verified ." " .$user->telegramid ." @" .$user->username ." pide nidos.\n"
-					.$chatinfo->messages ." - " .$timestr;
-
-			$this->telegram->send
-				->notification(FALSE)
-				->chat($adminchat)
-				->text($str)
-			->send();
-		}
+		return -1;
 	}
 
 	// Registrar el último comando, independientemente de su resultado.
@@ -198,11 +160,11 @@ if(
 		return -1;
 	}
 
-    $query = $this->db
-        ->where_in('chat', $target)
-        ->where('pokemon', $pk['pokemon'])
+	$query = $this->db
+		->where_in('chat', $target)
+		->where('pokemon', $pk['pokemon'])
 		->where('active', TRUE)
-    ->get('pokemon_nests');
+	->get('pokemon_nests');
 
     if($query->num_rows() == 0){
 		$frases = [
@@ -226,34 +188,34 @@ if(
 		}
 
 		$n = mt_rand(0, count($frases) - 1);
-        $telegram->send->text($frases[$n])->send();
-        return -1;
-    }elseif($query->num_rows() == 1){
-        $res = $query->row();
-        if(!empty($res->lat) && !empty($res->lng)){
-            $telegram->send
-                ->location($res->lat, $res->lng)
-            ->send();
-        }
-        $frases = [
-            'Sólo lo he visto en',
-            'Prueba a buscar en',
-            'Mira a ver si te sale en',
-            'Lo he visto en',
-            'Tal vez lo encuentres en'
-        ];
-        $n = mt_rand(0, count($frases) - 1);
-        $telegram->send->text($frases[$n] ." " .$res->location_string .".")->send();
-    }elseif($query->num_rows() > 1){
-        $str = "Está en varios lugares:\n";
-        foreach($query->result_array() as $res){
-            $str .= "- " .$res['location_string'] ."\n";
-        }
-        $telegram->send->text($str)->send();
-    }
+		$telegram->send->text($frases[$n])->send();
+		return -1;
+	}elseif($query->num_rows() == 1){
+		$res = $query->row();
+		if(!empty($res->lat) && !empty($res->lng)){
+			$telegram->send
+				->location($res->lat, $res->lng)
+			->send();
+		}
+		$frases = [
+			'Sólo lo he visto en',
+			'Prueba a buscar en',
+			'Mira a ver si te sale en',
+			'Lo he visto en',
+			'Tal vez lo encuentres en'
+		];
+		$n = mt_rand(0, count($frases) - 1);
+		$telegram->send->text($frases[$n] ." " .$res->location_string .".")->send();
+	}elseif($query->num_rows() > 1){
+		$str = "Está en varios lugares:\n";
+		foreach($query->result_array() as $res){
+			$str .= "- " .$res['location_string'] ."\n";
+		}
+		$telegram->send->text($str)->send();
+	}
 
-    // $telegram->send->text("El #" .$pk['pokemon'] ." dices? Aún no lo sé.")->send();
-    return -1;
+	// $telegram->send->text("El #" .$pk['pokemon'] ." dices? Aún no lo sé.")->send();
+	return -1;
 }
 
 elseif(
@@ -262,7 +224,7 @@ elseif(
 	$telegram->text_contains("?") &&
 	$telegram->words() >= 4
 ){
-    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return; }
+	if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return; }
 	$pkuser = $pokemon->user($telegram->user->id);
 	if(!$pkuser->verified){ return -1; }
 	$txt = $telegram->text(TRUE);
@@ -274,13 +236,13 @@ elseif(
 	}
 	if(strlen($txt) < 4){ return; }
 
-    $groups = $pokemon->settings($telegram->chat->id, 'pair_groups');
-    $target = array();
-    if($groups){
-        $target = get_paired_groups($groups);
-    }
-    $target[] = $this->telegram->chat->id;
-    $target = array_unique($target);
+	$groups = $pokemon->settings($telegram->chat->id, 'pair_groups');
+	$target = array();
+	if($groups){
+		$target = get_paired_groups($groups);
+	}
+	$target[] = $this->telegram->chat->id;
+	$target = array_unique($target);
 
 	$query = $this->db
 		->where_in('chat', $target)
@@ -314,11 +276,11 @@ elseif(
 }
 
 elseif(
-    $telegram->text_has(["confirmo", "confirmar", "confirmado", "hay"], ["nido", "un nido", "el nido"], TRUE) &&
-    $telegram->text_has(["en", "entre", "delante", "enfrente", "frente"]) &&
-    $telegram->is_chat_group()
+	$telegram->text_has(["confirmo", "confirmar", "confirmado", "hay"], ["nido", "un nido", "el nido"], TRUE) &&
+	$telegram->text_has(["en", "entre", "delante", "enfrente", "frente"]) &&
+	$telegram->is_chat_group()
 ){
-    $pkuser = $pokemon->user($telegram->user->id);
+	$pkuser = $pokemon->user($telegram->user->id);
 
 	$uinfo = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
 	$utime = strtotime($uinfo->register_date);
@@ -336,65 +298,64 @@ elseif(
 		)
 	){ return -1; }
 
-    $text = $telegram->text();
-    $pk = pokemon_parse($text);
+	$text = $telegram->text();
+	$pk = pokemon_parse($text);
 
-    if(empty($pk['pokemon'])){ return; }
+	if(empty($pk['pokemon'])){ return; }
 
-    $pos = strpos($text, " en ") + strlen(" en ");
-    $loc = trim(substr($text, $pos));
-    if(strlen($loc) < 4 or strlen($loc) > 200){ return; }
+	$pos = strpos($text, " en ") + strlen(" en ");
+	$loc = trim(substr($text, $pos));
+	if(strlen($loc) < 4 or strlen($loc) > 200){ return; }
 
-    $this->db
-        ->set('user', $telegram->user->id)
-        ->set('chat', $telegram->chat->id)
-        ->set('pokemon', $pk['pokemon'])
-        ->set('location_string', $loc)
-        ->set('register_date', date("Y-m-d H:i:s"))
+	$this->db
+		->set('user', $telegram->user->id)
+		->set('chat', $telegram->chat->id)
+		->set('pokemon', $pk['pokemon'])
+		->set('location_string', $loc)
+		->set('register_date', date("Y-m-d H:i:s"))
 		->set('active', TRUE)
-    ->insert('pokemon_nests');
+	->insert('pokemon_nests');
 
-    $telegram->send->text($telegram->emoji(":ok:") . " ¡Registrado!")->send();
+	$telegram->send->text($telegram->emoji(":ok:") . " ¡Registrado!")->send();
 	return -1;
-    // $telegram->send->text("Recibo #" .$pk['pokemon'] . " en " . substr($text, $pos))->send();
+	// $telegram->send->text("Recibo #" .$pk['pokemon'] . " en " . substr($text, $pos))->send();
 }
 
 elseif(
-    $telegram->has_reply &&
-    $telegram->text_has("ahí hay") && $telegram->text_has("nido") &&
-    $telegram->is_chat_group()
-
+	$telegram->has_reply &&
+	$telegram->text_has("ahí hay") && $telegram->text_has("nido") &&
+	$telegram->is_chat_group()
 ){
-    if(!isset($telegram->reply->location)){ return; }
+	if(!isset($telegram->reply->location)){ return; }
 
-    // TODO el usuario debe estar validado y tiempo mínimo de registro 2 semanas.
-    $pkuser = $pokemon->user($telegram->user->id);
-    if(!$pkuser->verified){ return; }
-    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam'])){ return; }
+	// TODO el usuario debe estar validado y tiempo mínimo de registro 2 semanas.
+	$pkuser = $pokemon->user($telegram->user->id);
+	if(!$pkuser->verified){ return; }
+	if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'spam'])){ return; }
 
-    $text = $telegram->text();
-    $pk = pokemon_parse($text);
+	$text = $telegram->text();
+	$pk = pokemon_parse($text);
 
-    if(empty($pk['pokemon'])){ return; }
+	if(empty($pk['pokemon'])){ return; }
 
-    $loc = $telegram->reply->location;
+	$loc = $telegram->reply->location;
 
-    $this->db
-        ->set('user', $telegram->user->id)
-        ->set('chat', $telegram->chat->id)
-        ->set('pokemon', $pk['pokemon'])
-        ->set('lat', $loc['latitude'])
-        ->set('lng', $loc['longitude'])
-        ->set('register_date', date("Y-m-d H:i:s"))
+	$this->db
+		->set('user', $telegram->user->id)
+		->set('chat', $telegram->chat->id)
+		->set('pokemon', $pk['pokemon'])
+		->set('lat', $loc['latitude'])
+		->set('lng', $loc['longitude'])
+		->set('register_date', date("Y-m-d H:i:s"))
 		->set('active', TRUE)
-    ->insert('pokemon_nests');
+	->insert('pokemon_nests');
 
-    $telegram->send->text($telegram->emoji(":ok:") . " ¡Registrado!")->send();
-    return -1;
+	$telegram->send->text($telegram->emoji(":ok:") . " ¡Registrado!")->send();
+	return -1;
 }
 
 elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && $telegram->words() <= 8){
-    if($pokemon->user_flags($telegram->user->id, ['ratkid', 'no_nest', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return -1; }
+	if($pokemon->user_flags($telegram->user->id, ['ratkid', 'no_nest', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return -1; }
 	if(!$telegram->callback && !$telegram->is_chat_group()){
 		$telegram->send
 			->text("Pídemelos por el grupo. Si no, no sé qué nidos quieres.")
@@ -457,38 +418,38 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
 	}
 
 	$pkuser = $pokemon->user($telegram->user->id);
-    if(!$pkuser->verified){ return; }
+	if(!$pkuser->verified){ return; }
 
-    $target = (is_numeric(str_replace("-", "", $telegram->last_word())) ? $telegram->last_word() : $telegram->chat->id);
+	$target = (is_numeric(str_replace("-", "", $telegram->last_word())) ? $telegram->last_word() : $telegram->chat->id);
 
-    if($telegram->user->id == $this->config->item('creator')){
-     //   $telegram->send->text($target)->send();
-    }
+	if($telegram->user->id == $this->config->item('creator')){
+		// $telegram->send->text($target)->send();
+	}
 
-    $groups = $pokemon->settings($telegram->chat->id, 'pair_groups');
-    if($groups){
-        $target = get_paired_groups($groups);
-        $target[] = $this->telegram->chat->id;
-        $target = array_unique($target);
-    }
+	$groups = $pokemon->settings($telegram->chat->id, 'pair_groups');
+	if($groups){
+		$target = get_paired_groups($groups);
+		$target[] = $this->telegram->chat->id;
+		$target = array_unique($target);
+	}
 
-    $query = $this->db
-        ->where_in('chat', $target)
+	$query = $this->db
+		->where_in('chat', $target)
 		->where('active', TRUE)
-        ->order_by('pokemon', 'ASC')
-    ->get('pokemon_nests');
+		->order_by('pokemon', 'ASC')
+	->get('pokemon_nests');
 
-    if($query->num_rows() == 0){
+	if($query->num_rows() == 0){
 		$str = "No hay ningún nido registrado.";
 		if($telegram->callback){
 			$telegram->answer_if_callback($str, TRUE);
 		}else{
 			$telegram->send->text($str)->send();
 		}
-        return -1;
-    }
+		return -1;
+	}
 
-    $pokedex = $pokemon->pokedex();
+	$pokedex = $pokemon->pokedex();
 
 	if($this->telegram->text_has(["completa", "entera", "full"])){
 		if(strtotime("+14 days", $utime) > time() && $this->telegram->user->id != $this->config->item('creator')){
@@ -510,37 +471,37 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
 		}
 
 		$str = "Lista de nidos:\n";
-	    foreach($query->result_array() as $nest){
-	        $str .= "- " .$pokedex[$nest['pokemon']]->name ." " .(empty($nest['location_string']) ? "en ubicación." : "en " .$nest['location_string'])  ."\n";
-	    }
+		foreach($query->result_array() as $nest){
+			$str .= "- " .$pokedex[$nest['pokemon']]->name ." " .(empty($nest['location_string']) ? "en ubicación." : "en " .$nest['location_string'])  ."\n";
+		}
 
 		// Si hay más de 12, mandarlo por privado.
-	    if($query->num_rows() > 12 or $telegram->callback){
-	        $telegram->send->chat($telegram->user->id);
-	    }
+		if($query->num_rows() > 12 or $telegram->callback){
+			$telegram->send->chat($telegram->user->id);
+		}
 
 		$q = $telegram->send->text($str, 'HTML')->send();
 
 		$str = ($q === FALSE ? "Ábreme por privado primero." : "");
-	    $telegram->answer_if_callback($str, TRUE);
+		$telegram->answer_if_callback($str, TRUE);
 
-	    // Avisar por grupo.
-	    if($query->num_rows() > 12 && !$telegram->callback){
-	        $str = "He contado <b>" .$query->num_rows() ."</b> nidos. Te los mando por privado!\n"
-	                ."¿Alguien más los quiere ver?";
-	        $telegram->send
-	            ->inline_keyboard()
-	                ->row_button("Yo!", "lista de nidos completa", "TEXT")
-	            ->show()
-	            ->text($str, 'HTML')
-	        ->send();
-	    }
+		// Avisar por grupo.
+		if($query->num_rows() > 12 && !$telegram->callback){
+			$str = "He contado <b>" .$query->num_rows() ."</b> nidos. Te los mando por privado!\n"
+				."¿Alguien más los quiere ver?";
+			$telegram->send
+				->inline_keyboard()
+					->row_button("Yo!", "lista de nidos completa", "TEXT")
+				->show()
+				->text($str, 'HTML')
+			->send();
+		}
 	}else{
 		$str = "Hay <b>" .$query->num_rows() ."</b> nidos de:\n";
 		$pokenames = array();
-	    foreach($query->result_array() as $nest){
+		foreach($query->result_array() as $nest){
 			$pokenames[] = $pokedex[$nest['pokemon']]->name;
-	    }
+		}
 		$pokenames = array_unique($pokenames);
 		$str .= implode(", ", $pokenames) .".";
 
@@ -556,7 +517,7 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
 		->send();
 	}
 
-    return -1;
+	return -1;
 }
 
 elseif($telegram->text_contains("nido") && $telegram->text_has(["borra", "borrar"])){

@@ -222,13 +222,19 @@ if(
 		return -1;
 	}
 
-	// HACK
-	/* if($userid != $this->config->item('creator')){
-		$this->telegram->send
-			->text("Pausado momentáneamente.")
-		->send();
-		return -1;
-	} */
+	if($userid != $this->config->item('creator')){
+		if(!in_array(date("H"), range(8, 21))){
+			$this->telegram->send
+				->text("No son horas de ponerse a validar... Descansa y vuelve mañana con energía y buena vista!")
+			->send();
+			return -1;
+		}elseif($pokemon->settings($this->config->item('creator'), 'disable_verify_vote')){
+			$this->telegram->send
+				->text("Pausado momentáneamente.")
+			->send();
+			return -1;
+		}
+	}
 
 	$times = filter_var($this->telegram->text(), FILTER_SANITIZE_NUMBER_INT);
 	if(empty($times) or $times <= 0){ $times = 10; } // Default
@@ -259,7 +265,7 @@ if(
 	->send();
 
 	// Descansa para la foto.
-	usleep(400000);
+	usleep(200000);
 
 	// ---------------------------
 	$verifydata = verify_get_randuser($userid);
@@ -348,6 +354,7 @@ if(
 
 	$messages = implode(",", [$rp['message_id'], $rt['message_id']]);
 	$pokemon->settings($userid, 'verify_messages', $messages);
+	$pokemon->settings($userid, 'verify_cooldown', time() + 8);
 	// ---------------------------
 }
 
@@ -380,16 +387,29 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 	$userid = $this->telegram->user->id;
 	if(!$pokemon->user_flags($userid, 'helper')){ return -1; }
 
-	// HACK
-	/* if($userid != $this->config->item('creator')){
-		$this->telegram->send
-			->text("Pausado momentáneamente.")
-		->send();
-		return -1;
-	} */
-
 	$id = $this->telegram->words(1);
 	$action = $this->telegram->words(2);
+	$timeout = $pokemon->settings($userid, 'verify_cooldown');
+
+	if($userid != $this->config->item('creator')){
+		if(!in_array(date("H"), range(8, 21))){
+			$this->telegram->answer_if_callback("No son horas de ponerse a validar... Descansa y vuelve mañana con energía y buena vista!");
+			return -1;
+		}elseif($pokemon->settings($this->config->item('creator'), 'disable_verify_vote')){
+			$this->telegram->answer_if_callback("Pausado momentáneamente.", TRUE);
+			return -1;
+		}elseif($timeout and $timeout >= time()){
+			$frases = [
+				"No tengas tanta prisa, con calma. :)",
+				"¿Seguro que está bien, bien?",
+				"Tranqui vaquer@, no quieras acabar las validaciones deprisa.",
+				"Fíjate bien en el nombre y la hora, vaya a ser que tenga una letra rara...",
+			];
+			$n = mt_rand(0, count($frases) - 1);
+			$this->telegram->answer_if_callback($frases[$n], TRUE);
+			return -1;
+		}
+	}
 
 	$data = [
 		'telegramid' => $userid,
@@ -618,6 +638,7 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 
 	$messages = implode(",", [$rp['message_id'], $rt['message_id']]);
 	$pokemon->settings($userid, 'verify_messages', $messages);
+	$pokemon->settings($userid, 'verify_cooldown', time() + 8);
 	// ---------------------------
 
 }

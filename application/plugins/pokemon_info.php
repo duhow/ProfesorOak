@@ -547,7 +547,13 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
     $this->analytics->event('Telegram', 'Egg Table');
     $telegram->send
         ->notification(FALSE)
-        ->file('photo', 'AgADBAADVqsxG6GxGVFXxVQklrm277wS-hkABF-BrmipuXUYAwkEAAEC');
+        ->file('photo', 'AgADBAADG6sxG5cR4FHBz7K6Wky7vtVFiRoABI0pbiPgw3hk_BEAAgI');
+    return -1;
+}elseif($telegram->text_contains(["tabla", "lista"]) && $telegram->text_contains(["shiny", "shinies", "variocolor", "variocolores"]) && $telegram->words() < 10){
+    $this->analytics->event('Telegram', 'Shiny Table');
+    $telegram->send
+        ->notification(FALSE)
+        ->file('photo', 'AgADBAADYasxG6dQaVEn-AABoKj9V60TAvoZAAR0LdtvIgTA-G5yBAABAg');
     return -1;
 }elseif($this->telegram->text_has(["Alfabeto", "Abedeario"], ["Pokémon", "Unown", "Uknown"]) && $telegram->words() <= 8){
 	$this->analytics->event('Telegram', 'Unown Alphabet');
@@ -565,7 +571,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
 	}
 }elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["facción", "color", "equipo", "team"]) && $telegram->words() <= 12){
     $help = "Según la página oficial de Niantic, aún no es posible cambiarse de equipo. Tendrás que esperar o hacerte una cuenta nueva, pero *procura no jugar con multicuentas, está prohibido.*";
-}elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["usuario", "nombre", "apodo", "llamo"]) && $telegram->words() <= 15){
+}elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["usuario", "nombre", "apodo", "llamo"]) && $telegram->words() <= 15 and !$telegram->has_forward){
     $help = "Si quieres cambiarte de nombre, puedes hacerlo en los *Ajustes de Pokemon GO.*\n";
 	if(!$pokemon->user_verified($this->telegram->user->id)){
 		$help .= "Si te has equivocado de nombre al registrarte, *valídate* conmigo siguiendo las indicaciones que te diré, y si lo haces correctamente, te cambiaré el nombre.";
