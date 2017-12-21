@@ -71,4 +71,25 @@ class Ingress extends TelegramApp\Module {
 			->text($this->strings->get('ingress_register'))
 		->send();
 	}
+
+	public function checkpoint(){
+		// https://septicycl.es
+		$epoch = 1389150000;
+		$cycle = 5 * 3600;
+
+		$q = $epoch;
+
+		while(time() > $q){ $q = $q + $cycle; }
+		$r = $q - ($q % $cycle);
+		$dif = ($r - time());
+
+		$str = ':calendar: ' .date("d/M H:i", $r) ."\n"
+			.':clock: ' .Tools::DateParser($dif + time(), "hms");
+
+		$this->telegram->send
+			->text($str)
+		->send();
+
+		return -1;
+	}
 }
