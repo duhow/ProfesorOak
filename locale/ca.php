@@ -115,6 +115,7 @@ return [
 	'custom_command_deleted' => 'Ordre "%s" esborrada.',
 
 	'command_rules' => ['(normes|regles) del grup', 'veure (les )?(normes|regles)', 'digue\'m les (normes|regles)'],
+	'command_rules_slash' => 'normes',
 	'command_rules_write' => ['posar', 'actualitzar', 'redactar', 'escriure', 'afegir', 'canviar'],
 	'command_rules_limit' => 6,
 	'command_welcome_message' => ['missatge de (benvinguda|entrada)', '(benvinguda|entrada) al grup'],

@@ -115,6 +115,7 @@ return [
 	'custom_command_deleted' => 'Comando "%s" borrado.',
 
 	'command_rules' => ['(reglas|normas) del grupo', 'ver (las )?(reglas|normas)', 'dime las (reglas|normas)'],
+	'command_rules_slash' => 'normas',
 	'command_rules_write' => ['poner', 'actualizar', 'redactar', 'escribir', 'editar', 'cambiar'],
 	'command_rules_limit' => 6,
 	'command_welcome_message' => ['mensaje de (bienvenida|entrada)', '(bienvenida|entrada) al grupo'],

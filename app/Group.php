@@ -116,7 +116,7 @@ class Group extends TelegramApp\Module {
 		elseif(
 			(
 				$this->telegram->text_regex($this->strings->get('command_rules')) or
-				$this->telegram->text_command(["rules", "normas"]) and
+				$this->telegram->text_command($this->strings->get('command_rules_slash')) and
 				$this->telegram->words() <= $this->strings->get('command_rules_limit')
 			)
 		){
