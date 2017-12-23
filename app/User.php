@@ -104,7 +104,7 @@ class User extends TelegramApp\User {
 	}
 
 	public function register($team){
-		if(!$this->team){ return FALSE; }
+		if($this->team){ return FALSE; }
 		$data = [
 			'telegramid' => $this->id,
 			'telegramuser' => @$this->telegram->username,

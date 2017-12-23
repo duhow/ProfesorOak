@@ -212,7 +212,9 @@ class Main extends TelegramApp\Module {
 			}elseif($team === FALSE){
 				$this->telegram->send->reply_to(TRUE);
 				$str = $this->strings->get('error_register');
-			}elseif(strlen($team) == 1 and in_array(strtoupper($team), ['R', 'B', 'Y'])){
+			}
+			$team = trim(strtoupper($team));
+			if(strlen($team) == 1 and in_array($team, ['R', 'B', 'Y'])){
 				// Intentar registrar, ignorar si es anonymous.
 				if($this->user->register($team) === FALSE){
 					$this->telegram->send
