@@ -113,6 +113,7 @@ return [
 	'custom_command_deleted' => 'Command "%s" deleted.',
 
 	'command_rules' => ['group rules', '(view|read) the (group )?rules'],
+	'command_rules_slash' => 'rules',
 	'command_rules_write' => ['write', 'edit', 'change', 'add'],
 	'command_rules_limit' => 6,
 	'command_welcome_message' => ['(welcome|entrance) (group |chat )?(message|text)'],

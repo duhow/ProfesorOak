@@ -115,6 +115,7 @@ return [
 	'custom_command_deleted' => 'Comando "%s" eliminato.',
 
 	'command_rules' => ['(regole|regolamento|norme) del gruppo', 'vedere (le )?(norme|regole)', 'dimmi le (norme|regole)'],
+	'command_rules_slash' => 'regole',
 	'command_rules_write' => ['aggiungi', 'aggiorna', 'redigi', 'scrivi', 'cambia', 'crea', 'modifica', 'imposta', 'inserisci', 'nuovo', 'nuove'],
 	'command_rules_limit' => 7,
 	'command_welcome_message' => ['(messaggio di )?(benvenuto|welcome) del gruppo'],
