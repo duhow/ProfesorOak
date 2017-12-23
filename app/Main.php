@@ -446,6 +446,144 @@ class Main extends TelegramApp\Module {
 		} */
 	}
 
+	private function user_mention(){
+		if(
+			$this->telegram->key == "edited_message" or
+			$this->telegram->text_has("people voted")
+		){ return NULL; } // Anti-vote
+
+		$users = array();
+		preg_match_all("/[@]\w+/", $this->telegram->text(), $users, PREG_SET_ORDER);
+		foreach($users as $i => $u){ $users[$i] = substr($u[0], 1); } // Quitamos la @
+		foreach($this->telegram->text_mention(TRUE) as $u){
+			if(is_array($u)){ $users[] = key($u); continue; }
+			if($u[0] == "@"){ $users[] = substr($u, 1); }
+		}
+
+		// Quitarse usuario a si mismo
+		$self = [$this->telegram->user->id, $this->telegram->user->username];
+		foreach($users as $k => $u){ if(in_array($u, $self)){ unset($users[$k]); } }
+
+		if(empty($users)){ return NULL; }
+		$users = array_unique($users);
+
+		// ADMIN MENTION
+		$admins = FALSE;
+		if(in_array("admin", $users)){
+			// FIXME Cambiar function get_admins por la integrada + array merge
+			$admins = $this->telegram->send->get_admins();
+			if(!empty($admins)){
+				foreach($admins as $a){	$users[] = $a['user']->id; } // REVIEW
+			}
+			$admins = $this->chat->settings('admins');
+			if($admins){
+				$admins = explode(",", $admins);
+				foreach($admins as $a){ $users[] = $a; }
+			}
+			$users = array_unique($users);
+			$admins = TRUE;
+
+			$adminchat = $this->chat->settings('admin_chat');
+			if($adminchat){
+				$this->telegram->send
+					->notification(FALSE)
+					->chat(TRUE)
+					->message(TRUE)
+					->forward_to($adminchat)
+				->send();
+
+				$this->telegram->send
+					->chat($adminchat)
+					->text_replace("Mensaje del usuario %s.", $this->telegram->user->id)
+				->send();
+			}
+		}
+		// -- ADMIN MENTION --
+
+		// REVIEW not working
+		/* $disabled = $this->db->subQuery();
+		$disabled
+			->where('type', 'no_mention')
+			->where('value', 0, '!=')
+		->get('settings', NULL, 'uid AS telegramid'); */
+
+		$inchat = $this->db->subQuery();
+		$inchat
+			->where('cid', $this->chat->id)
+		->get('user_inchat', NULL, 'uid AS telegramid');
+
+		// Get user id numeric
+		$nusers = array();
+		foreach($users as $user){
+			if(is_numeric($user)){ $nusers[] = (int) $user; }
+		}
+
+		// TODO REVIEW improve
+		$userids = $this->db->subQuery();
+
+		if(!empty($nusers)){ $userids->where('telegramid', $users, 'IN'); }
+		$userids
+			->orWhere('username', $users, 'IN')
+			->orWhere('telegramuser', $users, 'IN')
+			->where('anonymous', FALSE)
+			->where('blocked', FALSE)
+		->get('user', NULL, 'telegramid');
+
+		$uids = $this->db
+			->where('telegramid', $userids, 'IN')
+			// ->where('telegramid', $disabled, 'NOT IN')
+			->where('telegramid', $inchat, 'IN')
+		->get('user', NULL, 'telegramid');
+
+		if(
+			empty($uids) or
+			(count($uids) > 15 and $this->user->id != CREATOR)
+		){ return FALSE; }
+
+		$uids = array_column($uids, 'telegramid');
+
+		// Preparar datos - Link del chat
+		$link = $this->chat->settings('link_chat');
+		$link = ($link ? $this->telegram->grouplink($link) : NULL);
+
+		// Preparar datos - Nombre de quien escribe
+		$name = (
+			isset($this->telegram->user->username) ?
+			"@" .$this->telegram->user->username :
+			$this->telegram->userlink($this->telegram->user->id, strval($this->telegram->user))
+		);
+
+		$resfin = FALSE;
+		foreach($uids as $uid){
+			// Valida que el entrenador esté en el grupo
+			// TODO Si es el creador / duhow, avisarle aunque no esté en el grupo.
+
+			$str = $name ." - ";
+			if(!empty($link)){ $str .= '<a href="' .$link .'">' .$this->telegram->chat->title ."</a>:\n"; }
+			else{ $str .= "<b>" .$this->telegram->chat->title ."</b>:\n"; }
+			$str .= $this->telegram->text();
+
+			$res = $this->telegram->send
+				->chat($uid)
+				->notification(TRUE)
+				->disable_web_page_preview(TRUE)
+				->text($str, 'HTML')
+			->send();
+			if($res){
+				$resfin = TRUE;
+				$this->message_assign_set($res, $this->user->id);
+			}
+		}
+
+		if($admins and $resfin === FALSE){
+			$this->telegram->send
+				->chat($this->chat->id)
+				->notification(TRUE)
+				->text("No puedo avisar a los @admin, no me han iniciado :(")
+			->send();
+		}
+	}
+
 	private function trust_user($member){
 		if(!is_numeric($member)){
 			$member = str_replace(['!', '@', '.', ','], '', $member);
@@ -663,7 +801,7 @@ class Main extends TelegramApp\Module {
 		if(
 			$this->chat->settings('blacklist') &&
 			!$this->chat->is_admin($this->user) && // El que invita no es admin
-			!empty($new->flags) // Tiene flags / blacklist?
+			$new->flags // Tiene flags / blacklist?
 		){
 			$blacklist = explode(",", $this->chat->settings('blacklist'));
 			foreach($blacklist as $b){
@@ -750,8 +888,8 @@ class Main extends TelegramApp\Module {
 			// $this->tracking->event('Telegram', 'Join user');
 
 			$ingress = NULL;
-			if(in_array('resistance', $new->flags)){ $ingress = ":key:"; }
-			elseif(in_array('enlightened', $new->flags)){ $ingress = ":frog:"; }
+			if($new->flags and in_array('resistance', $new->flags)){ $ingress = ":key:"; }
+			elseif($new->flags and in_array('enlightened', $new->flags)){ $ingress = ":frog:"; }
 
 			$pokename = (strlen($new->username) > 1 ? "@" .$new->username : "");
 			$lvl = ($new->lvl > 1 ? "L" .$new->lvl : "");
@@ -924,6 +1062,15 @@ class Main extends TelegramApp\Module {
 			$this->telegram->words() <= $this->strings->get('command_pokemongo_status_limit')
 		){
 			return $this->announce_pokemon_status();
+		}
+
+		if(
+			$this->telegram->text_mention() and
+			$this->chat->is_group() and
+			!$this->chat->settings('no_mention') and
+			$this->user->step === NULL
+		){
+			$this->user_mention();
 		}
 
 		// LOAD

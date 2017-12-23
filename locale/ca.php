@@ -282,6 +282,7 @@ return [
 		'funcion(a|en) (el|els) servidors?( de pokemon)?',
 		'caigut el (joc|pokemon)'
 	],
+	'command_pokemongo_status_limit' => 6,
 	'pokemongo_status_11' => 'Tot està funcionant correctament!',
 	'pokemongo_status_10' => 'El joc funciona, però sembla que <b>PTC</b> té problemes per entrar.',
 	'pokemongo_status_01' => '<b>PTC</b> sembla ser que funciona, hi ha problemes amb <b>Google</b>.',

@@ -122,12 +122,11 @@ class User extends TelegramApp\User {
 
 	public function register_username($name, $force = FALSE){
 		if($name[0] == "@"){ $name = substr($name, 1); }
-		$username = $this->username;
 
 		// Invalid user or already set name.
 		if(
 			(!$this->load()) or
-			(!$force && !empty($username))
+			(!$force && $this->username)
 		){ return -1; }
 
 		// Name too long or short.

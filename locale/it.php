@@ -282,6 +282,7 @@ return [
 	    'funzionano? (il|i) server( di pokemon)?',
 	    'crashato (il )?(gioco|pokemon|server)'
 	],
+	'command_pokemongo_status_limit' => 6,
 	'pokemongo_status_11' => 'Tutto sta funzionando correttamente!',
 	'pokemongo_status_10' => 'Il gioco funziona, però sembra che con <b>PTC</b> ci sono problemi per loggare.',
 	'pokemongo_status_01' => '<b>PTC</b> sembra che funzioni, ci sono problemi con <b>Google</b>.',
