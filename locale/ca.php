@@ -277,6 +277,30 @@ return [
 	'game_roulette_ending' => ['final', 'finals'],
 	'game_exp_levelup' => '<b>%s</b> ha pujat al <b>nivell %s</b>!',
 
+	'command_pokemongo_status' => [
+		'(funciona|va) (el )?(pokemon|joc)',
+		'funcion(a|en) (el|els) servidors?( de pokemon)?',
+		'caigut el (joc|pokemon)'
+	],
+	'pokemongo_status_11' => 'Tot està funcionant correctament!',
+	'pokemongo_status_10' => 'El joc funciona, però sembla que <b>PTC</b> té problemes per entrar.',
+	'pokemongo_status_01' => '<b>PTC</b> sembla ser que funciona, hi ha problemes amb <b>Google</b>.',
+	'pokemongo_status_00' => 'Nop, el joc ha caigut.',
+	'pokemongo_status_joke' => [
+		'A veure quan tarda l\'infermera Joy en donar-li aspirines als monos de Niantic...',
+		'Crec que el Team Fly ha sabotejat el joc i Niantic està esbarallant-se virtualment amb ells.',
+		'Trobes que hi hagi un mes en que funcioni sense caure\'s?',
+		'Doncs res, avui em quedo sense les meves Pokémonedes diàries...',
+		'Això amb els ràdars Pokémon no passava.',
+	],
+
+	'command_pokemongo_update' => [
+		'(descarrega|enllaç|actualitzacio) (de |del )?(pokemon|joc)'
+	],
+	'command_pokemongo_update_limit' => 10,
+	'pokemongo_update_new_today' => '<b>NOVA d\'avui!</b>',
+	'pokemongo_update_new_yesterday' => '<b>NOVA d\'ahir!</b>',
+	'pokemongo_update_ago' => 'fa %s dies',
 
 	'register_hello_start' => "Hola %s! Em pots dir de quin color ets?\n<b>Di:</b> Sóc...",
 	'register_hello_private' => "Hola %s! Parla\'m per privat per a enregistrar-te! :)",

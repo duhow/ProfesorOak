@@ -912,6 +912,18 @@ class Main extends TelegramApp\Module {
 			return $this->trust_user($target);
 		}
 
+		if(
+			$this->telegram->text_regex($this->strings->get('command_pokemongo_update')) and
+			$this->telegram->words() <= $this->strings->get('command_pokemongo_update_limit')
+		){
+			return $this->announce_pokemon_update();
+		}elseif(
+			$this->telegram->text_regex($this->strings->get('command_pokemongo_status')) and
+			$this->telegram->words() <= $this->strings->get('command_pokemongo_status_limit')
+		){
+			return $this->announce_pokemon_status();
+		}
+
 		// LOAD
 		foreach($this->core->getLoaded() as $name){
 			if(in_array($name, ["Main", "User", "Chat"])){ continue; }
@@ -1008,6 +1020,67 @@ class Main extends TelegramApp\Module {
 				->text($this->strings->get($str))
 			->send();
 		}
+	}
+
+	private function announce_pokemon_update(){
+		$this->telegram->send
+			->chat(TRUE)
+			->chat_action('typing')
+		->send();
+
+		$apple = Tools::AppInfoApple("pokemon-go", 1094591345);
+		$robot = Tools::AppInfoGoogle('com.nianticlabs.pokemongo');
+
+		$str = "";
+
+		foreach(['apple', 'robot'] as $os){
+			$str .= ":$os: ";
+			if(${$os}['days'] == 1){
+				$str .= $this->strings->get('pokemongo_update_new_today');
+			}elseif(${$os}['days'] == 2){
+				$str .= $this->strings->get('pokemongo_update_new_yesterday');
+			}else{
+				$str .= $this->strings->parse('pokemongo_update_new_ago', ${$os}['days']);
+			}
+
+			$str .= ' (' .${$os}['version'] .')' ."\n";
+		}
+
+		return $this->telegram->send
+			->inline_keyboard()
+				->row()
+					->button("Android", "https://play.google.com/store/apps/details?id=com.nianticlabs.pokemongo")
+					->button("Apple", "https://itunes.apple.com/es/app/pokemon-go/id1094591345")
+				->end_row()
+			->show()
+			->text($str)
+		->send();
+	}
+
+	private function announce_pokemon_status(){
+		$this->telegram->send
+			->chat(TRUE)
+			->chat_action('typing')
+		->send();
+
+		$game = Tools::PokemonGoStatusGame();
+		$ptc  = Tools::PokemonGoStatusPTC();
+
+		$selcode = (string) (int) $game . (string) (int) $ptc;
+
+		$icon = ':white_check_mark:'; // 11
+		if(!$game and !$ptc){ $icon = ':bangbang:'; } // 00
+		elseif(!$game or !$ptc){ $icon = ':warning:'; } // 10/01
+
+		$str = $icon .' ' .$this->strings->get('pokemongo_status_' .$selcode);
+		if(!$game or !$ptc){
+			$str .= "\n" .'(' .$this->strings->get_random('pokemongo_status_joke') .')';
+		}
+
+		return $this->telegram->send
+			->notification(TRUE)
+			->text($str, 'HTML')
+		->send();
 	}
 
 	private function autoconfigure($type, $chat = NULL){
