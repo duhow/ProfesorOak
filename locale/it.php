@@ -237,6 +237,7 @@ return [
 		"Nel gioco mi chiamo {name}", "Mi chiamo {name} nel gioco"
 	],
 	'command_levelup' => ["Sono livello {N:level}", "Sono L{N:level}", "Sono lvl {N:level}", "Sono salito al {N:level}", "Sono gia livello {N:level}"],
+	'command_levelup_question' => 'Che livello sei?',
 	'command_levelup_limit' => 6,
 	'command_verify' => [
 		["oak", "prof", "vorrei", "come"],

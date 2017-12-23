@@ -901,8 +901,8 @@ class Main extends TelegramApp\Module {
 			$repl = [
 				'$nombre' => $new->telegram->first_name,
 				'$apellidos' => $new->telegram->last_name,
-				'$equipo' => ':heart-' .$emoji[$new->team] .':',
-				'$team' => ':heart-' .$emoji[$new->team] .':',
+				'$equipo' => ':heart-' .($new->team ? $emoji[$new->team] : 'purple') .':',
+				'$team' => ':heart-' .($new->team ? $emoji[$new->team] : 'purple') .':',
 				'$usuario' => "@" .$new->telegram->username,
 				'$pokemon' => $pokename,
 				'$nivel' => $lvl,
@@ -1007,10 +1007,14 @@ class Main extends TelegramApp\Module {
 				$this->telegram->words() <= $this->strings->get('command_levelup_limit') and
 				$this->telegram->text_regex($this->strings->get("command_levelup"))
 			) or (
-				$this->user->step == "CHANGE_LEVEL" and
 				$this->telegram->has_reply and
 				!$this->telegram->has_forward and
+				!$this->telegram->callback and
 				$this->telegram->reply_user->id == $this->telegram->bot->id and
+				(
+					$this->user->step == "CHANGE_LEVEL" or
+					$this->telegram->text_message() == $this->strings->get('command_levelup_question')
+				) and
 				$this->telegram->words() <= 4 and
 				$this->telegram->text_regex("{N:level}") // CHECK
 			)
@@ -1036,6 +1040,13 @@ class Main extends TelegramApp\Module {
 		){
 			$username = (isset($this->telegram->input->username) ? $this->telegram->input->username : NULL);
 			return $this->whois($username);
+		}
+
+		elseif(
+			$this->telegram->text_has($this->strings->get('command_whoami')) and
+			$this->telegram->words() <= 5
+		){
+			return $this->whois($this->user->id);
 		}
 
 		if(

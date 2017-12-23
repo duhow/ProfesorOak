@@ -237,6 +237,7 @@ return [
 		"Dins el joc em dic {name}", "Em dic {name} al joc"
 	],
 	'command_levelup' => ["Soc nivell {N:level}", "Soc N {N:level}", "Soc L{N:level}", "Soc lvl {N:level}", "He pujat al {N:level}", "Ja soc nivell {N:level}"],
+	'command_levelup_question' => '¿Quin nivell ets?',
 	'command_levelup_limit' => 6,
 	'command_verify' => [
 		["oak", "profe", "vull", "com"],
