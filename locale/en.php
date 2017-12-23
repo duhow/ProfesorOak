@@ -183,6 +183,7 @@ return [
 		"The username is {name}", "The name is {name}"
 	],
 	'command_levelup' => ["I'm level {N:level}", "I'm L{N:level}", "I'm lvl {N:level}", "Level up to {N:level}", "Level up {N:level}"],
+	'command_levelup_question' => 'What level are you?',
 	'command_levelup_limit' => 6,
 	'command_verify' => [
 		["oak", "profe", "want", "how"],
