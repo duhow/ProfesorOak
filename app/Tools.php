@@ -426,4 +426,92 @@ class Tools extends TelegramApp\Functions {
 		return $locA;
 	}
 
+	function AppInfoGoogle($package){
+	    $web = file_get_contents("https://play.google.com/store/apps/details?id={$package}");
+	    $data['date'] = substr($web, strpos($web, "datePublished") - 32, 100);
+	    $data['version'] = substr($web, strpos($web, "softwareVersion") - 32, 100);
+	    foreach($data as $k => $v){
+	        $data[$k] = substr($data[$k], 0, strpos($data[$k], "</div>") + strlen("</div>"));
+	        $data[$k] = trim(strip_tags($data[$k]));
+	    }
+
+		 // FIXME Receiving months in French.
+		 // Translate to English for strtotime correct parsing.
+		$months = [
+			'janvier' => 'january',
+			'février' => 'february',
+			'mars' => 'march',
+			'avril' => 'april' ,
+			'mai' => 'may',
+			'juin' => 'june',
+			'juillet' => 'july',
+			'août' => 'august' ,
+			'septembre' => 'september',
+			'octobre' => 'october',
+			'novembre' => 'november',
+			'décembre' => 'december',
+		];
+
+		$data['date'] = strtolower($data['date']);
+	    $data['date'] = str_replace(array_keys($months), array_values($months), $data['date']);
+	    $data['date'] = date("Y-m-d", strtotime($data['date']));
+	    $data['days'] = floor((time() - strtotime($data['date'])) / 86400); // -> Days
+	    $data['new'] = ($data['days'] <= 1);
+	    $data['days'] = ($data['days'] > 365 ? "---" : $data['days']);
+
+		return $data;
+	}
+
+	function AppInfoApple($package, $id = NULL){
+		if(is_array($package) and empty($id)){
+			$id = array_pop($package);
+			$package = array_shift($package);
+		}
+		$url = "https://itunes.apple.com/es/app/{$package}/id{$id}";
+
+		$web = file_get_contents($url);
+		$data['date'] = substr($web, strpos($web, "datePublished") - 16, 100);
+		$data['version'] = substr($web, strpos($web, "softwareVersion") - 16, 100);
+		foreach($data as $k => $v){
+			$data[$k] = substr($data[$k], 0, strpos($data[$k], "</span>") + strlen("</span>"));
+			$data[$k] = trim(strip_tags($data[$k]));
+		}
+		$data['date'] = date_create_from_format('d/m/Y', $data['date'])->format('Y-m-d'); // HACK DMY -> YMD
+		$data['days'] = floor((time() - strtotime($data['date'])) / 86400); // -> Days
+		$data['new'] = ($data['days'] <= 1);
+		$data['days'] = ($data['days'] > 365 ? "---" : $data['days']);
+
+		return $data;
+	}
+
+	function PokemonGoStatusGame($timedown = FALSE){
+		$web = @file_get_contents("https://www.jooas.com/status/pokemon-go");
+		if(!$web){ return NULL; }
+
+		$down = -1;
+		$web = strstr($web, "#status-course");
+		$web = preg_replace("/.*\[(\[[01, ]+\])\].*/s", '\1', $web);
+		$pkgo_status_json = json_decode($web);
+		$pkgo_status = array_sum($pkgo_status_json);
+		for($i = sizeof($pkgo_status)-1; $i>=0 && $pkgo_status[$i] == 0; $i--, $down++);
+
+		if($timedown){ return $down; }
+		return ($down == 0);
+	}
+
+	function PokemonGoStatusPTC($timedown = FALSE){
+		$web = @file_get_contents("https://www.jooas.com/status/pokemon-trainer-club");
+		if(!$web){ return NULL; }
+
+		$down = -1;
+		$web = strstr($web, "#status-course");
+		$web = preg_replace("/.*\[(\[[01, ]+\])\].*/s", '\1', $web);
+		$ptc_status_json = json_decode($web);
+		$ptc_status = array_sum($ptc_status_json);
+		for($i = sizeof($ptc_status)-1; $i>=0 && $ptc_status[$i] == 0; $i--, $down++);
+
+		if($timedown){ return $down; }
+		return ($down == 0);
+	}
+
 }

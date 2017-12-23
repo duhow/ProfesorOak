@@ -277,6 +277,30 @@ return [
 	'game_roulette_ending' => ['fine', 'finali'],
 	'game_exp_levelup' => '<b>%s</b> è salito al <b>livello %s</b>!',
 
+	'command_pokemongo_status' => [
+	    '(funziona|va) (il )?(pokemon|gioco)',
+	    'funzionano? (il|i) server( di pokemon)?',
+	    'crashato (il )?(gioco|pokemon|server)'
+	],
+	'pokemongo_status_11' => 'Tutto sta funzionando correttamente!',
+	'pokemongo_status_10' => 'Il gioco funziona, però sembra che con <b>PTC</b> ci sono problemi per loggare.',
+	'pokemongo_status_01' => '<b>PTC</b> sembra che funzioni, ci sono problemi con <b>Google</b>.',
+	'pokemongo_status_00' => 'Nope, il gioco è inaccessibile.',
+	'pokemongo_status_joke' => [
+	    'Vediamo quanto ci mette l\'infermiera Joy a dare le aspirine alle scimmie della Niantic...',
+	    'Credo che il Team Fly ha sabotato il gioco e la Niantic sta combattendo virtualmente con loro.',
+	    'C\'è un mese in cui ha mai funzionato tutto senza mai crashare?',
+	    'Eh niente, oggi niente Pokemonete giornaliere',
+	    'Questo con i radar Pokemon non succedeva.',
+	],
+
+	'command_pokemongo_update' => [
+		'(descarga|enlace|actualizacion) (de |del )?(pokemon|juego)'
+	],
+	'command_pokemongo_update_limit' => 10,
+	'pokemongo_update_new_today' => '<b>NUOVA di oggi!</b>',
+	'pokemongo_update_new_yesterday' => '<b>NUOVA di ieri!</b>',
+	'pokemongo_update_ago' => 'da %s giorni',
 
 	'register_hello_start' => "Ciao %s! Puoi dirmi che colore sei?\n<b>Di semplicemente</b> Sono ...",
 	'register_hello_private' => "Ciao %s! Aprimi in privato per registrarti! :)",
