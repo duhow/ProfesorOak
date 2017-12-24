@@ -102,6 +102,8 @@ class Jokes extends TelegramApp\Module {
 			return;
 		}elseif($this->telegram->text_has("es fly")){
 			return $this->soy_una_avioneta();
+		}elseif($this->telegram->text_has("ripme") and $this->telegram->words() <= 8){
+			return $this->ripme();
 		}
 
 		// -----------
@@ -577,6 +579,19 @@ class Jokes extends TelegramApp\Module {
 
 	public function soy_una_avioneta(){
 		return $this->send_video('BAADBAAD9AgAAjbFNAABxUA6dF63m1YC', "Soy una avioneta");
+	}
+
+	public function ripme(){
+		$files = [
+			'Sad%20Violin%20(Airhorn%20Remix).mp3',
+			'Haddaway%20-%20What%20Is%20Love.mp3',
+			'TF2%20Heavy%20-%20You%20are%20dead,%20not%20big%20suprise.mp3',
+			'Rick%20Astley%20-%20Never%20Gonna%20Give%20You%20Up.mp3'
+		];
+
+		$url = 'https://ripme.xyz/assets/audio/';
+		$n = mt_rand(0, count($files) - 1);
+		return $this->send_audio($url .$files[$n], 'RipMe');
 	}
 
 }
