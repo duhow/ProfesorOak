@@ -646,22 +646,33 @@ class Main extends TelegramApp\Module {
 				}
 
 				// Si el grupo tiene <= 5 usuarios, el bot abandona el grupo
-				if(is_numeric($count) && $count <= 5){
+				/* if(is_numeric($count) && $count <= 5){
 					// $this->tracking->event('Telegram', 'Join low group');
 					$this->telegram->send->text("Nope.")->send();
 					$this->telegram->send->leave_chat();
 					$this->end();
-				}
+				}  */
 
 				// Si el que me agrega está registrado
 				if($this->user->load()){
 					if(
 						$this->user->blocked or
-						in_array(['hacks', 'troll', 'ratkid'], $this->user->flags)
+						in_array(['fly', 'troll', 'ratkid', 'spam'], $this->user->flags)
 					){
 						$this->telegram->send->leave_chat();
 						$this->end();
 					}
+				}
+
+				if(
+					!$this->chat->is_admin($this->user) or
+					!in_array('helper', $this->user->flags)
+				){
+					$this->telegram->send
+						->text($this->strings->get('welcome_bot_start_notadmin'))
+					->send();
+					$this->telegram->send->leave_chat();
+					$this->end();
 				}
 			}
 

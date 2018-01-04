@@ -221,6 +221,7 @@ return [
 
 	'welcome_bot' => "¡Buenas a todos, entrenadores!\n¡Un placer estar con todos vosotros! ^3^",
 	'welcome_bot_newgroup' => 'Veo que este grupo es nuevo, así que voy a buscar cuánta gente conozco.',
+	'welcome_bot_start_notadmin' => 'Necesito que me invite el administrador del grupo.',
 	'welcome_group' => '¡Bienvenido al grupo, %s!',
 	'welcome_group_creator' => '¡Bienvenido, jefe! ¡Un placer tenerte aquí! ^3^',
 	'welcome_group_team_exclusive' => '<b>¡SE CUELA UN TOPO!</b> @%s',

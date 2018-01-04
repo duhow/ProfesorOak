@@ -220,6 +220,7 @@ return [
 
 	'welcome_bot' => "Buongiorno a tutti, allenatori!\n¡E' un piacere stare con voi! ^3^",
 	'welcome_bot_newgroup' => 'Vedo che questo gruppo è nuovo, quindi ho intenzione di scoprire quante persone conosco',
+	'welcome_bot_start_notadmin' => 'Ho bisogno che un amministatore del gruppo mi aggiunga.',
 	'welcome_group' => 'Benvenuto nel gruppo, %s!',
 	'welcome_group_creator' => 'Benvenuto capo! E\' un piacere averti qui ^3^',
 	'welcome_group_team_exclusive' => '<b>¡SE CUELA UN TOPO!</b> @%s',
@@ -231,12 +232,12 @@ return [
 	'welcome_group_require_alias' => 'avere @alias di Telegram',
 	'welcome_group_require_avatar' => 'avere una foto del profilo',
 
-	'command_register_color' => ['(Sono|Squadra|Team) {color}', 'Sono del colore {color}'],
+	'command_register_color' => ['(Sono|Squadra|Team) {color}', 'Sono (del|di) colore {color}'],
 	'command_register_username' => [
 		"M[ei] chiamo {name}", "Il mio nome e {name}", "Il nome utente e {name}",
 		"Nel gioco mi chiamo {name}", "Mi chiamo {name} nel gioco"
 	],
-	'command_levelup' => ["Sono livello {N:level}", "Sono L{N:level}", "Sono lvl {N:level}", "Sono salito al {N:level}", "Sono gia livello {N:level}"],
+	'command_levelup' => ["Sono L{N:level}", "Sono (gia )?(lvl|liv|livello) {N:level}", "Sono salito al {N:level}"],
 	'command_levelup_question' => 'Che livello sei?',
 	'command_levelup_limit' => 6,
 	'command_verify' => [
@@ -432,7 +433,7 @@ return [
 
 	'levelup_same' => 'Si, lo sò.',
 	'levelup_ok' => 'Oh, capisco, quindi livello %s ... Figo!',
-	'levelup_ok_2' => 'Insomma sei salito al livello <b>%s</b>... ¡Guay!',
+	'levelup_ok_2' => 'Insomma sei salito al livello <b>%s</b>... Daje!',
 	'levelup_first_too_much' => 'Beh... Non so se ci credo però...',
 	'levelup_too_much' => 'Si, già. Certo.',
 	'levelup_verify' => "Ottimo! Allora inviami uno screenshot della tua schermata <b>profilo di Pokémon GO</b>come ti ho chiesto per convalidarti.\n"
