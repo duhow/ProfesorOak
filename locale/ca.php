@@ -220,6 +220,7 @@ return [
 
 	'welcome_bot' => "Hola a tots, entrenadors!\nUn plaer ser aquí amb tots vosaltres! ^3^",
 	'welcome_bot_newgroup' => 'Veig que aquest grup és nou, així que vaig a buscar quanta gent conec.',
+	'welcome_bot_start_notadmin' => 'Necessito que sigui un administrador del grup qui em convidi aquí.',
 	'welcome_group' => 'Benvingut al grup, %s!',
 	'welcome_group_creator' => 'Benvingut, cap! Un plaer tenir-te aquí! ^3^',
 	'welcome_group_team_exclusive' => '<b>ES COLA UN TALP!</b> @%s',
