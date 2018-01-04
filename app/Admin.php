@@ -153,7 +153,7 @@ class Admin extends TelegramApp\Module {
 
 		$r = $this->admin_chat_message($str, FALSE);
 		if($r){
-			$this->Main->message_assign_set($r, $this->user->id);
+			$this->Functions->message_assign_set($r, $this->user->id);
 
 			$adminchat = $this->chat->settings('admin_chat');
 			$this->telegram->send

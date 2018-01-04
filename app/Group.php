@@ -592,7 +592,7 @@ class Group extends TelegramApp\Module {
 			->text($this->strings->parse('group_user_here_' .$here, $linkname))
 		->send();
 		if($here){
-			$this->Main->message_assign_set($r, $look->user->id);
+			$this->Functions->message_assign_set($r, $look->user->id);
 		}
 	}
 

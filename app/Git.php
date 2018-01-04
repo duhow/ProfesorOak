@@ -4,12 +4,19 @@ class Git extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 
 	protected function hooks(){
+		if(!$this->telegram->text_command()){ return; }
+
 		if(
 			$this->telegram->user->id == CREATOR &&
 			$this->telegram->text_command("git") &&
 			$this->telegram->words() > 1
 		){
 			return $this->git_command($this->telegram->words(1));
+		}
+
+		elseif($this->telegram->text_command("github")){
+			$issue = ($this->telegram->words() == 2 ? $this->telegram->last_word() : NULL);
+			return $this->github($issue);
 		}
 	}
 
@@ -77,6 +84,17 @@ class Git extends TelegramApp\Module {
 		$out = shell_exec("git revert -i $hash");
 		if(strpos($out, "") !== FALSE){ return TRUE; }
 		return $out;
+	}
+
+	public function github($issue = NULL){
+		$help = $this->strings->get('github_info');
+		if(!empty($issue) and is_numeric($issue) and $issue > 0){
+			$help = "https://github.com/duhow/ProfesorOak/issues/$issue";
+		}
+		return $this->telegram->send
+			->text($help)
+			->notification(FALSE)
+		->send();
 	}
 
 }

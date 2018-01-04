@@ -460,7 +460,7 @@ class Ticket extends TelegramApp\Module {
 					->chat($toUser)
 				->file($msg['type'], $msg['message']);
 				// Assign to reply
-				$this->Main->message_assign_set($r, $latestuid);
+				$this->Functions->message_assign_set($r, $latestuid);
 				$rets[] = $r;
 
 				$str = "";
@@ -473,7 +473,7 @@ class Ticket extends TelegramApp\Module {
 						->chat($toUser)
 						->text($str, 'HTML')
 						->send();
-					$this->Main->message_assign_set($r, $latestuid);
+					$this->Functions->message_assign_set($r, $latestuid);
 					$rets[] = $r;
 					usleep($sleep * 100);
 					$str = "";
