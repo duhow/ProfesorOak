@@ -70,7 +70,7 @@ class Creator extends TelegramApp\Module {
 	private function get_user($onlyid = FALSE, $wordpos = 2){
 		$user = NULL;
 		if($this->telegram->has_reply){
-			$user = $this->Main->message_assign_get();
+			$user = $this->Functions->message_assign_get();
 			if(!$user){
 				$user = $this->telegram->reply_target('forward')->id;
 			}

@@ -73,7 +73,7 @@ class Config extends TelegramApp\Module {
 				->chat(CREATOR)
 				->text($str)
 			->send();
-			$this->Main->message_assign_set($r, $this->user->id);
+			$this->Functions->message_assign_set($r, $this->user->id);
 		}
 	}
 

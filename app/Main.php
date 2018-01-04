@@ -157,7 +157,7 @@ class Main extends TelegramApp\Module {
 					->show()
 					->text($str, 'HTML')
 				->send();
-				$this->message_assign_set($r, $this->user->id);
+				$this->Functions->message_assign_set($r, $this->user->id);
 				// $bw = $pokemon->settings($telegram->chat->id, 'blackword');
 				// if(!$bw or stripos($bw, "fake") === FALSE){ return -1; }
 			}
@@ -254,7 +254,7 @@ class Main extends TelegramApp\Module {
 
 	public function whois($username = NULL, $send = TRUE){
 		if(empty($username) and $this->telegram->has_reply){
-			$username = $this->message_assign_get();
+			$username = $this->Functions->message_assign_get();
 			if($username == FALSE){
 				$username = $this->telegram->reply_target('forward')->id;
 			}
@@ -418,7 +418,7 @@ class Main extends TelegramApp\Module {
 			if($info){ $target = $info->telegramid; }
 			elseif(is_numeric($username)){ $target = $username; }
 
-			$this->message_assign_set($r, $target);
+			$this->Functions->message_assign_set($r, $target);
 		}
 		return $str;
 	}
@@ -571,7 +571,7 @@ class Main extends TelegramApp\Module {
 			->send();
 			if($res){
 				$resfin = TRUE;
-				$this->message_assign_set($res, $this->user->id);
+				$this->Functions->message_assign_set($res, $this->user->id);
 			}
 		}
 
@@ -682,7 +682,7 @@ class Main extends TelegramApp\Module {
 				->chat(CREATOR)
 				->text_replace($text, $repl, 'HTML')
 			->send();
-			$this->message_assign_set($r, $this->telegram->user->id);
+			$this->Functions->message_assign_set($r, $this->telegram->user->id);
 
 			// -----------------
 
@@ -711,7 +711,7 @@ class Main extends TelegramApp\Module {
 				->reply_to(TRUE)
 				->text($this->strings->get('welcome_group_creator'))
 			->send();
-			$this->message_assign_set($r, $new->id);
+			$this->Functions->message_assign_set($r, $new->id);
 			$this->end();
 		}
 
@@ -723,7 +723,7 @@ class Main extends TelegramApp\Module {
 			// $this->tracking->event('Telegram', 'Join limit users');
 			$this->Admin->kick($new->id);
 			$r = $this->Admin->admin_chat_message($this->strings->parse('adminchat_newuser_limit_join', $new->id));
-			$this->message_assign_set($r, $new->id);
+			$this->Functions->message_assign_set($r, $new->id);
 			// $pokemon->user_delgroup($new->id, $this->telegram->chat->id);
 			$this->end();
 		}
@@ -749,7 +749,7 @@ class Main extends TelegramApp\Module {
 			$str = $this->telegram->emoji($str);
 			// ---------
 			$r = $this->Admin->admin_chat_message($str);
-			$this->message_assign_set($r, $new->id);
+			$this->Functions->message_assign_set($r, $new->id);
 			$this->end();
 		}
 
@@ -766,7 +766,7 @@ class Main extends TelegramApp\Module {
 				->chat(CREATOR)
 				->text($str)
 			->send();
-			$this->message_assign_set($r, $new->id);
+			$this->Functions->message_assign_set($r, $new->id);
 		}
 
 		if($this->chat->settings('team_exclusive')){
@@ -790,7 +790,7 @@ class Main extends TelegramApp\Module {
 								.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 						$str = $this->telegram->emoji($str);
 						$r = $this->Admin->admin_chat_message($str);
-						$this->message_assign_set($r, $new->id);
+						$this->Functions->message_assign_set($r, $new->id);
 					}
 				}
 
@@ -815,7 +815,7 @@ class Main extends TelegramApp\Module {
 					$str = $this->telegram->emoji($str);
 
 					$r = $this->Admin->admin_chat_message($str);
-					$this->message_assign_set($r, $new->id);
+					$this->Functions->message_assign_set($r, $new->id);
 					// $pokemon->user_delgroup($new->id, $this->telegram->chat->id);
 					$this->end();
 				}
@@ -842,7 +842,7 @@ class Main extends TelegramApp\Module {
 							.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 					$str2 = $this->telegram->emoji($str2);
 					$r = $this->Admin->admin_chat_message($str2);
-					$this->message_assign_set($r, $new->id);
+					$this->Functions->message_assign_set($r, $new->id);
 				}
 			}else{
 				$str = $this->strings->get('welcome_group_unverified');
@@ -916,7 +916,7 @@ class Main extends TelegramApp\Module {
 				->reply_to(TRUE)
 				->text( $text , 'HTML')
 			->send();
-			$this->message_assign_set($r, $new->id);
+			$this->Functions->message_assign_set($r, $new->id);
 		}
 
 		// Avisar al grupo administrativo
@@ -925,7 +925,7 @@ class Main extends TelegramApp\Module {
 				.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
 		$str = $this->telegram->emoji($str);
 		$r = $this->Admin->admin_chat_message($str);
-		$this->message_assign_set($r, $new->id);
+		$this->Functions->message_assign_set($r, $new->id);
 	}
 
 	public function left_member(){
@@ -946,7 +946,7 @@ class Main extends TelegramApp\Module {
 				->chat(CREATOR)
 				->text($str, 'HTML')
 			->send();
-			$this->message_assign_set($r, $this->telegram->user->id);
+			$this->Functions->message_assign_set($r, $this->telegram->user->id);
 
 			$this->chat->disable();
 		}else{
@@ -1246,54 +1246,6 @@ class Main extends TelegramApp\Module {
 	private function autoconfigure($type, $chat = NULL){
 		if(empty($chat)){ $chat = $this->chat->id; }
 		$chat = new Chat($chat, $this->db);
-	}
-
-	public function message_assign_set($mid, $chat = NULL, $user = NULL){
-		if(is_array($mid)){
-			if(empty($user) and !empty($chat)){
-				$user = $chat;
-				$chat = $mid['chat']['id'];
-				$mid = $mid['message_id'];
-			}elseif(empty($chat) and empty($user)){
-				$user = $mid['from']['id'];
-				$chat = $mid['chat']['id'];
-				$mid = $mid['message_id'];
-			}
-		}
-		if(!$mid){ return FALSE; }
-
-		$data = [
-			'mid' => $mid,
-			'cid' => $chat,
-			'target' => $user,
-			'date' => $this->db->now(),
-		];
-
-		$id = $this->db->insert('user_message_id', $data);
-		// TODO Cache
-		// $key = 'message_assign_' .md5($mid .$chat);
-		// $this->cache->save($key, $user, 3600*24);
-		return $id;
-	}
-
-	public function message_assign_get($mid = NULL, $chat = NULL){
-		// mirar si hay reply y llamar directamente
-		if(empty($mid)){
-			if(!$this->telegram->has_reply){ return FALSE; }
-			$mid = $this->telegram->reply->message_id;
-			$chat = $this->chat->id;
-		}
-
-		if($chat instanceof Chat){ $chat = $chat->id; }
-		// TODO Cache
-		// $key = 'message_assign_' .md5($mid .$chat);
-		// $cache = $this->cache->get($key);
-		// if($cache){ return $cache; }
-		$uid = $this->db
-			->where('mid', $mid)
-			->where('cid', $chat)
-		->getValue('user_message_id', 'target');
-		return $uid;
 	}
 
 	private function hooks_newuser(){

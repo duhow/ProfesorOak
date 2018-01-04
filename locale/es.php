@@ -18,6 +18,7 @@ return [
 	'help' => 'Ayuda',
 	'help_text' => '¡Aquí tienes la <a href="%s">ayuda</a>!',
 	'help_url' => 'http://telegra.ph/Ayuda-11-30',
+	'github_info' => 'Puedes inspeccionarme y contribuir a mi código en git.profoak.me!',
 
 	'cancel' => 'Cancelar',
 	'step_cancel' => 'Acción cancelada.',
@@ -429,6 +430,13 @@ return [
 		"",
 		"¡Muchísimas gracias, de verdad! <3"
 	],
+
+	'autoconfig_skip' => 'Saltar',
+	'autoconfig_question_start' => 'Para empezar...',
+	'autoconfig_chat_type_question' => '¿Qué tipo de grupo o canal es éste?',
+	'autoconfig_chat_type_options' => ['Desconocido', 'General', 'Color', 'Administrativo', 'Incursiones', 'Avistamientos', 'Offtopic'],
+	'autoconfig_team_exclusive_kick_question' => 'En caso de que entre alguien que no es del color, ¿prefieres hacerle kick o ban?',
+	'autoconfig_team_exclusive_kick_options' => ['Kick', 'Ban'],
 
 	'levelup_same' => 'Si, ya lo sé.',
 	'levelup_ok' => 'Ah, ya veo, así que %s ... ¡Guay!',
