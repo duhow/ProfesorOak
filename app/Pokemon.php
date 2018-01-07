@@ -3,121 +3,36 @@
 class Pokemon extends TelegramApp\Module {
 	protected $runCommands = FALSE;
 	private $misspells = array();
+	private $GAMEMASTER = NULL;
+	private $GAMEMASTER_FAST = array();
+	private $loadedNames = array();
 
 	public function __construct($name = NULL){
+		// Start when needed.
+		// $this->GAMEMASTER = json_decode(file_get_contents("GAME_MASTER.json"));
 		$folder = dirname(__FILE__) ."/Pokemon/";
 		foreach(scandir($folder) as $file){
 			if(substr($file, -4) == ".php"){ require_once $folder .$file; }
 		}
-		if($name !== NULL){
+		/* if($name !== NULL){
 			$this->load($name);
-		}
+		} */
 	}
 
-	public function load($search, $misspell = FALSE){
-		if(is_string($search) && !is_numeric($search)){
-			if($misspell){
-				$m = $this->misspell($search);
-
-				if($m !== FALSE){ $this->db->where('name', $search); }
-				else{ $search = $m; }
-			}else{
-				$this->db->where('name', $search);
+	public function gamemaster($key){
+		if($this->GAMEMASTER == NULL){
+			$this->GAMEMASTER = json_decode(file_get_contents("GAME_MASTER.json"));
+		}
+		if(array_key_exists($key, $this->GAMEMASTER_FAST)){
+			return $this->GAMEMASTER_FAST[$key];
+		}
+		foreach($this->GAMEMASTER->itemTemplates as $data){
+			if($data->templateId == $key){
+				$this->GAMEMASTER_FAST[$key] = $data;
+				return $data;
 			}
 		}
-
-		if(is_numeric($search)){
-			$this->db->where('id', $search);
-		}
-
-		$res = $this->db->get('pokedex');
-		if($this->db->count == 0){ return FALSE; }
-
-		// TODO Load data to this object.
-
-		return TRUE;
-	}
-
-	public function load_full($id){
-		$pokemon = $this->db
-			->where('id', $id)
-		->getOne('pokedex');
-		if(!$pokemon){ return FALSE; }
-		$movements = $this->db
-			->where('pokemon', $id)
-		->get('pokedex_attacks');
-		if($movements){ $pokedex['movements'] = $movements; }
-	}
-
-	public function name($id){
-		$res = $this->db
-			->where('id', $id)
-		->get('pokedex');
-		if($this->db->count == 1){ return $res[0]['name']; }
-		return FALSE;
-	}
-
-	public function pokedex($search){
-		if($search === TRUE){
-			$pkdx = $this->db->get('pokedex');
-			$final = array();
-			foreach($pkdx as $pkmn){
-				$final[$pkmn['id']] = (object) $pkmn;
-				// TODO Add skills, set evolutions and more.
-				// Funcion universal para agregar contenido a cualquier elemento.
-			}
-			return $final;
-		}
-
-		$misspell = $this->db->subQuery(); // TODO CHECK es asi?
-		$misspell->where('word', $search)->getValue('pokemon_misspell', 'pokemon');
-
-		$pokemon = $this->db
-			->where('name', $search)
-			->orWhere('id', $search)
-			->orWhere('id', $misspell)
-		->getOne('pokedex');
-
-		if($pokemon){ return $pokemon; } // TODO Check
-	}
-
-	public function evolution($pokemon){
-		$pokemon = $this->load($pokemon);
-
-	}
-
-	public function movements($pokemon){
-		$pokemon = $this->load($pokemon);
-	}
-
-	public function movement_info($movement){
-		$load = $this->db
-			->where('id', $movement)
-			->orWhere('name', $movement)
-		->getOne('pokedex_movements_info');
-		// Id, CodeName, MT/MO, Type, Attack, Bars, TimeRun, TImeDelay
-		return $load;
-	}
-
-	public function movement_best($pokemon, $str = FALSE){
-		$pokemon = $this->load($pokemon);
-	}
-
-	public function movement_worst($pokemon, $str = FALSE){
-		$pokemon = $this->load($pokemon);
-	}
-
-	public function attack_pokemon($pokemon, $target = 'source'){
-		// This redirects to attack_type
-		$pokemon = $this->load($pokemon);
-	}
-
-	public function attack_type($type, $type2 = 'source', $target = NULL){
-		// TODO HACK function 2/3 args.
-	}
-
-	public function attack_table($type){
-
+		return NULL;
 	}
 
 	public function misspell($name, $retnum = FALSE){
@@ -207,67 +122,107 @@ class Pokemon extends TelegramApp\Module {
 		return $findings;
 	}
 
-	public function iv($pokemon, $cp = NULL, $hp = NULL, $stardust = NULL, $extra = NULL){
-		if(is_array($pokemon)){
-			if(is_array($cp)){ $extra = $cp; }
-			$stardust = $pokemon[3];
-			$hp = $pokemon[2];
-			$cp = $pokemon[1];
-			$pokemon = $pokemon[0];
+	// -----------------------------------
+
+	public function PlayerLevel($exp){
+		$data = $this->gamemaster('PLAYER_LEVEL_SETTINGS');
+		foreach($data->playerLevel->requiredExperience as $lvl => $minexp){
+			if($exp > $minexp){ continue; }
+			return $lvl;
 		}
-		$pokemon = $this->load($pokemon);
-		$levels = new Pokemon\Levels($stardust);
+	}
+
+	public function CPScalar($lvl){
+		$half = (is_float($lvl) and $lvl < 40);
+		$lvl = min(floor($lvl), 40) - 1;
+		$data = $this->gamemaster('PLAYER_LEVEL_SETTINGS');
+		$cpcur = $data->playerLevel->cpMultiplier[$lvl];
+		if(!$half){ return $cpcur; }
+
+		// Source: https://pokemongo.gamepress.gg/cp-multiplier
+		$cpnext = $data->playerLevel->cpMultiplier[$lvl + 1];
+		$cpmstep = (pow($cpnext, 2) - pow($cpcur, 2) / 2);
+		return sqrt($cpcur + $cpmstep);
+	}
+
+	public function CalculateCP($pokemon, $cpm, $ivAtk, $ivDef = NULL, $ivSta = NULL){
+		if(!is_object($pokemon)){ $pokemon = $this->Get($pokemon); }
+		if($cpm >= 1){ $cpm = $this->CPScalar($cpm); } // LVL -> CPM
+		if(empty($ivSta) and empty($ivDef) and is_array($ivAtk)){
+			$ivSta = $ivAtk[2];
+			$ivDef = $ivAtk[1];
+			$ivAtk = $itAtk[0];
+		}
+		$atk = ($pokemon->stats->baseAttack + $ivAtk) * $cpm;
+		$def = ($pokemon->stats->baseDefense + $ivDef) * $cpm;
+		$sta = ($pokemon->stats->baseStamina + $ivSta) * $cpm;
+		return max(10, (floor(
+			pow($sta, 0.5) *
+			$atk *
+			pow($def, 0.5)
+			/ 10
+		)));
+	}
+
+	public function CalculateHP($pokemon, $cpm, $ivSta){
+		if(!is_object($pokemon)){ $pokemon = $this->Get($pokemon); }
+		if($cpm >= 1){ $cpm = $this->CPScalar($cpm); } // LVL -> CPM
+
+		return max(10, floor(
+			($pokemon->stats->baseStamina + $ivSta) * $cpm
+		));
+	}
+
+	public function CalculateIV($pokemon, $cp, $hp, $stardust, $extra = array()){
+		$half = (
+			(isset($extra['powered']) and $extra['powered']) or
+			$extra === TRUE
+		);
 		$table = array();
 		$low = 100; $high = 0; // HACK
-		foreach($levels as $lvl => $mul){
-			$pow = pow($mul, 2) * 0.1;
-			for($IV_STA = 0; $IV_STA < 16; $IV_STA++){
-				$cal['hp'] = max(floor(($pokemon->stamina + $IV_STA) * $mul), 10);
-				if($cal['hp'] == $hp){
-					$lvl_STA = sqrt($pokemon->stamina + $IV_STA) * $pow;
-					// $cps = array(); // DEBUG
-					for($IV_DEF = 0; $IV_DEF < 16; $IV_DEF++){
-						for($IV_ATK = 0; $IV_ATK < 16; $IV_ATK++){
-							$cal['cp'] = floor( ($pokemon->attack + $IV_ATK) * sqrt($pokemon->defense + $IV_DEF) * $lvl_STA);
-							// Si el CP calculado coincide con el nuestro, agregar posibilidad.
-							if($cal['cp'] == $cp){
-								$sum = (($IV_ATK + $IV_DEF + $IV_STA) / 45) * 100;
-								if($sum > $high){ $high = $sum; }
-								if($sum < $low){ $low = $sum; }
-								$table[] = ['level' => $lvl, 'atk' => $IV_ATK, 'def' => $IV_DEF, 'sta' => $IV_STA];
-							}
-							// $cps[] = $cp; // DEBUG
-						}
+		foreach($this->CostGetLevels($stardust, $half) as $level){
+			$cpmul = $this->CPScalar($level);
+			for($ivSta = 0; $ivSta <= 15; $ivSta++){
+				if($hp != $this->CalculateHP($pokemon, $cpmul, $ivSta)){ continue; }
+
+				for($ivDef = 0; $ivDef <= 15; $ivDef++){
+					for($ivAtk = 0; $ivAtk <= 15; $ivAtk++){
+						// Si el CP calculado coincide con el nuestro, agregar posibilidad.
+						if($cp != $this->CalculateCP($pokemon, $cpmul, $ivAtk, $ivDef, $ivSta)){ continue; }
+
+						$sum = (($ivAtk + $ivDef + $ivSta) / 45) * 100;
+						if($sum > $high){ $high = $sum; }
+						if($sum < $low){ $low = $sum; }
+						$table[] = ['level' => $level, 'atk' => $ivAtk, 'def' => $ivDef, 'sta' => $ivSta];
 					}
 				}
 			}
 		}
 
-		if(count($table) > 1 and ($pk['attack'] or $pk['defense'] or $pk['stamina'])){
+		if(count($table) > 1 and (isset($extra['attack']) or isset($extra['defense']) or isset($extra['stamina']))){
 			// si tiene ATK, DEF O STA, los resultados
 			// que lo superen, quedan descartados.
 			foreach($table as $i => $r){
 				if
 				(
-					( $pk['attack'] and (
+					( $extra['attack'] and (
 						( max($r['atk'], $r['def'], $r['sta']) != $r['atk'] ) or
-						( isset($pk['ivcalc']) and !in_array($r['atk'], $pk['ivcalc']) )
+						( isset($extra['ivcalc']) and !in_array($r['atk'], $extra['ivcalc']) )
 					) ) or (
-					$pk['defense'] and (
+					$extra['defense'] and (
 						( max($r['atk'], $r['def'], $r['sta']) != $r['def'] ) or
-						( isset($pk['ivcalc']) and !in_array($r['def'], $pk['ivcalc']) )
+						( isset($extra['ivcalc']) and !in_array($r['def'], $extra['ivcalc']) )
 					) ) or (
-					$pk['stamina'] and (
+					$extra['stamina'] and (
 						( max($r['atk'], $r['def'], $r['sta']) != $r['sta'] ) or
-						( isset($pk['ivcalc']) and !in_array($r['sta'], $pk['ivcalc']) )
+						( isset($extra['ivcalc']) and !in_array($r['sta'], $extra['ivcalc']) )
 					) ) or (
-						(!$pk['attack'] or !$pk['defense'] or !$pk['stamina']) and
+						(!$extra['attack'] or !$extra['defense'] or !$extra['stamina']) and
 						($r['atk'] + $r['def'] + $r['sta'] == 45)
 					)
 				){ unset($table[$i]); continue; }
 			}
-			$low = 100;
-			$high = 0;
+			$low = 100; $high = 0;
 			foreach($table as $r){
 				$sum = (($r['atk'] + $r['def'] + $r['sta']) / 45) * 100;
 				if($sum > $high){ $high = $sum; }
@@ -277,6 +232,176 @@ class Pokemon extends TelegramApp\Module {
 
 		return $table;
 	}
+
+	public function CandyCost($lvl){
+		$lvl = min(floor($lvl), 40) - 1; // Round down
+		$data = $this->gamemaster('POKEMON_UPGRADE_SETTINGS');
+		return $data->pokemonUpgrades->candyCost[$lvl];
+	}
+
+	public function StardustCost($lvl){
+		$lvl = min(floor($lvl), 40) - 1; // Round down
+		$data = $this->gamemaster('POKEMON_UPGRADE_SETTINGS');
+		return $data->pokemonUpgrades->stardustCost[$lvl];
+	}
+
+	// For Candy and Stardust
+	public function CostGetLevels($amount, $half = FALSE){
+		$data = $this->gamemaster('POKEMON_UPGRADE_SETTINGS');
+		$key = ($amount <= 15 ? "candy" : "stardust") ."Cost";
+		$levels = array();
+		foreach($data->pokemonUpgrades->{$key} as $lvl => $cost){
+			if($cost == $amount){
+				$levels[] = ($lvl + 1);
+				if($half){ $levels[] = ($lvl + 1.5); }
+			}
+		}
+		return $levels;
+	}
+
+	public function BadgeLevel($badge, $amount){
+		if(is_numeric($badge)){
+			// TODO INT -> STRVAL
+		}elseif(strpos($badge, "BADGE_") !== 0){
+			$badge = "BADGE_$badge"; // ADD prefix if removed
+		}
+
+		$data = $this->gamemaster($badge);
+		if(!$data){ return NULL; }
+		$lvl = 0;
+		foreach($data->badgeSettings->targets as $minval){
+			if($amount >= $minval){ $lvl++; }
+		}
+		return $lvl;
+	}
+
+	public function Get($search, $retkey = FALSE){
+		$key = NULL;
+		if(is_string($search) and strlen($search) <= 12){
+			$search = $this->misspell($search, TRUE);
+		}
+
+		if(is_numeric($search)){
+			$name = $this->GetNames($search);
+			if(!$name){ return NULL; }
+			$key = "V" .str_pad($search, 4, "0", STR_PAD_LEFT) ."_POKEMON_" .$name;
+			if($retkey){ return $key; }
+		}
+
+		$data = $this->gamemaster($key);
+		if($data){ return $data->pokemonSettings; }
+		return NULL;
+	}
+
+	public function GetLegendaries($search = NULL){
+		$legendaries = array();
+		$names = $this->GetNames(TRUE);
+		if(is_string($search)){ $search = $this->GetNames($search); } // -> int
+		foreach($names as $id => $name){
+			$key = "V" .str_pad($id, 4, "0", STR_PAD_LEFT) ."_POKEMON_" .$name;
+			$pokemon = $this->Get($key);
+			if($search and $search == $id){
+				return isset($pokemon->rarity);
+				// and $pokemon->rarity == "POKEMON_RARITY_LEGENDARY"
+			}elseif(isset($pokemon->rarity)){
+				$legendaries[] = $id;
+			}
+		}
+		return $legendaries;
+	}
+
+	public function GetNames($id = TRUE){
+		if(!empty($this->loadedNames)){
+			if(is_numeric($id) and array_key_exists($id, $this->loadedNames)){
+				return $this->loadedNames[$id];
+			}
+			return $this->loadedNames;
+		}
+		$info = array();
+		foreach($this->GAMEMASTER as $data){
+			$key = strval($data->templateId);
+			$r = preg_match_all('/^V(?P<ID>[\d]{4})_POKEMON_(?P<NAME>[^\s]+)$/i', $key, $matches);
+			if($r){
+				$idp = intval($matches["ID"]);
+				if($id === $idp){ return $matches["NAME"]; }
+
+				$info[] = [
+					'ID' => $idp,
+					'NAME' => $matches["NAME"]
+				];
+			}
+		}
+		$this->loadedNames = array_column($info, 'NAME', 'ID');
+		return $this->loadedNames;
+	}
+
+	public function GetType($search = TRUE){
+		$names = [
+			"NONE", "NORMAL", "FIGHTING", "FLYING", "POISON", "GROUND",
+			"ROCK", "BUG", "GHOST", "STEEL", "FIRE", "WATER", "GRASS",
+			"ELECTRIC", "PSYCHIC", "ICE", "DRAGON", "DARK", "FAIRY"
+		];
+		if(is_string($search)){
+			$search = strtoupper($search);
+			$search = str_replace("POKEMON_TYPE_", "", $search);
+			return array_search($search, $names);
+		}elseif(is_numeric($search)){
+			if(array_key_exists($search, $names)){ return $names[$search]; }
+		}elseif($search === TRUE){
+			return $names;
+		}
+		return FALSE;
+	}
+
+	public function TypeScalar($type, $toTarget = NULL){
+		if(is_numeric($type)){ $type = $this->GetType($type); }
+		else{
+			$type = strtoupper($type);
+			$type = str_replace("POKEMON_TYPE_", "", $type);
+		}
+
+		$data = $this->gamemaster("POKEMON_TYPE_$type");
+		if(!$data){ return FALSE; }
+
+		if($toTarget === NULL){ return $data->typeEffective->attackScalar; }
+		if(is_string($toTarget)){
+			$toTarget = strtoupper($toTarget);
+			$toTarget = str_replace("POKEMON_TYPE_", "", $toTarget);
+			$toTarget = $this->GetType($toTarget);
+		}
+
+		return $data->typeEffective->attackScalar[$toTarget - 1];
+	}
+
+	// Tipos que me afectan
+	public function TypeAffects($me){
+		if(is_string($me)){ $me = $this->GetType($me); }
+		$types = $this->GetType(TRUE);
+		$affects = array();
+
+		foreach($types as $pos => $type){
+			$data = $this->gamemaster("POKEMON_TYPE_$type");
+			if(!$data){ continue; } // NONE TYPE
+			$affects[$pos] = $data->typeEffective->attackScalar[$me];
+		}
+
+		return $affects;
+	}
+
+	public function MovementInfo($movement){
+		// Id, CodeName, MT/MO, Type, Attack, Bars, TimeRun, TImeDelay
+		// return $load;
+	}
+
+	public function MovementBest($pokemon, $str = FALSE){
+		// $pokemon = $this->load($pokemon);
+	}
+
+	public function MovementWorst($pokemon, $str = FALSE){
+		// $pokemon = $this->load($pokemon);
+	}
+
+	// -----------------------------------
 
 	public function parser($text){
 		$pokes = array(); // $pokemon->pokedex();
@@ -330,7 +455,6 @@ class Pokemon extends TelegramApp\Module {
 					}
 				}
 			}
-
 
 			$search = ['cp', 'pc', 'hp', 'ps', 'polvo', 'polvos', 'caramelo', 'polvoestelar', 'stardust', 'm', 'metro', 'km'];
 			$enter = FALSE;
