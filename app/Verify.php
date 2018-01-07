@@ -16,6 +16,7 @@ class Verify extends TelegramApp\Module {
 	];
 
 	const VERIFY_MIN_VOTE_AMOUNT = 5;
+	const MAX_VERIFY_VOTE_AMOUNT = 200;
 
 	protected function hooks(){
 		// if($this->user->verified){ return; }
@@ -64,10 +65,11 @@ class Verify extends TelegramApp\Module {
 	 * Ver si el usuario ha enviado una foto para validarse
 	 * o buscar el ID de validación
 	 */
-	public function user_has_submited($id){
+	public function user_has_submited($id, $time = "1 week"){
 		return $this->db
 			->where('id', $id)
 			->orWhere('telegramid', $id)
+			->where('date', date("Y-m-d", strtotime('-' .$time)), ">=")
 			->orderBy('id DESC')
 		->getOne('user_verify');
 	}
@@ -287,9 +289,19 @@ class Verify extends TelegramApp\Module {
 		return (bool) $value;
 	}
 
+	public function last_verify_date($user){
+		if($user instanceof User){ $user = $user->id; }
+		return $this->db
+			->where('uid', $user)
+			->where('status', self::VERIFY_OK)
+			->where('date_finish', NULL, 'IS NOT')
+			->orderBy('date_finish', 'DESC')
+		->getValue('user_verify', 'date_finish', 1);
+	}
+
 	private function verify_check(){
 		// Desactivar validacioness en general
-		if($this->is_disabled()){
+		if($this->is_disabled() or $this->count_user_vote_remaining() > self::MAX_VERIFY_VOTE_AMOUNT)){
 			$this->telegram->send
 				->chat($this->telegram->user->id)
 				->text($this->telegram->emoji(":clock: ") .$this->strings->get('verify_disabled_too_many'))
@@ -354,7 +366,7 @@ class Verify extends TelegramApp\Module {
 		$str = NULL;
 		$icon = NULL;
 
-		if($this->is_disabled()){
+		if($this->is_disabled() or $this->count_user_vote_remaining() > self::MAX_VERIFY_VOTE_AMOUNT)){
 			$this->user->step = NULL;
 
 			$str = 'verify_disabled_too_many';
