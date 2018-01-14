@@ -11,18 +11,19 @@ class Autoconfig extends TelegramApp\Module {
 	const TYPE_CATCH	= 5;
 	const TYPE_OFFTOPIC	= 6;
 
-	public function __construct(){
+	public function run(){
 		if(
 			$this->user->step != "AUTOCONFIG" or
 			$this->chat->is_group()
 		){ return; }
+		parent::run();
 	}
 
 	// Command must be started from group or channel as admin.
 	// Disabled to run by itself.
 	// Call @Admin ?
 	protected function hooks(){
-		
+
 	}
 
 	// When running Autoconfig command
@@ -144,7 +145,7 @@ class Autoconfig extends TelegramApp\Module {
 	}
 
 	public function setup_team_exclusive_kick(){
-		// Sólo si se ha configurado color exclusivo, 
+		// Sólo si se ha configurado color exclusivo,
 		// Botones toggle para kickear o banear según si es topo.
 		// Opcional (skip >>)
 
@@ -184,7 +185,7 @@ class Autoconfig extends TelegramApp\Module {
 	}
 
 	public function setup_welcome(){
-		// Keyboard de Si o No 
+		// Keyboard de Si o No
 		// En caso de que quiera un mensaje personalizado, escribir directamente.
 	}
 

@@ -460,6 +460,12 @@ return [
 	'lure_seen_place' => 'Cebo en <b>%s</b>, gracias por avisar! ^3^',
 	'pokemon_found_position' => 'Tienes a <b>%s</b> a %s, ve a por él!',
 
+	'command_timezone_set' => '^(configurar|establecer) zona horaria$',
+	'timezone_input' => 'Escribe tu zona horaria o envía tu ubicación actual.',
+	'timezone_send_location' => 'Enviar ubicación',
+	'timezone_set_successfully' => 'Se ha configurado la zona horaria!',
+	'timezone_set_successfully_to' => 'Ahora la zona horaria será %s.',
+
 	'error_register' => 'Error general al registrar.',
 	'error_chat_abandoned' => 'Este chat ha sido abandonado.',
 	'error_candy_as_stardust' => '¿Caramelos? Querrás decir polvos...',
@@ -469,6 +475,7 @@ return [
 	'error_wait_too_soon' => 'Aún no ha pasado suficiente tiempo. Espera un poco, anda. :)',
 	'error_pokestop_not_near' => 'No hay Pokeparadas por ahí cerca, o no están registradas. Pregúntalo más adelante.',
 	'error_group_mention_admin' => 'No puedo avisar a los @admin, no me han iniciado :(',
+	'error_timezone_not_exist' => 'Esa zona horaria no existe.',
 
 	'GAME_MASTER_MOVES' => [
 		'WRAP' => 'Constricción',

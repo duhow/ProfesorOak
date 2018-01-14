@@ -1259,6 +1259,58 @@ class Main extends TelegramApp\Module {
 		$chat = new Chat($chat, $this->db);
 	}
 
+	public function timezone($set = NULL){
+		// in_array($timezone, DateTimeZone::listIdentifiers())
+		if(is_string($set)){
+			if(!in_array($set, DateTimeZone::listIdentifiers())){
+				$str = $this->telegram->emoji(":x: ") .$this->strings->get('error_timezone_not_exist');
+				$this->telegram->send
+					->notification(FALSE)
+					->text($str)
+				->send();
+				return FALSE;
+			}
+
+			$change = FALSE;
+			if($this->chat->is_group() and $this->chat->is_admin($this->user)){
+				$this->chat->settings('tz', $set);
+				$change = TRUE;
+			}
+
+			elseif(!$this->chat->is_group()){
+				$this->user->settings('tz', $set);
+				$change = TRUE;
+			}
+
+			if($change){
+				$str = $this->telegram->emoji(":white_check_mark: ") . $this->strings->parse('timezone_set_successfully_to', $set);
+				$this->telegram->send
+					->text($str)
+				->send();
+			}
+
+			if($change){ $this->user->step = NULL; }
+			return $change;
+		}elseif(is_object($set) and $set instanceof Location){
+			// Extraer coordenadas y buscar aprox.
+			// GeoNames
+			$this->telegram->send
+				->keyboard()->hide(TRUE)
+				->text("")
+			->send();
+		}
+
+		if($this->chat->is_group() and !$this->chat->is_admin($this->user)){ return FALSE; }
+
+		$this->user->step = "TIMEZONE";
+		return $this->telegram->send
+			->keyboard()
+				->row_button($this->telegram->emoji(":world-europe: ") .$this->strings->get('timezone_send_location'), "location")
+			->show(TRUE, TRUE)
+			->text($this->strings->get('timezone_input'))
+		->send();
+	}
+
 	private function hooks_newuser(){
 		// TODO HACK WIP Get all translations
 		$langs = ['es', 'en', 'ca', 'it'];
