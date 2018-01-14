@@ -84,7 +84,7 @@ class Pokemon extends TelegramApp\Module {
 		// Y lo mismo con los Nidoran.
 		if(empty($string)){ $string = $this->telegram->text(); }
 		// $string = strtolower($string);
-		$string = explode(" ", $string);
+		// $string = explode(" ", $string);
 		$findings = array();
 
 		// Load misspells
@@ -93,19 +93,23 @@ class Pokemon extends TelegramApp\Module {
 		foreach($misnames as $k => $v){
 			$misnames[$k] = str_replace(".", '\.', $v);
 		}
-		$misnames = implode("|", $misnames);
+		$pokemonList = $this->GetNames(TRUE);
+		$misnames = implode("|", $misnames) .'|' .implode("|", array_values($pokemonList));
 
 		$r = preg_match_all("/(#(?P<id>\d{1,3})\b|(?P<name>$misnames)\b)/i", $string, $matches);
 		if($r){
 			foreach($matches["id"] as $k => $n){
 				if(!empty($n)){
-					$findings[$k] = (int) $n;
+					$findings[] = (int) $n;
 				}
 			}
 			foreach($matches["name"] as $k => $n){
 				if(!empty($n)){
 					if(array_key_exists($n, $this->misspells)){
-						$findings[$k] = $this->misspells[$n];
+						$findings[] = $this->misspells[$n];
+					}else{
+						$search = array_search(strtoupper($n), $pokemonList);
+						if($search !== FALSE){ $findings[] = $search; }
 					}
 				}
 			}
@@ -114,7 +118,7 @@ class Pokemon extends TelegramApp\Module {
 		if($first){
 			if(!isset($findings[0])){ return NULL; }
 			if($get_pokemon and is_numeric($findings[0])){
-				return $this->load($findings[0]);
+				return $this->Get($findings[0]);
 			}
 			return $findings[0];
 		}
@@ -308,6 +312,36 @@ class Pokemon extends TelegramApp\Module {
 			}
 		}
 		return $legendaries;
+	}
+
+	public function ResolveName($pokemon, $lang = "en"){
+		if(is_numeric($pokemon)){
+			$pokemon = $this->Get($pokemon);
+		}
+		if(is_object($pokemon)){
+			$pokemon = $pokemon->pokemonId;
+		}
+		if(!is_string($pokemon)){ return FALSE; }
+
+		// Si la entrada ya existe directamente...
+		$langs = array_unique([$lang, "en"]);
+		foreach($langs as $lang){
+			$res = ($this->strings->get_multi('GAME_MASTER_POKEMON', strtoupper($pokemon), $lang));
+			if($res){ return $res; }
+		}
+
+		// Si ha indicado el propio nombre...
+		// Array search no buscará comparando mayus/minus, y ucwords no siempre es viable.
+		$pokemonList = $this->strings->get('GAME_MASTER_POKEMON');
+		$len = strlen($pokemon);
+		foreach($pokemonList as $index => $name){
+			if(
+				stripos($name, $pokemon) === 0 and
+				strlen($name) == $len
+			){ return $name; }
+		}
+
+		return FALSE;
 	}
 
 	public function GetNames($id = TRUE){

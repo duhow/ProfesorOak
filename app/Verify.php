@@ -2,6 +2,7 @@
 
 class Verify extends TelegramApp\Module {
 	protected $runCommands = FALSE;
+	private $OCR = NULL;
 
 	const VERIFY_OK	 = 1;
 	const VERIFY_CHECK  = 2;
@@ -301,7 +302,7 @@ class Verify extends TelegramApp\Module {
 
 	private function verify_check(){
 		// Desactivar validacioness en general
-		if($this->is_disabled() or $this->count_user_vote_remaining() > self::MAX_VERIFY_VOTE_AMOUNT)){
+		if($this->is_disabled() or $this->count_user_vote_remaining() > self::MAX_VERIFY_VOTE_AMOUNT){
 			$this->telegram->send
 				->chat($this->telegram->user->id)
 				->text($this->telegram->emoji(":clock: ") .$this->strings->get('verify_disabled_too_many'))
@@ -366,7 +367,7 @@ class Verify extends TelegramApp\Module {
 		$str = NULL;
 		$icon = NULL;
 
-		if($this->is_disabled() or $this->count_user_vote_remaining() > self::MAX_VERIFY_VOTE_AMOUNT)){
+		if($this->is_disabled() or $this->count_user_vote_remaining() > self::MAX_VERIFY_VOTE_AMOUNT){
 			$this->user->step = NULL;
 
 			$str = 'verify_disabled_too_many';
@@ -429,5 +430,14 @@ class Verify extends TelegramApp\Module {
 
 		$this->user->step = NULL;
 		$this->end();
+	}
+
+	private function setupOCR($image = NULL, $force = FALSE){
+		if($this->OCR !== NULL and !$force){ return $this->OCR; }
+		$lib = 'libs/tesseract-ocr-for-php/src/TesseractOCR.php';
+		if(!file_exists($lib) or !is_readable($lib)){ return FALSE; }
+		require_once $lib;
+		$this->OCR = new \TesseractOCR($image);
+		return $this->OCR;
 	}
 }

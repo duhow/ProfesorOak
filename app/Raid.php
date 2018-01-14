@@ -85,6 +85,10 @@ class Raid extends TelegramApp\Module {
 	}
 
 	public function owner($id, $user = NULL){
+		if($user instanceof User){ $user = $user->id; }
+		if(is_object($id) and isset($id->owner)){
+			return ($user ? $user == $id->owner : $id->owner);
+		}
 		$owner = $this->db
 			->where('id', $id)
 		->getValue('raid', 'owner');
@@ -191,8 +195,8 @@ class Raid extends TelegramApp\Module {
 		$str[] = $this->strings->get('raid_new_raid');
 
 		if(!empty($data) and isset($data['pokemon'])){
-			$poke = $this->Pokemon->name($data['pokemon']);
-			$str[] = $this->strings->parse('raid_pokemon', $poke);
+			$poke = $this->Pokemon->Get($data['pokemon']);
+			$str[] = $this->strings->parse('raid_pokemon', $this->Pokemon->ResolveName($poke));
 		}
 
 		if(!empty($data) and isset($data['hour'])){
@@ -228,7 +232,7 @@ class Raid extends TelegramApp\Module {
 				$status[$p['status']]
 				." " .$color[$p['team']]
 				." L" .$p['lvl']
-				.' <a href="tg://user?id=' .$p['telegramid'] .'">' .$p['username'] .'</a>';
+				.' ' .$this->telegram->userlink($p['telegramid'], $p['username']);
 
 			if($p['buddies'] > 0){
 				$str .= " <b>+" .$p['buddies'] ."</b>";
