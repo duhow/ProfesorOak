@@ -578,22 +578,25 @@ class Ticket extends TelegramApp\Module {
 			->where('value', FALSE, '!=')
 			->where('uid', $flags, 'IN')
 		->get('settings', NULL, 'uid');
-		$users = array_column($users, 'uid');
 
-		$str = ":exclamation: " .$this->strings->get('ticket_notify_new') ."\n"
-			.":id: <b>#" .$ticket->id ."</b>\n"
-			.":man_frowning: " .$this->telegram->userlink($ticket->uid, $ticket->uid);
+		$users = array_column($users, 'uid');
+		$langs = $this->Functions->user_languages($users, "en");
 
 		$r = array();
 
 		foreach($users as $user){
+			$lang = (isset($langs[$user]) ? $langs[$user] : "en");
+			$str = ":exclamation: " .$this->strings->get('ticket_notify_new', $lang) ."\n"
+				.":id: <b>#" .$ticket->id ."</b>\n"
+				.":man_frowning: " .$this->telegram->userlink($ticket->uid, $ticket->uid);
+
 			$r[] = $this->telegram->send
 				->notification(TRUE)
 				->chat($user)
 				->inline_keyboard()
 					->row()
-						->button($this->telegram->emoji(":memo: ") .$this->strings->get('ticket_action_read'), "ticket show " .$ticket->id, "TEXT")
-						->button($this->telegram->emoji(":man_office_worker: ") .$this->strings->get('ticket_action_assign'), "ticket assign " .$ticket->id, "TEXT")
+						->button($this->telegram->emoji(":memo: ") .$this->strings->get('ticket_action_read', $lang), "ticket show " .$ticket->id, "TEXT")
+						->button($this->telegram->emoji(":man_office_worker: ") .$this->strings->get('ticket_action_assign', $lang), "ticket assign " .$ticket->id, "TEXT")
 					->end_row()
 				->show()
 				->text($str, 'HTML')
@@ -698,7 +701,7 @@ class Ticket extends TelegramApp\Module {
 		if($data === TRUE){ return $closed; }
 
 		if(is_object($data) and isset($data->status)){ $data = $data->status; }
-		if($data >= 8){ $data = $this->status($data); }
+		if($data >= 8){ $data = $this->status($data); } // Ticket -> status
 
 		return in_array($data, $closed);
 	}
@@ -946,14 +949,15 @@ class Ticket extends TelegramApp\Module {
 						$k++;
 					}
 					$new = array_reverse($new);
+					$lang = $this->Functions->user_languages($ticket->assigned);
 					if(count($new) > 0){
 						$this->telegram->send
 							->notification(TRUE)
 							->chat($ticket->assigned)
-							->text($this->strings->parse('ticket_notify_reply', $ticket->id), 'HTML')
+							->text($this->strings->parse('ticket_notify_reply', $ticket->id, $lang), 'HTML')
 						->send();
 
-						$msnd = $this->send_messages_advanced($new, $ticket->assigned);
+						$msnd = $this->send_messages_advanced($new, $ticket, $ticket->assigned);
 						// WIP Guardar los MID del bot por si hace reply a estos.
 						$msnd = array_column($msnd, 'message_id');
 						$utarget = new User($ticket->assigned);
@@ -992,11 +996,12 @@ class Ticket extends TelegramApp\Module {
 						$k++;
 					}
 					$new = array_reverse($new);
+					$lang = $this->Functions->user_languages($ticket->uid);
 					if(count($new) > 0){
 						$this->telegram->send
 							->notification(TRUE)
 							->chat($ticket->uid)
-							->text($this->strings->parse('ticket_notify_reply', $ticket->id), 'HTML')
+							->text($this->strings->parse('ticket_notify_reply', $ticket->id, $lang), 'HTML')
 						->send();
 
 						$msnd = $this->send_messages($new, $ticket->uid);
@@ -1048,8 +1053,15 @@ class Ticket extends TelegramApp\Module {
 		// Al pulsar sobre un boton, cambiar el estado.
 		// Cualquier otra respuesta sera ignorada y cancelara el STEP
 		$status_txt = $this->strings->get('ticket_status');
+		$selected = $this->telegram->text();
 		// Remove Emoji
-		$next_status = array_search(trim($this->telegram->text(TRUE)), $status_txt);
+		$next_status = NULL;
+		foreach($status_txt as $k => $status){
+			if(strlen($status) + 20 > strlen($selected) and stripos($selected, $status) !== FALSE){
+				$next_status = $k;
+				break;
+			}
+		}
 		if(!$next_status){
 			$this->ticket_status_keyboard(FALSE);
 			$this->telegram->send
@@ -1086,19 +1098,20 @@ class Ticket extends TelegramApp\Module {
 			->keyboard()->hide(TRUE)
 			->text($str, 'HTML')
 		->send();
+		$lang = $this->Functions->user_languages($ticket->uid);
 
 		// Avisar al usuario
 		if($this->is_closed($next_status)){
 			$this->user->settings('ticket_writing', 'DELETE');
-			$str .= "\n\n" .$this->strings->get('ticket_status_closed');
+			$str .= "\n\n" .$this->strings->get('ticket_status_closed', $lang);
 		}elseif($next_status == self::TICKET_WAITING){
 			$this->user->settings('ticket_writing', 'DELETE');
-			$str .= "\n\n" .$this->strings->get('ticket_status_waiting_user');
+			$str .= "\n\n" .$this->strings->get('ticket_status_waiting_user', $lang);
 			$this->telegram->send
 				->inline_keyboard()
 					->row()
-						->button($this->telegram->emoji(":speech_balloon: ") .$this->strings->get('ticket_action_reply'), "ticket reply " .$ticketId, "TEXT")
-						->button($this->telegram->emoji(":x: ") .$this->strings->get('ticket_action_close'), "ticket close " .$ticketId, "TEXT")
+						->button($this->telegram->emoji(":speech_balloon: ") .$this->strings->get('ticket_action_reply', $lang), "ticket reply " .$ticketId, "TEXT")
+						->button($this->telegram->emoji(":x: ") .$this->strings->get('ticket_action_close', $lang), "ticket close " .$ticketId, "TEXT")
 					->end_row()
 				->show();
 		}
@@ -1108,7 +1121,7 @@ class Ticket extends TelegramApp\Module {
 		->send();
 
 		// Avisar al chat de tickets
-		$str = $this->strings->parse('ticket_status_change', [$ticket->id, $status_txt[$next_status]]);
+		$str = $this->strings->parse('ticket_status_change', [$ticket->id, $status_txt[$next_status]], "es");
 		$this->telegram->send
 			->chat(self::CHAT_TICKETS)
 			->notification(FALSE)
