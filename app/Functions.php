@@ -54,6 +54,52 @@ class Functions extends TelegramApp\Module {
 		return $uid;
 	}
 
+	public function user_languages($users, $default = "en"){
+		$single = FALSE;
+		if(is_object($users)){ $users = [$users->id]; $single = TRUE; }
+		elseif(is_string($users) or is_numeric($users)){ $users = [$users]; $single = TRUE; }
+
+		$query = $this->db
+			->where('uid', $users, 'IN')
+			->where('type', 'language')
+		->get('settings', NULL, 'uid, value');
+		$final = array();
+		foreach($users as $user){ $final[$user] = $default; }
+		foreach($query as $user => $lang){ $final[$user] = $lang; }
+		return ($single ? current($final) : $final);
+	}
+
+	public function is_allowed_whois_hidden($user, $chat = NULL){
+		if($user instanceof User){ $user = $user->id; }
+		if($chat instanceof Chat){ $chat = $chat->id; }
+
+		// TODO Cache
+
+		$query = $this->db
+			->where('user', $user)
+			->where('active', TRUE)
+			->where('amount < limit')
+		->get('user_whois_allow');
+
+		if($this->db->count == 0){ return FALSE; }
+		$allowed = FALSE;
+		foreach($query as $row){
+			if($row['chat'] == NULL or $row['chat'] == $chat){
+				$allowed = TRUE;
+
+				$data = [
+					'amount' => $this->db->inc(1),
+					'last_query' => $this->db->now()
+				];
+
+				$this->db
+					->where('id', $row['id'])
+				->update('user_whois_allow', $data);
+			}
+		}
+		return $allowed;
+	}
+
 	// INFO:
 	// Hay dos funciones diferentes para calcular la distancia.
 	// Una es más precisa si la distancia es más pequeña de 500m aprox.
@@ -70,14 +116,14 @@ class Functions extends TelegramApp\Module {
 		$locA[1] = deg2rad($locA[1]);
 		$locB[0] = deg2rad($locB[0]);
 		$locB[1] = deg2rad($locB[1]);
-	
+
 		$latD = $locB[0] - $locA[0];
 		$lonD = $locB[1] - $locA[1];
-	
+
 		$angle = 2 * asin(sqrt(pow(sin($latD / 2), 2) + cos($locA[0]) * cos($locB[0]) * pow(sin($lonD / 2), 2)));
 		return ($angle * $earth);
 	}
-	
+
 	function location_add($locA, $locB, $amount = NULL, $direction = NULL){
 		// if(is_object($locA)){ $locA = [$locA->latitude, $locA->longitude]; }
 		if(!is_array($locA) && $direction === NULL){ return FALSE; }
@@ -101,14 +147,14 @@ class Functions extends TelegramApp\Module {
 		foreach($steps as $s => $k){ if(in_array($direction, $k)){ $direction = $s; break; } } // Buscar y asociar dirección
 		$earth = (40075 / 360 * 1000);
 		$cal = ($amount / $earth);
-	
+
 		foreach(str_split($direction) as $dir){
 			if($dir == 'N'){ $locA[0] = $locA[0] + $cal; }
 			elseif($dir == 'S'){ $locA[0] = $locA[0] - $cal; }
 			elseif($dir == 'W'){ $locA[1] = $locA[1] - $cal; }
 			elseif($dir == 'E'){ $locA[1] = $locA[1] + $cal; }
 		}
-	
+
 		return $locA;
 	}
 }
