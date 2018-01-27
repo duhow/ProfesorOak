@@ -242,6 +242,25 @@ if(
     return;
 }elseif($telegram->text_has("dame", ["un huevo", "pokeball", "pokeballs"]) && $telegram->words() <= 6){
 	$joke = "Nope.";
+}elseif($telegram->text_contains("viejopole") and $telegram->words() <= 3){
+	$stickers = [
+		'CAADBAADRgMAAnaZGAXv6s2EGjAlQQI',
+		'CAADBAADSgMAAnaZGAU3Kzu9_Pl4FwI',
+		'CAADBAADVgMAAnaZGAWtWyNydFORHAI',
+		'CAADBAADVAMAAnaZGAVirAi-iedwNQI',
+		'CAADBAADSgMAAnaZGAU3Kzu9_Pl4FwI',
+		'CAADBAADUAMAAnaZGAW6rOfF6V-AKgI',
+		'CAADBAADZAMAAnaZGAVfxjsvbS_U7wI',
+		'CAADBAADmQMAAnaZGAWzIykiyx4EDgI',
+		'CAADBAADdgMAAnaZGAXbk_ANdRMmNQI',
+		'CAADBAADggMAAnaZGAW6xeVnzyQjoQI',
+		'CAADBAADsAYAAnaZGAVRmvWv_JKeHwI',
+		'CAADBAADuAYAAnaZGAV_T-98ikW7mAI',
+		'CAADBAADLBIAAnaZGAUUKq-s7cMiMwI'
+	];
+	$n = mt_rand(0, count($stickers) - 1);
+	$this->telegram->send->file('sticker', $stickers[$n]);
+	return -1;
 }
 
 
