@@ -547,13 +547,13 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
     $this->analytics->event('Telegram', 'Egg Table');
     $telegram->send
         ->notification(FALSE)
-        ->file('photo', 'AgADBAADIKsxG21BwVKCn0ce6yHLHj7cJxoABF2r91SAGaditIQCAAEC');
+        ->file('photo', 'AgADBAADZKsxGySTsVPR2x8cM-wfhBtwjBoABOTIW4Q_Fl4msZ8BAAEC');
     return -1;
 }elseif($telegram->text_contains(["tabla", "lista"]) && $telegram->text_contains(["shiny", "shinies", "variocolor", "variocolores"]) && $telegram->words() < 10){
     $this->analytics->event('Telegram', 'Shiny Table');
     $telegram->send
         ->notification(FALSE)
-        ->file('photo', 'AgADBAADWKoxG-zhOFJNEo7b3fDsmbH-ihoABHQk6FdSV2MwJ1oAAgI');
+        ->file('photo', 'AgADBAADZasxGySTsVMkBTtDpyU7COp6jBoABNDlf5V5v8ZGsqEBAAEC');
     return -1;
 }elseif($this->telegram->text_has(["Alfabeto", "Abedeario"], ["Pokémon", "Unown", "Uknown"]) && $telegram->words() <= 8){
 	$this->analytics->event('Telegram', 'Unown Alphabet');
