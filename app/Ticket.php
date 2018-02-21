@@ -75,6 +75,9 @@ class Ticket extends TelegramApp\Module {
 					->text($this->strings->get('ticket_status_closed'), 'HTML')
 				->send();
 
+				// Unlock ticket
+				$this->lock($ticket->id, FALSE);
+
 				$str = $this->strings->parse('ticket_status_change', [
 					$ticket->id,
 					$this->strings->get_multi('ticket_status', self::TICKET_ARCHIVED)
@@ -1102,6 +1105,9 @@ class Ticket extends TelegramApp\Module {
 
 		// Avisar al usuario
 		if($this->is_closed($next_status)){
+			// Unlock ticket
+			$this->lock($ticket->id, FALSE);
+
 			$this->user->settings('ticket_writing', 'DELETE');
 			$str .= "\n\n" .$this->strings->get('ticket_status_closed', $lang);
 		}elseif($next_status == self::TICKET_WAITING){
