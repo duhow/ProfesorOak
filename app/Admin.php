@@ -123,7 +123,7 @@ class Admin extends TelegramApp\Module {
 				!$this->telegram->text_contains(["http", "www", ".com", ".es", ".net", "telegram.me", "t.me"])
 			) or (
 				$this->telegram->text_contains(["PokéTrack", "PokeTrack"]) or
-				$this->telegram->text_contains(["maps.google", "google.com/maps", "goo.gl/maps"]) or
+				$this->telegram->text_contains(["maps.google", "google.com/maps", "goo.gl/maps"]) 
 			)
 		){ return FALSE; } // HACK Falsos positivos.
 		if(stripos($this->telegram->text_url(), "pokemon") !== FALSE){ return FALSE; } // HACK cosas de Pokemon oficiales u otros.
