@@ -36,6 +36,7 @@ if($this->telegram->is_chat_group() or $this->telegram->key == "channel_post"){
 
 		if(!empty($poke) and isset($poke['pokemon'])){
 			$pokedex = $pokemon->pokedex($poke['pokemon']);
+			if(!$pokedex){ return -1; } // Pokémon tiene que existir.
 			$str .= " de " .$pokedex->name;
 		}
 

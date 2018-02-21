@@ -324,6 +324,8 @@ function pokemon_parse($string){
     if(text_find(["bajo", "muy bajo", "poco que desear", "bien"], $string)){ $data['ivcalc'] = [0,1,2,3,4,5,6,7]; }
     if(text_find(["fuerte", "fuertes", "excelente", "excelentes", "impresionante", "impresionantes", "alto", "alta"], $string)){ $data['ivcalc'] = [13,14]; }
 
+    if(isset($data['pokemon']) and $data['pokemon'] > 386){ unset($data['pokemon']); }
+
     return $data;
 }
 
