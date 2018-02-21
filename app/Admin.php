@@ -112,18 +112,23 @@ class Admin extends TelegramApp\Module {
 	}
 
 	public function antispam(){
-		if($this->user->messages > 5 or $this->chat->settings('antispam') === FALSE){ return FALSE; }
+		if(
+			$this->user->messages > 5 or
+			$this->chat->settings('antispam') === FALSE or
+			$this->chat->is_admin($this->user)
+		){ return FALSE; }
 
 		if(
-			!$this->telegram->text_contains(["http", "www", ".com", ".es", ".net"]) and
-			!$this->telegram->text_contains(["telegram.me", "t.me"]) or
-			$this->telegram->text_contains(["PokéTrack", "PokeTrack"]) or
-			$this->telegram->text_contains(["maps.google", "google.com/maps", "goo.gl/maps"])
+			(
+				!$this->telegram->text_contains(["http", "www", ".com", ".es", ".net", "telegram.me", "t.me"])
+			) or (
+				$this->telegram->text_contains(["PokéTrack", "PokeTrack"]) or
+				$this->telegram->text_contains(["maps.google", "google.com/maps", "goo.gl/maps"]) or
+			)
 		){ return FALSE; } // HACK Falsos positivos.
 		if(stripos($this->telegram->text_url(), "pokemon") !== FALSE){ return FALSE; } // HACK cosas de Pokemon oficiales u otros.
 
 		// TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
-		if($this->chat->is_admin($this->user)){ return FALSE; }
 
 		$this->telegram->send
 			->message(TRUE)
