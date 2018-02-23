@@ -313,12 +313,39 @@ class Main extends TelegramApp\Module {
 			}
 		}else{
 			$info = (object) $info; // HACK
+			$target = new User($info->telegramid);
+			$target->load();
+
+			$hide = FALSE;
+			$hidden = array();
+
+			if(!in_array($target->flags, ['fly', 'multiaccount', 'troll', 'ratkid'])){
+				foreach(['username', 'level', 'profile'] as $set){
+					$hidden[] = $target->settings('userinfo_hide_' .$set);
+				}
+
+				// TODO
+				if($hidden){
+					$hide = !( // IF NOT included in
+						$this->user->id == CREATOR or
+						$this->Functions->is_allowed_whois_hidden($this->user, $this->chat)
+					);
+				}
+			}
+
 			if(empty($info->username)){
 				$str = $this->strings->get('whois_user_noname');
 			}else{
 				$str = '$pokemon, ';
+				if($hide and $hidden[0]){
+					$str = "";
+				}
 			}
+
 			$str .= $this->strings->get('whois_user') .' <b>$team</b> $nivel. $valido' ."\n";
+			if($hide and $hidden[1]){
+				$str = str_replace(' $nivel', '', $str);
+			}
 
 			if(!empty($info->username)){
 				$reps = $this->Report->get($username, TRUE);
@@ -398,7 +425,7 @@ class Main extends TelegramApp\Module {
 
 			$str = str_replace(array_keys($repl), array_values($repl), $str);
 
-			if(!empty($info->username) && !$offline){
+			if(!empty($info->username) && !$offline and !($hide and $hidden[2]) ){
 				$this->telegram->send
 					->inline_keyboard()
 					->row_button($this->telegram->emoji(":memo: ") .$this->strings->get('view_profile'), "http://profoak.me/user/" .$info->username)
@@ -1008,6 +1035,7 @@ class Main extends TelegramApp\Module {
 			if($this->telegram->words() == 1){
 				$username = $this->telegram->last_word();
 			}
+			$username = preg_replace('/[\W_]/', '', $username);
 			$this->set_username($username);
 			$this->end();
 		}
@@ -1093,6 +1121,17 @@ class Main extends TelegramApp\Module {
 			$this->user->step === NULL
 		){
 			$this->user_mention();
+		}
+
+		if($this->user->step == "TIMEZONE"){
+			$set = NULL;
+			if($this->telegram->text()){
+				$set = $this->telegram->text();
+			}elseif($this->telegram->location() and !$this->telegram->has_forward){
+				$set = $this->telegram->location();
+			}
+			if(empty($set)){ $this->end(); }
+			return $this->timezone($set);
 		}
 
 		// LOAD
@@ -1272,12 +1311,16 @@ class Main extends TelegramApp\Module {
 			}
 
 			$change = FALSE;
+			// TODO Si ya está puesta la config de "location", usar para calcular TZ.
+			// Cron para elementos que hayan variado, y agregar en el propio set,
+			// o reconfigurar de otra forma.
 			if($this->chat->is_group() and $this->chat->is_admin($this->user)){
 				$this->chat->settings('tz', $set);
 				$change = TRUE;
 			}
 
-			elseif(!$this->chat->is_group()){
+			// Usuarios deben enviar location, para evitar pirulas.
+			elseif(!$this->chat->is_group() and $this->user->id == CREATOR){
 				$this->user->settings('tz', $set);
 				$change = TRUE;
 			}
@@ -1294,6 +1337,8 @@ class Main extends TelegramApp\Module {
 		}elseif(is_object($set) and $set instanceof Location){
 			// Extraer coordenadas y buscar aprox.
 			// GeoNames
+			// Google API Time Zone? -> JSON con offset y TZ.
+			// https://maps.googleapis.com/maps/api/timezone/json?location=444.44,-222.22&timestamp=123123&key
 			$this->telegram->send
 				->keyboard()->hide(TRUE)
 				->text("")

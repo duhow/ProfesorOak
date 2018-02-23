@@ -93,7 +93,7 @@ class Pokemon extends TelegramApp\Module {
 		foreach($misnames as $k => $v){
 			$misnames[$k] = str_replace(".", '\.', $v);
 		}
-		$pokemonList = $this->GetNames(TRUE);
+		$pokemonList = $this->GetNames(TRUE, "POKEMON");
 		$misnames = implode("|", $misnames) .'|' .implode("|", array_values($pokemonList));
 
 		$r = preg_match_all("/(#(?P<id>\d{1,3})\b|(?P<name>$misnames)\b)/i", $string, $matches);
@@ -280,27 +280,69 @@ class Pokemon extends TelegramApp\Module {
 	}
 
 	public function Get($search, $retkey = FALSE){
+		if(empty($search)){ return NULL; }
 		$key = NULL;
-		if(is_string($search) and strlen($search) <= 12){
-			$search = $this->misspell($search, TRUE);
+
+		// Search common name.
+		if(!is_numeric($search)){
+			$tmpsearch = array_search(strtoupper($search), $this->GetNames(TRUE, "POKEMON"));
+			if($tmpsearch){
+				$key = "V" .str_pad($tmpsearch, 4, "0", STR_PAD_LEFT) ."_POKEMON_" .strtoupper($search);
+				return ($retkey ? $key : $this->gamemaster($key)->pokemonSettings);
+			}
 		}
 
+		// ------------------
+		// Still not found? Misspells.
+		if(is_string($search) and strlen($search) <= 12){
+			$tmpsearch = $this->misspell($search, TRUE);
+			if($tmpsearch){ $search = $tmpsearch; }
+		}
+
+		// Generate Key
 		if(is_numeric($search)){
-			$name = $this->GetNames($search);
+			$name = $this->GetNames($search, "POKEMON");
 			if(!$name){ return NULL; }
 			$key = "V" .str_pad($search, 4, "0", STR_PAD_LEFT) ."_POKEMON_" .$name;
 			if($retkey){ return $key; }
 		}
 
+		if(empty($key)){ return FALSE; }
 		$data = $this->gamemaster($key);
-		if($data){ return $data->pokemonSettings; }
-		return NULL;
+		return ($data ? $data->pokemonSettings : NULL);
+	}
+
+	public function GetMovement($search, $retkey = FALSE){
+		if(empty($search)){ return NULL; }
+		$key = NULL;
+		// Id, CodeName, MT/MO, Type, Attack, Bars, TimeRun, TImeDelay
+		// energyDelta es positiva si es FAST (ataque normal)
+		// Es negativa -33, -50 o -100 | barras.
+
+		// Buscar por traduccion -> numero
+		if(is_string($search)){
+			$tmpsearch = array_search(strtoupper($search), $this->GetNames(TRUE, "MOVE"));
+			if($tmpsearch){
+				$key = "V" .str_pad($tmpsearch, 4, "0", STR_PAD_LEFT) ."_MOVE_" .strtoupper($search);
+				return ($retkey ? $key : $this->gamemaster($key)->moveSettings);
+			}
+		}
+
+		if(is_numeric($search)){
+			$name = $this->GetNames($search, "MOVE");
+			if(!$name){ return NULL; }
+			$key = "V" .str_pad($search, 4, "0", STR_PAD_LEFT) ."_MOVE_" .$name;
+			if($retkey){ return $key; }
+		}
+
+		$data = $this->gamemaster($key);
+		return ($data ? $data->moveSettings : NULL);
 	}
 
 	public function GetLegendaries($search = NULL){
 		$legendaries = array();
-		$names = $this->GetNames(TRUE);
-		if(is_string($search)){ $search = $this->GetNames($search); } // -> int
+		$names = $this->GetNames(TRUE, "POKEMON");
+		if(is_string($search)){ $search = $this->GetNames($search, "POKEMON"); } // -> int
 		foreach($names as $id => $name){
 			$key = "V" .str_pad($id, 4, "0", STR_PAD_LEFT) ."_POKEMON_" .$name;
 			$pokemon = $this->Get($key);
@@ -315,13 +357,14 @@ class Pokemon extends TelegramApp\Module {
 	}
 
 	public function ResolveName($pokemon, $lang = "en"){
-		if(is_numeric($pokemon)){
-			$pokemon = $this->Get($pokemon);
-		}
-		if(is_object($pokemon)){
-			$pokemon = $pokemon->pokemonId;
-		}
+		if(is_numeric($pokemon)){ $pokemon = $this->Get($pokemon); }
+		if(is_object($pokemon)){ $pokemon = $pokemon->pokemonId; }
 		if(!is_string($pokemon)){ return FALSE; }
+
+		// Si es idioma estándar y Pokémon general (no especial), transforma.
+		if($lang == "en" and strpos($pokemon, "_") === FALSE){
+			return ucwords(strtolower($pokemon));
+		}
 
 		// Si la entrada ya existe directamente...
 		$langs = array_unique([$lang, "en"]);
@@ -344,29 +387,34 @@ class Pokemon extends TelegramApp\Module {
 		return FALSE;
 	}
 
-	public function GetNames($id = TRUE){
-		if(!empty($this->loadedNames)){
-			if(is_numeric($id) and array_key_exists($id, $this->loadedNames)){
-				return $this->loadedNames[$id];
+	public function GetNames($id = TRUE, $search = "POKEMON"){
+		if(isset($this->loadedNames[$search])){
+			if(is_numeric($id) and array_key_exists($id, $this->loadedNames[$search])){
+				return $this->loadedNames[$search][$id];
 			}
-			return $this->loadedNames;
+			return $this->loadedNames[$search];
 		}
 		$info = array();
-		foreach($this->GAMEMASTER as $data){
+		$find = FALSE;
+		$this->gamemaster('PLAYER_LEVEL_SETTINGS'); // Force NULL load
+		foreach($this->GAMEMASTER->itemTemplates as $data){
 			$key = strval($data->templateId);
-			$r = preg_match_all('/^V(?P<ID>[\d]{4})_POKEMON_(?P<NAME>[^\s]+)$/i', $key, $matches);
+			$r = preg_match_all('/^V(?P<ID>[\d]{4})_'.$search.'_(?P<NAME>[^\s]+)$/i', $key, $matches);
 			if($r){
-				$idp = intval($matches["ID"]);
-				if($id === $idp){ return $matches["NAME"]; }
+				$idp = intval($matches["ID"][0]);
+				if($id === $idp){ $find = $matches["NAME"][0]; }
 
 				$info[] = [
 					'ID' => $idp,
-					'NAME' => $matches["NAME"]
+					'NAME' => $matches["NAME"][0]
 				];
 			}
 		}
-		$this->loadedNames = array_column($info, 'NAME', 'ID');
-		return $this->loadedNames;
+		$data = $this->loadedNames;
+		$data[$search] = array_column($info, 'NAME', 'ID');
+		$this->loadedNames = $data;
+		if($id !== TRUE){ return $find; }
+		return $data[$search];
 	}
 
 	public function GetType($search = TRUE){
@@ -385,6 +433,34 @@ class Pokemon extends TelegramApp\Module {
 			return $names;
 		}
 		return FALSE;
+	}
+
+	public function GetTypeIcon($type, $resolveUni = TRUE){
+		if(!is_numeric($type)){ $type = $this->GetType($type); }
+		$icons = [
+			'',
+			["\u{1F937}\u{200D}\u{2642}\u{FE0F}", ':man_shrugging:'], // NORMAL
+			["\u{1F44A}", ':punch:'], // FIGHTING
+			["\u{1F4A8}", ':dash:'], // FLYING
+			["\u{1F5A4}", ':black_heart:'], // POISON
+			["\u{1F463}", ':footprints:'], // GROUND
+			["\u{2604}\u{FE0F}", ':comet:'], // ROCK
+			["\u{1F41B}", ':bug:'], // BUG
+			["\u{1F47B}", ':ghost:'], // GHOST
+			["\u{1F918}", ':metal:'], // STEEL
+			["\u{1F525}", ':fire:'], // FIRE
+			["\u{1F4A7}", ':droplet:'], // WATER
+			["\u{1F343}", ':leaves:'], // GRASS
+			["\u{26A1}", ':zap:'], // ELECTRIC
+			["\u{1F300}", ':cyclone:'], // PSYCHIC
+			["\u{2744}\u{FE0F}", ':snowflake:'], // ICE
+			["\u{1F409}", ':dragon:'], // DRAGON
+			["\u{1F31A}", ':new_moon_with_face:'], // DARK (:new_moon:)
+			["\u{1F9DA}\u{200D}\u{2640}\u{FE0F}", ':woman_fairy:'], // FAIRY, NEW (does not exist on all platform),
+		];
+		$resolveUni = (int) !$resolveUni;
+		if(is_numeric($type) and isset($icons[$type])){ return $icons[$type][$resolveUni]; }
+		return NULL;
 	}
 
 	public function TypeScalar($type, $toTarget = NULL){
@@ -422,10 +498,6 @@ class Pokemon extends TelegramApp\Module {
 		return $affects;
 	}
 
-	public function MovementInfo($movement){
-		// Id, CodeName, MT/MO, Type, Attack, Bars, TimeRun, TImeDelay
-		// return $load;
-	}
 
 	public function MovementBest($pokemon, $str = FALSE){
 		// $pokemon = $this->load($pokemon);
@@ -538,6 +610,36 @@ class Pokemon extends TelegramApp\Module {
 		return $data;
 	}
 
+	public function pokedex_text($pokemon, $parseEmoji = TRUE){
+		$str = ":id: "  ." - "  .$this->ResolveName($pokemon) . " " .$this->GetTypeIcon($pokemon->type, $parseEmoji);
+		if(isset($pokemon->type2)){ $str .= " / " .$this->GetTypeIcon($pokemon->type2, $parseEmoji); }
+		$str .= "\n";
+
+		$str .= ":crossed_swords: " .$pokemon->stats->baseAttack
+				." :shield: " .$pokemon->stats->baseDefense
+				." :heartbeat: " .$pokemon->stats->baseStamina
+				."\n";
+
+		$str .= "\n";
+
+		foreach(["quickMoves", "cinematicMoves"] as $selector){
+			foreach($pokemon->{$selector} as $movename){
+				$move = $this->GetMovement($movename);
+				$bars = 0;
+				if($move->energyDelta < 0){
+					$bars = (4 - round(abs($move->energyDelta) / 33));
+				}
+				$str .= $this->GetTypeIcon($move->pokemonType, $parseEmoji) ." "
+						.(int) $move->power .($bars > 0 ? "/".$bars : "")  ." - "
+						.$this->strings->get_multi('GAME_MASTER_MOVES', $movename)
+						."\n";
+			}
+			$str .= "\n";
+		}
+
+		return ($parseEmoji ? $this->telegram->emoji($str) : $str);
+	}
+
 	protected function hooks(){
 		if(
 			$this->telegram->text_command("iv") or
@@ -580,6 +682,26 @@ class Pokemon extends TelegramApp\Module {
 			if($trustlvl and $this->user->trust($this->chat) < $trustlvl){
 				$this->end();
 			}
+		}
+
+		elseif(
+			$this->telegram->text_regex(["^pokedex #?{N:pokemon}$", "^pokedex {S:pokemon}"]) and
+			$this->telegram->words() <= 5 and
+			!$this->telegram->has_forward
+		){
+			if(stripos($this->telegram->input->pokemon, "Mr") === 0){
+				$this->telegram->input->pokemon = "MR_MIME";
+			}
+
+			$pokemon = $this->Get($this->telegram->input->pokemon);
+			if(!$pokemon){ $this->end(); }
+
+			$str = $this->pokedex_text($pokemon);
+
+			$this->telegram->send
+				->text($str)
+			->send();
+			$this->end();
 		}
 	}
 }

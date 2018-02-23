@@ -243,6 +243,39 @@ class Raid extends TelegramApp\Module {
 		return $this->telegram->emoji($str);
 	}
 
+	private function user_distance($raidId, $user = NULL){
+		if($user instanceof User){ $user = $user->id; }
+		if($user){ $this->db->where('uid', $user); }
+
+		$users = $this->db
+			->where('id', $raidId)
+		->get('raid_users', NULL, 'uid');
+		$users = array_column($users, 'uid');
+		if(empty($users)){ return FALSE; }
+
+		$raid = $raidId;
+		if(is_numeric($raidId)){
+			$raid = $this->db
+				->where('id', $raidId)
+			->getOne('raid');
+			if(!$raid){ return FALSE; }
+			$raid = (object) $raid;
+		}
+
+		$select = "uid, " .$this->Functions->location_search_sql('SUBSTRING_INDEX(value, ",", 1)', 'SUBSTRING_INDEX(value, ",", -1)', $raid->latitude, $raid->longitude) ." AS distance";
+
+		$location = $this->db
+			->where('type', 'location')
+			->where('uid', $users, 'IN')
+			->where('value > 0')
+			->orderBy('2')
+		->get('settings', NULL, $select);
+		if(!$location){ return NULL; }
+		$location = array_column($location, 'distance', 'uid');
+		if($user > 0){ return array_key_exists($user, $location) ? $location[$user] : NULL; }
+		return $location;
+	}
+
 	private function generate_text($id){
 		// Cargar Raid y gente
 		// $raid =
