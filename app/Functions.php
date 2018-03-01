@@ -78,7 +78,7 @@ class Functions extends TelegramApp\Module {
 		$query = $this->db
 			->where('user', $user)
 			->where('active', TRUE)
-			->where('amount < limit')
+			->where('amount < `limit`')
 		->get('user_whois_allow');
 
 		if($this->db->count == 0){ return FALSE; }
