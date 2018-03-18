@@ -56,11 +56,13 @@ return [
 	'admin_kicked_reason_flood' => 'Expulsió per flood.',
 	'admin_spam_detected' => '¡<b>SPAM</b> detectat!',
 	'admin_kicked_unverified' => 'Usuari expulsat per no estar verificat.',
+	'admin_kicked_minlevel' => 'Usuari expulsat per no tenir el nivell requerit.',
 
 	'adminchat_newuser_limit_join' => '%s ha intentat entrar.',
 	'adminchat_newuser_team_exclusive_invalid' => 'Talp detectat!',
 	'adminchat_newuser_in_blacklist' => 'Usuari a la llista negra',
 	'adminchat_newuser_not_verified' => 'Usuari no validat.',
+	'adminchat_newuser_minlevel' => 'Usuari amb nivell baix.',
 	'adminchat_newuser_add_bot' => 'Afegir bot al grup',
 	'adminchat_newuser_enter' => 'Entra al grup',
 
@@ -225,7 +227,8 @@ return [
 	'welcome_group_creator' => 'Benvingut, cap! Un plaer tenir-te aquí! ^3^',
 	'welcome_group_team_exclusive' => '<b>ES COLA UN TALP!</b> @%s',
 	'welcome_group_unverified' => 'Usuari no està verificat.',
-	'welcome_group_register' => "Escolta, em podries dir el color del teu equip?\n<b>Di: </b><i>Soy ...</i>",
+	'welcome_group_minlevel' => 'Usuari no té el nivell mínim requerit.',
+	'welcome_group_register' => "Escolta, em podries dir el color del teu equip?\n<b>Digues: </b><i>Soc ...</i>",
 	'welcome_invite_user' => 'He convidat a @%s a aquest grup.',
 	'welcome_group_require_start' => 'Per ser en aquest grup has',
 	'welcome_group_require_verified' => 'd\'estar validat',
@@ -306,7 +309,7 @@ return [
 	'pokemongo_update_new_yesterday' => '<b>NOVA d\'ahir!</b>',
 	'pokemongo_update_ago' => 'fa %s dies',
 
-	'register_hello_start' => "Hola %s! Em pots dir de quin color ets?\n<b>Di:</b> Sóc...",
+	'register_hello_start' => "Hola %s! Em pots dir de quin color ets?\n<b>Digues:</b> Sóc...",
 	'register_hello_private' => "Hola %s! Parla\'m per privat per a enregistrar-te! :)",
 	'register_hello_name' => 'Escolta, com et dius <b>dins del joc</b>? <b>Digues:</b> Em dic ...',
 	'register_hello_verify' => 'Entenc que et vols <b>validar</b>?',

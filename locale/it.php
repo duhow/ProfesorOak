@@ -56,11 +56,13 @@ return [
 	'admin_kicked_reason_flood' => 'Espulsione per flood.',
 	'admin_spam_detected' => '<b>SPAM</b> rilevato!',
 	'admin_kicked_unverified' => 'Utente kickato per non essere verificato.',
+	'admin_kicked_minlevel' => 'Utente kickato per non avere il livello richiesto.',
 
 	'adminchat_newuser_limit_join' => '%s ha richiesto di entrare.',
 	'adminchat_newuser_team_exclusive_invalid' => 'Topo rilevato!',
 	'adminchat_newuser_in_blacklist' => 'Utente inserito nella blacklist',
 	'adminchat_newuser_not_verified' => 'Utente non verificato.',
+	'adminchat_newuser_minlevel' => 'Utente con basso livello.',
 	'adminchat_newuser_add_bot' => 'Metti il bot nel gruppo',
 	'adminchat_newuser_enter' => 'Entra nel gruppo',
 
@@ -225,6 +227,7 @@ return [
 	'welcome_group_creator' => 'Benvenuto capo! E\' un piacere averti qui ^3^',
 	'welcome_group_team_exclusive' => '<b>¡SE CUELA UN TOPO!</b> @%s',
 	'welcome_group_unverified' => 'L\'utente non è verificato.',
+	'welcome_group_minlevel' => 'L\'utente non ha il livello minimo richiesto.',
 	'welcome_group_register' => "Ehi, potresti dirmi il colore della tua squadra?\n<b>Scrivi semplicemente: </b><i>Sono ...</i>",
 	'welcome_invite_user' => 'Ho invitato a @%s a questo gruppo.',
 	'welcome_group_require_start' => 'Per rimanere in questo gruppo devi',
