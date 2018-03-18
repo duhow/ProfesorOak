@@ -58,7 +58,7 @@ class GameGeneral extends TelegramApp\Module {
 		if($this->telegram->text_contains(["lagarto", "/rpsls"]) or $ls === TRUE){ $rps[] = "Lagarto"; }
 		if($this->telegram->text_contains(["spock", "/rpsls"]) or $ls === TRUE){ $rps[] = "Spock"; }
 		$this->telegram->send
-			->text("*" .$rps[mt_rand(0, count($rps) - 1)] ."!*")
+			->text("<b>" .$rps[mt_rand(0, count($rps) - 1)] ."!</b>", 'HTML')
 		->send();
 		// return choice?
 	}

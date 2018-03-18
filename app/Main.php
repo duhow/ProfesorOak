@@ -1000,6 +1000,18 @@ class Main extends TelegramApp\Module {
 		$this->end();
 	}
 
+	public function start($callback = NULL){
+		if(empty($callback)){
+			// Maybe is first time startup?
+			// Check if user exists...
+			if(!$this->chat->is_group()){
+				$this->telegram->send
+					->text($this->strings->parse('register_hello_start', $this->telegram->user->first_name))
+				->send();
+			}
+		}
+	}
+
 	protected function hooks(){
 		// iniciar variables
 		// $pokemon = $this->pokemon;
@@ -1024,6 +1036,7 @@ class Main extends TelegramApp\Module {
 		// Registro nombre
 		if(
 			!$this->telegram->text_command() and
+			!$this->telegram->text_url() and
 			(
 				$this->user->step == "SETNAME" and $this->telegram->words() == 1
 			) or (
@@ -1357,8 +1370,12 @@ class Main extends TelegramApp\Module {
 	}
 
 	private function hooks_newuser(){
-		// TODO HACK WIP Get all translations
-		$langs = ['es', 'en', 'ca', 'it'];
+		$langs = array();
+		foreach(scandir("locale") as $file){
+			if(is_readable("locale/$file") and substr($file, -4) == ".php"){
+				$langs[] = pathinfo("locale/$file", PATHINFO_FILENAME);
+			}
+		}
 		$langsel = NULL;
 		$teams = ['B' => 'mystic', 'R' => 'valor', 'Y' => 'instinct'];
 		$color = NULL;
@@ -1380,6 +1397,9 @@ class Main extends TelegramApp\Module {
 			if(!$reg){ continue; } // or !$this->telegram->input->color
 
 			$color = strtolower($this->telegram->input->color);
+			// Remove symbols, numbers, ending dots...
+			// WARNING This can also affect other languages. TODO fix.
+			$color = preg_replace('/[^a-zA-Z]+/', '', $color);
 			$langsel = $lang;
 			foreach($teams as $code => $team){
 				if(
@@ -1400,12 +1420,14 @@ class Main extends TelegramApp\Module {
 		}
 
 		// Registrar con frase
-		if(!empty($color)){
+		if(
+			!empty($color) and
+			!$this->telegram->text_url() and
+			!$this->telegram->text_command()
+		){
 			$this->register($color);
 		}elseif(
-			$this->telegram->text_command("register") or
-			($this->telegram->text_command("start") and
-			!$this->telegram->is_chat_group())
+			$this->telegram->text_command("register")
 		){
 			$this->register(NULL);
 		}elseif(
@@ -1414,17 +1436,13 @@ class Main extends TelegramApp\Module {
 		){
 			$this->help();
 		}elseif(
-			$this->telegram->text_command("start") and
-			!$this->chat->is_group()
+			$this->telegram->text_command("start")
 		){
-			$this->telegram->send
-				->text($this->strings->parse('register_hello_start', $this->telegram->user->first_name))
-			->send();
-		}elseif(
-			$this->telegram->text_command("start") and
-			$this->chat->is_group()
-		){
-			// TODO FUTURE: Start group command for join groups w/ user not registered.
+			$callback = NULL;
+			if($this->telegram->words() == 2){
+				$callback = $this->telegram->last_word();
+			}
+			$this->start($callback);
 		}
 		$this->end();
 	}

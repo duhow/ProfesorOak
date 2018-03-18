@@ -63,6 +63,7 @@ class Functions extends TelegramApp\Module {
 			->where('uid', $users, 'IN')
 			->where('type', 'language')
 		->get('settings', NULL, 'uid, value');
+		if($query){ $query = array_column($query, 'value', 'uid'); }
 		$final = array();
 		foreach($users as $user){ $final[$user] = $default; }
 		foreach($query as $user => $lang){ $final[$user] = $lang; }
@@ -177,7 +178,7 @@ class Functions extends TelegramApp\Module {
 	public function location_search_sql($fieldLat, $fieldLng, $locLat, $locLng){
 		$earth = 6371000;
 		return "ASIN(SQRT(POW(SIN((RADIANS($locLat) - RADIANS($fieldLat)) / 2), 2) + COS(RADIANS($fieldLat)) * COS(RADIANS($locLat)) * "
-			."POW(SIN((RADIANS($locLng) - RADIANS($fieldLng)) / 2), 2) )) * 2 $earth";
+			."POW(SIN((RADIANS($locLng) - RADIANS($fieldLng)) / 2), 2) )) * 2 * $earth";
 	}
 
 	public function location_timezone($location){
