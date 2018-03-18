@@ -10,7 +10,7 @@ return [
 	'team_valor_leader' => 'Candela',
 
 	'team_instinct' => 'Instinto',
-	'team_instinct_color' => ['giallo', 'gialli'],
+	'team_instinct_color' => ['giallo', 'gialli', 'gialla'],
 	'team_instinct_leader' => 'Sparky',
 
 	'team_colors' => ['R' => 'Rosso', 'B' => 'Blu', 'Y' => 'Giallo'],
@@ -699,7 +699,7 @@ return [
 		'PAID_RAID_TICKET' => 'Biglietto raid premium',
 		'LEGENDARY_RAID_TICKET' => 'Biglietto raid EX'
 	],
-	
+
 ];
 
 ?>

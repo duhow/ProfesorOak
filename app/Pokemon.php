@@ -14,9 +14,6 @@ class Pokemon extends TelegramApp\Module {
 		foreach(scandir($folder) as $file){
 			if(substr($file, -4) == ".php"){ require_once $folder .$file; }
 		}
-		/* if($name !== NULL){
-			$this->load($name);
-		} */
 	}
 
 	public function gamemaster($key){
@@ -48,16 +45,6 @@ class Pokemon extends TelegramApp\Module {
 	}
 
 	private function load_misspells(){
-		$load = array();
-		/* $file = dirname(__FILE__) ."/Pokemon/misspells.csv";
-		if(file_exists($file) and is_readable($file)){
-			$fp = fopen($file, "r");
-			while(!feof($fp)){
-				$row = fgetcsv($fp, 24);
-				$load[trim($row[0])] = intval($row[1]);
-			}
-			fclose($fp);
-		} */
 		$load = $this->db->get('pokemon_misspell', NULL, 'word, pokemon');
 		$load = array_column($load, 'pokemon', 'word');
 
@@ -124,6 +111,34 @@ class Pokemon extends TelegramApp\Module {
 		}
 
 		return $findings;
+	}
+
+	public function GymID($id){
+		return $this->db
+			->where('uuid', $id)
+			->where('gym', TRUE)
+			->where('disabled', FALSE)
+		->getOne('pokestops');
+	}
+
+	public function GymSearchNear($search, $location, $radius = 160, $limit = 1){
+		$locsql = $this->Functions->location_search_sql('lat', 'lng', $location->latitude, $location->longitude);
+		$gyms = $this->db
+			->where('gym', TRUE)
+			->where('title', $search, 'LIKE')
+			->where("($locsql) <= $radius")
+		->get('pokestops', $limit, "uuid, title, lat, lng, ($locsql) AS distance");
+		if(count($gyms) == 1){ return current($gyms); }
+		return $gyms;
+	}
+
+	public function GymNear($location, $radius = 160, $limit = 10){
+		$locsql = $this->Functions->location_search_sql('lat', 'lng', $location->latitude, $location->longitude);
+		$gyms = $this->db
+			->where('gym', TRUE)
+			->where("($locsql) <= $radius")
+		->get('pokestops', $limit, "uuid, title, lat, lng, ($locsql) AS distance");
+		return $gyms;
 	}
 
 	// -----------------------------------

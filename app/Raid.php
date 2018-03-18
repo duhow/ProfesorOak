@@ -110,6 +110,14 @@ class Raid extends TelegramApp\Module {
 		*/
 
 		// TODO Generar raid en DB y devolver ID.
+		$raid = [
+			'owner' => $this->user->id
+		];
+
+		if(isset($data['time'])){
+			$raid['date_start'] = date("Y-m-d H:i:s", strtotime($data['time']));
+			$raid['date_end'] = date("Y-m-d H:i:s", strtotime("+45 minutes", strtotime($raid['date_start'])) );
+		}
 
 		// Borrar el mensaje original si es posible.
 		$this->telegram->send->delete(TRUE);
@@ -194,16 +202,18 @@ class Raid extends TelegramApp\Module {
 		$str = array();
 		$str[] = $this->strings->get('raid_new_raid');
 
-		if(!empty($data) and isset($data['pokemon'])){
+		if(empty($data)){ return implode(" ", $str) . "!\n"; }
+
+		if(isset($data['pokemon'])){
 			$poke = $this->Pokemon->Get($data['pokemon']);
 			$str[] = $this->strings->parse('raid_pokemon', $this->Pokemon->ResolveName($poke));
 		}
 
-		if(!empty($data) and isset($data['hour'])){
-			$str[] = $this->strings->parse('raid_time', $data['hour']);
+		if(isset($data['time'])){
+			$str[] = $this->strings->parse('raid_time', $data['time']);
 		}
 
-		if(!empty($data) and isset($data['place'])){
+		if(isset($data['place'])){
 			$str[] = $this->strings->parse('raid_place', $data['place']);
 		}
 
@@ -336,10 +346,20 @@ class Raid extends TelegramApp\Module {
 	// Genera un array con las opciones de la raid.
 	public function parse_text($string){
 		$data = array();
-		// TODO Parse Pokémon
-		// TODO Parse time
+
+		$pokemon = $this->Pokemon->parse_text($string, TRUE, FALSE);
+		if($pokemon){
+			$data['pokemon'] = $pokemon;
+		}
+
+		$time = Tools::Time($this->telegram->text());
+		if($time and isset($time['time'])){
+			$data['time'] = $time['time'];
+		}
+
 		// TODO Search gym or place
-		$pokemon = $this->Pokemon->parse_text($string, TRUE, TRUE);
+		$place = NULL;
+
 		// 1 or 2 stars (pink egg) - Exeggutor, Magikarp, Bayleef, Croconaw, Muk, Weezing, Magmar, Electabuzz, Quilava
 		// 3 or 4 stars (yellow egg) - Venusaur, Charizard, Blastoise, Alakazam, Rhydon, Jolteon, Lapras, Snorlax, Tyranitar, Arcanine, Machamp, Gengar, Vaporeon, Flareon
 
