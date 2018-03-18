@@ -55,11 +55,13 @@ return [
 	'admin_kicked_flood' => 'User kicked for doing flood.',
 	'admin_spam_detected' => '¡<b>SPAM</b> detected!',
 	'admin_kicked_unverified' => 'User was kicked because was not verified.',
+	'admin_kicked_minlevel' => 'User was kicked for not having required level.',
 
 	'adminchat_newuser_limit_join' => '%s has tried to join.',
 	'adminchat_newuser_team_exclusive_invalid' => '¡Topo detectado!',
 	'adminchat_newuser_in_blacklist' => 'User in blacklist',
 	'adminchat_newuser_not_verified' => 'User not verified.',
+	'adminchat_newuser_minlevel' => 'User with low level.',
 	'adminchat_newuser_add_bot' => 'Add bot in group',
 	'adminchat_newuser_enter' => 'Enter group',
 
@@ -170,6 +172,7 @@ return [
 	'welcome_group_creator' => 'Welcome, boss! It\'s a pleasure to see you here! ^3^',
 	'welcome_group_team_exclusive' => '<b>¡SE CUELA UN TOPO!</b> @%s',
 	'welcome_group_unverified' => 'User not verified.',
+	'welcome_group_minlevel' => 'User does not have the minimum level required.',
 	'welcome_group_register' => "Hey, can you tell me your team color?\n<b>Say: </b><i>I'm ...</i>",
 	'welcome_invite_user' => 'I\'ve invited @%s here.',
 	'welcome_group_require_start' => 'In order to be in this group, you must',

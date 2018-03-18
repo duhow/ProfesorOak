@@ -769,7 +769,7 @@ class Main extends TelegramApp\Module {
 		// Bot agregado al grupo. Vamos a ver si se puede quedar.
 		if($new->id != $this->telegram->bot->id && $this->telegram->is_bot($new->username)){
 			if(
-				in_array($this->telegram->user->id, telegram_admins(TRUE)) or // Lo agrega un admin, no pasa na.
+				$this->chat->is_admin($this->telegram->user->id) or // Lo agrega un admin, no pasa na.
 				!$this->chat->settings('mute_content') // No hay límites.
 			){ $this->end(); }
 
@@ -890,6 +890,39 @@ class Main extends TelegramApp\Module {
 				->text($str)
 			->send();
 			$this->end();
+		}
+
+		if(
+			$this->chat->settings('require_level')
+		){
+			$minlvl = $this->chat->settings('require_level');
+			if(
+				is_numeric($minlvl) and
+				$minlvl >= 5 and $minlvl <= 40 and
+				$new->lvl < $minlvl
+			){
+				if(!$this->chat->is_admin($this->user)){
+					$q = $this->Admin->kick($new->id);
+					if($q !== FALSE){
+						// $pokemon->user_delgroup($new->id, $this->telegram->chat->id);
+						$str = $this->strings->get('admin_kicked_minlevel');
+
+						$str2 = ":warning: " .$this->strings->get('adminchat_newuser_minlevel') ."\n"
+								.":id: " .$new->id ."\n"
+								.":abc: " .$this->telegram->new_user->first_name ." - @" .$new->username;
+						$str2 = $this->telegram->emoji($str2);
+						$r = $this->Admin->admin_chat_message($str2);
+						$this->Functions->message_assign_set($r, $new->id);
+					}
+				}else{
+					$str = $this->strings->get('welcome_group_minlevel');
+				}
+
+				$this->telegram->send
+					->text($str)
+				->send();
+				$this->end();
+			}
 		}
 
 		// Si un usuario generico se une al grupo
