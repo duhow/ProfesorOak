@@ -692,7 +692,7 @@ class Main extends TelegramApp\Module {
 				}
 
 				if(
-					!$this->chat->is_admin($this->user) or
+					!$this->chat->is_admin($this->user) and
 					!in_array('helper', $this->user->flags)
 				){
 					$this->telegram->send
