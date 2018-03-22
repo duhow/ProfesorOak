@@ -327,8 +327,13 @@ return [
 	'raid_time' => 'at %s',
 	'raid_time_end' => 'ends at %s',
 	'raid_place' => 'in %s',
-	'raid_button_join' => 'Going!',
+	'raid_button_join' => 'Join',
 	'raid_button_here' => 'I\'m there!',
+	'raid_button_late' => 'Late',
+	'raid_button_setup' => 'Setup',
+	'raid_button_update' => 'Update',
+	'raid_error_join_userdata_empty' => 'Please register your username and level before joining the raid.',
+	'raid_error_create_time_expired' => 'You can\'t create a raid that has already expired.',
 
 	'donate_text' => [
 		"\ud83d\udcc6 He dedicado <b>más de %s dias</b> en ayudar a todos los entrenadores.",

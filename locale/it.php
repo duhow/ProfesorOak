@@ -411,8 +411,13 @@ return [
 	'raid_time' => 'schiude alle %s',
 	'raid_time_end' => 'termina alle %s',
 	'raid_place' => 'alla palestra %s',
-	'raid_button_join' => 'Mi prenoto!',
+	'raid_button_join' => 'Unisciti',
 	'raid_button_here' => 'Ci sono!',
+	'raid_button_late' => 'Ritardo',
+	'raid_button_setup' => 'Set',
+	'raid_button_update' => 'Aggiornare',
+	'raid_error_join_userdata_empty' => 'Registra il tuo nome allenatore e livello prima di partecipare al raid.',
+	'raid_error_create_time_expired' => 'Non puoi creare un raid che è già scomparso.',
 
 	'donate_text' => [
 		"\ud83d\udcc6 Ho dedicato <b>più di %s giorni</b> ad aiutare tutti gli allenatori.",

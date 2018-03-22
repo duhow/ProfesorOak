@@ -426,8 +426,13 @@ return [
 	'raid_time' => 'a las %s',
 	'raid_time_end' => 'termina a las %s',
 	'raid_place' => 'en %s',
-	'raid_button_join' => '¡Me apunto!',
+	'raid_button_join' => 'Unirse',
 	'raid_button_here' => '¡Ya estoy!',
+	'raid_button_late' => 'Tardo',
+	'raid_button_setup' => 'Configurar',
+	'raid_button_update' => 'Actualizar',
+	'raid_error_join_userdata_empty' => 'Registra tu nombre y nivel actual antes de unirte a la raid.',
+	'raid_error_create_time_expired' => 'No puedes crear la raid a una hora que ya ha pasado.',
 
 	'donate_text' => [
 		"\ud83d\udcc6 He dedicado <b>más de %s dias</b> en ayudar a todos los entrenadores.",

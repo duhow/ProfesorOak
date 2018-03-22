@@ -101,6 +101,16 @@ class Functions extends TelegramApp\Module {
 		return $allowed;
 	}
 
+	public function resolve_username($id, $retselfempty = FALSE){
+		$result = $this->db
+			->where('telegramid', $id)
+		->getValue('user', 'username');
+		if(!$result){
+			return ($retselfempty ? $id : FALSE);
+		}
+		return $result;
+	}
+
 	// INFO:
 	// Hay dos funciones diferentes para calcular la distancia.
 	// Una es más precisa si la distancia es más pequeña de 500m aprox.
