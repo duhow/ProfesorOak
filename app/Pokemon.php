@@ -113,12 +113,16 @@ class Pokemon extends TelegramApp\Module {
 		return $findings;
 	}
 
-	public function GymID($id){
-		return $this->db
+	public function GymID($id, $retobj = TRUE){
+		$gym = $this->db
 			->where('uuid', $id)
 			->where('gym', TRUE)
 			->where('disabled', FALSE)
 		->getOne('pokestops');
+		if($retobj){
+			return ($gym ? (object) $gym : FALSE);
+		}
+		return $gym;
 	}
 
 	public function GymSearchNear($search, $location, $radius = 160, $limit = 1){

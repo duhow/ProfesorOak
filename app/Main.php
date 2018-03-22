@@ -1070,6 +1070,7 @@ class Main extends TelegramApp\Module {
 		if(
 			!$this->telegram->text_command() and
 			!$this->telegram->text_url() and
+			!$this->telegram->callback and
 			(
 				$this->user->step == "SETNAME" and $this->telegram->words() == 1
 			) or (
