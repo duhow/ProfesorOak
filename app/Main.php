@@ -492,7 +492,7 @@ class Main extends TelegramApp\Module {
 		foreach($users as $k => $u){ if(in_array($u, $self)){ unset($users[$k]); } }
 
 		if(empty($users)){ return NULL; }
-		$users = array_unique($users);
+		$users = array_values(array_unique($users));
 
 		// ADMIN MENTION
 		$admins = FALSE;
