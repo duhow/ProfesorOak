@@ -428,33 +428,19 @@ class Tools extends TelegramApp\Functions {
 
 	function AppInfoGoogle($package){
 	    $web = file_get_contents("https://play.google.com/store/apps/details?id={$package}");
-	    $data['date'] = substr($web, strpos($web, "datePublished") - 32, 100);
-	    $data['version'] = substr($web, strpos($web, "softwareVersion") - 32, 100);
-	    foreach($data as $k => $v){
-	        $data[$k] = substr($data[$k], 0, strpos($data[$k], "</div>") + strlen("</div>"));
-	        $data[$k] = trim(strip_tags($data[$k]));
-	    }
 
-		 // FIXME Receiving months in French.
-		 // Translate to English for strtotime correct parsing.
-		$months = [
-			'janvier' => 'january',
-			'février' => 'february',
-			'mars' => 'march',
-			'avril' => 'april' ,
-			'mai' => 'may',
-			'juin' => 'june',
-			'juillet' => 'july',
-			'août' => 'august' ,
-			'septembre' => 'september',
-			'octobre' => 'october',
-			'novembre' => 'november',
-			'décembre' => 'december',
-		];
-
-		$data['date'] = strtolower($data['date']);
-	    $data['date'] = str_replace(array_keys($months), array_values($months), $data['date']);
+		$date = substr($web, strpos($web, "Additional Information"), 250);
+		$date = substr($date, strpos($date, 'Updated') + strlen('Updated</div>'));
+	    $data['date'] = trim(strip_tags($date));
 	    $data['date'] = date("Y-m-d", strtotime($data['date']));
+
+		$search = "AF_initDataCallback({key: 'ds:5'";
+		$version = substr($web, strpos($web, $search));
+		$version = substr($version, strpos($version, '['));
+		$version = substr($version, 0, strpos($version, ']') + 1);
+		$version = json_decode($version);
+		$data['version'] = $version[1];
+
 	    $data['days'] = floor((time() - strtotime($data['date'])) / 86400); // -> Days
 	    $data['new'] = ($data['days'] <= 1);
 	    $data['days'] = ($data['days'] > 365 ? "---" : $data['days']);
@@ -470,13 +456,15 @@ class Tools extends TelegramApp\Functions {
 		$url = "https://itunes.apple.com/es/app/{$package}/id{$id}";
 
 		$web = file_get_contents($url);
-		$data['date'] = substr($web, strpos($web, "datePublished") - 16, 100);
-		$data['version'] = substr($web, strpos($web, "softwareVersion") - 16, 100);
-		foreach($data as $k => $v){
-			$data[$k] = substr($data[$k], 0, strpos($data[$k], "</span>") + strlen("</span>"));
-			$data[$k] = trim(strip_tags($data[$k]));
-		}
-		$data['date'] = date_create_from_format('d/m/Y', $data['date'])->format('Y-m-d'); // HACK DMY -> YMD
+
+		$search = '<script type="fastboot/shoebox" id="shoebox-ember-data-store">';
+		$json = substr($web, strpos($web, $search) + strlen($search));
+		$json = substr($json, 0, strpos($json, '}</script>') + 1);
+		$json = json_decode($json);
+
+		$data['date'] = date("Y-m-d", strtotime($json->data->attributes->versionHistory[0]->releaseDate));
+		$data['version'] = $json->data->attributes->versionHistory[0]->versionString;
+
 		$data['days'] = floor((time() - strtotime($data['date'])) / 86400); // -> Days
 		$data['new'] = ($data['days'] <= 1);
 		$data['days'] = ($data['days'] > 365 ? "---" : $data['days']);
