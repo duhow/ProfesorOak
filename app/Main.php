@@ -774,6 +774,7 @@ class Main extends TelegramApp\Module {
 			){ $this->end(); }
 
 			$mute = explode(",", $this->chat->settings('mute_content'));
+			if(!is_array($mute)){ $mute = [$mute]; }
 			if(!in_array("bot", $mute)){ $this->end(); } // Se permite agregar bots
 
 			$this->telegram->send->ban($this->telegram->user->id);

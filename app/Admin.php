@@ -123,7 +123,7 @@ class Admin extends TelegramApp\Module {
 				!$this->telegram->text_contains(["http", "www", ".com", ".es", ".net", "telegram.me", "t.me"])
 			) or (
 				$this->telegram->text_contains(["PokéTrack", "PokeTrack"]) or
-				$this->telegram->text_contains(["maps.google", "google.com/maps", "goo.gl/maps"]) 
+				$this->telegram->text_contains(["maps.google", "google.com/maps", "goo.gl/maps"])
 			)
 		){ return FALSE; } // HACK Falsos positivos.
 		if(stripos($this->telegram->text_url(), "pokemon") !== FALSE){ return FALSE; } // HACK cosas de Pokemon oficiales u otros.
@@ -237,6 +237,7 @@ class Admin extends TelegramApp\Module {
 
 	public function mute_content(){
 		$mute = explode(",", $this->chat->settings('mute_content'));
+		if(!is_array($mute)){ $mute = [$mute]; }
 		if(
 			(in_array("url", $mute) and $this->telegram->text_url()) or
 			(in_array("command", $mute) and $this->telegram->text_command()) or
