@@ -122,10 +122,11 @@ return [
 	'roulette_lose' => 'Has perdido :(',
 
 	'command_custom_command_create' => ['Crear comando'],
-	'command_custom_command_delete' => ['(borrar|cancelar|eliminar) comando {S:command}'],
+	'command_custom_command_delete' => ['(borrar|cancelar|eliminar) comando {S:command}', '^(borrar|cancelar|eliminar) comando'],
 	'command_custom_command_list' => ['Lista (de )?comandos'],
 	'command_custom_command_create_limit' => 3,
-	'custom_command_create' => 'Dime el comando / frase a crear.',
+	'custom_command_create' => 'Dime el /comando o frase a crear.',
+	'custom_command_delete' => 'Dime el /comando o frase a borrar.',
 	'custom_command_answer' => '¡De acuerdo! Ahora envíame la respuesta que quieres enviar.',
 	'custom_command_unknown_content' => ['No lo entiendo.', 'Prueba con otra cosa.', '¿Que es eso?'],
 	'custom_command_created' => '¡Comando creado correctamente!',

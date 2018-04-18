@@ -42,6 +42,13 @@ class Group extends TelegramApp\Module {
 		$this->end();
 	}
 	private function step_custom_command(){ return $this->custom_command_create(); }
+	private function step_custom_command_del(){
+		if($this->telegram->text()){
+			$this->custom_command_delete($this->telegram->text());
+			$this->user->step = NULL;
+		}
+		$this->end();
+	}
 
 	protected function hooks(){
 		if(
@@ -150,6 +157,7 @@ class Group extends TelegramApp\Module {
 			!$this->user->step and $this->chat->is_admin($this->user)
 		){
 			$this->user->settings('command_name', "DELETE");
+			$this->user->settings('command_chat', "DELETE");
 			$this->custom_command_create();
 			$this->end();
 		}
@@ -158,7 +166,12 @@ class Group extends TelegramApp\Module {
 			$this->telegram->text_regex($this->strings->get('command_custom_command_delete')) and
 			!$this->user->step and $this->chat->is_admin($this->user)
 		){
-			$this->custom_command_delete($this->telegram->input->command);
+			if($this->telegram->input->command and strlen($this->telegram->input->command) > 0){
+				$this->custom_command_delete($this->telegram->input->command);
+				$this->end();
+			}
+
+			$this->custom_command_delete_ask();
 			$this->end();
 		}
 
@@ -663,6 +676,10 @@ class Group extends TelegramApp\Module {
 		$this->user->step = 'CUSTOM_COMMAND';
 		if($this->user->settings('command_name')){
 			// Ver el contenido que ha enviado, y guardarlo en DB.
+			if($this->user->settings('command_chat') != $this->chat->id){
+				$this->end();
+			}
+
 			$commands = $this->chat->settings('custom_commands');
 			$cname = $this->user->settings('command_name');
 
@@ -701,10 +718,7 @@ class Group extends TelegramApp\Module {
 			$this->end();
 		}else{
 			if($this->telegram->text_regex($this->strings->get('command_custom_command_create'))){
-				$this->telegram->send
-					->text($this->strings->get('custom_command_create'))
-				->send();
-				$this->end();
+				$str = ':question: ' .$this->strings->get('custom_command_create');
 			}elseif($this->telegram->text()){
 				$text = strtolower(trim($this->telegram->text()));
 				if(
@@ -714,16 +728,18 @@ class Group extends TelegramApp\Module {
 					$this->telegram->words() > 6
 				){
 					$str = "";
-					$this->end();
 				}else{
 					$this->user->settings('command_name', $text);
+					$this->user->settings('command_chat', $this->chat->id);
 					$str = $this->strings->get('custom_command_answer');
 				}
+			}
+			if($str){
 				$this->telegram->send
 					->text($str)
 				->send();
-				$this->end();
 			}
+			$this->end();
 		}
 	}
 
@@ -747,6 +763,13 @@ class Group extends TelegramApp\Module {
 		}
 
 		return TRUE;
+	}
+
+	public function custom_command_delete_ask(){
+		$this->user->step = "CUSTOM_COMMAND_DEL";
+		return $this->telegram->send
+			->text(':grey_question: ' .$this->strings->get('custom_command_delete'))
+		->send();
 	}
 
 	public function custom_command_list(){

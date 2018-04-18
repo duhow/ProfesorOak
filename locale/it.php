@@ -107,10 +107,11 @@ return [
 	'roulette_lose' => 'Hai perso :(',
 
 	'command_custom_command_create' => ['Crea(re)? comand[oi]'],
-	'command_custom_command_delete' => ['(elimina|cancella) comand[oi] {S:command}'],
+	'command_custom_command_delete' => ['(elimina|cancella) comand[oi] {S:command}', '^(elimina|cancella) comand[oi]'],
 	'command_custom_command_list' => ['(Lista|Elenco) (dei )?comand[oi]'],
 	'command_custom_command_create_limit' => 3,
-	'custom_command_create' => 'Dimmi il comando / frase da creare.',
+	'custom_command_create' => 'Dimmi il /comando o frase da creare.',
+	'custom_command_delete' => 'Dimmi il /comando o frase a eliminare.',
 	'custom_command_answer' => '¡D\'accordo! Ora inviami la risposta che devo inviare.',
 	'custom_command_unknown_content' => ['Non capisco.', 'Prova con un altra cosa.', 'Che cos\'è questo?'],
 	'custom_command_created' => 'Comando creato correttamente!',
