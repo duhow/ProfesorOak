@@ -874,7 +874,12 @@ class Ticket extends TelegramApp\Module {
 			$this->end();
 		}
 
-		if(!($this->telegram->text() and $this->telegram->words() <= 2) and !$this->telegram->callback){
+		if(
+			($this->telegram->text() and strlen(trim($this->telegram->text())) <= 1) or // Si no hay palabras
+			$this->telegram->callback
+		){
+			// No agregar mensaje.
+		}else{
 			$private = $this->user->settings('ticket_private');
 			$message = [$type => $data];
 			$users = [$user, $ref];
