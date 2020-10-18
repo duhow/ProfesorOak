@@ -246,7 +246,7 @@ return [
 	'command_levelup_limit' => 6,
 	'command_verify' => [
 		["oak", "profe", "vull", "com"],
-		["valida\'m", "valida", "validar-me", "validar-se", "vàlid", "verificar-me", "verifico"]
+		["valida\\'m", "valida", "validar-me", "validar-se", "vàlid", "verificar-me", "verifico"]
 	],
 	'command_whois' => ['qui es {username}', 'qui ets {username}', 'coneixes a {username}'],
 	'command_whoami' => ['qui soc'],
@@ -311,15 +311,15 @@ return [
 	'pokemongo_update_ago' => 'fa %s dies',
 
 	'register_hello_start' => "Hola %s! Em pots dir de quin color ets?\n<b>Digues:</b> Sóc...",
-	'register_hello_private' => "Hola %s! Parla\'m per privat per a enregistrar-te! :)",
+	'register_hello_private' => "Hola %s! Parla\\'m per privat per a enregistrar-te! :)",
 	'register_hello_name' => 'Escolta, com et dius <b>dins del joc</b>? <b>Digues:</b> Em dic ...',
 	'register_hello_verify' => 'Entenc que et vols <b>validar</b>?',
-	'register_error_color' => "No t\'he entès bé...\nEm pots dir senzillament <b>sóc vermell, sóc blau</b> o <b>sóc groc</b>?",
+	'register_error_color' => "No t\\'he entès bé...\nEm pots dir senzillament <b>sóc vermell, sóc blau</b> o <b>sóc groc</b>?",
 	'register_error_duplicated_name' => "No pot ser, ja hi ha algú que es diu <b>@%s</b> :(\nParla amb en @duhow per a arreglar-ho.",
 	'register_ok_name' => "Moltes gràcies %s! Per cert, com et dius <b>dins del joc</b>? \n<i> (Me llamo...) </i>",
 	'register_error_name_shln' => "No crec que et diguis així...Va, ara de veritat. Com et dius?",
 	'register_error_name_real' => "Em referia al teu <b>NOM DE JOC</b>, no el de veritat. Torna-ho a provar.",
-	'register_successful' => "D\'acord, <b>@%s</b>!\nRecorda <b>validar-te</b> per a poder entrar als grups de colors!",
+	'register_successful' => "D\\'acord, <b>@%s</b>!\nRecorda <b>validar-te</b> per a poder entrar als grups de colors!",
 
 	'verify_register' => 'Entenc que vols <b>validar-te</b>?',
 	'verify_register_touch' => 'Hola, %s!',
@@ -327,13 +327,13 @@ return [
 	'verify_register_button' => 'Validar perfil',
 
 	'verify_info' => [
-		"Per a validar-te, necessito que m\'enviïs <b>UNA captura del teu PERFIL de Pokémon GO.</b>",
+		"Per a validar-te, necessito que m\\'enviïs <b>UNA captura del teu PERFIL de Pokémon GO.</b>",
 		"La captura ha de complir les següents condicions:\n",
-		":clock2: S\'ha de veure l\'<b>HORA</b> del teu mòbil, i l\'has d\'enviar en un marge de <b>6 minuts</b>. No s\'hi valen captures antigues.",
-		":mens: Al teu <b>PERFIL</b> s\'hi ha de veure el nom d\'entrenador i el color.",
-		":arrow_forward: Al teu <b>PERFIL</b> s\'hi ha de veure que la <b>MASCOTA</b> es diu <b>Oak</b>. Després li pots tornar a canviar el nom.",
-		":arrow_up_small: Assegura\'t que el <b>NIVELL</b> és correcte. Es revisarà igualment, però la validació es fa més ràpid si el nivell està ben posat.",
-		"Quan hagi confirmat la validació, t\'avisaré per aquí.\n"
+		":clock2: S\\'ha de veure l\\'<b>HORA</b> del teu mòbil, i l\\'has d\\'enviar en un marge de <b>6 minuts</b>. No s\\'hi valen captures antigues.",
+		":mens: Al teu <b>PERFIL</b> s\\'hi ha de veure el nom d\\'entrenador i el color.",
+		":arrow_forward: Al teu <b>PERFIL</b> s\\'hi ha de veure que la <b>MASCOTA</b> es diu <b>Oak</b>. Després li pots tornar a canviar el nom.",
+		":arrow_up_small: Assegura\\'t que el <b>NIVELL</b> és correcte. Es revisarà igualment, però la validació es fa més ràpid si el nivell està ben posat.",
+		"Quan hagi confirmat la validació, t\\'avisaré per aquí.\n"
 	],
 
 	'verify_before_send' => 'Abans de validar-te, necessito saber',
@@ -342,8 +342,8 @@ return [
 	'verify_before_send_concat' => ' i ',
 	'verify_before_send_ready' => 'Quan ho hagis dit, llavors t\'explicaré els passos per a validar-te.',
 
-	'verify_disabled_newuser' => "M\'alegra que et vulguis validar! Molts grups tenen la norma d\'estar validar per a poder confiar en els usuaris, així tots es coneixen. El problema és que últimament hi ha molta gent nova que entra a Telegram i marxa (per raons que desconec, perquè és molt guai, però bé), llavors els valido en va, perquè després ni parlen ni res… així que  per a poder validar-te, t\'hauràs d\'esperar <b>%s dies</b>.\nTingues paciència. :)",
-	'verify_disabled_too_many' => "Ho sento, però ara mateix estic col·lapsat. Prova-ho d\'aquí a unes hores.\nI recorda enviar-me una nova captura del perfil en què es vegi l\'hora!",
+	'verify_disabled_newuser' => "M\\'alegra que et vulguis validar! Molts grups tenen la norma d\\'estar validar per a poder confiar en els usuaris, així tots es coneixen. El problema és que últimament hi ha molta gent nova que entra a Telegram i marxa (per raons que desconec, perquè és molt guai, però bé), llavors els valido en va, perquè després ni parlen ni res… així que  per a poder validar-te, t\\'hauràs d\\'esperar <b>%s dies</b>.\nTingues paciència. :)",
+	'verify_disabled_too_many' => "Ho sento, però ara mateix estic col·lapsat. Prova-ho d\\'aquí a unes hores.\nI recorda enviar-me una nova captura del perfil en què es vegi l\\'hora!",
 	'verify_disabled_cooldown' => 'Para el carro! Ja m\'has enviat una foto. Espera que la comprovi, no em donis més feina...',
 	'verify_disabled_repeat' => 'Ja m\'has enviat aquesta fotografia! Fes una altra foto nova, i assegura\'t que compleix els requisits.',
 	'verify_sent' => 'Enviat correctament! El procés de validar pot trigar un temps. Tingues paciència, que últimament s\'enregistra molta gent i no dono l\'abast!',
@@ -416,21 +416,21 @@ return [
 	'raid_button_here' => 'Ja hi sóc!',
 
 	'donate_text' => [
-		"\ud83d\udcc6 He dedicat <b>més de %s dies</b> a ajudar a tots els entrenadors.",
+		"\\ud83d\\udcc6 He dedicat <b>més de %s dies</b> a ajudar a tots els entrenadors.",
 		":male: Cada dia apareixen entre 100 i 200 entrenadors nous que exploren aquest món Pokémon.",
 		"I mentrestant, jo estic aquí estudiant al laboratori, noves eines per a afegir al PokéNav de Telegram.",
-		"Si fa temps que ets aquí, estic segur que les coneixeràs de sobra. Fins i tot n\'hi ha algunes que són secretes, i que són divertides.",
+		"Si fa temps que ets aquí, estic segur que les coneixeràs de sobra. Fins i tot n\\'hi ha algunes que són secretes, i que són divertides.",
 		"",
-		"Dedico temps a això perquè m\'agrada, perquè vull oferir una eina útil i de qualitat per a tots els entrenadors.",
-		"Però el cert és que no rebo res a canvi. És mes, visc alimentant-me de les baies Pokémon que cauen de l\'arbre, i de les restes de Carameloraros que em dóna el <b>Professor Willow</b>.",
-		"No sé d\'on els treu, però estàn dolentíssims. \ud83d\ude14",
+		"Dedico temps a això perquè m\\'agrada, perquè vull oferir una eina útil i de qualitat per a tots els entrenadors.",
+		"Però el cert és que no rebo res a canvi. És mes, visc alimentant-me de les baies Pokémon que cauen de l\\'arbre, i de les restes de Carameloraros que em dóna el <b>Professor Willow</b>.",
+		"No sé d\\'on els treu, però estàn dolentíssims. \\ud83d\\ude14",
 		"",
-		"Però tu tens l\'oportunitat d\'ajudarme, si ho vols, per suposat... \ud83d\ude33",
+		"Però tu tens l\\'oportunitat d\\'ajudarme, si ho vols, per suposat... \\ud83d\\ude33",
 		"Si no hi tens cap problema, em pots donar diners per a poder mantenir viu el projecte, ja que té un cost mensual per a mi i per als usuaris.",
-		"Encara que nomès sigui 1€, ja és una ajuda, creu-me. \ud83d\udcb6",
-		"A canvi i per agrair-t\'ho, rebràs una medalla i uns quants objectes. \ud83e\udd17",
+		"Encara que nomès sigui 1€, ja és una ajuda, creu-me. \\ud83d\\udcb6",
+		"A canvi i per agrair-t\\'ho, rebràs una medalla i uns quants objectes. \\ud83e\\udd17",
 		"",
-		"<i>Nota:</i> PayPal cobra tarifes per càrrecs amb targeta. Assegura\'t d\'enviar saldo des de PayPal o des del teu compte bancari, i <b>per a un amic</b>.",
+		"<i>Nota:</i> PayPal cobra tarifes per càrrecs amb targeta. Assegura\\'t d\\'enviar saldo des de PayPal o des del teu compte bancari, i <b>per a un amic</b>.",
 		"",
 		"Moltíssimes gràcies, de tot cor! <3"
 	],
@@ -440,8 +440,8 @@ return [
 	'levelup_ok_2' => 'Així que has pujat al nivell <b>%s</b>... Guai!',
 	'levelup_first_too_much' => 'Bé... No sé si creure-m\'ho, però...',
 	'levelup_too_much' => 'Si, ja. Clar.',
-	'levelup_verify' => "Genial! Ara envia\'m una captura de pantalla del teu <b>perfil Pokémon GO</b> com t\'he demanat per a validar-te.\n"
-						."Recorda que ha de ser <b>d\'ara<b>, no una antiga!",
+	'levelup_verify' => "Genial! Ara envia\\'m una captura de pantalla del teu <b>perfil Pokémon GO</b> com t\\'he demanat per a validar-te.\n"
+						."Recorda que ha de ser <b>d\\'ara<b>, no una antiga!",
 
 	'levelup_screenshot' => 'De debò? Doncs… envia\'m una captura per a demostrar-ho.',
 	'levelup_screenshot_ok' => 'Guai! La miro d\'aquí a una estona.',
