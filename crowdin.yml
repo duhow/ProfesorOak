@@ -1,0 +1,3 @@
+files:
+  - source: /locale/*.php
+    translation: /locale/%two_letters_code%.php
