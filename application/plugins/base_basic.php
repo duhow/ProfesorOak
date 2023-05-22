@@ -71,7 +71,7 @@ elseif($telegram->text_command(["donate", "donar"]) or
 			->inline_keyboard()
 			->row()
 				->button("Más info", "donate", "COMMAND")
-				->button("Donar", "http://donar.profoak.me/")
+				->button("Donar", "https://paypal.me/duhow")
 			->end_row()
 		->show();
 	}else{
@@ -98,7 +98,7 @@ elseif($telegram->text_command(["donate", "donar"]) or
 
 		$this->telegram->send
 			->inline_keyboard()
-			->row_button("Donar", "http://donar.profoak.me/")
+			->row_button("Donar", "https://paypal.me/duhow")
 		->show();
 	}
 
