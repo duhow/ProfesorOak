@@ -96,7 +96,7 @@ elseif($telegram->text_has("Éste", TRUE) && $telegram->has_reply){
 
     // guardar nivel del user
     elseif($telegram->text_has("es nivel")){
-        if(is_numeric($word) && $word >= 5 && $word <= 40){
+        if(is_numeric($word) && $word >= 5 && $word <= POKEMON_GO_LEVEL_MAX){
             $this->analytics->event('Telegram', 'Change level', $word);
             $pokemon->update_user_data($reply->id, 'lvl', $word);
         }
@@ -1014,8 +1014,8 @@ elseif($telegram->text_command(["register", "r"]) && $telegram->has_reply){
     foreach($telegram->words(TRUE) as $w){
         $w = trim($w);
         if($w[0] == "/"){ continue; }
-        if(is_numeric($w) && $w >= 5 && $w <= 40){ $data['lvl'] = $w; }
-		if(is_numeric($w) && $w > 40){ $data['exp'] = (int) $w; }
+        if(is_numeric($w) && $w >= 5 && $w <= POKEMON_GO_LEVEL_MAX){ $data['lvl'] = $w; }
+		if(is_numeric($w) && $w > POKEMON_GO_LEVEL_MAX){ $data['exp'] = (int) $w; }
         if(in_array(strtoupper($w), ['R','B','Y'])){ $data['team'] = strtoupper($w); }
         if($w[0] == "@" or strlen($w) >= 4 && !is_numeric($w)){ $data['username'] = $w; }
         if(strtoupper($w) == "V"){ $data['verified'] = TRUE; }

@@ -509,7 +509,7 @@ if(
 }elseif($telegram->text_contains(["recompensa", "recibe", "consigue", "obtiene"]) && $telegram->text_has(["llegar", "nivel", "lvl", "level"]) && $telegram->words() <= 10){
     $items = $pokemon->items();
     $num = filter_var($telegram->text(TRUE), FILTER_SANITIZE_NUMBER_INT);
-    if($num > 1 && $num <= 40){
+    if($num > 1 && $num <= POKEMON_GO_LEVEL_MAX){
         $this->analytics->event('Telegram', 'Trainer Rewards', $num);
         $rewards = $pokemon->trainer_rewards($num);
         if(!empty($rewards)){
@@ -941,7 +941,7 @@ elseif($telegram->text_command("pkseed")){
 
 	$error = NULL;
 
-	if($pk['lvl'] > 40 or $pk['lvl'] <= 0){
+	if($pk['lvl'] > POKEMON_GO_LEVEL_MAX or $pk['lvl'] <= 0){
 		$error = "Nivel incorrecto.";
 	}elseif($pk['atk'] > 15 or $pk['atk'] < 0){
 		$error = "IV de Ataque incorrecto.";

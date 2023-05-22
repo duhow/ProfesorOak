@@ -92,7 +92,7 @@ function user_parser($text){
 	foreach($text as $w){
 	    $w = trim($w);
 	    if($w[0] == "/"){ continue; }
-	    if(is_numeric($w) && $w >= 5 && $w <= 40){ $data['lvl'] = $w; }
+	    if(is_numeric($w) && $w >= 5 && $w <= POKEMON_GO_LEVEL_MAX){ $data['lvl'] = $w; }
 	    if(in_array(strtoupper($w), ['R','B','Y'])){ $data['team'] = strtoupper($w); }
 	    if($w[0] == "@" or strlen($w) >= 4){ $data['username'] = $w; }
 	    if(strtolower($w) == "loc"){ $data['location'] = TRUE; }
@@ -125,7 +125,7 @@ if($step == "SETNAME"){
 				$telegram->send
 					->text("Ah, ya veo, así que $level ... Guay!")
 				->send();
-			}elseif($level > 35 && $level <= 39){
+			}elseif($level > 35 && $level <= (POKEMON_GO_LEVEL_MAX - 1)) {
 				$pokemon->step($pokeuser->telegramid, "LEVEL_SCREENSHOT");
 				$pokemon->settings($pokeuser->telegramid, "levelup_new", $level);
 				$telegram->send
@@ -204,7 +204,7 @@ if(
 	    }
 	    $this->analytics->event('Telegram', 'Change level', $level);
 	    $pokemon->settings($telegram->user->id, 'last_command', 'LEVELUP');
-	    if($level >= 5 && $level <= 40){
+	    if($level >= 5 && $level <= POKEMON_GO_LEVEL_MAX){
 	        // if($level <= $pokeuser->lvl){ return; }
 	        $pokemon->update_user_data($telegram->user->id, 'lvl', $level);
 			$pokemon->update_user_data($telegram->user->id, 'exp', 0);
@@ -242,7 +242,7 @@ if(
 				->notification( (($level - $pokeuser->lvl) >= 3) )
 			->send();
 		} */
-	    }elseif($level > 35 && $level <= 40){
+	    }elseif($level > 35 && $level <= POKEMON_GO_LEVEL_MAX){
 			if($level <= $pokeuser->lvl){ return; }
 			if($pokeuser->lvl == 1){
 				$telegram->send

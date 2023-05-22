@@ -43,7 +43,7 @@ if(
 			$change[] = 'nombre';
 		}elseif(
 			!array_key_exists('lvl', $data) and
-			intval($val) > 5 and intval($val) <= 40 and
+			intval($val) > 5 and intval($val) <= POKEMON_GO_LEVEL_MAX and
 			intval($val) != $target->lvl
 		){
 			$data['lvl'] = intval($val);
