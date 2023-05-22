@@ -9,11 +9,38 @@ class Main extends CI_Controller {
 
 	public function index($access = NULL){
 		// comprobar IP del host
-		if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ die(); }
+		// if(strpos($_SERVER['REMOTE_ADDR'], "149.154.167.") === FALSE){ die(); }
 		// Kill switch for overloading.
-		if(file_exists('die')){ die(); }
-		if(file_exists('skip') and unlink('skip')){ die(); }
-		if(file_exists('callback') and $this->telegram->callback){ die(); }
+
+		// -------------
+		// $chat = ($this->telegram->chat ? $this->telegram->chat->id : "0");
+		// $user = ($this->telegram->user ? $this->telegram->user->id : "0");
+		// if($this->telegram->new_user){ $user = $this->telegram->new_user->id; }
+
+		ini_set("log_errors_max_len", 0);
+
+		$key = "telegram.oak.updates";
+		$key2 = "telegram.oak.key."; 
+		if($this->telegram->callback){
+			$key2 .= "callback";
+		}elseif($this->telegram->new_user){
+			$key2 .= "member.new";
+		}elseif(@$this->telegram->left_user){
+			$key2 .= "member.left";
+		}else{
+			$key2 .= "message";
+		}
+
+		$data = $this->telegram->update_id;
+		// $date = $this->telegram->timestamp;
+		$date = time();
+
+		// METRICS - DISABLED 
+		//$conn = fsockopen("localhost", 2003);
+		//fwrite($conn, "$key $data $date\n");
+		//fwrite($conn, "$key2 1 $date\n");
+		//fclose($conn);
+		// -------------
 
 		$this->load->driver('cache');
 
@@ -25,20 +52,31 @@ class Main extends CI_Controller {
 		// Actualizamos datos de chat
 		$this->_update_chat();
 
+		/* if($this->telegram->text() and !$this->telegram->callback and mt_rand(0,100) >= 50){
+			die();
+		} */
+
+		// if(mt_rand(1,3) == 1){ die(); }
+		if(!$this->telegram->new_user){
+			if(file_exists('die')){ die(); }
+			if(file_exists('skip') and unlink('skip')){ die(); }
+			if(file_exists('callback') and $this->telegram->callback){ die(); }
+		}
 		$this->load->model('plugin');
 		// PRIO LOAD
 		if(date("G") == "0" && intval(date("i")) <= 7 && $this->telegram->words() == 1){
-			$this->plugin->load('game_pole');
+			// $this->plugin->load('game_pole');
+			// die();
 		}
 
-		$loads = [$this->telegram->user->id];
+		$loads = [ (string) $this->telegram->user->id];
 		if($this->telegram->is_chat_group()){
-			$loads[] = $this->telegram->chat->id;
+			$loads[] = (string) $this->telegram->chat->id;
 		}
 		$this->pokemon->load_settings($loads);
 
 		$step = NULL;
-		if($pokeuser = $pokemon->user($telegram->user->id)){
+		if($pokeuser = $pokemon->user_firstload($telegram->user->id)){
 			$step = $pokeuser->step;
 		}
 
@@ -57,7 +95,8 @@ class Main extends CI_Controller {
 		// Si el usuario no está registrado con las funciones básicas, fuera.
 		// Si el usuario está bloqueado, fuera.
 		// $pokeuser = $pokemon->user($telegram->user->id);
-		if(empty($pokeuser) or $pokeuser->blocked){ return; }
+		if($this->telegram->key != "channel_post" and (empty($pokeuser) or $pokeuser->blocked)){ return; }
+		if($this->telegram->key == "channel_post"){ return; }
 
 		// Cancelar pasos en general.
 		if($step != NULL && $telegram->text_has(["Cancelar", "Desbugear", "/cancel"], TRUE)){
@@ -82,7 +121,23 @@ class Main extends CI_Controller {
 		##################
 		# Comandos admin #
 		##################
-		*/
+		 */
+
+		/* if(
+			// $telegram->user->id == $this->config->item('creator') or 
+			$telegram->key == "message" and
+			(intval($telegram->message_id) % 222 == 0) and
+			$telegram->is_chat_group()
+		){
+			$r = mt_rand(1,3);
+			$poles = ['la pole', 'la subpole', 'el bronce'];
+
+			$str = $telegram->emoji(":medal-" .$r .": ") .$telegram->user->first_name ." ha conseguido <b>" .$poles[$r - 1] ."</b>!";
+			$telegram->send
+				->notification(FALSE)
+				->text($str, 'HTML')
+			->send();
+		} */
 
 		// ---------------------
 		// Apartado de cuenta
@@ -328,7 +383,7 @@ class Main extends CI_Controller {
 		}elseif($telegram->text_has(["team", "equipo"]) && $telegram->text_has(["sóis", "hay aquí", "estáis"])){
 			exit();
 		}elseif($telegram->text_has(["pokemon", "pokemons", "busca", "buscar", "buscame"]) && $telegram->text_contains("cerca") && $telegram->words() <= 10){
-			$this->_locate_pokemon();
+			// $this->_locate_pokemon();
 			return;
 		}
 		// ---------------------
@@ -360,7 +415,7 @@ class Main extends CI_Controller {
 		// NUEVO MOLESTO
 		if($telegram->photo() && $telegram->user->id != $this->config->item('creator')){
 			if($pokeuser->verified){ return; }
-			$pokemon->step($telegram->user->id, 'SCREENSHOT_VERIFY');
+			// $pokemon->step($telegram->user->id, 'SCREENSHOT_VERIFY');
 			$this->_step();
 		}
 	}
@@ -831,7 +886,13 @@ class Main extends CI_Controller {
 
 	function cron(){
 		$chat = "-221103258";
-		if($_SERVER['REMOTE_ADDR'] != getHostByName(getHostName())){ die(); }
+		if($_SERVER['REMOTE_ADDR'] != getHostByName(getHostName())){
+			$this->telegram->send
+				->chat($chat)
+				->text($_SERVER['REMOTE_ADDR'] ." / " .getHostByName(getHostName()))
+			->send();
+			die();
+		}
 
 		$this->load->driver('cache', array('adapter' => 'memcached', 'backup' => 'file'));
 		if($groups = $this->cache->get('pole_groups') and date("H:i") == "23:59"){
@@ -850,6 +911,7 @@ class Main extends CI_Controller {
 				->send();
 			}
 			if($q['pending_update_count'] >= 100){
+				touch('skip');
 				$str = $this->telegram->emoji(":warning: ") ."¡Hay " .$q['pending_update_count'] ." requests pendientes!";
 				if($q['pending_update_count'] >= 300 and (
 						!in_array(date("H:i"), ["00:00", "00:01", "00:02", "00:03", "00:04", "00:05"])
@@ -890,7 +952,7 @@ class Main extends CI_Controller {
 				->send();
 			}
 			$cpu = sys_getloadavg();
-			if($cpu[0] >= 6.5){
+			if($cpu[0] >= 3.8){
 				$this->telegram->send
 					->chat($chat)
 					->text($this->telegram->emoji(":fire: ") ."¡CPU caliente! " .implode(" / ", $cpu))
@@ -1121,5 +1183,525 @@ class Main extends CI_Controller {
 				->where('telegramid', $user->id)
 			->update('user');
 		}
+	}
+
+	function pruebando(){
+		set_time_limit (3600);
+                $chat = $this->config->item('creator');
+                $groups = $this->pokemon->get_groups();
+                $groups = array_reverse($groups);
+                $c = 0;
+                $this->telegram->send->chat($chat)->text("Voy!")->send();
+                $total = 0;
+                $txt = NULL;
+                foreach($groups as $g){
+                        // $ret = $this->telegram->send->get_member_info($this->config->item('telegram_bot_id'), $g);
+                        $info = $this->pokemon->group($g);
+                        $ret = $this->telegram->send->get_members_count($g);
+                        if(!$this->telegram->user_in_chat($this->config->item('telegram_bot_id'), $g)){
+                                $this->telegram->send
+                                        ->chat($chat)
+                                        ->text("Marco fuera de " .$info->title .".")
+                                ->send();
+                                $this->pokemon->group_disable($g);
+			}else{
+				$info = $this->telegram->send->get_chat($g);
+	                        $this->db
+	                                ->where('id', $g)
+					->set('users', $ret)
+					->set('title', $info['title'])
+				->update('chats');
+			}
+
+			$total = $total + $ret;
+
+			usleep(100000);
+
+		}
+                $this->telegram->send
+                        ->chat($chat)
+                        ->text("En total hay $total")
+                ->send();
+	}
+
+	function sobrantes(){
+	set_time_limit (2700);
+
+	$query = $this->db
+		->select(['user_inchat.id', 'user_inchat.cid', 'user_inchat.uid'])
+		->from('user_inchat')
+		->join('chats', 'chats.id = user_inchat.cid')
+		->not_like('type', 'private')
+		->where('active', TRUE)
+		->order_by('RAND()')
+	->get();
+
+	$c = 0;
+	foreach($query->result_array() as $u){
+		if(!$this->telegram->user_in_chat($u['uid'], $u['cid'])){
+			$c++;
+
+			$this->db
+				->where('id', $u['id'])
+			->delete('user_inchat');
+
+			$this->telegram->send
+				->chat("-247195497")
+				->notification(FALSE)
+				->text_replace("Saco a %s de %s.", [$u['uid'], $u['cid']])
+			->send();
+		}
+	}
+
+	$this->telegram->send
+		->chat("-247195497")
+		->notification(TRUE)
+		->text("$c usuarios limpiados.")
+	->send();
+	}
+
+	function validacionesextra(){
+		set_time_limit (7200);
+
+		$query = $this->db
+			->select('user.*')
+			->from('user')
+			->join('user_flags', 'user.telegramid = user_flags.user')
+			->where('value', 'verified_2016')
+			->where('verified', FALSE)
+			->where('blocked', FALSE)
+			->where('anonymous', FALSE)
+		->get();
+
+		$c = 0;
+		// $prueba = [['telegramid' =>3458358]];
+		foreach($query->result_array() as $u){
+			$this->pokemon->step($u['telegramid'], "SCREENSHOT_VERIFY");
+
+			$str = "¡Hola entrenador!\n\n"
+					."Por temas de limpieza y gestión, tengo que volver a pedirte la validación de usuario.\n"
+					."Por favor, mándame una captura de pantalla de tu <b>perfil Pokémon GO</b>, y con <b>una mascota que se llame Oak</b>.\n"
+					."Luego le puedes volver a cambiar el nombre, no hay problema.";
+
+			$q = $this->telegram->send
+				->chat($u['telegramid'])
+				->text($str, 'HTML')
+			->send();
+
+			if($q === FALSE){
+				$this->pokemon->user_flags($u['telegramid'], 'nocontesta');
+			}else{
+				$c++;
+			}
+
+			usleep(200000);
+		}
+
+		$this->telegram->send
+			->chat(3458358)
+			->text("Acabado con $c.")
+		->send();
+	}
+
+	function chatget(){
+		set_time_limit(2700);
+		$query = $this->db
+			->select('id')
+			->where('type !=', 'private')
+			->where('active', TRUE)
+		->get('chats');
+
+		$chats = array_column($query->result_array(), 'id');
+		foreach($chats as $c){
+			$linkid = NULL;
+			$chatinfo = $this->telegram->send->get_chat($c);
+			if(!$chatinfo){ continue; }
+			echo $chatinfo['id'] ."\t" .$chatinfo['title'] ."\t";
+			if(array_key_exists('username', $chatinfo)){
+				echo "https://t.me/" .$chatinfo['username'];
+				$linkid = "@" .$chatinfo['username'];
+			}else{
+				$link = $this->telegram->send->get_chat_link($c);
+				if($link){
+					$linkid = str_replace("https://t.me/joinchat/", "", $link);
+					echo $link;
+				}
+			}
+
+			if(!empty($linkid)){
+				$data = ['type' => 'link_chat', 'value' => $linkid, 'uid' => $c];
+				$sql = $this->db->insert_string('settings', $data) ." ON DUPLICATE KEY UPDATE value='" .$linkid ."'";
+				$this->db->query($sql);
+			}
+			echo "\n";
+		}
+	}
+
+	function chatsend(){
+		set_time_limit(2700);
+		$query = $this->db
+			->select('id')
+			->where_in('type', ['group', 'supergroup'])
+			->where('active', TRUE)
+		->get('chats');
+
+		$chats = array_column($query->result_array(), 'id');
+
+		foreach($chats as $c){
+			$this->telegram->send
+				->chat("-1001089222378")
+				->message("490")
+				->forward_to($c)
+			->send();
+		}
+	}
+
+	function nivelazo(){
+		set_time_limit (7200);
+		// SELECT * FROM `user` WHERE `lvl` BETWEEN 34 AND 39 AND `verified` = 1 AND `blocked` = 0 AND `anonymous` = 0
+		$query = $this->db
+			->select('telegramid')
+			->where('lvl >=', 34)
+			->where('lvl <=', 39)
+			->where('blocked', FALSE)
+			->where('anonymous', FALSE)
+			->where('verified', TRUE)
+		->get('user');
+
+		$users = array_column($query->result_array(), 'telegramid');
+
+		$str = "Hola entrenador! Debido al exito del evento, estoy convencido de que habrás subido de nivel, así que en un rato podrás decirme directamente tu nivel actual."
+			."\n\n" ."Pero por favor, nada de troleitos. Si no, ya no seré tu amigo. Gracias. <3";
+
+		foreach($users as $user){
+			$this->telegram->send
+				->text($str)
+				->chat($user)
+			->send();
+			usleep(500000);
+		}
+	}
+
+	function poletroll($user){
+		$this->load->driver('cache');
+		$this->load->model('pokemon');
+		$pkuser = $this->pokemon->user($user);
+		$query = $this->db
+			->where('uid', $pkuser->telegramid)
+			->where('cid !=', $pkuser->telegramid)
+		->get('user_inchat');
+		if($query->num_rows() == 0){ die(); }
+		$chats = array_column($query->result_array(), 'cid');
+		foreach($chats as $chat){
+			$this->telegram->send
+				->chat($chat)
+				->text('¡Estáis de suerte! Hoy podréis hacer la pole en este grupo gracias a @' .$pkuser->username ."!")
+			->send();
+		}
+	}
+
+	function antiguallas(){
+		set_time_limit (2700);
+
+		$query = $this->db
+			->select('id')
+			->where('type !=', 'private')
+			->where('active', TRUE)
+			->where('last_date <=', "2017-12-02")
+		->get('chats');
+
+		$ids = array_column($query->result_array(), 'id');
+		foreach($ids as $id){
+			$this->telegram->send->leave_chat($id);
+
+			$this->db
+				->where('id', $id)
+				->set('active', FALSE)
+			->update('chats');
+			usleep(50000);
+		}
+	}
+
+	function cachear(){
+		$timecache = 58;
+		header("Content-Type: text/plain");
+		$this->load->driver('cache',  array('adapter' => 'memcached', 'backup' => 'file') );
+
+		echo date("H:i:s") ." begin\n";
+
+		// ----------------
+
+		$groups = $this->db
+			->select(['uid', 'value'])
+			->where('type', 'admin_chat')
+		->get('settings');
+
+		foreach($groups->result() as $group){
+			$key = 'group_admin_' .$group->uid;
+			$this->cache->save('oak_' .$key, strval($group->value), $timecache);
+			// echo $key ."\n";
+		}
+
+		echo date("H:i:s") ." groups\n\n";
+		unset($groups);
+		// ----------------
+		
+		$flagqu = $this->db
+			->select(['user', 'value'])
+			->order_by('user')
+		->get('user_flags');
+
+		$flags = array();
+		foreach($flagqu->result_array() as $flag){
+			if(!array_key_exists($flag['user'], $flags)){
+				$flags[$flag['user']] = array();
+			}
+			$flags[$flag['user']][] = $flag['value'];
+		}
+
+		foreach($flags as $user => $flagc){
+			$flagc = array_unique($flagc);
+			$key = 'flags_' .$user;
+			// echo $key ."\n";
+			$this->cache->save('oak_' .$key, $flagc, $timecache);
+		}
+
+		echo date("H:i:s") ." flags\n\n";
+		unset($flagqu);
+		unset($flags);
+		// ----------------
+
+		$adminqu = $this->db
+			->select(['gid', 'uid'])
+			->where('expires >=', date("Y-m-d H:i:s"))
+		->get('user_admins');
+
+		$adminlist = array();
+		foreach($adminqu->result_array() as $admin){
+			if(!array_key_exists($admin['gid'], $adminlist)){
+				$adminlist[$admin['gid']] = array();
+			}
+			$adminlist[$admin['gid']][] = $admin['uid'];
+		}
+
+		foreach($adminlist as $gid => $uids){
+			$key = 'useradmins_' .$gid;
+			// echo $key ."\n";
+			$this->cache->save('oak_' .$key, $uids, $timecache);
+		}
+
+		echo date("H:i:s") ." admins\n\n";
+		unset($adminqu);
+		unset($adminlist);
+
+		// ------------------
+
+		$users = $this->db
+			->where('anonymous', FALSE)
+		->get('user');
+
+		foreach($users->result() as $user){
+			$key = 'user_' .$user->telegramid;
+			$this->cache->save('oak_' .$key, $user, 15);
+			// echo $key ."\n";
+		}
+
+		echo date("H:i:s") ." users\n\n";
+		unset($users);
+		// var_dump($this->cache->cache_info());
+
+	}
+
+	function validacionesatope(){
+		set_time_limit(86400);
+		$query = $this->db
+			->select('telegramid')
+			->where('verified', false)
+			->where('blocked', false)
+			->where('anonymous', false)
+		->get('user');
+
+		$users = array_column($query->result_array(), 'telegramid');
+		// $users = [3458358];
+
+		$str = "Todavía no estás validado.\nRecuerda volver a validarte para poder usar todas las funciones de Oak!\nTendrás más información y avisos en @ProfesorOakNews, te recomiendo que sigas al canal :)";
+		foreach($users as $user){
+			$this->telegram->send
+				->chat($user)
+				->notification(TRUE)
+				->text($str)
+				->inline_keyboard()
+					->row_button("Quiero validarme", "Quiero validarme", "TEXT")
+				->show()
+			->send();
+			echo $user ."\n";
+			sleep(1);
+		}
+	}
+
+
+	function adiosmigente(){
+		set_time_limit(86400);
+		$query = $this->db
+			->select('telegramid')
+			->order_by('RAND()')
+		->get('user');
+
+		$users = array_column($query->result_array(), 'telegramid');
+		// $users = [3458358];
+
+		foreach($users as $user){
+			$info = $this->telegram->send->get_chat($user);
+			$flag = NULL;
+			if($info and empty(trim($info['first_name']))){ $flag = "deleted"; }
+			elseif(!$info){ $flag = "bot_blocked"; }
+			if($flag){
+				$data = ['user' => $user, 'value' => $flag];
+				$this->db->insert('user_flags', $data);
+			}
+			usleep(250000);
+		}
+	}
+
+
+	function actualiza(){
+		die();
+		$data = json_decode(file_get_contents('nudata'), TRUE);
+
+		foreach($data as $pk){
+			$update = [
+				'attack' => $pk[2],
+				'defense' => $pk[3],
+				'stamina' => $pk[1],
+				'candy' => $pk[4]
+			];
+			$pokemon = $pk[0];
+
+			$this->db
+				->where('id', $pokemon)
+			->update('pokedex', $update);
+		}
+	}
+
+	function valista(){
+		/*
+		 * select u.username, count(*) from user_verify_vote v
+		 * join user u on v.telegramid = u.telegramid
+		 * where v.date between "2018-01-14 00:00:00" and "2018-01-14 23:59:59"
+		 * group by v.telegramid
+		 */
+
+		$today = $this->db
+			->select('u.username AS username, count(*) AS count')
+			->from('user_verify_vote v')
+			->join('user u', 'v.telegramid = u.telegramid')
+			->where('v.date >=', date("Y-m-d 00:00:00"))
+			->where('v.date <=', date("Y-m-d 23:59:59"))
+			->group_by('v.telegramid')
+		->get();
+		
+		$total = $this->db
+			->select('u.username AS username, count(*) AS count')
+			->from('user_verify_vote v')
+			->join('user u', 'v.telegramid = u.telegramid')
+			->where('v.date >=', "2018-01-12")
+			->group_by('v.telegramid')
+			->order_by('count', 'DESC')
+		->get();
+
+		$cfin = $this->db
+			->select('count(*) AS count')
+			->where('date_finish >=', date("Y-m-d 00:00:00"))
+			->where('date_finish <=', date("Y-m-d 23:59:59"))
+		->get('user_verify');
+
+		$cadd = $this->db
+			->select('count(*) AS count')
+			->where('date_add >=', date("Y-m-d 00:00:00"))
+			->where('date_add <=', date("Y-m-d 23:59:59"))
+		->get('user_verify');
+
+		$todayArr = array_column($today->result_array(), 'count', 'username');
+		$totalArr = array_column($total->result_array(), 'count', 'username');
+		$cfin = $cfin->row()->count;
+		$cadd = $cadd->row()->count;
+
+		$str = "";
+		foreach($totalArr as $user => $atotal){
+			$str .= "<code>$atotal</code> ";
+			if(array_key_exists($user, $todayArr)){
+				$str .= "(+" .$todayArr[$user] .") ";
+			}
+			$str .= $user ."\n";
+		}
+
+		// $str .= "\n" ."#ranking del " .date("m-d");
+		$str .= "\n" ."IN: $cadd ($cfin)";
+
+		$this->telegram->send
+			->chat("-1001108551764")
+			// ->chat($this->config->item('creator'))
+			->text($str, 'HTML')
+		->send();
+	}
+
+	function viguense(){
+		set_time_limit(86400);
+		$news = $this->db
+			->select('uid')
+			->where('cid', '-1001291546747')
+		->get('user_inchat');
+		$news = array_column($news->result_array(), 'uid');
+
+		$users = $this->db
+			->select('uid')
+			->where('cid', '-1001146489804')
+			->where_in('uid', $news)
+			->where('uid !=', $this->config->item('telegram_bot_id'))
+		->get('user_inchat');
+
+		$users = array_column($users->result_array(), 'uid');
+
+		// $this->telegram->send->text( (count($users)) )->chat('3458358')->send();
+		//
+
+		foreach($users as $user){
+			$this->telegram->send
+				->kick($user, '-1001146489804');
+			usleep(300000);
+		}
+
+	}
+
+	function fantasiafinal(){
+		$url = "https://na.finalfantasyxiv.com/lodestone/worldstatus/";
+		$data = file_get_contents($url);
+		$pos1 = strpos($data, 'Ragnarok');
+		$pos2 = strpos($data, 'Light');
+		$ragnarok = substr($data, $pos1, $pos2 - $pos1);
+
+		$status = 'Unknown';
+		foreach(['Unavailable', 'Available'] as $stat){
+			if(strpos($ragnarok, $stat) !== FALSE){
+				$status = $stat;
+				break;
+			}
+		}
+
+		$this->telegram->send
+			->text("Status: $status")
+			->chat($this->config->item('creator'))
+		->send();
+	}
+
+
+	function existe($user){
+		$r = $this->telegram->send->get_chat($user);
+		$exists = !empty($r['first_name']);
+		$this->telegram->send
+			->text($user ." " .(!$exists ? "<b>NO </b>" : "") ."existe.", 'HTML')
+			->chat("-273852147")
+			->notification(!$exists)
+		->send();
 	}
 }

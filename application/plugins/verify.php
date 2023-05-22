@@ -28,7 +28,7 @@ if($this->pokemon->step($telegram->user->id) == 'SCREENSHOT_VERIFY'){
 		if($pokemon->settings($this->config->item('creator'), 'disable_verify')){
 			$this->telegram->send
 				->chat($userid)
-				->text($this->telegram->emoji(":clock: ") ."Lo siento, pero ahora mismo estoy muy saturado. Prueba dentro de unas horas.\n¡Y recuerda mandarme una captura nueva del perfil donde se vea la hora!")
+				->text($this->telegram->emoji(":clock: ") ."Lo siento, pero ahora mismo estoy muy saturado. Prueba en otro momento.\n¡Y recuerda mandarme una captura nueva del perfil donde se vea la hora!")
 			->send();
 			$pokemon->step($userid, NULL);
 			return -1;
@@ -283,7 +283,7 @@ elseif(
         return;
     }
 
-	$date = strtotime("+7 days", strtotime($pokeuser->register_date));
+	/* $date = strtotime("+7 days", strtotime($pokeuser->register_date));
 	if($date > time()){
 		$timer = max(round(($date - time()) / 86400), 1);
 		$text = ":clock: Debido a que bastantes personas acaban abandonando Telegram (por motivos que desconozco, porque es muy guay, pero bueno), tendrás que esperar <b>$timer días</b> para poder validarte."
@@ -296,7 +296,7 @@ elseif(
 
 		$this->pokemon->step($this->telegram->user->id, NULL);
 		return -1;
-	}
+	} */
 
     $text = "Para validarte, necesito que me envies <b>UNA captura de tu PERFIL Pokémon GO.</b> "
             ."La captura tiene que cumplir las siguientes condiciones:\n\n"

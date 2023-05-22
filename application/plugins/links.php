@@ -121,7 +121,9 @@ elseif($telegram->text_has("Lista de", ["enlaces", "links"], TRUE)){
 	$text = trim(strtolower($text));
 
 	$link = $pokemon->link($text);
-	if(!empty($link) && count($link) == 1){
+	if(empty($link)){
+		return -1;
+	}elseif(count($link) == 1){
 		$telegram->send
 			->chat($chat)
 			->text($link)

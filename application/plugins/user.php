@@ -27,7 +27,15 @@ function user_set_name($user, $name, $force = FALSE){
 		$telegram->send
 			->reply_to(TRUE)
 			->notification(FALSE)
-			->text("No puede ser, ya hay alguien que se llama *@$name* :(\nHabla con @duhow para arreglarlo.", TRUE)
+			->text("No puede ser, ya hay alguien que se llama *@$name* :(\nNo haberte borrado el Telegram. Ale.", TRUE)
+		->send();
+
+		$str = $telegram->emoji(':warning: ') .'<a href="tg://user?id=' .$telegram->user->id .'">' .$telegram->user->id .'</a> se registra con nombre ocupado ' .$name;
+
+		$telegram->send
+			->notification(FALSE)
+			->chat("-1001108551764")
+			->text($str, 'HTML')
 		->send();
 		return FALSE;
 	}
@@ -49,15 +57,15 @@ function user_set_name($user, $name, $force = FALSE){
 
 		$str = "De acuerdo, *@$name*!\n";
 		if($pokemon->settings($telegram->chat->id, 'require_verified')){
-			$str .= "Para estar en este grupo *debes estar validado.*";
+			// $str .= "Para estar en este grupo *debes estar validado.*";
 		}else{
-			$str .= "¡Recuerda *validarte* para poder entrar en los grupos de colores!";
+			// $str .= "¡Recuerda *validarte* para poder entrar en los grupos de colores!";
 		}
 
 		$telegram->send
-			->inline_keyboard()
+			/* ->inline_keyboard()
 				->row_button("Validar perfil", "quiero validarme", TRUE)
-			->show()
+				->show() */
 			->reply_to(TRUE)
 			->notification(FALSE)
 			->text($str, TRUE)
@@ -67,6 +75,7 @@ function user_set_name($user, $name, $force = FALSE){
 }
 
 function user_reports($name, $retall = FALSE, $valid = TRUE){
+	return NULL;
 	$CI =& get_instance();
 	if($valid){ $CI->db->where('valid', TRUE); }
 	$query = $CI->db
@@ -81,16 +90,16 @@ function user_reports($name, $retall = FALSE, $valid = TRUE){
 function user_parser($text){
 	$data = array();
 	foreach($text as $w){
-        $w = trim($w);
-        if($w[0] == "/"){ continue; }
-        if(is_numeric($w) && $w >= 5 && $w <= 40){ $data['lvl'] = $w; }
-        if(in_array(strtoupper($w), ['R','B','Y'])){ $data['team'] = strtoupper($w); }
-        if($w[0] == "@" or strlen($w) >= 4){ $data['username'] = $w; }
-        if(strtolower($w) == "loc"){ $data['location'] = TRUE; }
-    }
-    if(!isset($data['username']) or !isset($data['team'])){ return FALSE; }
-    if(!isset($data['lvl'])){ $data['lvl'] = 1; }
-    $data['username'] = str_replace("@", "", $data['username']);
+	    $w = trim($w);
+	    if($w[0] == "/"){ continue; }
+	    if(is_numeric($w) && $w >= 5 && $w <= 40){ $data['lvl'] = $w; }
+	    if(in_array(strtoupper($w), ['R','B','Y'])){ $data['team'] = strtoupper($w); }
+	    if($w[0] == "@" or strlen($w) >= 4){ $data['username'] = $w; }
+	    if(strtolower($w) == "loc"){ $data['location'] = TRUE; }
+	}
+	if(!isset($data['username']) or !isset($data['team'])){ return FALSE; }
+	if(!isset($data['lvl'])){ $data['lvl'] = 1; }
+	$data['username'] = str_replace("@", "", $data['username']);
 	return $data;
 }
 
@@ -116,7 +125,7 @@ if($step == "SETNAME"){
 				$telegram->send
 					->text("Ah, ya veo, así que $level ... Guay!")
 				->send();
-			}elseif($level > 35 && $level <= 40){
+			}elseif($level > 35 && $level <= 39){
 				$pokemon->step($pokeuser->telegramid, "LEVEL_SCREENSHOT");
 				$pokemon->settings($pokeuser->telegramid, "levelup_new", $level);
 				$telegram->send
@@ -127,7 +136,7 @@ if($step == "SETNAME"){
 	}
 	return -1;
 }elseif($step == "LEVEL_SCREENSHOT"){
-	if($telegram->photo()){
+	if($telegram->photo() and !$telegram->has_forward){
 		$pokeuser = $pokemon->user($telegram->user->id);
 		$level = $pokemon->settings($telegram->user->id, "levelup_new");
 		$pokemon->settings($telegram->user->id, "levelup_new", "DELETE");
@@ -175,32 +184,32 @@ if($telegram->text_has(["Me llamo", "Mi nombre es", "Mi usuario es"], TRUE) && $
 
 // Guardar nivel del user
 if(
-    $telegram->text_has("Soy", ["lvl", "nivel", "L", "level"]) or
-    $telegram->text_has("Soy L", TRUE) or // HACK L junta
-    $telegram->text_has(["Acabo de subir al", "He subido a nivel", "He subido al"]) &&
+	$telegram->text_has("Soy", ["lvl", "nivel", "L", "level"]) or
+	$telegram->text_has("Soy L", TRUE) or // HACK L junta
+	$telegram->text_has(["Acabo de subir al", "He subido a nivel", "He subido al"]) &&
 	!$telegram->text_has("No") and // Si, la gente es gilipollas.
 	!$telegram->text_contains("?") // Anda que preguntar qué nivel eres de esta forma...
 ){
 	if($this->telegram->has_forward){ return -1; }
-    $level = filter_var($telegram->text(), FILTER_SANITIZE_NUMBER_INT);
-    if(is_numeric($level)){
-        $pokeuser = $pokemon->user($telegram->user->id);
-        $command = $pokemon->settings($telegram->user->id, 'last_command');
-        if($level == $pokeuser->lvl){ // or $command == "LEVELUP"
-            $telegram->send
-                ->notification(FALSE)
-                ->text("Si, ya lo sé...")
-            ->send();
+	$level = filter_var($telegram->text(), FILTER_SANITIZE_NUMBER_INT);
+	if(is_numeric($level)){
+	    $pokeuser = $pokemon->user($telegram->user->id);
+	    $command = $pokemon->settings($telegram->user->id, 'last_command');
+	    if($level == $pokeuser->lvl){ // or $command == "LEVELUP"
+	        $telegram->send
+	            ->notification(FALSE)
+	            ->text("Si, ya lo sé...")
+	        ->send();
 			return -1;
-        }
-        $this->analytics->event('Telegram', 'Change level', $level);
-        $pokemon->settings($telegram->user->id, 'last_command', 'LEVELUP');
-        if($level >= 5 && $level <= 35){
-            if($level <= $pokeuser->lvl){ return; }
-            $pokemon->update_user_data($telegram->user->id, 'lvl', $level);
+	    }
+	    $this->analytics->event('Telegram', 'Change level', $level);
+	    $pokemon->settings($telegram->user->id, 'last_command', 'LEVELUP');
+	    if($level >= 5 && $level <= 40){
+	        // if($level <= $pokeuser->lvl){ return; }
+	        $pokemon->update_user_data($telegram->user->id, 'lvl', $level);
 			$pokemon->update_user_data($telegram->user->id, 'exp', 0);
-            $pokemon->log($telegram->user->id, 'levelup', $level);
-            if($telegram->is_chat_group()){ // $command == "WHOIS" &&
+	        $pokemon->log($telegram->user->id, 'levelup', $level);
+	        if($telegram->is_chat_group()){ // $command == "WHOIS" &&
 				$editwho = $pokemon->settings($telegram->chat->id, 'whois_last');
 				if(!empty($editwho)){
 					// el mensaje será sobre self, imagino
@@ -217,13 +226,23 @@ if(
 
 					$pokemon->settings($telegram->chat->id, 'whois_last', 'DELETE');
 				}
-                $telegram->send
-                    ->notification(FALSE)
-                    ->text("Así que has subido al nivel *$level*... Guay!", TRUE)
-                    // Vale. Como me vuelvas a preguntar quien eres, te mando a la mierda. Que lo sepas.
-                ->send();
-            }
-        }elseif($level > 35 && $level <= 40){
+	        }
+		$telegram->send
+	                ->notification(FALSE)
+	                ->text("Así que has subido al nivel *$level*... Guay!", TRUE)
+	                // Vale. Como me vuelvas a preguntar quien eres, te mando a la mierda. Que lo sepas.
+		->send();
+
+		/* if($level >= 35){
+			$str = $pokeuser->username ." - " .$pokeuser->telegramid ." cambia de " .$pokeuser->lvl ." a " .$level ." (" .($level - $pokeuser->lvl) .") " .(($level - $pokeuser->lvl) >= 3 ? "\u{203c}\u{fe0f}" : "")  ;
+	
+			$telegram->send
+				->chat("-211635275")
+				->text($str)
+				->notification( (($level - $pokeuser->lvl) >= 3) )
+			->send();
+		} */
+	    }elseif($level > 35 && $level <= 40){
 			if($level <= $pokeuser->lvl){ return; }
 			if($pokeuser->lvl == 1){
 				$telegram->send
@@ -254,7 +273,7 @@ if(
 			!empty($pokeuser->username) &&
 			!$pokeuser->verified
 		){
-			$pokemon->step($telegram->user->id, 'SCREENSHOT_VERIFY');
+			// $pokemon->step($telegram->user->id, 'SCREENSHOT_VERIFY');
 
 			$str = "¡Genial! Ahora mándame una captura de pantalla de tu <b>perfil Pokémon GO</b> para validarte.\n"
 					."¡Recuerda que tiene que ser <b>de ahora<b>, no una antigua!";
@@ -262,8 +281,8 @@ if(
 				->text($str, 'HTML')
 			->send();
 		}
-    }
-    return -1;
+	}
+	return -1;
 }
 
 // pedir info sobre uno mismo
@@ -298,8 +317,8 @@ if(
 		'$apellidos' => $telegram->user->last_name,
 		'$equipo' => $team[$pokeuser->team],
 		'$team' => $team[$pokeuser->team],
-		'$usuario' => "@" .$telegram->user->username,
-		'$pokemon' => "@" .$pokeuser->username,
+		'$usuario' => $telegram->user->username,
+		'$pokemon' => $pokeuser->username,
 		'$nivel' => "L" .$pokeuser->lvl,
 		'$exp' => number_format($pokeuser->exp, 0, ',', '.'),
 		'$valido' => ($pokeuser->verified ? ':green-check:' : ':warning:')
@@ -449,6 +468,7 @@ elseif(
 			if(in_array("donator", $flags)){ $str .= $telegram->emoji("\ud83d\udcb6 "); }
 			if(in_array("helper", $flags)){ $str .= $telegram->emoji(":beginner: "); }
 			if(in_array("gay", $flags)){ $str .= $telegram->emoji(":rainbow_flag: "); }
+			if(in_array("spain", $flags)){ $str .= $telegram->emoji(":flag_es: "); }
 		}
 	}
 
@@ -471,7 +491,7 @@ elseif(
 		'$equipo' => $teams[$info->team],
 		'$team' => $teams[$info->team],
 		// '$usuario' => "@" .$new->username,
-		'$pokemon' => "@" .$info->username,
+		'$pokemon' => $info->username,
 		'$nivel' => "L" .$info->lvl,
 		'$valido' => $validicon
 	];
@@ -501,23 +521,23 @@ elseif(
 
 // Mención de usuarios
 if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
-    $touch = NULL;
-    if($telegram->has_reply){
-        $touch = $telegram->reply_user->id;
-    }elseif($telegram->text_mention()){
-        $touch = $telegram->text_mention();
-        if(is_array($touch)){ $touch = key($touch); }
-        else{ $touch = substr($touch, 1); }
-    }else{
-        $touch = $telegram->last_word(TRUE);
-        if(strlen($touch) < 4 or $telegram->words() < 2){ return -1; }
-    }
-    $name = (isset($telegram->user->username) ? "@" .$telegram->user->username : $telegram->user->first_name);
+	$touch = NULL;
+	if($telegram->has_reply){
+	    $touch = $telegram->reply_user->id;
+	}elseif($telegram->text_mention()){
+	    $touch = $telegram->text_mention();
+	    if(is_array($touch)){ $touch = key($touch); }
+	    else{ $touch = substr($touch, 1); }
+	}else{
+	    $touch = $telegram->last_word(TRUE);
+	    if(strlen($touch) < 4 or $telegram->words() < 2){ return -1; }
+	}
+	$name = (isset($telegram->user->username) ? "@" .$telegram->user->username : $telegram->user->first_name);
 
-    $usertouch = $pokemon->user($touch);
-    $req = FALSE;
+	$usertouch = $pokemon->user($touch);
+	$req = FALSE;
 
-    if(!empty($usertouch)){
+	if(!empty($usertouch)){
 		$can = $pokemon->settings($usertouch->telegramid, 'touch');
 		$req = FALSE;
 		if($can == NULL or $can == TRUE){
@@ -527,15 +547,15 @@ if($telegram->text_has(["toque", "tocar"]) && $telegram->words() <= 3){
 				->text("$name te ha tocado.")
 			->send();
 		}
-    }
+	}
 
-    $text = ($req ? $telegram->emoji(":green-check:") : $telegram->emoji(":times:"));
-    $telegram->send
-        ->chat($telegram->user->id)
-        ->notification(!$req)
-        ->text($text)
-    ->send();
-    return -1;
+	$text = ($req ? $telegram->emoji(":green-check:") : $telegram->emoji(":times:"));
+	$telegram->send
+	    ->chat($telegram->user->id)
+	    ->notification(!$req)
+	    ->text($text)
+	->send();
+	return -1;
 }
 
 // Responder el nivel de un entrenador.
@@ -544,87 +564,87 @@ elseif(
 	$telegram->text_has(["lvl", "level", "nivel"], ["eres", "es", "soy", "tiene", "tienes", "tengo"]) &&
 	$telegram->words() <= 7
 ){
-    $user = $telegram->user->id;
-    if($telegram->text_has(["eres", "es", "tiene", "tienes"])){
-        if(!$telegram->has_reply){ return -1; }
-        $user = $telegram->reply_user->id;
-    }
+	$user = $telegram->user->id;
+	if($telegram->text_has(["eres", "es", "tiene", "tienes"])){
+	    if(!$telegram->has_reply){ return -1; }
+	    $user = $telegram->reply_user->id;
+	}
 
-    $u = $pokemon->user($user);
-    $text = NULL;
-    if(!empty($u) && $u->lvl >= 5){
-        $this->analytics->event('Telegram', 'Whois', 'Level');
-        $text = ($telegram->text_has(["eres", "es", "tienes", "tiene"]) ? "Es" : "Eres") ." L" .$u->lvl .".";
-    }else{
-        $text = ($telegram->text_has("soy", "tengo") ? "No lo sé. ¿Y si me lo dices?" : "No lo sé. :(");
-    }
-    $telegram->send
-        ->notification(FALSE)
-        // ->reply_to(TRUE)
-        ->text($text)
-    ->send();
+	$u = $pokemon->user($user);
+	$text = NULL;
+	if(!empty($u) && $u->lvl >= 5){
+	    $this->analytics->event('Telegram', 'Whois', 'Level');
+	    $text = ($telegram->text_has(["eres", "es", "tienes", "tiene"]) ? "Es" : "Eres") ." L" .$u->lvl .".";
+	}else{
+	    $text = ($telegram->text_has("soy", "tengo") ? "No lo sé. ¿Y si me lo dices?" : "No lo sé. :(");
+	}
+	$telegram->send
+	    ->notification(FALSE)
+	    // ->reply_to(TRUE)
+	    ->text($text)
+	->send();
 
 	if($telegram->is_chat_group() && $pokemon->group_find_member($u->telegramid, $telegram->chat->id)){
 		$pokemon->step($u->telegramid, 'CHANGE_LEVEL');
 	}
 
-    return -1;
+	return -1;
 }
 
 // Ver estadísticas de los entrenadores registrados
 elseif($telegram->text_command("stats")){
-    $stats = $pokemon->count_teams();
-    $text = "";
-    $equipos = ["Y" => "yellow", "B" => "blue", "R" => "red"];
-    foreach($stats as $s => $v){
-        $text .= $telegram->emoji(":heart-" .$equipos[$s] .":") ." $v\n";
-    }
-    $text .= "*TOTAL:* " .array_sum($stats);
-    $telegram->send
-        ->notification(FALSE)
-        // ->reply_to(TRUE)
-        ->text($text, TRUE)
-    ->send();
-    return;
+	$stats = $pokemon->count_teams();
+	$text = "";
+	$equipos = ["Y" => "yellow", "B" => "blue", "R" => "red"];
+	foreach($stats as $s => $v){
+	    $text .= $telegram->emoji(":heart-" .$equipos[$s] .":") ." $v\n";
+	}
+	$text .= "*TOTAL:* " .array_sum($stats);
+	$telegram->send
+	    ->notification(FALSE)
+	    // ->reply_to(TRUE)
+	    ->text($text, TRUE)
+	->send();
+	return;
 }
 
 // Registro offline de users
 elseif($telegram->text_command("regoff")){
-    // $chat = ($telegram->is_chat_group() && $this->is_shutup(TRUE)) ? $telegram->user->id : $telegram->chat->id);
-    $data = user_parser($telegram->words(TRUE));
+	// $chat = ($telegram->is_chat_group() && $this->is_shutup(TRUE)) ? $telegram->user->id : $telegram->chat->id);
+	$data = user_parser($telegram->words(TRUE));
 	if(!$data){ return -1; }
-    if($pokemon->user($data['username'], FALSE)){ // Online
-        $telegram->send
-            ->notification(FALSE)
-            ->text($telegram->emoji(":warning: Es usuario real."))
-        ->send();
-        return;
-    }
-    $register = $pokemon->register_offline($data['username'], $data['team'], $telegram->user->id, $data['lvl']);
-    if($register){
-        $icon = ['Y' => ':heart-yellow:', 'R' => ':heart-red:', 'B' => ':heart-blue:'];
-        $icon_text = ['Y' => 'amarillo', 'R' => 'rojo', 'B' => 'azul'];
-        $this->analytics->event("Telegram", "Register offline", $icon_text[$data['team']]);
-        $text = ":ok: Registro a @" .$data['username'] ." " .$icon[$data['team']] ." L" .$data['lvl'];
-        $pokemon->log($telegram->user->id, 'register_offline', $register);
-    }else{
-        $uoff = $pokemon->user_offline($data['username']);
-        if($uoff){
-            $text = ":banned: Usuario ya registrado.";
-            if($data['lvl'] > $uoff->lvl){
-                $text = ":ok: Ya registrado, subo nivel *$uoff->lvl -> " .$data['lvl'] ."*.";
-                $pokemon->update_user_offline_data($uoff->id, 'lvl', $data['lvl']);
-                $pokemon->log($telegram->user->id, 'lvl_offline', $register);
-            }
-        }else{
-            $text = ":forbid: Error general.";
-        }
-    }
-    $telegram->send
-        ->notification(FALSE)
-        ->text($telegram->emoji($text), TRUE)
-    ->send();
-    return;
+	if($pokemon->user($data['username'], FALSE)){ // Online
+	    $telegram->send
+	        ->notification(FALSE)
+	        ->text($telegram->emoji(":warning: Es usuario real."))
+	    ->send();
+	    return;
+	}
+	$register = $pokemon->register_offline($data['username'], $data['team'], $telegram->user->id, $data['lvl']);
+	if($register){
+	    $icon = ['Y' => ':heart-yellow:', 'R' => ':heart-red:', 'B' => ':heart-blue:'];
+	    $icon_text = ['Y' => 'amarillo', 'R' => 'rojo', 'B' => 'azul'];
+	    $this->analytics->event("Telegram", "Register offline", $icon_text[$data['team']]);
+	    $text = ":ok: Registro a @" .$data['username'] ." " .$icon[$data['team']] ." L" .$data['lvl'];
+	    $pokemon->log($telegram->user->id, 'register_offline', $register);
+	}else{
+	    $uoff = $pokemon->user_offline($data['username']);
+	    if($uoff){
+	        $text = ":banned: Usuario ya registrado.";
+	        if($data['lvl'] > $uoff->lvl){
+	            $text = ":ok: Ya registrado, subo nivel *$uoff->lvl -> " .$data['lvl'] ."*.";
+	            $pokemon->update_user_offline_data($uoff->id, 'lvl', $data['lvl']);
+	            $pokemon->log($telegram->user->id, 'lvl_offline', $register);
+	        }
+	    }else{
+	        $text = ":forbid: Error general.";
+	    }
+	}
+	$telegram->send
+	    ->notification(FALSE)
+	    ->text($telegram->emoji($text), TRUE)
+	->send();
+	return;
 }
 
 elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->document)){
@@ -681,23 +701,23 @@ elseif($this->telegram->text_command("regcsv") && isset($this->telegram->reply->
 	foreach($csv as $r){
 		$data = user_parser(explode(" ", $r));
 		if(!$data){ continue; }
-	    if($pokemon->user($data['username'], FALSE)){ // Online
+		if($pokemon->user($data['username'], FALSE)){ // Online
 			$car++; continue;
-	    }
-	    $register = $pokemon->register_offline($data['username'], $data['team'], $telegram->user->id, $data['lvl']);
-	    if($register){
+		}
+		$register = $pokemon->register_offline($data['username'], $data['team'], $telegram->user->id, $data['lvl']);
+		if($register){
 			$cok++;
-	        $pokemon->log($telegram->user->id, 'register_offline', $register);
-	    }else{
-	        $uoff = $pokemon->user_offline($data['username']);
-	        if($uoff){
-	            if($data['lvl'] > $uoff->lvl){
-	                $pokemon->update_user_offline_data($uoff->id, 'lvl', $data['lvl']);
-	                $pokemon->log($telegram->user->id, 'lvl_offline', $register);
+		    $pokemon->log($telegram->user->id, 'register_offline', $register);
+		}else{
+		    $uoff = $pokemon->user_offline($data['username']);
+		    if($uoff){
+		        if($data['lvl'] > $uoff->lvl){
+		            $pokemon->update_user_offline_data($uoff->id, 'lvl', $data['lvl']);
+		            $pokemon->log($telegram->user->id, 'lvl_offline', $register);
 					$cup++;
-	            }
-	        }
-	    }
+		        }
+		    }
+		}
 	}
 
 	$str .= "\n";
@@ -719,6 +739,7 @@ elseif(
 	$this->telegram->words() == 2 and
 	$this->telegram->has_reply
 ){
+	return -1;
 	$target = $this->telegram->reply_target('forward')->id;
 	$pkuser = $pokemon->user($target);
 
@@ -742,6 +763,7 @@ elseif(
 }
 
 elseif($this->telegram->text_command("exp") && $this->telegram->has_reply){
+	return -1;
 	if(isset($this->telegram->reply->photo)){
 		$photo = array_pop($this->telegram->reply->photo);
 		$photo = $photo['file_id'];

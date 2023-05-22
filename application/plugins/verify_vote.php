@@ -5,7 +5,7 @@ const VERIFY_CHECK = 2;
 const VERIFY_REJECT = 3;
 const VERIFY_REPORT = 4;
 
-const VERIFY_MIN_VOTE_AMOUNT = 5;
+const VERIFY_MIN_VOTE_AMOUNT = 4;
 
 function verify_get_randuser($helperid){
 	$CI =& get_instance();
@@ -17,15 +17,47 @@ function verify_get_randuser($helperid){
 		->where_not_in("v.id", "(SELECT photo FROM user_verify_vote WHERE telegramid = $helperid)", FALSE)
 		->where_not_in("v.id", "(SELECT photo FROM user_verify_vote GROUP BY photo HAVING count(*) >= " .VERIFY_MIN_VOTE_AMOUNT ." )", FALSE)
 		->where_not_in("v.telegramid", "(SELECT telegramid FROM user WHERE verified = TRUE)", FALSE)
-		->order_by('RAND()')
+		// ->where('v.date_add >=', date("Y-m-d H:i:s", strtotime("-2 days")))
+		// ->order_by('RAND()')
 		// ->order_by('v.id ASC')
-		->limit(1);
+		->limit(10);
 
-	/* if($helperid == "3458358"){
-		$CI->db->order_by('v.id ASC');
-	}else{
+	if($helperid == "3458358"){
+		/* $CI->db->reset_query();
+
+		$query = $CI->db
+		->select('v.id')
+		->from('user_verify v')
+		->where('v.status IS NULL')
+		->get();
+
+		$id_empty = array_column($query->result_array(), 'id');
+
+		$query = $CI->db
+		->select('photo')
+		->from('user_verify_vote')
+		->where_in('photo', $id_empty)
+		->group_by('photo')
+		->get();
+
+		$id_done = array_column($query->result_array(), 'photo');
+
+		$aempty = array_diff($id_empty, $id_done);
+		if(count($aempty) == 0){ return false; }
+
+		$CI->db
+		->select('v.*')
+		->from('user_verify v')
+		->where('v.id', $aempty[0]); */
+
 		$CI->db->order_by('v.id DESC');
-	} */
+		// $CI->db->order_by('RAND()');
+	}else{
+		$CI->db->order_by('v.id ASC');
+		$CI->db->order_by('RAND()');
+		// $CI->db->order_by('MINUTE(date_add), RAND()');
+		// $CI->db->order_by('HOUR(date_add) DESC, RAND()');
+	}
 
 	$query = $CI->db->get();
 
@@ -41,7 +73,7 @@ function verify_get_randuser($helperid){
 		->limit(1)
 	->get(); */
 
-	if($query->num_rows() == 1){ return $query->row(); }
+	if($query->num_rows() >= 1){ return $query->row(); }
 	return NULL;
 }
 
@@ -214,7 +246,7 @@ if(
 	!$this->telegram->is_chat_group()
 ){
 	$userid = $this->telegram->user->id;
-	if(!$pokemon->user_flags($userid, 'helper')){
+	if( !($pokemon->user_flags($userid, 'helper') and $pokemon->user_verified($userid)) ){
 		$this->telegram->send
 			->text("Nope.")
 		->send();
@@ -223,12 +255,12 @@ if(
 	}
 
 	if($userid != $this->config->item('creator')){
-		if(!in_array(date("H"), range(8, 21))){
+		/* if(!in_array(date("H"), range(8, 22))){
 			$this->telegram->send
 				->text("No son horas de ponerse a validar... Descansa y vuelve mañana con energía y buena vista!")
 			->send();
 			return -1;
-		}elseif($pokemon->settings($this->config->item('creator'), 'disable_verify_vote')){
+	}else*/ if($pokemon->settings($this->config->item('creator'), 'disable_verify_vote')){
 			$this->telegram->send
 				->text("Pausado momentáneamente.")
 			->send();
@@ -258,6 +290,8 @@ if(
 		->send();
 		return -1;
 	}
+
+	// $count = min($count, mt_rand(270, 300));
 
 	$this->telegram->send
 		->notification(FALSE)
@@ -334,9 +368,19 @@ if(
 			->text($str, "HTML")
 		->send();
 	}else{
-		$rp = $this->telegram->send
-			->notification(FALSE)
-			->file('photo', $verifydata->photo);
+		$photo = $pokemon->settings($verifydata->telegramid, 'verify_id');
+
+		if($photo){
+			$rp = $this->telegram->send
+				->chat($verifydata->telegramid)
+				->message($photo)
+				->forward_to($this->telegram->chat->id)
+			->send();
+		}else{
+			$rp = $this->telegram->send
+				->notification(FALSE)
+				->file('photo', $verifydata->photo);
+		}
 
 		$rt = $this->telegram->send
 			->notification(TRUE)
@@ -354,7 +398,7 @@ if(
 
 	$messages = implode(",", [$rp['message_id'], $rt['message_id']]);
 	$pokemon->settings($userid, 'verify_messages', $messages);
-	$pokemon->settings($userid, 'verify_cooldown', time() + 8);
+	$pokemon->settings($userid, 'verify_cooldown', time() + 6);
 	// ---------------------------
 }
 
@@ -392,13 +436,13 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 	$timeout = $pokemon->settings($userid, 'verify_cooldown');
 
 	if($userid != $this->config->item('creator')){
-		if(!in_array(date("H"), range(8, 21))){
+		/* if(!in_array(date("H"), range(8, 22))){
 			$this->telegram->answer_if_callback("No son horas de ponerse a validar... Descansa y vuelve mañana con energía y buena vista!");
 			return -1;
-		}elseif($pokemon->settings($this->config->item('creator'), 'disable_verify_vote')){
+		}else*/ if($pokemon->settings($this->config->item('creator'), 'disable_verify_vote')){
 			$this->telegram->answer_if_callback("Pausado momentáneamente.", TRUE);
 			return -1;
-		}elseif($timeout and $timeout >= time()){
+		/* }elseif($timeout and $timeout >= time()){
 			$frases = [
 				"No tengas tanta prisa, con calma. :)",
 				"¿Seguro que está bien, bien?",
@@ -407,7 +451,7 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 			];
 			$n = mt_rand(0, count($frases) - 1);
 			$this->telegram->answer_if_callback($frases[$n], TRUE);
-			return -1;
+			return -1; */
 		}
 	}
 
@@ -618,9 +662,18 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 			->text($str, "HTML")
 		->send();
 	}else{
-		$rp = $this->telegram->send
-			->notification(FALSE)
-			->file('photo', $verifydata->photo);
+		$photo = $pokemon->settings($verifydata->telegramid, 'verify_id');
+		if($photo){
+			$rp = $this->telegram->send
+				->chat($verifydata->telegramid)
+				->message($photo)
+				->forward_to($this->telegram->chat->id)
+			->send();
+		}else{
+			$rp = $this->telegram->send
+				->notification(FALSE)
+				->file('photo', $verifydata->photo);
+		}
 
 		$rt = $this->telegram->send
 			->notification(TRUE)
@@ -638,7 +691,7 @@ if($this->telegram->callback and $this->telegram->text_has("verivote", TRUE)){
 
 	$messages = implode(",", [$rp['message_id'], $rt['message_id']]);
 	$pokemon->settings($userid, 'verify_messages', $messages);
-	$pokemon->settings($userid, 'verify_cooldown', time() + 8);
+	$pokemon->settings($userid, 'verify_cooldown', time() + 6);
 	// ---------------------------
 
 }

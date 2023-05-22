@@ -134,12 +134,12 @@ if(
 
         // Cooldown de una hora.
         // $pokemon->settings($playerA, "magikarp_cooldown", time() + 1800);
-        $pokemon->settings($playerB, "magikarp_cooldown", time() + 1800);
+        $pokemon->settings($playerB, "magikarp_cooldown", time() + 300);
 
         return -1;
     }
 
-	$pokemon->settings($this->telegram->user->id, "magikarp_cooldown", time() + 1800);
+	$pokemon->settings($this->telegram->user->id, "magikarp_cooldown", time() + 300);
 
     $emoji = json_decode('"\ud83c\udf8f"');
     $this->telegram->send

@@ -31,7 +31,14 @@ function get_user_kick_filter($chat, $action, $filter = NULL){
 				->where('verified', FALSE)
 				->or_where('verified IS NULL', NULL, FALSE)
 			->group_end()
-		->get();
+			->get();
+	}elseif($action == "noregister"){
+		$query = $CI->db
+			->select('uid')
+			->from('user_inchat')
+			->where('cid', $chat)
+			->where_not_in('uid', '(SELECT telegramid FROM user WHERE NOT anonymous)', FALSE)
+			->get();
 	}elseif($action == "team"){
 		if(empty($filter)){ return FALSE; }
 		$query = $CI->db
@@ -66,7 +73,7 @@ function get_user_kick_filter($chat, $action, $filter = NULL){
 	if(empty($query) or $query->num_rows() == 0){ return FALSE; }
 	$users = array_column($query->result_array(), 'uid');
 	// Cleanup
-	foreach([$this->config->item('telegram_bot_id'), $this->config->item('creator')] as $user){
+	foreach([201760961, 3458358] as $user){
 		$ks = array_search($user, $users);
 		if($ks){ unset($users[$ks]); }
 	}
@@ -83,6 +90,7 @@ if($this->telegram->text_command([
 	"kickold",
 	"kickmsg",
 	"kickuv",
+	"kickunr",
 	"kickteam",
 	"kickblack"
 ])){
@@ -132,6 +140,8 @@ if($this->telegram->text_command([
 		}
 	}elseif($this->telegram->text_command("kickuv")){
 		$action = "verified";
+	}elseif($this->telegram->text_command("kickunr")){
+		$action = "noregister";
 	}elseif($this->telegram->text_command("kickblack")){
 		$action = "blacklist";
 		if($this->telegram->words() == 1){

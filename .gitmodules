@@ -4,3 +4,6 @@
 [submodule "application/third_party/tesseract-ocr-for-php"]
 	path = application/third_party/tesseract-ocr-for-php
 	url = https://github.com/thiagoalessio/tesseract-ocr-for-php
+[submodule "admin"]
+	path = admin
+	url = https://github.com/duhow/Telegram-PHP-Admin

@@ -26,7 +26,8 @@ if(
 			.":ok: $key -";
 	$str = $this->telegram->emoji($str);
 	$str .= " " .json_encode($value);
-    $telegram->send
+	$telegram->send
+		->notification(FALSE)
         ->chat( $this->config->item('creator') )
         ->text($str)
     ->send();

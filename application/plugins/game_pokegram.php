@@ -53,12 +53,23 @@ function pokegame_pokestop_spin($id, $user, $amount = NULL){
         ->set('spins', 'spins - 1', FALSE)
     ->update('pokegame_pokestop');
 
-	if(!is_numeric($amount)){ $amount = mt_rand(3, 5); }
+	if(!is_numeric($amount)){ $amount = mt_rand(3, 6); }
+    $new_items = [];
     for($i = 0; $i < $amount; $i++){
-        $rand = mt_rand(0, count($items) - 1);
+	    $rand = mt_rand(0, count($items) - 1);
+	    $new_items[$items[$rand]]++;
         pokegame_item_add($user, $items[$rand]);
-        pokegame_notify_item($user, $items[$rand]);
+        //pokegame_notify_item($user, $items[$rand]);
     }
+    $telegram = new Telegram();
+    foreach(array_keys($new_items) as $item){
+	$msg[] = $new_items[$item] ." $item";
+    }
+    $msg = "Has conseguido " .implode(", ", $msg) ."!";
+    $telegram->send
+	    ->text($msg)
+	    ->chat($user)
+	->send();
 
     return ($pokestop->spins - 1);
 }
@@ -67,9 +78,9 @@ function pokegame_notify_item($target, $item){
     $telegram = new Telegram();
 
     $items = [
-        'pokeball' => 'CAADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
-        'superball' => 'CAADBAADDggAAjbFNAABArAsznkfzmAC',
-        'ultraball' => 'CAADBAADEAgAAjbFNAABc1c6B4iXJosC'
+        'pokeball' => 'AgADDAgAAjbFNAAB',
+        'superball' => 'AgADDggAAjbFNAAB',
+        'ultraball' => 'AgADEAgAAjbFNAAB'
     ];
 
     if(!in_array($item, array_keys($items))){ return FALSE; }
@@ -125,7 +136,7 @@ function pokegame_pokemon_trydown($id){
 
 function pokegame_pokemon_generate($chat, $num = NULL, $res = FALSE){
 	if(empty($num)){
-		$num = pokegame_number(FALSE, 251);
+		$num = pokegame_number(TRUE);
 		// if(in_array($num, [144, 145, 146])){ $num = 1; } // HACK No legendarios
 	}
 
@@ -194,12 +205,20 @@ function pokegame_pokemon_appearview($chat, $id, $poke = NULL){
 		->chat($chat)
 	->file('sticker', $poke->sticker);
 
-    $q = $telegram->send
-        ->inline_keyboard()
-            ->row_button("Capturar", "Capturar $id", "TEXT")
-        ->show()
-        ->text("¡Ha aparecido un <b>" .$poke->name ."</b> de <b>" .$data->cp ." PC</b>!", 'HTML')
-    ->send();
+	// if($telegram->chat->id == "-1001311308708"){
+    	// TEMP HACK REMOVE BUTTON
+	if(true){
+    		$q = $telegram->send
+    		    ->text("¡Ha aparecido un <b>" .$poke->name ."</b> de <b>" .$data->cp ." PC</b>!", 'HTML')
+    		->send();
+	}else{
+    		$q = $telegram->send
+    		    ->inline_keyboard()
+    		        ->row_button("Capturar", "Capturar $id", "TEXT")
+    		    ->show()
+    		    ->text("¡Ha aparecido un <b>" .$poke->name ."</b> de <b>" .$data->cp ." PC</b>!", 'HTML')
+    		->send();
+	}
 
     $pokemon->settings($chat, 'pokemon_summon', $id .":" .$q['message_id']);
 }
@@ -220,7 +239,7 @@ function pokegame_egg_generate($user, $pokemon = NULL){
     $CI =& get_instance();
 
     if(empty($pokemon)){
-        $pokemon = pokegame_number(FALSE, 251);
+        $pokemon = pokegame_number(FALSE);
     }
 
     $data = [
@@ -287,7 +306,7 @@ function pokegame_egg_open($user, $open = FALSE, $force = FALSE){
 
 function __pokegame_item_manage($user, $item, $action = "+", $amount = 1){
     $item = strtolower($item);
-    if(!in_array($item, ['pokeball', 'superball', 'ultraball', 'lure', 'incense', 'fishingrod'])){ return FALSE; }
+    if(!in_array($item, ['pokeball', 'superball', 'ultraball', 'masterball', 'lure', 'incense', 'fishingrod'])){ return FALSE; }
 
     $CI =& get_instance();
     $query = $CI->db
@@ -456,11 +475,13 @@ function pokegame_event(){
 }
 
 function pokegame_is_legendary($number){
-    return in_array($number, [144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251]);
+    return in_array($number, [144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 480, 481, 482, 483, 484, 485, 486, 487, 488, 638, 639, 640, 641, 642, 643, 644, 645, 646]);
 }
 
-function pokegame_number($legendary = FALSE, $top = 251){
+function pokegame_number($legendary = FALSE, $top = 649){
 	$num = mt_rand(1, $top);
+	// HACK 2019 nueva gen
+	// $num = mt_rand(387, 649);
 	if(!$legendary && pokegame_is_legendary($num)){ return call_user_func(__FUNCTION__, $legendary, $top); }
 	return $num;
 }
@@ -662,15 +683,71 @@ if(
 	return -1;
 }
 
+if(
+	$telegram->text_command("pogodonate") and
+	$telegram->user->id == $this->config->item("creator")
+){
+	if(
+		$telegram->words() == 2 and
+		is_numeric($telegram->last_word())
+	){
+		$target = $telegram->last_word();
+	}else if(
+		$telegram->has_reply and
+		$telegram->reply_target("forward")->id != $this->config->item("creator")
+	){
+		$target = $telegram->reply_target("forward")->id;
+	}else{
+		$telegram->send
+			->text("No has mencionado ningun user.")
+		->send();
+		return -1;
+	}
+
+	$user = $pokemon->user($target);
+	if(!$user){
+		$telegram->send
+			->text("El usuario no esta registrado.")
+		->send();
+		return -1;
+	}
+
+	$telegram->send
+		->text("Preparando pack donativo para $target ( $user->username )")
+	->send();
+
+	$telegram->send
+		->text(pokegame_message_items($target))
+	->send();
+
+
+	$pokemon->user_flags($target, 'donator', TRUE);
+	$pokemon->user_flags($target, 'donator_pokegram', TRUE);
+
+	pokegame_item_add($target, 'lure', 10);
+	pokegame_item_add($target, 'incense', 40);
+	pokegame_item_add($target, 'ultraball', 25);
+	pokegame_item_add($target, 'masterball', 1);
+
+	$telegram->send
+		->text(pokegame_message_items($target))
+	->send();
+
+	$telegram->send
+		->chat($target)
+		->text("Muchisimas gracias por tu donativo! Como recompensa, te he dado unos cuantos objetos. Usalos bien!")
+	->send();
+}
+
 // ---------------------------------
 
 if(!$telegram->is_chat_group()){ return; }
 
 $pokeballs_sticker = [
-    'pokeball' => 'CAADBAADDAgAAjbFNAAB6xJe3sYfW5QC',
-    'superball' => 'CAADBAADDggAAjbFNAABArAsznkfzmAC',
-    'ultraball' => 'CAADBAADEAgAAjbFNAABc1c6B4iXJosC',
-    'masterball' => 'CAADBAADEggAAjbFNAABanVUlBU9VxwC'
+    'pokeball' => 'AgADDAgAAjbFNAAB',
+    'superball' => 'AgADDggAAjbFNAAB',
+    'ultraball' => 'AgADEAgAAjbFNAAB',
+    'masterball' => 'AgADEggAAjbFNAAB'
 ];
 
 if(
@@ -688,12 +765,6 @@ if(
 		$telegram->answer_if_callback("¡No tienes espacio para tantos Pokémon!", TRUE);
 		return -1;
 	} */
-
-	// Check if can do action.
-	if(!pokegame_delay_can_continue($telegram->chat->id, 2)){
-		$telegram->answer_if_callback("");
-		return -1;
-	}
 
     if(!$telegram->user_in_chat($telegram->user->id, $telegram->chat->id)){
         $pokemon->user_delgroup($telegram->user->id, $telegram->chat->id);
@@ -763,6 +834,11 @@ if(
         }
     }
 
+    // TEMP HACK: Deshabilitar tirar con cualquier bola
+    if(empty($sel) and $telegram->sticker()){
+	return;
+    }
+
     if(empty($sel)){
         if($items->ultraball > 0){ $sel = "ultraball"; }
         elseif($items->superball > 0){ $sel = "superball"; }
@@ -771,11 +847,17 @@ if(
 
     pokegame_item_remove($telegram->user->id, $sel);
 
+	// Check if can do action.
+	if(!pokegame_delay_can_continue($telegram->chat->id, 2)){
+		$telegram->answer_if_callback("");
+		return -1;
+	}
+
     $prob = [
         "masterball" => 999,
-        "ultraball" => 30,
-        "superball" => 20,
-        "pokeball" => 10,
+        "ultraball" => 40,
+        "superball" => 30,
+        "pokeball" => 30,
     ];
 
     $pokeuser = $pokemon->user($telegram->user->id);
@@ -815,12 +897,13 @@ if(
         }
     }
 
-    if(!$success && ($poke->tries - 1) > 0){
+    // TEMP HACK REMOVE BUTTON
+    /* if(!$success && ($poke->tries - 1) > 0 && $telegram->chat->id != "-1001311308708"){
         $telegram->send
             ->inline_keyboard()
                 ->row_button("Capturar", "Capturar " .$poke->id, "TEXT")
             ->show();
-    }
+    } */
 
     if($telegram->sticker()){
         $telegram->send
@@ -846,8 +929,8 @@ if($telegram->callback && $telegram->text_has("pokespin") && $telegram->words() 
     }
 
 	// Check if can do action.
-	if(!pokegame_delay_can_continue($telegram->chat->id, 4)){
-		$telegram->answer_if_callback("");
+	if(!pokegame_delay_can_continue($telegram->chat->id, 2)){
+		// $telegram->answer_if_callback("");
 		return -1;
 	}
 
@@ -897,7 +980,10 @@ if($telegram->id % 66 == 0){
         pokegame_register($telegram->user->id);
     }
 
-    if($pokemon->group_count_members($telegram->chat->id, 10) >= 15){
+    if(
+	    $pokemon->group_count_members($telegram->chat->id, 10) >= 15 or
+	    $pokemon->settings($telegram->chat->id, 'pokegram_force')
+    ){
         $items = ["pokeball", "superball", "ultraball"];
         $sel = mt_rand(0, count($items) - 1);
 
@@ -950,7 +1036,7 @@ if(
         $telegram->send
             ->notification(FALSE)
             ->chat($target)
-        ->file('sticker', 'CAADBAADcggAAjbFNAAB4a2hODCkLw8C');
+        ->file('sticker', 'CAADBAADcggAAjbFNAAB4a2hODCkLw8WBA');
 
         $telegram->send
             ->notification(TRUE)
@@ -962,7 +1048,8 @@ if(
 
 if(
     (!$telegram->callback &&
-    $telegram->id % 1337 == 0) or
+    $telegram->id % 1337 == 0 &&
+    !$pokemon->settings($telegram->chat->id, 'pokegram_no_tr')) or
     ($telegram->text_command("teamrocket") && $telegram->user->id == $this->config->item('creator'))
 ){
 	if($telegram->text_command() or $pokemon->group_count_members($telegram->chat->id) >= 22){
@@ -990,11 +1077,11 @@ if(
 if(
 	(
 	    (!$telegram->callback && $telegram->message % 667 == 0) or
-	    ($telegram->sticker() == "CAADBAADdAgAAjbFNAABYcghFn7ZiQIC") or
+	    ($telegram->sticker() == "AgADdAgAAjbFNAAB") or
 	    ($telegram->text_command("pokestop") && $telegram->user->id == $this->config->item('creator'))
 	) and $telegram->key == "message" // Fix edited messages
 ){
-    if($telegram->sticker() == "CAADBAADdAgAAjbFNAABYcghFn7ZiQIC"){
+    if($telegram->sticker() == "AgADdAgAAjbFNAAB"){
         if($pokemon->group_count_members($telegram->chat->id, 10) <= 15){
             $telegram->send
                 ->notification(FALSE)
@@ -1036,7 +1123,7 @@ if(
 
 if(
 	$telegram->is_chat_group() and
-	$telegram->sticker() == 'CAADBAADOwoAAjbFNAABpIfi763TplEC'
+	$telegram->sticker() == 'AgADOwoAAjbFNAAB'
 ){
 
 	$items = pokegame_items($telegram->user->id);
@@ -1063,10 +1150,10 @@ if(
     $telegram->message % 49 == 0 &&
 	!$telegram->text_command() &&
 	$telegram->words() > 1) or
-    $telegram->sticker() == 'CAADBAADcAgAAjbFNAABpv0WcvCzRoIC' or
+    $telegram->sticker() == 'AgADcAgAAjbFNAAB' or
     ($telegram->text_command("summon") && $telegram->user->id == $this->config->item('creator'))
 ){
-    if($telegram->sticker() == 'CAADBAADcAgAAjbFNAABpv0WcvCzRoIC'){
+    if($telegram->sticker() == 'AgADcAgAAjbFNAAB'){
         if($pokemon->group_count_members($telegram->chat->id, 10) <= 20){
             $telegram->send
                 ->notification(FALSE)
@@ -1075,6 +1162,7 @@ if(
             return -1;
         }
 
+	// TEMP HACK REMOVE INFINITE
         $items = pokegame_items($telegram->user->id);
         if($items->incense == 0){
             $telegram->send
@@ -1086,19 +1174,20 @@ if(
         pokegame_item_remove($telegram->user->id, 'incense');
     }else{
         if(
-			$pokemon->group_count_members($telegram->chat->id, 10) <= 15 &&
-			$telegram->user->id != $this->config->item('creator')
+			( $pokemon->group_count_members($telegram->chat->id, 10) <= 15 &&
+			$telegram->user->id != $this->config->item('creator') ) and
+			!$pokemon->settings($telegram->chat->id, 'pokegram_force')
 		){ return; }
     }
 
     $chat = $telegram->chat->id;
-	$num = pokegame_number(FALSE, 251);
+	$num = pokegame_number(TRUE);
 	if($telegram->text_command("summon") && $telegram->words() == 2){
 		if(is_numeric($telegram->words(1, TRUE))){
 			$num = intval($telegram->words(1, TRUE));
             if($num < 0){
                 $chat = $num;
-                $num = pokegame_number(FALSE, 251);
+                $num = pokegame_number(FALSE);
             }
 		}else{
 			$pk = pokemon_parse($telegram->words(1, TRUE));
@@ -1204,5 +1293,34 @@ if($telegram->sticker() == 'BQADBAADKAgAAjbFNAABUl6LvyvgffoC'){
 
     }
 }
+
+if($telegram->text_command("legendario")){
+	$amount = $pokemon->settings($telegram->chat->id, 'pokegram_legendary');
+	if($amount == NULL or (int) $amount <= 0){
+		$telegram->send
+			->text("No puedes hacer eso.")
+		->send();
+		return -1;
+	}
+	$amount = (int) $amount - 1;
+	$pokemon->settings($telegram->chat->id, 'pokegram_legendary', $amount);
+
+	$legendary = [
+		144, 145, 146, 150, 151,
+		243, 244, 245, 249, 250, 251,
+		377, 378, 379, 380, 381, 382, 383, 384, 385, 386,
+		480, 481, 482, 483, 484, 485, 486, 487, 488,
+		638, 639, 640, 641, 642, 643, 644, 645, 646
+	];
+	$rand = mt_rand(0, count($legendary) - 1);
+	$poke = $pokemon->pokedex($legendary[$rand]); // object
+
+	$pokedata = pokegame_pokemon_generate($telegram->chat->id, $poke, TRUE);
+	$id = pokegame_pokemon_add($pokedata);
+	pokegame_pokemon_appearview($telegram->chat->id, $id, $poke);
+
+	return -1;
+}
+
 
 ?>

@@ -11,20 +11,48 @@ class Pokemon extends CI_Model{
 	//   Funciones de usuario
 	// --------------------------------
 
-	function user($user, $offline = FALSE){
-		if($user[0] == "@"){ $user = substr($user, 1); }
+	function user_firstload($user, $offline = FALSE){
+		if($user == NULL){ return NULL; }
+		if(!is_int($user) && $user[0] == "@"){ $user = substr($user, 1); }
 		if(array_key_exists($user, $this->user_loaded)){
 			return $this->user_loaded[$user];
 		}
 
-		// $cache = $this->cache->get('user_' .$user);
-		// if($cache !== FALSE){ return $cache; }
+		$cache = $this->cache->get('user_' .$user);
+		if($cache !== FALSE){ return $cache; }
+
+		$query = $this->db
+			// ->group_start()
+				->where('telegramid', $user)
+				// ->or_where('telegramuser', (string) $user)
+				// ->or_where('username', (string) $user)
+			// ->group_end()
+			->where('anonymous', FALSE)
+		->get('user');
+		if($query->num_rows() == 1){
+			// $this->cache->save('user_' .$user, $query->row(), 3600);
+			$id = $query->row()->telegramid;
+			$this->step_loaded[$id] = $query->row()->step;
+			$this->user_loaded[$id] = $query->row();
+			return $query->row();
+		}
+		return ($offline ? $this->user_offline($user) : NULL);
+	}
+
+	function user($user, $offline = FALSE){
+		if(!is_int($user) && $user[0] == "@"){ $user = substr($user, 1); }
+		if(array_key_exists($user, $this->user_loaded)){
+			return $this->user_loaded[$user];
+		}
+
+		$cache = $this->cache->get('user_' .$user);
+		if($cache !== FALSE){ return $cache; }
 
 		$query = $this->db
 			->group_start()
 				->where('telegramid', $user)
-				->or_where('telegramuser', $user)
-				->or_where('username', $user)
+				->or_where('telegramuser', (string) $user)
+				->or_where('username', (string) $user)
 			->group_end()
 			->where('anonymous', FALSE)
 		->get('user');
@@ -156,7 +184,31 @@ class Pokemon extends CI_Model{
 				->delete('user_flags');
 			}
 		}else{
+			$cache = $this->cache->get('oak_flags_' .$user);
+			if($cache){
+				if($flag == NULL){
+					return $cache;
+				}elseif(!empty($flag)){
+					return (in_array($flag, $cache));
+				}
+				return FALSE;
+			}
+
+			// ----------------
+			
 			if($flag != NULL && !is_array($flag)){ $flag = [$flag]; }
+
+			// ------
+			$query = $this->db
+				->where('user', $user)
+			->get('user_flags');
+
+			if($query->num_rows() > 0){
+				$flagcachs = array_column($query->result_array(), 'value');
+				$this->cache->save('oak_flags_' .$user, $flagcachs, 3600);
+			}
+			// ------		
+			
 			if(is_array($flag)){ $this->db->where_in('value', $flag); }
 
 			$query = $this->db
@@ -165,7 +217,7 @@ class Pokemon extends CI_Model{
 
 			if($flag == NULL && $query->num_rows() == 1){
 				return array($query->row()->value);
-			}elseif(count($flag) == 1 && $query->num_rows() == 1){
+			}elseif($flag != NULL && count($flag) == 1 && $query->num_rows() == 1){
 				return TRUE;
 			}elseif($query->num_rows() > 0){
 				return array_column($query->result_array(), 'value');
@@ -224,16 +276,17 @@ class Pokemon extends CI_Model{
 
 	function register($telegramid, $team){
 		$team = $this->team_text($team);
-		if($team === FALSE){ return FALSE; }
+		if($team === FALSE or empty($team)){ return FALSE; }
 
-		if($this->user_exists($telegramid, TRUE)){ return FALSE; }
+		if($this->user_exists($telegramid, TRUE)){ return -1; }
 
-		$this->db
+		$r = $this->db
 			->set('telegramid', $telegramid)
 			->set('team', $team)
 			->set('verified', FALSE)
 			->set('register_date', date("Y-m-d H:i:s"))
 		->insert('user');
+		return $r;
 		return $this->db->insert_id();
 	}
 
@@ -274,15 +327,21 @@ class Pokemon extends CI_Model{
 		}
 	}
 
-	function load_settings($uids){
-		if(!is_array($uids)){ $uids = [$uids]; }
-		/* foreach($uids as $k => $uid){
+	function load_settings_cache($uids){
+		foreach($uids as $k => $uid){
 			$data = $this->cache->get('settings_' .$uid);
 			if(is_array($data)){
 				$this->settings_loaded[$uid] = $data;
 				unset($uids[$k]);
 			}
-		} */
+		}
+		return $uids;
+	}
+
+	function load_settings($uids){
+		if(!is_array($uids)){ $uids = [ (string) $uids]; }
+		$uids = $this->load_settings_cache($uids);
+
 		if(empty($uids)){ return; }
 		$query = $this->db
 			->select(['uid', 'type', 'value'])
@@ -296,14 +355,18 @@ class Pokemon extends CI_Model{
 			}
 			$this->settings_loaded = $final;
 		}
-		/* foreach($this->settings_loaded as $uid => $data){
-			$this->cache->save('settings_' .$uid, $data, 300);
-		} */
+		foreach($this->settings_loaded as $uid => $data){
+			$cache = $this->cache->get('settings_' .$uid);
+			if(empty($cache)){
+				$this->cache->save('settings_' .$uid, $data, 60);
+			}
+		}
 	}
 
 	function settings($user, $key, $value = NULL){
 		// $full = FALSE;
 		// if(strtolower($value) == "fullinfo"){ $value = NULL; $full = TRUE; }
+		if(empty($user)){ return FALSE; }
 		if($value === NULL){
 			if(!is_array($key) && array_key_exists($user, $this->settings_loaded)){
 				// Si se ha cargado todo lo del usuario
@@ -315,7 +378,7 @@ class Pokemon extends CI_Model{
 			}
 
 			$this->load_settings($user);
-			if(array_key_exists($key, $this->settings_loaded[$user])){
+			if(array_key_exists($user, $this->settings_loaded) && array_key_exists($key, $this->settings_loaded[$user])){
 				return $this->settings_loaded[$user][$key];
 			}
 			// Si no existe
@@ -363,6 +426,7 @@ class Pokemon extends CI_Model{
 				// ---------
 				if(array_key_exists($user, $this->settings_loaded)){
 					unset($this->settings_loaded[$user][$key]);
+					$this->cache->delete('settings_' .$user);
 				}
 
 				return $this->db
@@ -387,6 +451,7 @@ class Pokemon extends CI_Model{
 				$id = $this->db->insert_id();
 
 				$this->settings_loaded[$user][$key] = $value;
+				$this->cache->delete('settings_' .$user);
 				// ----------
 				// $this->load_settings($user);
 				return $id;
@@ -440,7 +505,10 @@ class Pokemon extends CI_Model{
 		if(array_key_exists($chat, $this->group_admin_loaded)){
 			return $this->group_admin_loaded[$chat];
 		}
-
+		
+		$cache = $this->cache->get('oak_group_admin_' .$chat);
+		if($cache){ return $cache; }
+		
 		$query = $this->db
 			->select('uid')
 			->where('type', 'admin_chat')
@@ -505,6 +573,10 @@ class Pokemon extends CI_Model{
 			if(array_key_exists($gid, $this->admins_loaded)){
 				return $this->admins_loaded[$gid];
 			}
+
+			$cache = $this->cache->get('oak_useradmins_' .$gid);
+			if($cache){ return $cache; }
+
 			$query = $this->db
 				->select('uid')
 				->where('gid', $gid)
@@ -700,7 +772,7 @@ class Pokemon extends CI_Model{
 	// --------------------------------
 
 	function find($search){
-		$search = str_replace("ñ", "", $search);
+		$search = preg_replace('/[^\w\.]/', '', $search);
 
 		$query = $this->db
 			->where('id', $search)
@@ -793,7 +865,7 @@ class Pokemon extends CI_Model{
 	}
 
 	function attack_type($search = NULL){
-		$search = str_replace("ñ", "", $search);
+		$search = preg_replace('/[^\w\.]/', '', $search);
 
 		if($search !== NULL){
 			$this->db->where('id', $search)

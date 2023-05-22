@@ -299,7 +299,7 @@ function pokemon_parse($string){
             if(strpos($w, 'm') !== FALSE && strlen($w) == 1){ $action = 'distance'; }
             if(strpos($w, 'caramelo') !== FALSE){ $action = 'candy'; }
             if(strpos($w, 'metro') !== FALSE){ $action = 'distance'; }
-            if(strpos($w, 'km') !== FALSE && strlen($w) == 2){ $action = 'distance'; $number = $number * 1000; }
+            if(strpos($w, 'km') !== FALSE && strlen($w) == 2){ $action = 'distance'; $number = intval($number) * 1000; }
 
             if(strlen($w) > 2 && $number === NULL){
                 // Creo que me lo ha puesto junto. Voy a sacar números...
@@ -370,6 +370,7 @@ function location_distance($locA, $locB, $locC = NULL, $locD = NULL){
 		$locA = [$locA, $locB];
 		$locB = [$locC, $locD];
 	}
+	if($locB[0] == ""){ return; }
 	$locA[0] = deg2rad($locA[0]);
 	$locA[1] = deg2rad($locA[1]);
 	$locB[0] = deg2rad($locB[0]);

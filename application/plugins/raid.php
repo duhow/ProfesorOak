@@ -1,7 +1,7 @@
 <?php
 
 // 7:00 -> 21:59
-if(!in_array(date("H"), range(7, 21))){
+if(!in_array(date("H"), range(4, 22))){
 	if(in_array($this->telegram->callback, ["raid apuntar", "raid estoy", "raid rewrite"])){
 		$this->telegram->answer_if_callback("");
 		// Remove button

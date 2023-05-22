@@ -573,6 +573,7 @@ elseif($telegram->text_command("vui") && $telegram->words() >= 2){
 }
 
 elseif($telegram->text_command(["ul", "ulv"]) and $telegram->is_chat_group()){
+	return -1;
 	$users = $pokemon->group_get_users($telegram->chat->id);
 
 	$str = "Hay " .count($users) ." usuarios registrados:\n";
@@ -611,18 +612,19 @@ elseif($telegram->text_command("cinfo")){
 	if($info != FALSE){
 		$str = ":id: " .$info['id'] ."\n"
 				.":abc: " .($info['title'] ?: $info['first_name']) ."\n"
-				."\ud83c\udf10 " .($info['username'] ? "@" .$info['username'] : "---") ."\n"
-				."\ud83d\udcf3 " .$info['type'] ."\n"
-				."\ud83c\udff3 " .($info['language_code'] ? $info['language_code'] : "---") ."\n";
-		if($info['type'] != "private"){
+				."\u{d83c}\u{df10} " .($info['username'] ? "@" .$info['username'] : "---") ."\n"
+				."\u{d83d}\u{dcf3} " .$info['type'] ."\n"
+				."\u{d83c}\u{dff3} " .($info['language_code'] ? $info['language_code'] : "---") ."\n";
+		/* if($info['type'] != "private"){
 			$info = $telegram->send->get_member_info($this->config->item('telegram_bot_id'), $id);
-			$str .= "\ud83d\udebb " .$count ."\n"
+			$str .= "\u{d83d}\u{debb} " .$count ."\n"
 					.":info: " .$info['status'];
-		}
+				} */
 
-		$str = $telegram->emoji($str);
+
+		// $str = $telegram->emoji($str);
 	}
-    $telegram->send->text( $str )->send();
+    $telegram->send->text( json_encode($info) )->send();
     return -1;
 }
 
@@ -646,9 +648,9 @@ elseif($telegram->text_command("uinfo") or $telegram->text_command("ui")){
 
     $str = "Desconocido.";
     if($find !== FALSE){
-        $str = '<a href="tg://user?id=' .$find['user']['id'] .'">' .$find['user']['id'] .'</a>'
-                . " - " .$find['user']['first_name'] ." " .$find['user']['last_name'] ." ";
-        if(in_array($find['status'], ["administrator", "creator"])){ $str .= ":star:"; }
+   	 $str = '<a href="tg://user?id=' .$find['user']['id'] .'">' .$find['user']['id'] .'</a>'
+        	 . " - " .$find['user']['first_name'] ." " .$find['user']['last_name'] ." ";
+	if(in_array($find['status'], ["administrator", "creator"])){ $str .= ":star:"; }
         elseif(in_array($find['status'], ["left"])){ $str .= ":door:"; }
         elseif(in_array($find['status'], ["kicked"])){ $str .= ":forbid:"; }
         else{ $str .= ":multiuser:"; }
@@ -675,7 +677,7 @@ elseif($telegram->text_command("uinfo") or $telegram->text_command("ui")){
 
     $telegram->send
         ->notification(FALSE)
-        ->text($str)
+        ->text($str, 'HTML')
     ->send();
     return -1;
 }
@@ -684,7 +686,8 @@ elseif($telegram->text_command("uinfo") or $telegram->text_command("ui")){
 elseif($telegram->text_has("salte de", TRUE) && $telegram->words() == 3){
     $id = $telegram->last_word();
     $telegram->send->leave_chat($id);
-	$pokemon->group_disable($id);
+    $pokemon->group_disable($id);
+    $pokemon->settings($id, 'die', TRUE);
     return -1;
 }
 

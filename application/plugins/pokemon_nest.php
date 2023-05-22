@@ -52,6 +52,28 @@ function check_reset_nest(){
 
 // if(!$this->telegram->text_contains("nido")){ return; } // HACK TODO Cambiar frases para la gente?
 
+/* if(in_array($telegram->chat->id, [
+	'-1001054243866',
+	'-273185530',
+	'-102735352',
+	'-1001356217950',
+	'-1001149270074',
+	'-1001143250792',
+	'-1001133049219',
+	'-1001132970346',
+	'-1001125621968',
+	'-1001125297032',
+	'-1001114184004',
+	'-1001108507562',
+	'-1001096491742',
+	'-1001094709470',
+	'-1001079317282',
+	'-1001077635169',
+	'-1001066445138',
+	'-1001062834352',
+	'-289330015'
+])){ return; } */
+
 if(
 	(
 		$telegram->text_has(["donde", "conocéis", "sabéis", "sabe", "cual"]) &&
@@ -115,7 +137,14 @@ if(
 		}
 	}
 
-	if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return -1; }
+	if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam', 'disable_nest'])){ return -1; }
+
+	// HACK NEW TEMP
+	if(
+		$pokemon->settings($telegram->chat->id, 'nest_auth') and
+		!$pokemon->user_flags($telegram->user->id, 'nest_auth')
+	){ return -1; }
+
 	$pkuser = $pokemon->user($telegram->user->id);
 	if(!$pkuser->verified){ return -1; }
 
@@ -224,7 +253,14 @@ elseif(
 	$telegram->text_contains("?") &&
 	$telegram->words() >= 4
 ){
-	if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam'])){ return; }
+	if($pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'gps', 'hacks', 'multiaccount', 'spam', 'disable_nest'])){ return; }
+
+	// HACK NEW TEMP
+	if(
+		$pokemon->settings($telegram->chat->id, 'nest_auth') and
+		!$pokemon->user_flags($telegram->user->id, 'nest_auth')
+	){ return -1; }
+
 	$pkuser = $pokemon->user($telegram->user->id);
 	if(!$pkuser->verified){ return -1; }
 	$txt = $telegram->text(TRUE);
@@ -296,6 +332,12 @@ elseif(
 			// y no hacer trampas.
 			$pokemon->user_flags($telegram->user->id, ['ratkid', 'troll', 'troll_nest', 'spam'])
 		)
+	){ return -1; }
+
+	// HACK NEW TEMP
+	if(
+		$pokemon->settings($telegram->chat->id, 'nest_auth') and
+		!$pokemon->user_flags($telegram->user->id, 'nest_auth')
 	){ return -1; }
 
 	$text = $telegram->text();
@@ -416,6 +458,12 @@ elseif($telegram->text_contains("lista") && $telegram->text_contains("nido") && 
 		}
 		return -1;
 	}
+
+	// HACK NEW TEMP
+	if(
+		$pokemon->settings($telegram->chat->id, 'nest_auth') and
+		!$pokemon->user_flags($telegram->user->id, 'nest_auth')
+	){ return -1; }
 
 	$pkuser = $pokemon->user($telegram->user->id);
 	if(!$pkuser->verified){ return; }

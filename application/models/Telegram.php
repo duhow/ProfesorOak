@@ -158,6 +158,7 @@ class __Module_Telegram_Sender extends CI_Model{
 	private $method = NULL;
 	private $_keyboard;
 	private $_inline;
+	public  $use_internal_resolver = FALSE;
 
 	function __construct(){
 		parent::__construct();
@@ -230,6 +231,7 @@ class __Module_Telegram_Sender extends CI_Model{
 				curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 					"Content-Type:multipart/form-data"
 				));
+				curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 				curl_setopt($ch, CURLOPT_URL, $this->_url(TRUE));
 				curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 				curl_setopt($ch, CURLOPT_POSTFIELDS, $this->content);
@@ -247,6 +249,7 @@ class __Module_Telegram_Sender extends CI_Model{
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
 			"Content-Type:multipart/form-data"
 		));
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		curl_setopt($ch, CURLOPT_URL, $this->_url(TRUE));
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->content);
@@ -397,7 +400,7 @@ class __Module_Telegram_Sender extends CI_Model{
 		if(is_string($until)){
 			$until = strtotime($until);
 		}
-		if(is_numeric($until)){
+		if(is_numeric($until) and $until > (time() - 86400)){
 			$this->content['until_date'] = $until;
 		}
 		return $this->_parse_generic_chatFunctions("kickChatMember", $keep, $chat, $user);
@@ -603,6 +606,17 @@ class __Module_Telegram_Sender extends CI_Model{
 		curl_setopt($handle, CURLOPT_CONNECTTIMEOUT, 5);
 		curl_setopt($handle, CURLOPT_TIMEOUT, 60);
 
+		if($this->use_internal_resolver){
+			$apihosts = [
+				"149.154.167.197",
+				"149.154.167.198",
+				"149.154.167.199",
+				"149.154.167.200"
+			];
+			$apihost = $apihosts[mt_rand(0,count($apihosts) - 1)];
+			curl_setopt($handle, CURLOPT_RESOLVE, ["api.telegram.org:443:$apihost"]);
+		}
+
 		return $this->exec_curl_request($handle);
 	}
 
@@ -645,7 +659,8 @@ class Telegram extends CI_Model{
 		// if(empty($content)){ die(); }
 		$this->raw = $content;
 		$this->data = json_decode($content, TRUE);
-		$this->id = $this->data['update_id'];
+		@$this->id = $this->data['update_id'];
+		@$this->update_id = $this->data['update_id'];
 		if(isset($this->data['message']) or isset($this->data['edited_message'])){
 			$this->key = (isset($this->data['edited_message']) ? "edited_message" : "message");
 			if($this->key == "edited_message"){
@@ -712,6 +727,7 @@ class Telegram extends CI_Model{
 	private $data = array();
 	public $key = NULL;
 	public $id = NULL;
+	public $update_id = NULL;
 	public $message = NULL; // DEPRECATED
 	public $message_id = NULL;
 	public $chat = NULL;
@@ -1059,6 +1075,8 @@ class Telegram extends CI_Model{
 		elseif($object === FALSE){ return array_values($data); }
 
 		if(in_array($key, ["document", "location", "game"])){ return $data; }
+		// HACK 2020
+		if($key == "sticker"){ $rkey = "file_unique_id"; }
 		return $data[$rkey];
 	}
 
@@ -1260,6 +1278,8 @@ class Telegram extends CI_Model{
 			'world-usa' => '\ud83c\udf0e',
 			'world-asia' => '\ud83c\udf0f',
 
+			'flag_es' => '\ud83c\uddea\ud83c\uddf8',
+
 			'clock-1' => '\ud83d\udd50',
 			'clock-2' => '\ud83d\udd51',
 			'clock-3' => '\ud83d\udd52',
@@ -1397,6 +1417,7 @@ class Telegram extends CI_Model{
 			'world-europe' => [':world-europe:', ':world:'],
 			'world-usa' => [':world-usa:'],
 			'world-asia' => [':world-asia:'],
+			'flag_es' => [':flag_es:'],
 
 			'clock-1' => [':clock-1:'],
 			'clock-2' => [':clock-2:', ':clock:'],

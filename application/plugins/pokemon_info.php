@@ -374,6 +374,7 @@ function pokemon_counter($target){
 
 $help = NULL;
 
+/*
 if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) && $telegram->text_has(["paradas", "pokeparadas"])){
     $help = "Lo siento, pero por el momento no es posible crear nuevas PokéParadas, tendrás que esperar... :(";
 }elseif($telegram->text_contains(["Niantic", "report"]) && $telegram->text_has(["link", "enlace", "página"])){
@@ -444,7 +445,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
             ."¡Y muchas más cosas que vendrán próximamente!\n"
             ."Cualquier duda, consulta, sugerencia o reporte de problemas podéis contactar con *mi creador*. :)";
 */
-}elseif(
+if(
     !$telegram->text_contains("http") && // Descargas de juegos? No, gracias
     $telegram->text_has(["descarga", "enlace", "actualización"], ["de pokémon", "pokémon", "del juego"]) &&
     $telegram->words() <= 12
@@ -470,7 +471,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
     $google['date'] = str_replace("octobre", "october", $google['date']); // FIXME raro de Google.
 
     $google['date'] = date("Y-m-d", strtotime($google['date']));
-    $apple['date'] = date_create_from_format('d/m/Y', $apple['date'])->format('Y-m-d'); // HACK DMY -> YMD
+    // $apple['date'] = date_create_from_format('d/m/Y', $apple['date'])->format('Y-m-d'); // HACK DMY -> YMD
 
     $google['days'] = floor((time() - strtotime($google['date'])) / 86400); // -> Days
     $apple['days'] = floor((time() - strtotime($apple['date'])) / 86400); // -> Days
@@ -520,6 +521,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
             }
         }
     }
+/*
 }elseif($telegram->text_contains("mejorar") && $telegram->text_has(["antes", "después"]) && $telegram->text_has(["evolución", "evolucionar", "evolucione"])){
     $help = "En principio es irrelevante, puedes mejorar un Pokemon antes o después de evolucionarlo sin problemas.";
 }elseif($telegram->text_has(["calculadora", "calcular", "calculo", "calcula", "tabla", "pagina", "xp", "experiencia"]) && $telegram->text_has(["evolución", "evoluciona", "evolucione", "nivel", "PC", "CP"]) && !$telegram->text_contains(["IV", "lV"])){
@@ -537,6 +539,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
     $this->analytics->event('Telegram', 'IV Calculator');
     // $help = "Puedes calcular las IVs de tus Pokemon en esta página: https://pokeassistant.com/main/ivcalculator";
     $help = "Si me dices los datos de tu Pokémon, te puedo calcular yo mismo los IV. :)";
+*/
 }elseif($telegram->text_contains(["tabla", "lista"]) && $telegram->text_contains(["ataque", "tipos", "tipos de ataque", "debilidad"]) && $telegram->words() < 10){
     $this->analytics->event('Telegram', 'Attack Table');
     $telegram->send
@@ -569,15 +572,17 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
 	if($telegram->words() == 2 and is_numeric($telegram->last_word())){
 		$help = "https://github.com/duhow/ProfesorOak/issues/" . $this->telegram->last_word();
 	}
+/*
 }elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["facción", "color", "equipo", "team"]) && $telegram->words() <= 12){
     $help = "Según la página oficial de Niantic, aún no es posible cambiarse de equipo. Tendrás que esperar o hacerte una cuenta nueva, pero *procura no jugar con multicuentas, está prohibido.*";
-}elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["usuario", "nombre", "apodo", "llamo"]) && $telegram->words() <= 15 and !$telegram->has_forward){
+/* }elseif($telegram->text_has(["cambiar", "cambio"]) && $telegram->text_has(["usuario", "nombre", "apodo", "llamo"]) && $telegram->words() <= 15 and !$telegram->has_forward){
     $help = "Si quieres cambiarte de nombre, puedes hacerlo en los *Ajustes de Pokemon GO.*\n";
 	if(!$pokemon->user_verified($this->telegram->user->id)){
 		$help .= "Si te has equivocado de nombre al registrarte, *valídate* conmigo siguiendo las indicaciones que te diré, y si lo haces correctamente, te cambiaré el nombre.";
 	}else{
 		$help .= "Una vez hecho, habla con @duhow para que pueda cambiarte el nombre aquí!";
-	}
+	} */
+/*
 }elseif($telegram->text_has("datos") && $telegram->text_has(["móvil", "móviles"]) && !$telegram->text_contains("http")){
     $help = "Si te has quedado sin datos, deberías pensar en cambiarte a otra compañía o conseguir una tarifa mejor. "
             ."Te recomiendo que tengas al menos 4GB si vas a ponerte a jugar en serio.";
@@ -611,6 +616,7 @@ if($telegram->text_contains(["añadir", "agreg", "crear", "solicit", "pedir"]) &
             // ."En uno de los capítulos, Ash y sus compañeros de viaje se topaban con los hermanos Eeeve, "
             // ."y cada uno de ellos tenía una de las tres evoluciones.\n_¿A que no adivinas como se llamaban los hermanos?_\n";
             // ."https://youtu.be/uZE3CwmCYcY";
+ */
 }
 
 if(!empty($help)){
@@ -699,6 +705,7 @@ elseif(
 
 // Significados de palabras
 elseif($telegram->text_has("Qué", ["significa", "es"], TRUE)){
+    return -1;
     $word = trim(strtolower($telegram->last_word(TRUE)));
     if(is_numeric($word)){ return; }
     $help = $pokemon->meaning($word);

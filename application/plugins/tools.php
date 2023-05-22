@@ -78,7 +78,7 @@ if($telegram->text_command("avoice")){
 		if(isset($telegram->reply->sticker)){
 			$telegram->send
 				->reply_to(FALSE)
-				->text($telegram->reply->sticker['file_id'])
+				->text($telegram->reply->sticker['file_unique_id'])
 			->send();
 		}
 	}

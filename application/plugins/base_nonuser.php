@@ -8,6 +8,7 @@ if($telegram->text_command("register")){
 		$this->telegram->send->delete(TRUE);
 		return -1;
 	}
+	if($pokemon->user_flags($this->telegram->user->id, 'selfblock')){ return -1; }
 
     $this->analytics->event('Telegram', 'Register', 'command');
     $str = "Hola " .$telegram->user->first_name ."! Me podrías decir tu color?\n"
@@ -31,12 +32,16 @@ elseif(
     ($telegram->text_has(["Soy", "Equipo", "Team"]) && color_parse($telegram->text()) ) or
     (color_parse($telegram->text()) && $telegram->words() == 1)
 ){
-	if($telegram->text_command()){ return -1; }
+	if(
+		$telegram->text_command() or
+		$telegram->text_url()
+	){ return -1; }
     if(!$pokemon->user_exists($telegram->user->id)){
 		$color = color_parse($telegram->text());
 
-        // Registrar al usuario si es del color correcto
-        if($pokemon->register($telegram->user->id, $color ) !== FALSE){
+		// Registrar al usuario si es del color correcto
+		$reg = $pokemon->register($telegram->user->id, $color);
+        if($reg > 0){
             $this->analytics->event('Telegram', 'Register', $color);
 
             $name = $telegram->user->first_name ." " .$telegram->user->last_name;
@@ -48,7 +53,7 @@ elseif(
                 ->reply_to(TRUE)
                 ->text("Muchas gracias " .$telegram->user->first_name ."! Por cierto, ¿cómo te llamas *en el juego*? \n_(Me llamo...)_", TRUE)
             ->send();
-        }else{
+        }elseif($reg === FALSE){
             $this->analytics->event('Telegram', 'Register', 'wrong', $text);
             $telegram->send
                 ->notification(FALSE)

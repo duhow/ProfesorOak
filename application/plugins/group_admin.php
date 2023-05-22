@@ -191,6 +191,12 @@ elseif(($telegram->text_contains("desbanea", TRUE) or $telegram->text_command("u
 	if($adm){ $chat = $adm; }
 
     if($target != NULL){
+	    if($telegram->user_in_chat($target, $chat)){
+		$telegram->send
+			->text("HDP, el user ya está aquí. Deja de tontear.")
+		->send();
+		return -1;
+	    }
         $q = $telegram->send->unban($target, $chat);
 		if($q !== FALSE){
 			$telegram->send
@@ -405,7 +411,7 @@ elseif($telegram->text_has(["oak", "profe"], ["sal", "vete"], TRUE) && !$telegra
 }
 
 // Investigar / contar usuarios topos de un grupo.
-elseif($telegram->text_command("investigate")){
+elseif($telegram->text_command("investigate") and $this->telegram->user->id == $this->config->item('creator')){
     $admins = $pokemon->telegram_admins(TRUE);
 
     if(!in_array($telegram->user->id, $admins)){ return; }
@@ -644,7 +650,7 @@ elseif(
 			$text = json_encode($telegram->reply->text);
 			if(strlen($text) > 4000 or strlen($text) < 10){
 				$this->telegram->send
-					->text("¿No crees que te pasas un poco?")
+					->text("¿No crees que te pasas un poco? (" .strlen($text) .")")
 				->send();
 
 				return -1;
@@ -862,6 +868,7 @@ elseif(
 elseif($telegram->text_has("mutear contenido") and $telegram->words() <= 6){
 	$settings = $this->pokemon->settings($telegram->chat->id, "mute_content");
 	if($settings){ $settings = explode(",", $settings); }
+	if(is_string($settings)){ $settings = [$settings]; }
 
 	if($this->telegram->callback){
 		$this->telegram->answer_if_callback("");

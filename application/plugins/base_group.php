@@ -39,7 +39,7 @@ if($flood && !in_array($telegram->user->id, $pokemon->telegram_admins(TRUE))){
     if($telegram->text_command()){ $amount = 1; }
     elseif($telegram->photo()){ $amount = 0.8; }
     elseif($telegram->sticker()){
-		if(strpos($telegram->sticker(), "CAADBAAD") === FALSE){ // + BQADBAAD - Oak Games
+		if(strpos($telegram->sticker(), "CAACA") === FALSE){ // + BQADBAAD - Oak Games
 			$amount = 1;
 		}
 	}
@@ -127,6 +127,28 @@ if($abandon){
 #####################
 */
 
+if($telegram->is_chat_group()){
+	$info = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
+	if(
+		$info->last_date == $info->register_date and
+		$info->messages <= 3 and
+		(
+			$telegram->photo() or
+			$telegram->text_url() or
+			$telegram->video()
+		)
+	){
+		$telegram->send->delete(TRUE);
+		$msg = $telegram->user->id ." / " .$telegram->user->first_name .' ' .$telegram->user->last_name;
+		$telegram->send
+			->text($msg)
+			->chat("-221103258")
+			->notification(FALSE)
+		->send();
+		return -1;
+	}
+}
+
 if($telegram->text_url() && $telegram->is_chat_group()){
     $info = $pokemon->user_in_group($telegram->user->id, $telegram->chat->id);
     // $telegram->send->text(json_encode($info))->send();
@@ -140,7 +162,7 @@ if($telegram->text_url() && $telegram->is_chat_group()){
         ){ return -1; } // HACK Falsos positivos.
 
         // TODO mirar antiguedad del usuario y mensajes escritos. - RELACIÓN.
-        $telegram->send
+        /* $telegram->send
             ->message(TRUE)
             ->chat(TRUE)
             ->forward_to("-211573726")
@@ -152,10 +174,13 @@ if($telegram->text_url() && $telegram->is_chat_group()){
             ->inline_keyboard()
                 ->row_button("No es spam", "/nospam " .$telegram->user->id ." " .$telegram->chat->id, "TEXT")
             ->show()
-        ->send();
+	    ->send(); */
 
-        $pokemon->user_flags($telegram->user->id, 'spam', TRUE);
+        $pokemon->user_flags($telegram->user->id, 'spam_dis', TRUE);
 
+// HACK 2020
+// ANTISPAM DESHABILITADO POR MUCHOS FALLOS
+/*
         $telegram->send
             ->text("¡*SPAM* detectado!", TRUE)
         ->send();
@@ -185,7 +210,9 @@ if($telegram->text_url() && $telegram->is_chat_group()){
 
 		$telegram->send->delete(TRUE);
 
-        return -1;
+	return -1;
+
+*/
     }
 }
 

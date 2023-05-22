@@ -1,16 +1,16 @@
 <?php
 
 // pillando a los h4k0rs
-if($telegram->text_contains(["fake GPS", "fake", "fakegps", "nox", "fly", "fli"]) and !$telegram->text_contains("me llamo", TRUE)){
+if($telegram->text_contains(["fake GPS", "fake", "fakegps", "nox"]) and !$telegram->text_contains("me llamo", TRUE)){
     if(
 		$telegram->user->id != $this->config->item("creator") and
 		!in_array($this->pokemon->step($this->telegram->user->id), ["RULES", "WELCOME", "CUSTOM_COMMAND"])
 	){
         $this->analytics->event('Telegram', 'Talk cheating');
-        $telegram->send
+        /* $telegram->send
             ->text("*(A)* *" .$telegram->chat->title ."* - " .$telegram->user->first_name ." @" .$telegram->user->username .":\n" .$telegram->text(), TRUE)
             ->chat("-226115807")
-        ->send();
+	    ->send(); */
         // $this->telegram->sendHTML("*OYE!* Si vas a empezar con esas, deberías dejar el juego. En serio, hacer trampas *NO MOLA*.");
 		$bw = $pokemon->settings($telegram->chat->id, 'blackword');
 		if(!$bw or stripos($bw, "fake") === FALSE){ return -1; }
@@ -18,6 +18,8 @@ if($telegram->text_contains(["fake GPS", "fake", "fakegps", "nox", "fly", "fli"]
 }
 
 elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has("dónde estás") && $telegram->words() <= 5){
+	if($pokemon->user_flags($this->telegram->user->id, 'selfblock')){ return -1; }
+
     $telegram->send
         ->notification(FALSE)
         // ->reply_to(TRUE)
@@ -30,13 +32,14 @@ elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has("dónde
 elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has(["ping", "pong", "me recibe", "estás", "estás ahí"]) && $telegram->words() <= 4){
 	if($pokemon->command_limit("ping", $telegram->chat->id, $telegram->message, 5)){ return -1; }
 	if($pokemon->settings($telegram->user->id, 'mute')){ return -1; }
+	if($pokemon->user_flags($this->telegram->user->id, 'selfblock')){ return -1; }
 
     $this->analytics->event('Telegram', 'Ping');
     $q = $telegram->send->text("Pong! :D")->send();
 
-	sleep(4);
-	$r = $this->telegram->send->delete($q);
-	if($r !== FALSE){ $this->telegram->send->delete(TRUE); }
+	// sleep(4);
+	// $r = $this->telegram->send->delete($q);
+	// if($r !== FALSE){ $this->telegram->send->delete(TRUE); }
 
     return -1;
 }
@@ -44,6 +47,7 @@ elseif($telegram->text_contains(["profe", "oak"]) && $telegram->text_has(["ping"
 elseif($telegram->text_command("help")){
 	if($pokemon->command_limit("help", $telegram->chat->id, $telegram->message, 5)){ return -1; }
 	if($pokemon->settings($telegram->user->id, 'mute')){ return -1; }
+	if($pokemon->user_flags($this->telegram->user->id, 'selfblock')){ return -1; }
 
     $telegram->send
         ->notification(FALSE)
@@ -58,6 +62,7 @@ elseif($telegram->text_command(["donate", "donar"]) or
 ){
 	if($pokemon->command_limit("donate", $telegram->chat->id, $telegram->message, 7)){ return -1; }
 	if($pokemon->settings($telegram->user->id, 'mute')){ return -1; }
+	if($pokemon->user_flags($this->telegram->user->id, 'selfblock')){ return -1; }
 
 	if($telegram->is_chat_group()){
 		$str = "Si quieres ayudarme, puedes contribuir con la cantidad que quieras, aunque sea un 1€. Te prometo que merecerá la pena. <3";
@@ -86,6 +91,8 @@ elseif($telegram->text_command(["donate", "donar"]) or
 			."Aunque sea tan solo 1€, ya es una ayuda, créeme. \ud83d\udcb6 \n"
 			."A cambio y para agradecertelo, recibirás una medalla y unos cuantos objetos. \ud83e\udd17"
 
+			."\n\n\u203c\ufe0f <b>Asegúrate de escribir en la descripción tu usuario de Telegram para saber que se trata de tu donativo.</b>"
+
 			."\n\n<i>Nota:</i> PayPal cobra tarifas por cargos con tarjeta. Asegúrate de enviar desde saldo PayPal o cuenta bancaria, y <b>para un amigo</b>.\n\n"
 			."¡Muchísimas gracias, de verdad! <3";
 
@@ -108,6 +115,7 @@ if(
 	strpos(strtolower(@$this->telegram->user->last_name), " oak") !== FALSE
 ){
 	if($pokemon->user_flags($this->telegram->user->id, 'impersonate')){ return -1; }
+	if($this->telegram->user->id == $this->config->item('telegram_bot_id')){ return -1; } // HACK FIX
 	$str = ":warning: Suplantación de nombre\n"
 				.":id: " .$this->telegram->user->id ." - " .$this->telegram->user->username ."\n"
 				.":multiuser: " .$this->telegram->chat->id;
