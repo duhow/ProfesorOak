@@ -1,4 +1,4 @@
-FROM php:8.0.30-apache
+FROM php:8.3.36-apache
 #FROM php:8.3.4-apache
 
 RUN apt-get update && apt-get install -y libmemcached-dev libssl-dev zlib1g-dev \
