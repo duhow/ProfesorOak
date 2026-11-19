@@ -75,6 +75,10 @@ class Main extends CI_Controller {
 		}
 		$this->pokemon->load_settings($loads);
 
+		// Strict moderation must precede forwarding and all base-plugin exits.
+		require_once APPPATH . 'libraries/StrictAntispam.php';
+		if(StrictAntispam::moderate($telegram, $pokemon)){ return; }
+
 		$step = NULL;
 		if($pokeuser = $pokemon->user_firstload($telegram->user->id)){
 			$step = $pokeuser->step;
